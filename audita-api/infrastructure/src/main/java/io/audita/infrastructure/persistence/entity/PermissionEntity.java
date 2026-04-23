@@ -1,15 +1,10 @@
 package io.audita.infrastructure.persistence.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import java.util.UUID;
 
 @Entity
 @Table(name = "permissions")
-@Getter
-@NoArgsConstructor
 public class PermissionEntity {
 
     @Id
@@ -21,4 +16,10 @@ public class PermissionEntity {
 
     @Column(nullable = false)
     private String label;
+
+    protected PermissionEntity() {}
+
+    public UUID getId() { return id; }
+    public String getCode() { return code; }
+    public String getLabel() { return label; }
 }

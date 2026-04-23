@@ -3,26 +3,24 @@ package io.audita.api.controller;
 import io.audita.api.dto.request.BootstrapRequest;
 import io.audita.infrastructure.service.AuthService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/platform/v1")
-@RequiredArgsConstructor
 public class PlatformBootstrapController {
 
     private final AuthService authService;
 
+    public PlatformBootstrapController(AuthService authService) {
+        this.authService = authService;
+    }
+
     /**
      * One-time platform bootstrap. Creates the first Super Admin account.
-     * Idempotent at the guard level — fails if already bootstrapped.
-     * Publicly accessible (no auth) so the first admin can be created.
+     * Publicly accessible — fails idempotently if already bootstrapped.
      */
     @PostMapping("/bootstrap")
     public ResponseEntity<Map<String, String>> bootstrap(

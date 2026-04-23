@@ -51,4 +51,14 @@ public class AuditaMultiTenantConnectionProvider implements MultiTenantConnectio
         // False: we manage the connection lifecycle explicitly
         return false;
     }
+
+    @Override
+    public boolean isUnwrappableAs(Class<?> unwrapType) {
+        return false;
+    }
+
+    @Override
+    public <T> T unwrap(Class<T> unwrapType) {
+        throw new UnsupportedOperationException("Unwrapping is not supported");
+    }
 }

@@ -1,6 +1,5 @@
 package io.audita.infrastructure.service;
 
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,10 +15,9 @@ import jakarta.mail.internet.MimeMessage;
 /**
  * Dispatches all outbound emails asynchronously.
  * Templates live in resources/templates/email/.
- * Failures are logged; they do not propagate to the caller.
+ * Failures are logged — they must never propagate to the caller.
  */
 @Service
-@RequiredArgsConstructor
 public class EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
@@ -32,6 +30,11 @@ public class EmailService {
 
     @Value("${audita.app.base-url:http://localhost:3000}")
     private String appBaseUrl;
+
+    public EmailService(JavaMailSender mailSender, TemplateEngine templateEngine) {
+        this.mailSender = mailSender;
+        this.templateEngine = templateEngine;
+    }
 
     @Async
     public void sendPasswordResetEmail(String toEmail, String fullName, String rawToken) {
@@ -54,7 +57,7 @@ public class EmailService {
 
     @Async
     public void sendApprovalRequestEmail(String toEmail, String approverName,
-                                          String crTitle, String crId) {
+                                         String crTitle, String crId) {
         Context ctx = new Context();
         ctx.setVariable("approverName", approverName);
         ctx.setVariable("crTitle", crTitle);
@@ -64,8 +67,8 @@ public class EmailService {
 
     @Async
     public void sendApprovalDecisionEmail(String toEmail, String recipientName,
-                                           String crTitle, String crId,
-                                           String decision, String deciderName) {
+                                          String crTitle, String crId,
+                                          String decision, String deciderName) {
         Context ctx = new Context();
         ctx.setVariable("recipientName", recipientName);
         ctx.setVariable("crTitle", crTitle);
@@ -77,7 +80,7 @@ public class EmailService {
 
     @Async
     public void sendMentionEmail(String toEmail, String recipientName,
-                                  String crTitle, String crId, String commenterName) {
+                                 String crTitle, String crId, String commenterName) {
         Context ctx = new Context();
         ctx.setVariable("recipientName", recipientName);
         ctx.setVariable("crTitle", crTitle);
@@ -88,7 +91,7 @@ public class EmailService {
 
     @Async
     public void sendSlaBreachEmail(String toEmail, String recipientName,
-                                    String crTitle, String crId) {
+                                   String crTitle, String crId) {
         Context ctx = new Context();
         ctx.setVariable("recipientName", recipientName);
         ctx.setVariable("crTitle", crTitle);
@@ -107,7 +110,6 @@ public class EmailService {
             helper.setText(html, true);
             mailSender.send(message);
         } catch (Exception e) {
-            // Email failures must never crash the application
             log.error("Failed to send email to={} subject={} template={}", to, subject, template, e);
         }
     }

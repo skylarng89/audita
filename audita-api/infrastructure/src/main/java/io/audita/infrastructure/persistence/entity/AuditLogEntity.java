@@ -1,8 +1,6 @@
 package io.audita.infrastructure.persistence.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -11,13 +9,11 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Immutable audit log — no setters, no @PreUpdate.
- * Insert-only. The app DB role should not be granted UPDATE/DELETE on this table.
+ * Immutable audit log entry — no setters, no @PreUpdate.
+ * The application DB role must not be granted UPDATE/DELETE on this table.
  */
 @Entity
 @Table(name = "audit_log")
-@Getter
-@NoArgsConstructor
 public class AuditLogEntity {
 
     @Id
@@ -26,7 +22,7 @@ public class AuditLogEntity {
 
     private UUID actorId;
 
-    // Denormalised — preserved even if the user is later deleted
+    // Denormalised: preserved even if the user is later deleted
     private String actorEmail;
 
     @Column(nullable = false)
@@ -43,9 +39,11 @@ public class AuditLogEntity {
     @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
+    protected AuditLogEntity() {}
+
     public AuditLogEntity(UUID actorId, String actorEmail, String actionType,
-                           String entityType, UUID entityId,
-                           Map<String, Object> payload, String ipAddress) {
+                          String entityType, UUID entityId,
+                          Map<String, Object> payload, String ipAddress) {
         this.actorId = actorId;
         this.actorEmail = actorEmail;
         this.actionType = actionType;
@@ -54,4 +52,14 @@ public class AuditLogEntity {
         this.payload = payload;
         this.ipAddress = ipAddress;
     }
+
+    public UUID getId() { return id; }
+    public UUID getActorId() { return actorId; }
+    public String getActorEmail() { return actorEmail; }
+    public String getActionType() { return actionType; }
+    public String getEntityType() { return entityType; }
+    public UUID getEntityId() { return entityId; }
+    public Map<String, Object> getPayload() { return payload; }
+    public String getIpAddress() { return ipAddress; }
+    public OffsetDateTime getCreatedAt() { return createdAt; }
 }

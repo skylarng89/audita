@@ -1,12 +1,10 @@
 package io.audita.infrastructure.service;
 
 import io.audita.domain.exception.DomainNotPermittedException;
-import io.audita.domain.exception.NotFoundException;
 import io.audita.domain.model.UserStatus;
 import io.audita.infrastructure.persistence.entity.*;
 import io.audita.infrastructure.persistence.repository.*;
 import io.audita.infrastructure.security.JwtService;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,7 +20,7 @@ import java.util.Base64;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
+@Transactional
 public class AuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
@@ -43,13 +41,32 @@ public class AuthService {
     @Value("${audita.refresh-token.expiry-days:7}")
     private long refreshExpiryDays;
 
-    // ── Login ────────────────────────────────────────────────────────────────
+    public AuthService(UserRepository userRepository,
+                       SuperAdminRepository superAdminRepository,
+                       RefreshTokenRepository refreshTokenRepository,
+                       PasswordResetTokenRepository passwordResetTokenRepository,
+                       InviteTokenRepository inviteTokenRepository,
+                       TenantRepository tenantRepository,
+                       JwtService jwtService,
+                       PasswordEncoder passwordEncoder,
+                       EmailService emailService) {
+        this.userRepository = userRepository;
+        this.superAdminRepository = superAdminRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.inviteTokenRepository = inviteTokenRepository;
+        this.tenantRepository = tenantRepository;
+        this.jwtService = jwtService;
+        this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
+    }
 
-    @Transactional
+    // ── Login ──────────────────────────────────────────────────────────────────
+
     public LoginResult loginTenantUser(String email, String rawPassword, String tenantSlug) {
         UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new DomainNotPermittedException("INVALID_CREDENTIALS",
-                        "Invalid email or password."));
+                .orElseThrow(() -> new DomainNotPermittedException(
+                        "INVALID_CREDENTIALS", "Invalid email or password."));
 
         if (user.getStatus() == UserStatus.SUSPENDED) {
             throw new DomainNotPermittedException("ACCOUNT_SUSPENDED",
@@ -63,11 +80,10 @@ public class AuthService {
         return issueTokensForUser(user, tenantSlug);
     }
 
-    @Transactional
     public LoginResult loginSuperAdmin(String email, String rawPassword) {
         SuperAdminEntity sa = superAdminRepository.findByEmail(email)
-                .orElseThrow(() -> new DomainNotPermittedException("INVALID_CREDENTIALS",
-                        "Invalid email or password."));
+                .orElseThrow(() -> new DomainNotPermittedException(
+                        "INVALID_CREDENTIALS", "Invalid email or password."));
 
         if (!passwordEncoder.matches(rawPassword, sa.getPasswordHash())) {
             throw new DomainNotPermittedException("INVALID_CREDENTIALS", "Invalid email or password.");
@@ -78,30 +94,27 @@ public class AuthService {
                 sa.getFullName(), "SUPER_ADMIN", null);
     }
 
-    // ── Refresh ──────────────────────────────────────────────────────────────
+    // ── Refresh ────────────────────────────────────────────────────────────────
 
-    @Transactional
     public LoginResult refreshToken(String rawRefreshToken) {
         String hash = sha256(rawRefreshToken);
         RefreshTokenEntity token = refreshTokenRepository.findByTokenHash(hash)
-                .orElseThrow(() -> new DomainNotPermittedException("INVALID_TOKEN",
-                        "Refresh token is invalid or expired."));
+                .orElseThrow(() -> new DomainNotPermittedException(
+                        "INVALID_TOKEN", "Refresh token is invalid or expired."));
 
         if (!token.isValid()) {
             throw new DomainNotPermittedException("INVALID_TOKEN", "Refresh token is invalid or expired.");
         }
 
-        // Rotate: revoke old, issue new
         token.setRevoked(true);
         refreshTokenRepository.save(token);
 
-        return issueTokensForUser(token.getUser(),
-                token.getUser().getRole() != null ? extractTenantSlug(token.getUser()) : null);
+        String tenantSlug = extractTenantSlug(token.getUser());
+        return issueTokensForUser(token.getUser(), tenantSlug);
     }
 
-    // ── Logout ───────────────────────────────────────────────────────────────
+    // ── Logout ─────────────────────────────────────────────────────────────────
 
-    @Transactional
     public void logout(String rawRefreshToken) {
         if (rawRefreshToken == null) return;
         String hash = sha256(rawRefreshToken);
@@ -111,11 +124,10 @@ public class AuthService {
         });
     }
 
-    // ── Forgot / Reset Password ───────────────────────────────────────────────
+    // ── Forgot / Reset password ─────────────────────────────────────────────────
 
-    @Transactional
     public void forgotPassword(String email) {
-        // Always return success to prevent email enumeration (AUTH-04)
+        // Always return success — prevents email enumeration
         userRepository.findByEmail(email).ifPresent(user -> {
             String rawToken = generateSecureToken();
             PasswordResetTokenEntity token = new PasswordResetTokenEntity(
@@ -125,12 +137,11 @@ public class AuthService {
         });
     }
 
-    @Transactional
     public void resetPassword(String rawToken, String newPassword) {
         String hash = sha256(rawToken);
         PasswordResetTokenEntity token = passwordResetTokenRepository.findByTokenHash(hash)
-                .orElseThrow(() -> new DomainNotPermittedException("INVALID_TOKEN",
-                        "Password reset link is invalid or has expired."));
+                .orElseThrow(() -> new DomainNotPermittedException(
+                        "INVALID_TOKEN", "Password reset link is invalid or has expired."));
 
         if (!token.isValid()) {
             throw new DomainNotPermittedException("INVALID_TOKEN",
@@ -143,20 +154,17 @@ public class AuthService {
 
         token.setUsed(true);
         passwordResetTokenRepository.save(token);
-
-        // Invalidate all refresh tokens on password change
         refreshTokenRepository.revokeAllForUser(user.getId());
         log.info("Password reset completed for user={}", user.getId());
     }
 
-    // ── Accept Invite ─────────────────────────────────────────────────────────
+    // ── Accept invite ───────────────────────────────────────────────────────────
 
-    @Transactional
     public void acceptInvite(String rawToken, String fullName, String password) {
         String hash = sha256(rawToken);
         InviteTokenEntity token = inviteTokenRepository.findByTokenHash(hash)
-                .orElseThrow(() -> new DomainNotPermittedException("INVALID_TOKEN",
-                        "Invite link is invalid or has expired."));
+                .orElseThrow(() -> new DomainNotPermittedException(
+                        "INVALID_TOKEN", "Invite link is invalid or has expired."));
 
         if (!token.isValid()) {
             throw new DomainNotPermittedException("INVALID_TOKEN",
@@ -174,9 +182,8 @@ public class AuthService {
         log.info("Invite accepted for user={}", user.getId());
     }
 
-    // ── Bootstrap (first run) ─────────────────────────────────────────────────
+    // ── Bootstrap (first run) ───────────────────────────────────────────────────
 
-    @Transactional
     public void bootstrap(String fullName, String email, String rawPassword) {
         if (superAdminRepository.count() > 0) {
             throw new DomainNotPermittedException("ALREADY_BOOTSTRAPPED",
@@ -187,7 +194,7 @@ public class AuthService {
         log.info("Platform bootstrapped. Super Admin created: {}", email);
     }
 
-    // ── Internal helpers ──────────────────────────────────────────────────────
+    // ── Helpers ─────────────────────────────────────────────────────────────────
 
     private LoginResult issueTokensForUser(UserEntity user, String tenantSlug) {
         String role = user.getRole() != null ? user.getRole().getName() : "Requester";
@@ -204,10 +211,7 @@ public class AuthService {
     }
 
     private String extractTenantSlug(UserEntity user) {
-        // Tenant slug is resolved from TenantContext at login time — stored in JWT.
-        // Here we look it up from the DB for refresh rotation.
         return tenantRepository.findAll().stream()
-                .filter(t -> t.getSlug() != null)
                 .findFirst()
                 .map(TenantEntity::getSlug)
                 .orElse(null);

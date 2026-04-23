@@ -8,7 +8,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +18,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
     private static final String REFRESH_COOKIE = "refreshToken";
@@ -32,7 +30,9 @@ public class AuthController {
     @Value("${audita.refresh-token.expiry-days:7}")
     private long refreshExpiryDays;
 
-    // ── Local login ───────────────────────────────────────────────────────────
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
@@ -42,7 +42,6 @@ public class AuthController {
 
         LoginResult result;
         if (tenantSlug == null || tenantSlug.isBlank()) {
-            // Attempt Super Admin login
             result = authService.loginSuperAdmin(request.email(), request.password());
         } else {
             result = authService.loginTenantUser(request.email(), request.password(), tenantSlug);
@@ -51,8 +50,6 @@ public class AuthController {
         setRefreshCookie(response, result.rawRefreshToken());
         return ResponseEntity.ok(toAuthResponse(result));
     }
-
-    // ── Refresh ───────────────────────────────────────────────────────────────
 
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refresh(
@@ -69,26 +66,20 @@ public class AuthController {
         return ResponseEntity.ok(toAuthResponse(result));
     }
 
-    // ── Logout ────────────────────────────────────────────────────────────────
-
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
             HttpServletRequest request,
             HttpServletResponse response) {
 
-        String rawToken = extractRefreshCookie(request);
-        authService.logout(rawToken);
+        authService.logout(extractRefreshCookie(request));
         clearRefreshCookie(response);
         return ResponseEntity.noContent().build();
     }
-
-    // ── Forgot / Reset password ───────────────────────────────────────────────
 
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request) {
         authService.forgotPassword(request.email());
-        // Always 200 — prevents email enumeration
         return ResponseEntity.ok(Map.of("message",
                 "If that email is registered, a reset link has been sent."));
     }
@@ -100,22 +91,20 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Password reset successfully."));
     }
 
-    // ── Accept invite ─────────────────────────────────────────────────────────
-
-    @PostMapping("/accept-invite")  // Mapped under /api/v1/users/accept-invite in UserController too
+    @PostMapping("/accept-invite")
     public ResponseEntity<Map<String, String>> acceptInvite(
             @Valid @RequestBody AcceptInviteRequest request) {
         authService.acceptInvite(request.token(), request.fullName(), request.password());
         return ResponseEntity.ok(Map.of("message", "Account activated. You can now sign in."));
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Helpers ────────────────────────────────────────────────────────────────
 
     private void setRefreshCookie(HttpServletResponse response, String rawToken) {
         if (rawToken == null) return;
         Cookie cookie = new Cookie(REFRESH_COOKIE, rawToken);
         cookie.setHttpOnly(true);
-        cookie.setSecure(true);   // HTTPS only in production
+        cookie.setSecure(true);
         cookie.setPath("/api/v1/auth/refresh");
         cookie.setAttribute("SameSite", "Strict");
         cookie.setMaxAge((int) (refreshExpiryDays * 24 * 60 * 60));
@@ -141,8 +130,7 @@ public class AuthController {
     }
 
     private AuthResponse toAuthResponse(LoginResult result) {
-        return AuthResponse.of(
-                result.accessToken(), jwtExpirySeconds,
+        return AuthResponse.of(result.accessToken(), jwtExpirySeconds,
                 result.userId(), result.email(), result.fullName(),
                 result.role(), result.tenantSlug());
     }

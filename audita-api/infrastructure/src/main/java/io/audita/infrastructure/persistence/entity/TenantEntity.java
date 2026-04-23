@@ -2,18 +2,11 @@ package io.audita.infrastructure.persistence.entity;
 
 import io.audita.domain.model.TenantStatus;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "tenants", schema = "public")
-@Getter
-@Setter
-@NoArgsConstructor
 public class TenantEntity {
 
     @Id
@@ -36,13 +29,25 @@ public class TenantEntity {
     @Column(nullable = false)
     private OffsetDateTime updatedAt = OffsetDateTime.now();
 
-    @PreUpdate
-    public void onUpdate() {
-        this.updatedAt = OffsetDateTime.now();
-    }
+    protected TenantEntity() {}
 
     public TenantEntity(String name, String slug) {
         this.name = name;
         this.slug = slug;
     }
+
+    @PreUpdate
+    public void onUpdate() {
+        this.updatedAt = OffsetDateTime.now();
+    }
+
+    public UUID getId() { return id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getSlug() { return slug; }
+    public void setSlug(String slug) { this.slug = slug; }
+    public TenantStatus getStatus() { return status; }
+    public void setStatus(TenantStatus status) { this.status = status; }
+    public OffsetDateTime getCreatedAt() { return createdAt; }
+    public OffsetDateTime getUpdatedAt() { return updatedAt; }
 }

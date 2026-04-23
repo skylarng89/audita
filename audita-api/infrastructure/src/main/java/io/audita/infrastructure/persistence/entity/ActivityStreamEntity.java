@@ -1,9 +1,6 @@
 package io.audita.infrastructure.persistence.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -13,9 +10,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "activity_stream")
-@Getter
-@Setter
-@NoArgsConstructor
 public class ActivityStreamEntity {
 
     @Id
@@ -39,11 +33,20 @@ public class ActivityStreamEntity {
     @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
+    protected ActivityStreamEntity() {}
+
     public ActivityStreamEntity(ChangeRequestEntity changeRequest, UserEntity actor,
-                                 String actionType, Map<String, Object> payload) {
+                                String actionType, Map<String, Object> payload) {
         this.changeRequest = changeRequest;
         this.actor = actor;
         this.actionType = actionType;
         this.payload = payload;
     }
+
+    public UUID getId() { return id; }
+    public ChangeRequestEntity getChangeRequest() { return changeRequest; }
+    public UserEntity getActor() { return actor; }
+    public String getActionType() { return actionType; }
+    public Map<String, Object> getPayload() { return payload; }
+    public OffsetDateTime getCreatedAt() { return createdAt; }
 }

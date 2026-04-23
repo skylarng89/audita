@@ -1,18 +1,11 @@
 package io.audita.infrastructure.persistence.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "super_admins", schema = "public")
-@Getter
-@Setter
-@NoArgsConstructor
 public class SuperAdminEntity {
 
     @Id
@@ -31,9 +24,20 @@ public class SuperAdminEntity {
     @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
+    protected SuperAdminEntity() {}
+
     public SuperAdminEntity(String email, String passwordHash, String fullName) {
         this.email = email;
         this.passwordHash = passwordHash;
         this.fullName = fullName;
     }
+
+    public UUID getId() { return id; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getPasswordHash() { return passwordHash; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+    public OffsetDateTime getCreatedAt() { return createdAt; }
 }

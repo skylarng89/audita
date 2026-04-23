@@ -1,18 +1,11 @@
 package io.audita.infrastructure.persistence.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "refresh_tokens")
-@Getter
-@Setter
-@NoArgsConstructor
 public class RefreshTokenEntity {
 
     @Id
@@ -32,17 +25,21 @@ public class RefreshTokenEntity {
     @Column(nullable = false)
     private boolean revoked = false;
 
+    protected RefreshTokenEntity() {}
+
     public RefreshTokenEntity(UserEntity user, String tokenHash, OffsetDateTime expiresAt) {
         this.user = user;
         this.tokenHash = tokenHash;
         this.expiresAt = expiresAt;
     }
 
-    public boolean isExpired() {
-        return OffsetDateTime.now().isAfter(expiresAt);
-    }
+    public boolean isExpired() { return OffsetDateTime.now().isAfter(expiresAt); }
+    public boolean isValid() { return !revoked && !isExpired(); }
 
-    public boolean isValid() {
-        return !revoked && !isExpired();
-    }
+    public UUID getId() { return id; }
+    public UserEntity getUser() { return user; }
+    public String getTokenHash() { return tokenHash; }
+    public OffsetDateTime getExpiresAt() { return expiresAt; }
+    public boolean isRevoked() { return revoked; }
+    public void setRevoked(boolean revoked) { this.revoked = revoked; }
 }
