@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Audita Platform | Tenant Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary": "#4b1c00",
+                    "on-secondary": "#ffffff",
+                    "surface": "#f7f9fb",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "inverse-surface": "#2d3133",
+                    "surface-tint": "#4059aa",
+                    "primary-fixed": "#dce1ff",
+                    "tertiary-container": "#6e2c00",
+                    "secondary": "#505f76",
+                    "surface-variant": "#e0e3e5",
+                    "on-background": "#191c1e",
+                    "background": "#f7f9fb",
+                    "primary": "#00236f",
+                    "on-tertiary-fixed": "#341100",
+                    "outline-variant": "#c5c5d3",
+                    "on-error-container": "#93000a",
+                    "surface-container": "#eceef0",
+                    "surface-container-lowest": "#ffffff",
+                    "error": "#ba1a1a",
+                    "tertiary-fixed": "#ffdbcb",
+                    "on-surface-variant": "#444651",
+                    "primary-fixed-dim": "#b6c4ff",
+                    "outline": "#757682",
+                    "inverse-on-surface": "#eff1f3",
+                    "surface-container-low": "#f2f4f6",
+                    "secondary-container": "#d0e1fb",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed": "#00164e",
+                    "tertiary-fixed-dim": "#ffb691",
+                    "on-primary-fixed-variant": "#264191",
+                    "on-surface": "#191c1e",
+                    "surface-container-high": "#e6e8ea",
+                    "error-container": "#ffdad6",
+                    "on-primary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "inverse-primary": "#b6c4ff",
+                    "secondary-fixed": "#d3e4fe",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "on-primary-container": "#90a8ff",
+                    "primary-container": "#1e3a8a",
+                    "on-tertiary-container": "#f39461",
+                    "surface-bright": "#f7f9fb",
+                    "on-secondary-fixed": "#0b1c30",
+                    "surface-dim": "#d8dadc",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-tertiary-fixed-variant": "#773205",
+                    "on-secondary-container": "#54647a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter", "sans-serif"],
+                    "body": ["Inter", "sans-serif"],
+                    "label": ["Inter", "sans-serif"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .signature-glow {
+            background: linear-gradient(150deg, #00236f 0%, #1e3a8a 100%);
+        }
+        .frosted-glass {
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(24px);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface flex min-h-screen">
+<!-- SideNavBar (Shared Component) -->
+<aside class="fixed h-screen flex flex-col py-8 gap-4 h-full w-72 left-0 top-0 border-r-0 bg-[#f7f9fb] dark:bg-slate-900 z-50">
+<div class="px-8 mb-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-fixed" style="font-variation-settings: 'FILL' 1;">corporate_fare</span>
+</div>
+<div>
+<h1 class="text-lg font-bold text-[#00236f] tracking-tight">Control Center</h1>
+<p class="text-[10px] font-label tracking-wider uppercase text-slate-500">ITIL v4 Compliant</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<!-- Active Tab: Tenants -->
+<a class="flex items-center gap-3 py-3 px-4 border-l-4 border-[#00236f] bg-blue-50/50 dark:bg-blue-900/10 text-[#00236f] font-semibold transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">domain</span>
+<span class="font-label text-xs tracking-wider uppercase">Tenants</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-600 dark:text-slate-400 pl-4 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-symbols-outlined">corporate_fare</span>
+<span class="font-label text-xs tracking-wider uppercase">Organizations</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-600 dark:text-slate-400 pl-4 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-symbols-outlined">verified_user</span>
+<span class="font-label text-xs tracking-wider uppercase">Roles &amp; Access</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-600 dark:text-slate-400 pl-4 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-symbols-outlined">timer_off</span>
+<span class="font-label text-xs tracking-wider uppercase">SLA Policies</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-600 dark:text-slate-400 pl-4 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label text-xs tracking-wider uppercase">Change Risk</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-600 dark:text-slate-400 pl-4 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label text-xs tracking-wider uppercase">Audit Logs</span>
+</a>
+</nav>
+<div class="px-6 mt-auto">
+<button class="w-full signature-glow text-on-primary py-4 rounded-xl font-semibold shadow-lg active:scale-95 duration-150 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+                Provision New Org
+            </button>
+</div>
+<div class="mt-8 px-4 space-y-1">
+<a class="flex items-center gap-3 py-2 px-4 text-slate-500 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">help_outline</span>
+<span class="font-label text-[10px] tracking-widest uppercase">Support</span>
+</a>
+<a class="flex items-center gap-3 py-2 px-4 text-slate-500 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">menu_book</span>
+<span class="font-label text-[10px] tracking-widest uppercase">Documentation</span>
+</a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 ml-72 min-h-screen flex flex-col">
+<!-- TopNavBar (Shared Component) -->
+<header class="flex justify-between items-center w-full px-8 py-4 bg-[#f7f9fb] dark:bg-slate-950 sticky top-0 z-40">
+<div class="flex items-center gap-8">
+<span class="text-xl font-medium tracking-tighter text-[#00236f] dark:text-blue-100">The Sovereign Architect</span>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#00236f] text-sm font-medium" href="#">Dashboard</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#00236f] text-sm font-medium" href="#">Changes</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#00236f] text-sm font-medium" href="#">Incident</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#00236f] text-sm font-medium" href="#">Service Desk</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-sm focus:ring-2 focus:ring-primary w-64" placeholder="Search resources..." type="text"/>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-slate-500 hover:bg-blue-50 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-slate-500 hover:bg-blue-50 transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<img alt="Administrator Profile" class="w-10 h-10 rounded-full border-2 border-surface-container-high" data-alt="professional portrait of a senior system architect in a clean workspace with soft ambient light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCWEMxMER_ky03uMq-f0neANrKL2HDvkVLro0WWfwhygJgsM-9ZkTPxWKsZ53W5UaiU0TngcOGmemk9Jp8GcUbwPhg4cW5YQ8mTl565rP_tnJmcl7Dwn26wQ1jU-xzyXskwtuPe_CAEH6XeH5VPqKiWOZispypc3iUrCXlx4S-AENpeXf9zylatQi8OwtkdYXuclioHjmf0s7Y9CZysO7GyaObYp-ILFjm8eJ8GO-GPcsusNJtNjdxIMBMxr7EjVskYZhHGKdM9A"/>
+</div>
+</header>
+<!-- Content Area -->
+<div class="p-10 space-y-10 max-w-[1400px]">
+<!-- Hero Header & Stats Bento -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 flex flex-col justify-end p-8 bg-surface-container-low rounded-xl">
+<h2 class="text-display-md font-bold tracking-tight text-primary leading-tight mb-2">Tenant Ecosystem</h2>
+<p class="text-on-surface-variant max-w-lg">Manage the architectural foundations of the Audita platform. Provision, monitor, and scale enterprise environments with sovereign precision.</p>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col justify-between">
+<span class="font-label text-[10px] tracking-widest uppercase text-outline">Total Tenants</span>
+<div>
+<span class="text-display-lg font-bold tracking-tighter text-primary">124</span>
+<div class="flex items-center text-xs text-green-600 mt-1 font-medium">
+<span class="material-symbols-outlined text-sm mr-1">trending_up</span> +12%
+                            </div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col justify-between">
+<span class="font-label text-[10px] tracking-widest uppercase text-outline">Total Users</span>
+<div>
+<span class="text-display-lg font-bold tracking-tighter text-primary">12.8k</span>
+<div class="flex items-center text-xs text-primary-fixed-variant mt-1 font-medium">
+<span class="material-symbols-outlined text-sm mr-1">person</span> Growth
+                            </div>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Data Canvas -->
+<section class="bg-surface-container-low rounded-xl overflow-hidden">
+<!-- Toolbar -->
+<div class="px-8 py-6 flex justify-between items-center">
+<div class="flex gap-4">
+<div class="bg-surface-container-lowest px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium text-on-surface">
+<span class="material-symbols-outlined text-primary text-xl">filter_list</span>
+                            Filter
+                        </div>
+<div class="bg-surface-container-lowest px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium text-on-surface">
+<span class="material-symbols-outlined text-primary text-xl">sort</span>
+                            Sort: Newest
+                        </div>
+</div>
+<div class="flex items-center gap-2 text-xs font-label uppercase tracking-widest text-outline">
+                        Last sync: 2 mins ago
+                        <span class="material-symbols-outlined text-sm animate-spin-slow">sync</span>
+</div>
+</div>
+<!-- Custom Table -->
+<div class="px-8 pb-8">
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-6 py-4 font-label text-[10px] tracking-widest uppercase text-outline">Organization Name</th>
+<th class="px-6 py-4 font-label text-[10px] tracking-widest uppercase text-outline">Domain</th>
+<th class="px-6 py-4 font-label text-[10px] tracking-widest uppercase text-outline">Status</th>
+<th class="px-6 py-4 font-label text-[10px] tracking-widest uppercase text-outline">Capacity</th>
+<th class="px-6 py-4 font-label text-[10px] tracking-widest uppercase text-outline">SLA Tier</th>
+<th class="px-6 py-4 font-label text-[10px] tracking-widest uppercase text-outline text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-secondary-container flex items-center justify-center font-bold text-primary">N</div>
+<span class="font-medium text-on-surface">Nebula Dynamics</span>
+</div>
+</td>
+<td class="px-6 py-5 text-on-surface-variant font-mono text-xs">nebula.audita.app</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase bg-green-100 text-green-700">Active</span>
+</td>
+<td class="px-6 py-5">
+<div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[65%]"></div>
+</div>
+<span class="text-[10px] text-outline mt-1 block">65% of 1TB used</span>
+</td>
+<td class="px-6 py-5 font-medium text-sm">Platinum</td>
+<td class="px-6 py-5 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 hover:bg-white rounded-lg text-primary"><span class="material-symbols-outlined">settings</span></button>
+<button class="p-2 hover:bg-white rounded-lg text-primary"><span class="material-symbols-outlined">analytics</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-tertiary-fixed flex items-center justify-center font-bold text-tertiary">O</div>
+<span class="font-medium text-on-surface">OmniCorp Global</span>
+</div>
+</td>
+<td class="px-6 py-5 text-on-surface-variant font-mono text-xs">omni.audita.app</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase bg-green-100 text-green-700">Active</span>
+</td>
+<td class="px-6 py-5">
+<div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[22%]"></div>
+</div>
+<span class="text-[10px] text-outline mt-1 block">22% of 5TB used</span>
+</td>
+<td class="px-6 py-5 font-medium text-sm">Enterprise</td>
+<td class="px-6 py-5 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 hover:bg-white rounded-lg text-primary"><span class="material-symbols-outlined">settings</span></button>
+<button class="p-2 hover:bg-white rounded-lg text-primary"><span class="material-symbols-outlined">analytics</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-error-container flex items-center justify-center font-bold text-error">H</div>
+<span class="font-medium text-on-surface">Horizon Retail</span>
+</div>
+</td>
+<td class="px-6 py-5 text-on-surface-variant font-mono text-xs">horizon.audita.app</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase bg-red-100 text-red-700">Suspended</span>
+</td>
+<td class="px-6 py-5">
+<div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+<div class="bg-outline h-full w-[0%]"></div>
+</div>
+<span class="text-[10px] text-outline mt-1 block">Account Locked</span>
+</td>
+<td class="px-6 py-5 font-medium text-sm">Standard</td>
+<td class="px-6 py-5 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 hover:bg-white rounded-lg text-primary"><span class="material-symbols-outlined">lock_open</span></button>
+<button class="p-2 hover:bg-white rounded-lg text-primary"><span class="material-symbols-outlined">settings</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-secondary-container flex items-center justify-center font-bold text-primary">S</div>
+<span class="font-medium text-on-surface">Stellar Systems</span>
+</div>
+</td>
+<td class="px-6 py-5 text-on-surface-variant font-mono text-xs">stellar.audita.app</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase bg-green-100 text-green-700">Active</span>
+</td>
+<td class="px-6 py-5">
+<div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[89%]"></div>
+</div>
+<span class="text-[10px] text-error mt-1 block font-medium">Critical Capacity (89%)</span>
+</td>
+<td class="px-6 py-5 font-medium text-sm">Platinum</td>
+<td class="px-6 py-5 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 hover:bg-white rounded-lg text-primary"><span class="material-symbols-outlined">settings</span></button>
+<button class="p-2 hover:bg-white rounded-lg text-primary"><span class="material-symbols-outlined">analytics</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="mt-6 flex justify-between items-center text-sm font-medium">
+<span class="text-on-surface-variant">Showing 4 of 124 organizations</span>
+<div class="flex gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-lg bg-white shadow-sm hover:bg-primary hover:text-white transition-all"><span class="material-symbols-outlined">chevron_left</span></button>
+<button class="px-4 h-10 flex items-center justify-center rounded-lg bg-primary text-white shadow-sm">1</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg bg-white shadow-sm hover:bg-blue-50">2</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg bg-white shadow-sm hover:bg-blue-50">3</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg bg-white shadow-sm hover:bg-primary hover:text-white transition-all"><span class="material-symbols-outlined">chevron_right</span></button>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Insight Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="p-8 rounded-xl bg-primary-container text-on-primary-fixed overflow-hidden relative">
+<div class="relative z-10">
+<h3 class="text-xl font-bold mb-4">Infrastructure Health</h3>
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<span class="text-sm opacity-80">Global Availability</span>
+<span class="text-2xl font-bold">99.998%</span>
+</div>
+<div class="flex justify-between items-end">
+<span class="text-sm opacity-80">Sync Latency</span>
+<span class="text-2xl font-bold">42ms</span>
+</div>
+</div>
+</div>
+<div class="absolute -right-10 -bottom-10 opacity-10">
+<span class="material-symbols-outlined text-[160px]" style="font-variation-settings: 'FILL' 1;">cloud_done</span>
+</div>
+</div>
+<div class="p-8 rounded-xl border border-outline-variant border-opacity-20 flex flex-col justify-between">
+<div>
+<h3 class="text-xl font-bold text-primary mb-2">Pending Provisions</h3>
+<p class="text-sm text-on-surface-variant">There are 3 new organization requests awaiting approval.</p>
+</div>
+<div class="flex -space-x-3 mt-6">
+<img alt="Axiom Corp Logo" class="w-10 h-10 rounded-full border-4 border-white bg-white" data-alt="clean geometric logo for a tech company in minimalist blue and white style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAt2tewTNz4ILqszEKlAYyRf1azCn6VAXmHwt8EHzdhJpFp_UxxDtDvcJjXbnPoIfJtiMi4y9_9GFJkqGCr22yw5ruVTcacRPmmdKFiDCMr8djYlauo8UgPmhSJUzRJS-8l6wZXx0IFf1jxzwFXbIYZKKF_nnfbd1QpjFMzD4Tmbhsak2DNAZHfjeGFQArpcYOdgyGHDLtPVGO9sC43drlUsPS4CqMtbZokUC2HLnm-YVd_nxbr54z3tMjOrdAe8-tNeFbKkDuT5w"/>
+<img alt="Nexus Global Logo" class="w-10 h-10 rounded-full border-4 border-white bg-white" data-alt="modern abstract circular logo for global enterprise using green and charcoal tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCaU73XSLwWcmeCDSnrGCFewzTvrvdPyIZpnvGOUKSL69YrbFBXySpxtuwLxWuFxfBSQQyU5v-2ocel7Cel1-GDALmv6bu_p3YMk3ri-RIJkRNOKA3lsgHZGF-097U5HUNq7-8z2MgD_8_MNTThzW6o0MBKnxYz4V4brYz-cc2Dst4JxYCHvzI1Af3eMkc2qY4RyG4aTBNkOgAL2bwyGpuBvVJXvccJk78r4qgjiPkGnufCDQTouyx-BRGEgxMQ7cgOjfQ_1yb26A"/>
+<img alt="Vortex Ltd Logo" class="w-10 h-10 rounded-full border-4 border-white bg-white" data-alt="dynamic swirling logo design for innovative startup using vibrant indigo colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBpiP8biNa2CnNsWjs0yghgtZvpfmrKJEg2pA7HGNPtThIfP1iKadduclO-nz5GgVwL29nWj5QcQZ4v5yAqzRAPxI9Hjf1Zxpm6O6VPoKm6kkdlhNP-wk4ncVsjKc70cIP6JfHAGqjJoGcWodgiJ3-40sCg-5dDz0VWoJLmx30JTttDWZXwvZdh8JD-ipjsF_G4x-Hc6GBdznO-ycnXFjkKjDCOUiHrDciEBvBcq2nJo_scKAtWyX5vW74hUnLOnKh7zQKijYuTQ"/>
+<div class="w-10 h-10 rounded-full border-4 border-white bg-surface-container flex items-center justify-center text-xs font-bold text-outline">+2</div>
+</div>
+<button class="mt-6 text-primary font-bold flex items-center gap-2 text-sm">
+                        Go to Approval Queue <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</section>
+</div>
+</main>
+<!-- Floating Quick Actions (Hidden by default, triggered by Architect intent) -->
+<div class="fixed bottom-8 right-8 flex flex-col gap-4">
+<button class="w-14 h-14 rounded-full signature-glow text-white shadow-2xl flex items-center justify-center active:scale-95 duration-150 group">
+<span class="material-symbols-outlined text-2xl group-hover:rotate-90 transition-transform">add</span>
+</button>
+</div>
+</body></html>

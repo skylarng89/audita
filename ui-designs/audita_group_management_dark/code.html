@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Group Management | Lumina ITSM</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b1326;
+        }
+        h1, h2, h3, .font-headline {
+            font-family: 'Manrope', sans-serif;
+        }
+        .glass-effect {
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .tonal-layering-no-borders {
+            border: none !important;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "background": "#0b1326",
+                      "on-error": "#690005",
+                      "surface-container-highest": "#2d3449",
+                      "surface-container-low": "#131b2e",
+                      "surface-container-high": "#222a3d",
+                      "outline-variant": "#444651",
+                      "on-surface-variant": "#c5c5d3",
+                      "on-secondary-fixed-variant": "#38485d",
+                      "surface-tint": "#adc6ff",
+                      "primary-fixed-dim": "#adc6ff",
+                      "outline": "#8f909d",
+                      "on-tertiary-fixed": "#341100",
+                      "tertiary-fixed-dim": "#ffb691",
+                      "on-error-container": "#ffdad6",
+                      "surface-container": "#171f33",
+                      "on-secondary": "#213145",
+                      "inverse-primary": "#005ac2",
+                      "secondary-fixed-dim": "#b7c8e1",
+                      "on-primary": "#002e6a",
+                      "surface-container-lowest": "#060e20",
+                      "on-primary-container": "#82abff",
+                      "tertiary": "#ffb691",
+                      "on-tertiary-fixed-variant": "#773205",
+                      "on-secondary-container": "#a9bad3",
+                      "primary-container": "#003d88",
+                      "error": "#ffb4ab",
+                      "inverse-on-surface": "#283044",
+                      "error-container": "#93000a",
+                      "secondary-fixed": "#d3e4fe",
+                      "tertiary-container": "#6e2c00",
+                      "secondary": "#b7c8e1",
+                      "primary": "#adc6ff",
+                      "surface-bright": "#31394d",
+                      "surface-dim": "#0b1326",
+                      "secondary-container": "#3a4a5f",
+                      "on-background": "#dae2fd",
+                      "on-secondary-fixed": "#0b1c30",
+                      "surface": "#0b1326",
+                      "on-surface": "#dae2fd",
+                      "on-primary-fixed-variant": "#004395",
+                      "tertiary-fixed": "#ffdbcb",
+                      "primary-fixed": "#d8e2ff",
+                      "on-tertiary-container": "#f39461",
+                      "on-primary-fixed": "#001a42",
+                      "surface-variant": "#2d3449",
+                      "on-tertiary": "#552000",
+                      "inverse-surface": "#dae2fd"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "fontFamily": {
+                      "headline": ["Manrope"],
+                      "body": ["Inter"],
+                      "label": ["Inter"]
+              }
+            }
+          }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface antialiased">
+<!-- TopNavBar Implementation -->
+<nav class="fixed top-0 w-full z-50 h-16 bg-[#0b1326]/60 backdrop-blur-2xl shadow-[0_20px_40px_rgba(0,0,0,0.4)] flex justify-between items-center px-8 w-full">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black text-[#adc6ff] tracking-tighter font-headline">Lumina ITSM</span>
+<div class="hidden md:flex space-x-6">
+<a class="text-[#adc6ff] border-b-2 border-[#adc6ff] pb-1 font-manrope tracking-tight font-semibold" href="#">Workspaces</a>
+<a class="text-slate-400 hover:text-slate-200 font-manrope tracking-tight font-semibold transition-all duration-300" href="#">Analyst Desk</a>
+<a class="text-slate-400 hover:text-slate-200 font-manrope tracking-tight font-semibold transition-all duration-300" href="#">Reports</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-400 hover:bg-[#222a3d] rounded-full transition-all duration-300 active:scale-95">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-slate-400 hover:bg-[#222a3d] rounded-full transition-all duration-300 active:scale-95">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+<img alt="System Administrator Avatar" class="w-full h-full object-cover" data-alt="Professional portrait of a middle-aged tech administrator with glasses, soft cinematic studio lighting on dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfn40yfKYcEA9u01oMx8nIEjLYO1Dg6bNYTvlJk7nOkJaThzzpS3PUI0-XTAPOouFOu8JfIaQ0ODl9jm9VOQ8vfhzdp4X2UU7oG3mP77wtNRWrcsuQuHXvXb6kgTBbRJtI9DE7Xgm11Ixeb3TnQhpdKK5h_qNPMjyZYZ5bqJcaIwu8CZLwmN6-PfGJKyQAkbUE73Q9Cg2hW4eJGFzzokwX2deI5TXiZ--b9_A-P6XWr3CjqNkXqtYTo8hGG2cu4equgnGlZs6BrQ"/>
+</div>
+</div>
+</nav>
+<!-- SideNavBar Implementation -->
+<aside class="h-screen w-64 fixed left-0 top-0 flex flex-col bg-[#131b2e] py-6 space-y-2 z-40 mt-16 lg:mt-0">
+<div class="px-6 mb-8 mt-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-xl" data-icon="security">security</span>
+</div>
+<div>
+<h2 class="text-lg font-bold text-[#adc6ff] font-headline leading-none">Service Desk</h2>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-1">Enterprise Tier</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 text-slate-400 px-4 py-2 mx-2 hover:bg-[#222a3d]/50 hover:text-[#adc6ff] transition-colors font-inter text-sm tracking-[-0.01em] font-medium group" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 text-slate-400 px-4 py-2 mx-2 hover:bg-[#222a3d]/50 hover:text-[#adc6ff] transition-colors font-inter text-sm tracking-[-0.01em] font-medium group" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="report_problem">report_problem</span>
+<span>Incidents</span>
+</a>
+<a class="flex items-center gap-3 text-slate-400 px-4 py-2 mx-2 hover:bg-[#222a3d]/50 hover:text-[#adc6ff] transition-colors font-inter text-sm tracking-[-0.01em] font-medium group" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="published_with_changes">published_with_changes</span>
+<span>Change Requests</span>
+</a>
+<a class="flex items-center gap-3 text-[#adc6ff] font-bold bg-[#222a3d] rounded-lg mx-2 px-4 py-2 font-inter text-sm tracking-[-0.01em]" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="manage_accounts">manage_accounts</span>
+<span>User Management</span>
+</a>
+<a class="flex items-center gap-3 text-slate-400 px-4 py-2 mx-2 hover:bg-[#222a3d]/50 hover:text-[#adc6ff] transition-colors font-inter text-sm tracking-[-0.01em] font-medium group" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="inventory_2">inventory_2</span>
+<span>Asset Registry</span>
+</a>
+<a class="flex items-center gap-3 text-slate-400 px-4 py-2 mx-2 hover:bg-[#222a3d]/50 hover:text-[#adc6ff] transition-colors font-inter text-sm tracking-[-0.01em] font-medium group" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings_applications">settings_applications</span>
+<span>System Config</span>
+</a>
+</nav>
+<div class="px-4 py-4">
+<button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform shadow-lg shadow-primary/10">
+<span class="material-symbols-outlined text-sm" data-icon="add_circle">add_circle</span>
+                New Request
+            </button>
+</div>
+<div class="mt-auto space-y-1">
+<a class="flex items-center gap-3 text-slate-400 px-4 py-2 mx-2 hover:bg-[#222a3d]/50 hover:text-[#adc6ff] transition-colors font-inter text-sm tracking-[-0.01em] font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="help">help</span>
+<span>Help Center</span>
+</a>
+<a class="flex items-center gap-3 text-slate-400 px-4 py-2 mx-2 hover:bg-[#222a3d]/50 hover:text-[#adc6ff] transition-colors font-inter text-sm tracking-[-0.01em] font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="logout">logout</span>
+<span>Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="pl-64 pt-16 min-h-screen">
+<div class="p-8 max-w-7xl mx-auto">
+<!-- Clarity Breadcrumb -->
+<div class="flex gap-2 mb-8 items-center">
+<span class="px-3 py-1 bg-surface-variant rounded-full text-[10px] font-bold text-on-surface-variant tracking-wider uppercase">Administration</span>
+<span class="material-symbols-outlined text-slate-600 text-sm" data-icon="chevron_right">chevron_right</span>
+<span class="px-3 py-1 bg-surface-variant rounded-full text-[10px] font-bold text-on-surface-variant tracking-wider uppercase">Access Control</span>
+<span class="material-symbols-outlined text-slate-600 text-sm" data-icon="chevron_right">chevron_right</span>
+<span class="px-3 py-1 bg-surface-bright rounded-full text-[10px] font-bold text-primary tracking-wider uppercase">Group Management</span>
+</div>
+<!-- Page Header -->
+<header class="mb-12 flex justify-between items-end">
+<div>
+<h1 class="text-4xl font-extrabold text-on-surface font-headline tracking-tight mb-2">Team Architect</h1>
+<p class="text-on-surface-variant max-w-lg leading-relaxed">Orchestrate enterprise-wide access, define functional silos, and manage security parameters across your global workforce.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-5 py-2.5 rounded-lg bg-surface-container-high text-on-surface font-semibold hover:bg-surface-bright transition-colors active:scale-95 duration-200">Export Registry</button>
+<button class="px-5 py-2.5 rounded-lg bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold active:scale-95 duration-200 shadow-xl shadow-primary/20">Create Group</button>
+</div>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Active Groups Summary (Large Asymmetric Card) -->
+<section class="col-span-12 lg:col-span-8 bg-surface-container-low p-8 rounded-2xl relative overflow-hidden group hover:bg-surface-container transition-all duration-500">
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -mr-32 -mt-32"></div>
+<div class="relative z-10">
+<div class="flex justify-between items-center mb-10">
+<h3 class="text-xl font-bold font-headline">Enterprise Groups</h3>
+<div class="flex items-center bg-background px-4 py-2 rounded-full">
+<span class="material-symbols-outlined text-primary mr-2" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm text-on-surface w-48 p-0" placeholder="Filter by name or ID..." type="text"/>
+</div>
+</div>
+<div class="space-y-4">
+<!-- Group Item -->
+<div class="flex items-center justify-between p-4 bg-surface-container-high rounded-xl hover:bg-surface-bright transition-all group/item">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="shield_person">shield_person</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Security Operations Center</h4>
+<p class="text-xs text-on-surface-variant">42 Analysts • Full Admin Access</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-high overflow-hidden">
+<img alt="User 1" class="w-full h-full object-cover" data-alt="close-up of a smiling young professional man in a tech environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoPvbRn7EDb_hjb-eIbr7FLWDJiloTpuhY6KgGWrfAekbU62FfRC-AciWr2BETPxPo5zQZPYf7iRDxmXeFXgLWXwqyZm72rhUYCWdqCcf0pZhomxTpgXyIo8S1YH5qGvf8X7OpaM2pjgr433GlDOsOnApqx0YkRI5MA8VW_LM6mT3aQnoXvIxyy7Q1WkzME9mHVMV428EUEVzLunJyYrLUV2txX-o6jv-OCP6AQnZp5bIBi_U7Hfj_8aUgjZDEyqoogwGpfv4TUQ"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-high overflow-hidden">
+<img alt="User 2" class="w-full h-full object-cover" data-alt="close-up of a concentrated woman working on a laptop with soft office lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnSs4iRG1Qu4pit4UaExsnbwigOpLDbQ6nsb4YwEmi2EJ_X0UGV4sEOEcYXO2HByhy2l8uFPwkhOvTdt8iNsdN2QKx0MOQcNETaofY1xOiGhmmpavAoWaoi5DMkROTPDF7-IeXC4ZAuP3rdzwS1Mgzn-ecAm1ZAVqox9OH_SLuOed8lfAh0XKRBC7RiX426_HU8BiiMs9YPuxRyAIPJTIfN3dg-5GqXjYjSOPfGnEdYU42ysrJSIPHzuGexMPM6iX-ql1GR2WFug"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-high bg-surface-bright flex items-center justify-center text-[10px] font-bold">+39</div>
+</div>
+<button class="material-symbols-outlined text-slate-500 hover:text-primary transition-colors" data-icon="more_vert">more_vert</button>
+</div>
+</div>
+<!-- Group Item -->
+<div class="flex items-center justify-between p-4 bg-surface-container-high rounded-xl hover:bg-surface-bright transition-all group/item">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-tertiary/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Cloud Infrastructure</h4>
+<p class="text-xs text-on-surface-variant">18 Engineers • Resource Management</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-high overflow-hidden">
+<img alt="User 3" class="w-full h-full object-cover" data-alt="portrait of a software engineer looking at multiple monitors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMV_R0MBb9avxgKjgdAAtStWewYNbmHoHTIwEImzHaBwH7BdnSMiHO1XL4NFNzTICSNeSNjGp14R31XP1hcbj4_K37gmxjdbH8fUN6fXgWbPFEMEfIvO1tC0p9AwZGY3ssJLKqUuJxyJ1FV4ZJm1040Gq7ezDySiKSmhSosUKJC8UY4hF-I_lA54uYgJD7FjFMd7ZGhMtezNksPG6DpkaoVro-DdNmsYEQwK6ZZTLIyhj72JNk9nqGb50ey5Zy-y7LwDalA3Jhvg"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-high bg-surface-bright flex items-center justify-center text-[10px] font-bold">+15</div>
+</div>
+<button class="material-symbols-outlined text-slate-500 hover:text-primary transition-colors" data-icon="more_vert">more_vert</button>
+</div>
+</div>
+<!-- Group Item -->
+<div class="flex items-center justify-between p-4 bg-surface-container-high rounded-xl hover:bg-surface-bright transition-all group/item">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-primary-container/30 flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined" data-icon="headset_mic">headset_mic</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Tier 1 Support</h4>
+<p class="text-xs text-on-surface-variant">124 Members • Ticket Resolution Only</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-high overflow-hidden">
+<img alt="User 4" class="w-full h-full object-cover" data-alt="customer support representative with headset in a modern bright office" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBykUGEbk3zJWnfNhIO_1z0XA8WlRkIKfCqo65dydyEWFshGK5LVwX4IXUFiThYlya4h0nsViKNYJIp391IfTEwcDTdYsh0gjTYbi8bcXoeYbfL3TF9R6HdOOyt12B9XGCGLJBU3kAyotiakHKZsalzq8Xp0rUkYc0O_J6sE8Ixu19Yqh1vvvDdiO8BUYnW5RjW0lrR44rZnIb7lqWH2cCs3vOIZJLKq6l5USA5lsos1MeSwK4IzCaNKeGOuL4297-7MlZXdcxsFg"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-high bg-surface-bright flex items-center justify-center text-[10px] font-bold">+122</div>
+</div>
+<button class="material-symbols-outlined text-slate-500 hover:text-primary transition-colors" data-icon="more_vert">more_vert</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Stats Pillar -->
+<aside class="col-span-12 lg:col-span-4 space-y-6">
+<!-- Distribution Card -->
+<div class="bg-surface-container-high p-6 rounded-2xl">
+<h3 class="text-sm font-bold text-on-surface-variant uppercase tracking-widest mb-6">Permission Heatmap</h3>
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<span class="text-xs text-on-surface-variant font-medium">Full Admin</span>
+<span class="text-lg font-bold text-primary">12%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 12%"></div>
+</div>
+<div class="flex justify-between items-end mt-4">
+<span class="text-xs text-on-surface-variant font-medium">Read/Write</span>
+<span class="text-lg font-bold text-tertiary">48%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-tertiary" style="width: 48%"></div>
+</div>
+<div class="flex justify-between items-end mt-4">
+<span class="text-xs text-on-surface-variant font-medium">Read Only</span>
+<span class="text-lg font-bold text-on-primary-container">40%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-primary-container" style="width: 40%"></div>
+</div>
+</div>
+</div>
+<!-- Insight Card (Glassmorphism) -->
+<div class="relative p-6 rounded-2xl overflow-hidden bg-surface-bright/20 glass-effect">
+<div class="absolute -top-10 -left-10 w-32 h-32 bg-tertiary/10 rounded-full blur-3xl"></div>
+<h3 class="font-headline font-bold mb-3">Security Alert</h3>
+<p class="text-sm text-on-surface-variant mb-4 leading-relaxed">"DevOps Alpha" group contains 4 inactive members with elevated privileges. Revocation recommended.</p>
+<button class="text-primary font-bold text-xs flex items-center hover:underline">
+                            REVIEW MEMBERS <span class="material-symbols-outlined text-sm ml-1" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</aside>
+<!-- Detailed Permissions Config (Wide Row) -->
+<section class="col-span-12 bg-surface-container-low p-8 rounded-2xl">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+<div>
+<h3 class="text-xl font-bold font-headline">Global Permissions Matrix</h3>
+<p class="text-sm text-on-surface-variant">Sync access levels across all integrated services</p>
+</div>
+<div class="flex bg-surface-container-lowest p-1 rounded-lg">
+<button class="px-4 py-1.5 rounded-md bg-surface-container-highest text-xs font-bold text-on-surface">By Group</button>
+<button class="px-4 py-1.5 rounded-md text-xs font-bold text-slate-500 hover:text-on-surface transition-colors">By Service</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="text-[10px] text-slate-500 font-bold uppercase tracking-widest bg-surface-container-high">
+<th class="px-6 py-4">Group Entity</th>
+<th class="px-6 py-4">Service Desk</th>
+<th class="px-6 py-4">Infrastructure</th>
+<th class="px-6 py-4">Asset Audit</th>
+<th class="px-6 py-4">Settings</th>
+<th class="px-6 py-4 text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-variant/10">
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-6 py-6">
+<div class="flex items-center gap-3">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span class="font-bold text-sm">System Admins</span>
+</div>
+</td>
+<td class="px-6 py-6"><span class="material-symbols-outlined text-primary text-lg" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span></td>
+<td class="px-6 py-6"><span class="material-symbols-outlined text-primary text-lg" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span></td>
+<td class="px-6 py-6"><span class="material-symbols-outlined text-primary text-lg" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span></td>
+<td class="px-6 py-6"><span class="material-symbols-outlined text-primary text-lg" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span></td>
+<td class="px-6 py-6 text-right"><button class="text-xs font-bold text-slate-400 hover:text-on-surface">MANAGE</button></td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-6 py-6">
+<div class="flex items-center gap-3">
+<span class="w-2 h-2 rounded-full bg-amber-500"></span>
+<span class="font-bold text-sm">Project Managers</span>
+</div>
+</td>
+<td class="px-6 py-6"><span class="material-symbols-outlined text-primary text-lg" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span></td>
+<td class="px-6 py-6"><span class="material-symbols-outlined text-slate-700 text-lg" data-icon="radio_button_unchecked">radio_button_unchecked</span></td>
+<td class="px-6 py-6"><span class="material-symbols-outlined text-primary text-lg" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span></td>
+<td class="px-6 py-6"><span class="material-symbols-outlined text-slate-700 text-lg" data-icon="radio_button_unchecked">radio_button_unchecked</span></td>
+<td class="px-6 py-6 text-right"><button class="text-xs font-bold text-slate-400 hover:text-on-surface">MANAGE</button></td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-6 py-6">
+<div class="flex items-center gap-3">
+<span class="w-2 h-2 rounded-full bg-slate-500"></span>
+<span class="font-bold text-sm">External Vendors</span>
+</div>
+</td>
+<td class="px-6 py-6"><span class="material-symbols-outlined text-slate-700 text-lg" data-icon="radio_button_unchecked">radio_button_unchecked</span></td>
+<td class="px-6 py-6"><span class="material-symbols-outlined text-slate-700 text-lg" data-icon="radio_button_unchecked">radio_button_unchecked</span></td>
+<td class="px-6 py-6"><span class="material-symbols-outlined text-primary text-lg" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span></td>
+<td class="px-6 py-6"><span class="material-symbols-outlined text-slate-700 text-lg" data-icon="radio_button_unchecked">radio_button_unchecked</span></td>
+<td class="px-6 py-6 text-right"><button class="text-xs font-bold text-slate-400 hover:text-on-surface">MANAGE</button></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- FAB Suppression: This page is focused on management, so no global FAB is rendered as per UX goals. -->
+</body></html>

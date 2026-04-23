@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Audita Sovereign | Super Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline": "#757682",
+                    "surface": "#f7f9fb",
+                    "outline-variant": "#c5c5d3",
+                    "on-tertiary-fixed": "#341100",
+                    "tertiary-container": "#6e2c00",
+                    "surface-bright": "#f7f9fb",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "surface-dim": "#d8dadc",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e6e8ea",
+                    "surface-container": "#eceef0",
+                    "secondary": "#505f76",
+                    "on-surface": "#191c1e",
+                    "surface-variant": "#e0e3e5",
+                    "on-primary-fixed": "#00164e",
+                    "on-secondary-fixed": "#0b1c30",
+                    "primary": "#00236f",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "on-secondary-container": "#54647a",
+                    "surface-tint": "#4059aa",
+                    "on-tertiary-fixed-variant": "#773205",
+                    "on-primary": "#ffffff",
+                    "inverse-surface": "#2d3133",
+                    "inverse-on-surface": "#eff1f3",
+                    "tertiary": "#4b1c00",
+                    "error-container": "#ffdad6",
+                    "on-secondary": "#ffffff",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-surface-variant": "#444651",
+                    "primary-fixed": "#dce1ff",
+                    "on-tertiary-container": "#f39461",
+                    "on-primary-fixed-variant": "#264191",
+                    "on-background": "#191c1e",
+                    "tertiary-fixed-dim": "#ffb691",
+                    "on-error-container": "#93000a",
+                    "surface-container-low": "#f2f4f6",
+                    "secondary-fixed": "#d3e4fe",
+                    "tertiary-fixed": "#ffdbcb",
+                    "primary-fixed-dim": "#b6c4ff",
+                    "inverse-primary": "#b6c4ff",
+                    "secondary-container": "#d0e1fb",
+                    "error": "#ba1a1a",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#90a8ff",
+                    "on-error": "#ffffff",
+                    "primary-container": "#1e3a8a",
+                    "background": "#f7f9fb"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "1rem",
+                    "xl": "1.25rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter", "sans-serif"],
+                    "body": ["Inter", "sans-serif"],
+                    "label": ["Inter", "sans-serif"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .glass-effect {
+            backdrop-filter: blur(24px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface flex min-h-screen">
+<!-- SideNavBar (The Anchor) -->
+<aside class="h-screen w-72 flex flex-col fixed left-0 top-0 bg-slate-50 dark:bg-slate-950 border-r border-slate-100/50 dark:border-slate-800/50 z-40">
+<div class="px-8 py-10">
+<div class="flex items-center gap-3 mb-12">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">shield</span>
+</div>
+<div>
+<h2 class="text-primary font-bold tracking-tighter text-xl leading-tight">The Sovereign</h2>
+<p class="text-[10px] font-['Inter'] uppercase tracking-widest font-bold text-slate-400">Super Admin Access</p>
+</div>
+</div>
+<nav class="space-y-1">
+<!-- Active Tab: Command Center -->
+<a class="flex items-center gap-4 py-3 px-4 relative text-blue-900 dark:text-blue-200 before:absolute before:left-0 before:w-1 before:h-full before:bg-blue-900 dark:before:bg-blue-500 bg-slate-100/50 group" href="#">
+<span class="material-symbols-outlined text-xl group-active:scale-95 transition-transform" data-icon="dashboard">dashboard</span>
+<span class="font-['Inter'] text-sm uppercase tracking-widest font-bold">Command Center</span>
+</a>
+<a class="flex items-center gap-4 py-3 px-4 text-slate-400 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all group" href="#">
+<span class="material-symbols-outlined text-xl group-active:scale-95 transition-transform" data-icon="domain">domain</span>
+<span class="font-['Inter'] text-sm uppercase tracking-widest font-bold">Tenant Management</span>
+</a>
+<a class="flex items-center gap-4 py-3 px-4 text-slate-400 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all group" href="#">
+<span class="material-symbols-outlined text-xl group-active:scale-95 transition-transform" data-icon="gavel">gavel</span>
+<span class="font-['Inter'] text-sm uppercase tracking-widest font-bold">Change Risk</span>
+</a>
+<a class="flex items-center gap-4 py-3 px-4 text-slate-400 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all group" href="#">
+<span class="material-symbols-outlined text-xl group-active:scale-95 transition-transform" data-icon="history">history</span>
+<span class="font-['Inter'] text-sm uppercase tracking-widest font-bold">Audit Logs</span>
+</a>
+<a class="flex items-center gap-4 py-3 px-4 text-slate-400 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all group" href="#">
+<span class="material-symbols-outlined text-xl group-active:scale-95 transition-transform" data-icon="security">security</span>
+<span class="font-['Inter'] text-sm uppercase tracking-widest font-bold">Security Policy</span>
+</a>
+<a class="flex items-center gap-4 py-3 px-4 text-slate-400 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all group" href="#">
+<span class="material-symbols-outlined text-xl group-active:scale-95 transition-transform" data-icon="dns">dns</span>
+<span class="font-['Inter'] text-sm uppercase tracking-widest font-bold">Infrastructure</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto px-8 py-8 border-t border-slate-100/50">
+<a class="flex items-center gap-4 py-2 text-slate-400 dark:text-slate-600 hover:text-primary transition-colors mb-2" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="cloud_done">cloud_done</span>
+<span class="font-['Inter'] text-sm uppercase tracking-widest font-bold">System Status</span>
+</a>
+<a class="flex items-center gap-4 py-2 text-slate-400 dark:text-slate-600 hover:text-error transition-colors" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="logout">logout</span>
+<span class="font-['Inter'] text-sm uppercase tracking-widest font-bold">Log Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 ml-72 min-h-screen relative flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl docked full-width top-0 sticky z-50 shadow-[0px_20px_40px_rgba(0,35,111,0.06)] flex justify-between items-center w-full px-8 py-3">
+<div class="flex items-center gap-8">
+<h1 class="text-xl font-bold tracking-tighter text-blue-950 dark:text-white">Audita</h1>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" data-icon="search">search</span>
+<input class="bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 w-80 transition-all" placeholder="Search across tenants..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-slate-500 dark:text-slate-400 hover:text-blue-900 dark:hover:text-white transition-colors duration-200 active:scale-95" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-slate-500 dark:text-slate-400 hover:text-blue-900 dark:hover:text-white transition-colors duration-200 active:scale-95" data-icon="help_outline">help_outline</button>
+<button class="material-symbols-outlined text-slate-500 dark:text-slate-400 hover:text-blue-900 dark:hover:text-white transition-colors duration-200 active:scale-95" data-icon="settings">settings</button>
+</div>
+<div class="h-8 w-[1px] bg-slate-200 mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-sm font-semibold text-blue-950 leading-none">Super Admin</p>
+<p class="text-[10px] text-slate-500 font-medium">Platform Controller</p>
+</div>
+<img alt="Super Admin Profile" class="w-9 h-9 rounded-full object-cover border-2 border-primary/10" data-alt="Professional headshot of a middle-aged male executive in a sharp navy suit against a clean white studio background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtL3L2_Raeq3neOrTBp8NB-sVAzVotB_U5gtsY9GwS6dneGe89R2PaC5SWBBqZ75Z3kATVhi1SC1_xD6x0_Z28_0DlA1yg70-rjB61FgvdLc94bO2sr6tjP4Ah4aaMfvXFPadMd1d_FJWWo3EvYFEEw_q-UWpcRhPz5apfLFF_0X48alo7zErJnfg6FEHVaX5Ohws15rvAOh1UNyZdGan7EuYSzpvxRQrhrs4uWBqsfrhNE76UOF19EEqfSSrs1E0fmwHtqTSEZw"/>
+</div>
+</div>
+</header>
+<!-- Dashboard Content -->
+<div class="p-8 space-y-8 max-w-[1400px] mx-auto w-full">
+<!-- Global Editorial Metrics (Bento Style) -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="col-span-2 bg-surface-container-lowest p-8 rounded-xl flex flex-col justify-between relative overflow-hidden group">
+<div class="relative z-10">
+<p class="text-xs font-bold tracking-widest text-slate-400 uppercase mb-2">Platform Scale</p>
+<h3 class="text-primary-container text-5xl font-extrabold tracking-tighter leading-none mb-1">1,284</h3>
+<p class="text-sm text-slate-500 font-medium">Total Provisioned Tenants</p>
+</div>
+<div class="mt-8 flex items-center gap-4 relative z-10">
+<div class="flex -space-x-2">
+<img class="w-8 h-8 rounded-full border-2 border-white" data-alt="Corporate logo of a tech firm in minimalist blue and grey tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUxTVOqqZCC3ld-ups0VTFmiDx6ODwkZhlw_mtznP0a5qM4UKhQBK8IuHfaSA2CX49gYoKHecpqV1nDIDAVQ8jkA9vvm0_uys2x557zHs2i_RDy4BVsRwTd8FLcgpaNA_C6BS9dZMcHGF7-kH74rvr1g8Cr9LfCQNduMMsA8TNYsv_OiIDinwMot1qMZe8LdbXlQNxbznqxWvz-f3hUsnNT3Av0ulwoMN4lssyvOcg1v1Zfs9j9v7jn8u3q9M4uk6RdAqS3yi0Rg"/>
+<img class="w-8 h-8 rounded-full border-2 border-white" data-alt="Modern geometric logo with vibrant orange and teal colors on white background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsRhZoK2zGt8LTGw368-DPIF6EMUt4rOX8p9XOaSe5t3W1GkUhQahC6ESTtfsbLPNfcVMho2JpMxPuQhBXSjekJXbx67dduGIowGWNS2nLmq9V0BTmRi-PUNBoX9D-to4RmAXVCh2Z5XKcM19ilybhM58WCmDLG6M-WY6Z9xaCQLju5xKPadArwlmlCDQCqHYluYnbom9VQiuC3ToaTwcmQnrhjPTqIpHP_y2nrYaoOkHL59eGzLI8FrMmi-5ZqPdCvPh-n1v_Wg"/>
+<img class="w-8 h-8 rounded-full border-2 border-white" data-alt="Sleek abstract corporate identity mark in monochromatic black and grey" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhFTI2sxeYa4J8xvmHyN-wrBVMp8hvR5BkQiiCWfr8iZ7Hqbv6dj_ny-HA6qeKtFkX_j15yyvfVp4tQiqKEZTlH5gzPxUkROZFs0xsHri9d0KBSYOealDo3rt2tZagEUc0pl26Tns9Xt7sKWAlfP3EYq9FtEnXqeFa73mrjwCyFpAhx4ZDKR8h7F4l-hTERw-vDFqXoYNPoExCj6oOsQWobHTkpgklzHG169K1x1B7Y6IVk_uBWElvFOZZWpCdCScJwvCRgdk08Q"/>
+</div>
+<p class="text-xs font-bold text-primary">+12 Today</p>
+</div>
+<div class="absolute right-0 bottom-0 opacity-10 group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-[160px] translate-y-12 translate-x-12" data-icon="corporate_fare">corporate_fare</span>
+</div>
+</div>
+<div class="bg-primary p-8 rounded-xl text-on-primary flex flex-col justify-between">
+<div>
+<p class="text-[10px] font-bold tracking-[0.2em] uppercase text-on-primary/60 mb-2">Global Users</p>
+<h3 class="text-4xl font-bold tracking-tight">84.2K</h3>
+</div>
+<div class="bg-primary-container/30 px-3 py-2 rounded-lg inline-flex items-center gap-2 self-start mt-4">
+<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+<span class="text-xs font-bold">14% YoY Growth</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-8 rounded-xl flex flex-col justify-between border-l-4 border-tertiary">
+<div>
+<p class="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 mb-2">System Health</p>
+<h3 class="text-4xl font-bold tracking-tight text-blue-950">99.98%</h3>
+</div>
+<div class="mt-4">
+<div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+<div class="bg-tertiary h-full w-[99.98%]"></div>
+</div>
+<p class="text-[10px] mt-2 font-bold text-slate-500 uppercase">Latency: 24ms (Avg)</p>
+</div>
+</div>
+</section>
+<!-- Asymmetric Layout: Organizations & Security -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Organization Management Table -->
+<div class="lg:col-span-2 space-y-6">
+<div class="flex items-end justify-between px-2">
+<div>
+<h2 class="text-2xl font-bold text-blue-950 tracking-tight">Top Organizations</h2>
+<p class="text-sm text-slate-500 font-medium">Manage high-priority enterprise tenants</p>
+</div>
+<button class="text-primary text-sm font-bold uppercase tracking-widest hover:underline">View All Tenants</button>
+</div>
+<div class="bg-surface-container-lowest rounded-xl shadow-[0px_20px_40px_rgba(0,35,111,0.04)] overflow-hidden">
+<div class="grid grid-cols-12 px-8 py-4 border-b border-slate-50 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+<div class="col-span-5">Organization Name</div>
+<div class="col-span-2 text-center">Status</div>
+<div class="col-span-3">Domain</div>
+<div class="col-span-2 text-right">Last Audit</div>
+</div>
+<!-- Row 1 -->
+<div class="grid grid-cols-12 px-8 py-5 items-center hover:bg-slate-50/50 transition-colors cursor-pointer group">
+<div class="col-span-5 flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-slate-100 flex items-center justify-center font-bold text-primary">NL</div>
+<div>
+<p class="font-semibold text-blue-950">Nova Logistics Global</p>
+<p class="text-xs text-slate-500">Tier 3 Enterprise</p>
+</div>
+</div>
+<div class="col-span-2 flex justify-center">
+<span class="bg-secondary-container text-on-secondary-container text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-tighter">Active</span>
+</div>
+<div class="col-span-3">
+<p class="text-xs font-medium text-slate-600">nova-logistics.ai</p>
+</div>
+<div class="col-span-2 text-right">
+<p class="text-xs font-bold text-blue-950">2h ago</p>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="grid grid-cols-12 px-8 py-5 items-center hover:bg-slate-50/50 transition-colors border-t border-slate-50/50 cursor-pointer group">
+<div class="col-span-5 flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-slate-100 flex items-center justify-center font-bold text-primary">CH</div>
+<div>
+<p class="font-semibold text-blue-950">Cloud Harbor Inc.</p>
+<p class="text-xs text-slate-500">Tier 1 SME</p>
+</div>
+</div>
+<div class="col-span-2 flex justify-center">
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-tighter">Review</span>
+</div>
+<div class="col-span-3">
+<p class="text-xs font-medium text-slate-600">cloud-harbor.net</p>
+</div>
+<div class="col-span-2 text-right">
+<p class="text-xs font-bold text-blue-950">14h ago</p>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="grid grid-cols-12 px-8 py-5 items-center hover:bg-slate-50/50 transition-colors border-t border-slate-50/50 cursor-pointer group">
+<div class="col-span-5 flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-slate-100 flex items-center justify-center font-bold text-primary">VX</div>
+<div>
+<p class="font-semibold text-blue-950">Vortex FinTech</p>
+<p class="text-xs text-slate-500">Tier 3 Enterprise</p>
+</div>
+</div>
+<div class="col-span-2 flex justify-center">
+<span class="bg-secondary-container text-on-secondary-container text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-tighter">Active</span>
+</div>
+<div class="col-span-3">
+<p class="text-xs font-medium text-slate-600">vortex.io</p>
+</div>
+<div class="col-span-2 text-right">
+<p class="text-xs font-bold text-blue-950">5m ago</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Controls & Overview -->
+<div class="space-y-8">
+<!-- Domain Whitelisting -->
+<div class="bg-surface-container-low p-6 rounded-xl space-y-4">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary" data-icon="language">language</span>
+<h3 class="font-bold text-blue-950 tracking-tight">Domain Controls</h3>
+</div>
+<p class="text-xs text-slate-500">Auto-whitelist domains matching strict patterns</p>
+<div class="space-y-2">
+<div class="flex items-center justify-between p-3 bg-surface-container-lowest rounded-lg">
+<span class="text-xs font-medium">*.gov.uk</span>
+<span class="material-symbols-outlined text-sm text-secondary" data-icon="verified_user">verified_user</span>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-lowest rounded-lg">
+<span class="text-xs font-medium">*.audita.com</span>
+<span class="material-symbols-outlined text-sm text-secondary" data-icon="verified_user">verified_user</span>
+</div>
+</div>
+<button class="w-full py-2.5 bg-primary text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-primary-container transition-all active:scale-95 shadow-lg shadow-primary/10">Add Domain Pattern</button>
+</div>
+<!-- Global SSO Overview -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0px_20px_40px_rgba(0,35,111,0.04)]">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-bold text-blue-950 tracking-tight">SSO Status</h3>
+<span class="material-symbols-outlined text-secondary" data-icon="vpn_key">vpn_key</span>
+</div>
+<div class="space-y-4">
+<div class="flex items-center gap-4">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<div class="flex-1">
+<p class="text-xs font-bold text-blue-950">Azure AD (OIDC)</p>
+<p class="text-[10px] text-slate-500 uppercase tracking-tighter">742 Tenants Connected</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<div class="flex-1">
+<p class="text-xs font-bold text-blue-950">Okta / SAML 2.0</p>
+<p class="text-[10px] text-slate-500 uppercase tracking-tighter">412 Tenants Connected</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-2 h-2 rounded-full bg-slate-300"></div>
+<div class="flex-1">
+<p class="text-xs font-bold text-blue-950">Native Auth</p>
+<p class="text-[10px] text-slate-500 uppercase tracking-tighter">130 Tenants Connected</p>
+</div>
+</div>
+</div>
+<div class="mt-6 pt-6 border-t border-slate-50 flex justify-center">
+<button class="text-xs font-bold text-primary flex items-center gap-2 group">
+                                Manage SSO Providers
+                                <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Section: Infrastructure Health -->
+<section class="bg-blue-950 text-white p-10 rounded-xl overflow-hidden relative">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-8 relative z-10">
+<div class="space-y-2">
+<p class="text-[10px] font-bold tracking-widest text-on-primary-container uppercase">API Request Load</p>
+<h4 class="text-2xl font-bold">12.4M <span class="text-sm font-normal text-slate-400">/hr</span></h4>
+<p class="text-xs text-slate-400">Normal Range</p>
+</div>
+<div class="space-y-2">
+<p class="text-[10px] font-bold tracking-widest text-on-primary-container uppercase">DB Connections</p>
+<h4 class="text-2xl font-bold">4.2K <span class="text-sm font-normal text-slate-400">Active</span></h4>
+<div class="w-full h-1 bg-white/10 rounded-full">
+<div class="w-1/3 h-full bg-on-primary-container"></div>
+</div>
+</div>
+<div class="space-span-2 col-span-2 bg-white/5 backdrop-blur-md rounded-lg p-4 flex items-center justify-between border border-white/10">
+<div class="flex items-center gap-4">
+<div class="w-3 h-3 bg-secondary rounded-full animate-pulse"></div>
+<div>
+<p class="text-sm font-bold">Global Cluster Status</p>
+<p class="text-xs text-slate-400">All 14 Regions Operational</p>
+</div>
+</div>
+<button class="bg-white text-primary px-4 py-2 rounded text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 transition-all">Open Terminal</button>
+</div>
+</div>
+<!-- Background Decoration -->
+<div class="absolute right-0 top-0 w-1/3 h-full bg-gradient-to-l from-primary-container/20 to-transparent"></div>
+</section>
+</div>
+<!-- Floating Action (Optional contextually) -->
+<!-- Suppressed for Dashboard context focus -->
+</main>
+<!-- Visual Soul: Ghost Background element -->
+<div class="fixed top-0 right-0 -z-10 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="fixed bottom-0 left-72 -z-10 w-[400px] h-[400px] bg-tertiary/5 rounded-full blur-[100px] pointer-events-none"></div>
+</body></html>

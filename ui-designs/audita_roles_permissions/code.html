@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary": "#4b1c00",
+                    "on-secondary": "#ffffff",
+                    "surface": "#f7f9fb",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "inverse-surface": "#2d3133",
+                    "surface-tint": "#4059aa",
+                    "primary-fixed": "#dce1ff",
+                    "tertiary-container": "#6e2c00",
+                    "secondary": "#505f76",
+                    "surface-variant": "#e0e3e5",
+                    "on-background": "#191c1e",
+                    "background": "#f7f9fb",
+                    "primary": "#00236f",
+                    "on-tertiary-fixed": "#341100",
+                    "outline-variant": "#c5c5d3",
+                    "on-error-container": "#93000a",
+                    "surface-container": "#eceef0",
+                    "surface-container-lowest": "#ffffff",
+                    "error": "#ba1a1a",
+                    "tertiary-fixed": "#ffdbcb",
+                    "on-surface-variant": "#444651",
+                    "primary-fixed-dim": "#b6c4ff",
+                    "outline": "#757682",
+                    "inverse-on-surface": "#eff1f3",
+                    "surface-container-low": "#f2f4f6",
+                    "secondary-container": "#d0e1fb",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed": "#00164e",
+                    "tertiary-fixed-dim": "#ffb691",
+                    "on-primary-fixed-variant": "#264191",
+                    "on-surface": "#191c1e",
+                    "surface-container-high": "#e6e8ea",
+                    "error-container": "#ffdad6",
+                    "on-primary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "inverse-primary": "#b6c4ff",
+                    "secondary-fixed": "#d3e4fe",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "on-primary-container": "#90a8ff",
+                    "primary-container": "#1e3a8a",
+                    "on-tertiary-container": "#f39461",
+                    "surface-bright": "#f7f9fb",
+                    "on-secondary-fixed": "#0b1c30",
+                    "surface-dim": "#d8dadc",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-tertiary-fixed-variant": "#773205",
+                    "on-secondary-container": "#54647a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .signature-glow-cta {
+            background: linear-gradient(150deg, #00236f 0%, #1e3a8a 100%);
+        }
+        .frosted-panel {
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(24px);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TopNavBar (JSON Managed) -->
+<header class="fixed top-0 z-50 w-full px-8 py-4 flex justify-between items-center bg-surface-container-low dark:bg-slate-900">
+<div class="flex items-center gap-8">
+<h1 class="text-xl font-medium tracking-tighter text-primary dark:text-blue-100">The Sovereign Architect</h1>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors font-inter tracking-tight" href="#">Dashboard</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors font-inter tracking-tight" href="#">Changes</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors font-inter tracking-tight" href="#">Incident</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors font-inter tracking-tight" href="#">Service Desk</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden lg:block">
+<input class="bg-surface-container-lowest border-none rounded-lg px-4 py-2 text-sm w-64 focus:ring-2 focus:ring-primary/20" placeholder="Search Architect..." type="text"/>
+</div>
+<button class="p-2 text-slate-500 hover:bg-blue-50 transition-colors rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-blue-50 transition-colors rounded-full">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<img alt="Administrator Profile" class="w-8 h-8 rounded-full" data-alt="professional portrait of a system administrator in a clean modern office setting with soft natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEXQFobURoWxTN3lWdsIcTQ_FAaknJN7KxED9aOdt22UqiOkBQgH7menFnX9L86HQpEZAb7ozy5CjcXvEvFGucaKpwKhYdVi041KGvzxgu__KVNZgrVHFYSfzy9cJU5IWD30DkKDehaQetw2F3zkpJDWBwL0ZJ407oKP5HMtavONERTsyaFedO4WBcVye_UEBtgDx2_qQlAWdJIce9DKgH2I-mfZqrxJg2NgKu-wa6TwsFT0umiZBR5eKhwwHOy-nsWBmNaQ3TyA"/>
+</div>
+</header>
+<!-- SideNavBar (JSON Managed) -->
+<aside class="fixed left-0 top-0 h-screen w-72 flex flex-col py-8 gap-4 bg-surface-container-low dark:bg-slate-900 mt-16">
+<div class="px-8 mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-fixed" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<div>
+<h2 class="text-lg font-bold text-primary">Control Center</h2>
+<p class="text-[10px] tracking-wider uppercase font-inter text-slate-500">ITIL v4 Compliant</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-8 py-3 text-slate-600 pl-4 hover:bg-slate-100 transition-all font-inter label-md tracking-wider uppercase" href="#">
+<span class="material-symbols-outlined text-xl">domain</span>
+<span>Tenants</span>
+</a>
+<a class="flex items-center gap-3 px-8 py-3 text-slate-600 pl-4 hover:bg-slate-100 transition-all font-inter label-md tracking-wider uppercase" href="#">
+<span class="material-symbols-outlined text-xl">corporate_fare</span>
+<span>Organizations</span>
+</a>
+<a class="flex items-center gap-3 px-8 py-3 border-l-4 border-primary bg-blue-50/50 text-primary font-semibold font-inter label-md tracking-wider uppercase" href="#">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<span>Roles &amp; Access</span>
+</a>
+<a class="flex items-center gap-3 px-8 py-3 text-slate-600 pl-4 hover:bg-slate-100 transition-all font-inter label-md tracking-wider uppercase" href="#">
+<span class="material-symbols-outlined text-xl">timer_off</span>
+<span>SLA Policies</span>
+</a>
+<a class="flex items-center gap-3 px-8 py-3 text-slate-600 pl-4 hover:bg-slate-100 transition-all font-inter label-md tracking-wider uppercase" href="#">
+<span class="material-symbols-outlined text-xl">analytics</span>
+<span>Change Risk</span>
+</a>
+<a class="flex items-center gap-3 px-8 py-3 text-slate-600 pl-4 hover:bg-slate-100 transition-all font-inter label-md tracking-wider uppercase" href="#">
+<span class="material-symbols-outlined text-xl">history</span>
+<span>Audit Logs</span>
+</a>
+</nav>
+<div class="px-6 py-4">
+<button class="w-full py-3 signature-glow-cta text-on-primary rounded-xl font-semibold shadow-lg shadow-primary/20 transition-transform active:scale-95">
+                Provision New Org
+            </button>
+</div>
+<div class="mt-auto px-8 space-y-4">
+<a class="flex items-center gap-3 text-slate-500 hover:text-primary transition-colors text-sm" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span>Support</span>
+</a>
+<a class="flex items-center gap-3 text-slate-500 hover:text-primary transition-colors text-sm" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span>Documentation</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-72 mt-20 p-8 min-h-screen">
+<div class="max-w-7xl mx-auto">
+<!-- Page Header -->
+<div class="flex justify-between items-end mb-10">
+<div class="space-y-2">
+<span class="text-label-sm uppercase tracking-[0.2em] text-outline font-bold">Identity &amp; Governance</span>
+<h2 class="text-display-md text-primary font-medium tracking-tight">Roles &amp; Permissions</h2>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-3 bg-surface-container-highest text-on-surface-variant font-semibold rounded-xl hover:bg-surface-variant transition-colors">
+                        Export Matrix
+                    </button>
+<button class="px-6 py-3 signature-glow-cta text-on-primary font-semibold rounded-xl flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+                        Create Custom Role
+                    </button>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-8 items-start">
+<!-- Left Column: Existing Roles (Editorial List) -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<h3 class="text-title-lg text-on-surface-variant px-2">Active Profiles</h3>
+<!-- Role Card Active -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border-l-4 border-primary shadow-sm group cursor-pointer transition-all hover:bg-white hover:shadow-md">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary-container/10 rounded-lg">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">admin_panel_settings</span>
+</div>
+<span class="text-[10px] font-bold text-primary bg-primary-fixed px-2 py-1 rounded">SYSTEM DEFAULT</span>
+</div>
+<h4 class="text-lg font-semibold text-primary mb-1">Organization Admin</h4>
+<p class="text-sm text-on-surface-variant leading-relaxed">Full access to all modules, system configurations, and billing management.</p>
+<div class="mt-4 pt-4 border-t border-surface-container flex items-center gap-2 text-xs text-outline">
+<span class="material-symbols-outlined text-xs">group</span> 12 users assigned
+                        </div>
+</div>
+<!-- Role Card -->
+<div class="bg-surface-container-low p-6 rounded-xl group cursor-pointer transition-all hover:bg-surface-container-lowest">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-outline-variant/20 rounded-lg">
+<span class="material-symbols-outlined text-on-surface-variant">engineering</span>
+</div>
+<span class="text-[10px] font-bold text-on-surface-variant bg-surface-container-highest px-2 py-1 rounded">CUSTOM</span>
+</div>
+<h4 class="text-lg font-semibold text-on-surface mb-1">Change Engineer</h4>
+<p class="text-sm text-on-surface-variant leading-relaxed">Can create and approve standard changes but cannot modify global SLAs.</p>
+<div class="mt-4 pt-4 flex items-center gap-2 text-xs text-outline">
+<span class="material-symbols-outlined text-xs">group</span> 48 users assigned
+                        </div>
+</div>
+<!-- Role Card -->
+<div class="bg-surface-container-low p-6 rounded-xl group cursor-pointer transition-all hover:bg-surface-container-lowest">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-outline-variant/20 rounded-lg">
+<span class="material-symbols-outlined text-on-surface-variant">visibility</span>
+</div>
+<span class="text-[10px] font-bold text-on-surface-variant bg-surface-container-highest px-2 py-1 rounded">AUDITOR</span>
+</div>
+<h4 class="text-lg font-semibold text-on-surface mb-1">Audit Observer</h4>
+<p class="text-sm text-on-surface-variant leading-relaxed">Read-only access to change history, incident reports, and compliance logs.</p>
+<div class="mt-4 pt-4 flex items-center gap-2 text-xs text-outline">
+<span class="material-symbols-outlined text-xs">group</span> 3 users assigned
+                        </div>
+</div>
+</div>
+<!-- Right Column: Permission Matrix (The Granular Interface) -->
+<div class="col-span-12 lg:col-span-8">
+<div class="bg-surface-container-low rounded-2xl overflow-hidden">
+<div class="bg-primary-container p-8 text-on-primary">
+<div class="flex justify-between items-center mb-4">
+<h3 class="text-2xl font-semibold tracking-tight">Configure: Organization Admin</h3>
+<div class="flex gap-2">
+<span class="material-symbols-outlined cursor-pointer">history</span>
+<span class="material-symbols-outlined cursor-pointer">more_vert</span>
+</div>
+</div>
+<p class="text-primary-fixed-dim text-sm max-w-lg">Modify access levels for this role across the Audita ecosystem. Changes are applied instantly to all assigned users.</p>
+</div>
+<div class="p-8 space-y-12">
+<!-- Permission Module: Change Requests -->
+<section class="space-y-6">
+<div class="flex items-center gap-3 pb-2 border-b border-outline-variant/20">
+<span class="material-symbols-outlined text-primary">published_with_changes</span>
+<h5 class="text-sm font-bold uppercase tracking-widest text-primary">Change Management</h5>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex justify-between items-start p-4 bg-surface-container-lowest rounded-xl">
+<div>
+<p class="font-semibold text-on-surface">Initiate Changes</p>
+<p class="text-xs text-on-surface-variant mt-1">Allows creation of new change requests</p>
+</div>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</div>
+</div>
+<div class="flex justify-between items-start p-4 bg-surface-container-lowest rounded-xl">
+<div>
+<p class="font-semibold text-on-surface">Approve CAB</p>
+<p class="text-xs text-on-surface-variant mt-1">Authority to sign off on high-risk changes</p>
+</div>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</div>
+</div>
+<div class="flex justify-between items-start p-4 bg-surface-container-lowest rounded-xl">
+<div>
+<p class="font-semibold text-on-surface">Override Constraints</p>
+<p class="text-xs text-on-surface-variant mt-1">Bypass automated risk analysis blockers</p>
+</div>
+<div class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</div>
+</div>
+<div class="flex justify-between items-start p-4 bg-surface-container-lowest rounded-xl">
+<div>
+<p class="font-semibold text-on-surface">Manage Workflows</p>
+<p class="text-xs text-on-surface-variant mt-1">Edit the sequence of change states</p>
+</div>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Permission Module: Users -->
+<section class="space-y-6">
+<div class="flex items-center gap-3 pb-2 border-b border-outline-variant/20">
+<span class="material-symbols-outlined text-primary">person_add</span>
+<h5 class="text-sm font-bold uppercase tracking-widest text-primary">User Management</h5>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex justify-between items-start p-4 bg-surface-container-lowest rounded-xl">
+<div>
+<p class="font-semibold text-on-surface">Provision Users</p>
+<p class="text-xs text-on-surface-variant mt-1">Invite new team members to the org</p>
+</div>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</div>
+</div>
+<div class="flex justify-between items-start p-4 bg-surface-container-lowest rounded-xl">
+<div>
+<p class="font-semibold text-on-surface">Assign Roles</p>
+<p class="text-xs text-on-surface-variant mt-1">Change permissions of other users</p>
+</div>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Permission Module: Settings -->
+<section class="space-y-6">
+<div class="flex items-center gap-3 pb-2 border-b border-outline-variant/20">
+<span class="material-symbols-outlined text-primary">settings_applications</span>
+<h5 class="text-sm font-bold uppercase tracking-widest text-primary">Global Settings</h5>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex justify-between items-start p-4 bg-surface-container-lowest rounded-xl opacity-50">
+<div>
+<p class="font-semibold text-on-surface">Billing Access</p>
+<p class="text-xs text-on-surface-variant mt-1">Access invoices and payment methods</p>
+</div>
+<div class="relative inline-flex items-center cursor-not-allowed">
+<input checked="" class="sr-only peer" disabled="" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</div>
+</div>
+<div class="flex justify-between items-start p-4 bg-surface-container-lowest rounded-xl">
+<div>
+<p class="font-semibold text-on-surface">API Keys</p>
+<p class="text-xs text-on-surface-variant mt-1">Generate and revoke system tokens</p>
+</div>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Specialized Component: Change Timeline (Ghosted Background) -->
+<div class="relative p-8 rounded-2xl bg-surface overflow-hidden">
+<div class="absolute inset-0 opacity-10 flex justify-center items-center pointer-events-none">
+<span class="material-symbols-outlined text-[300px] text-primary">security</span>
+</div>
+<div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+<div class="text-center md:text-left">
+<h6 class="text-lg font-semibold text-primary">Ready to commit changes?</h6>
+<p class="text-sm text-on-surface-variant">Reviewing the audit trail ensures compliance with your organization's security policy.</p>
+</div>
+<div class="flex gap-4 w-full md:w-auto">
+<button class="flex-1 md:flex-none px-8 py-3 bg-white text-on-surface font-semibold rounded-xl border border-outline-variant/20 hover:bg-surface-container-low transition-colors">Discard</button>
+<button class="flex-1 md:flex-none px-8 py-3 signature-glow-cta text-on-primary font-semibold rounded-xl">Save Changes</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Meta -->
+<footer class="ml-72 p-8 border-t border-outline-variant/10 text-outline text-xs flex justify-between items-center">
+<div>© 2024 The Sovereign Architect. All permissions logged under ITIL Compliance Protocol v4.</div>
+<div class="flex gap-6">
+<a class="hover:text-primary" href="#">System Status</a>
+<a class="hover:text-primary" href="#">API v2.4</a>
+<a class="hover:text-primary" href="#">Security Policy</a>
+</div>
+</footer>
+</body></html>

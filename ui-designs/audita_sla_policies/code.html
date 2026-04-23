@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Audita ITSM - SLA Policies</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#2d3133",
+                        "primary-fixed-dim": "#b6c4ff",
+                        "on-tertiary-fixed-variant": "#773205",
+                        "on-primary-fixed-variant": "#264191",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "secondary": "#505f76",
+                        "outline-variant": "#c5c5d3",
+                        "error-container": "#ffdad6",
+                        "primary": "#00236f",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#4b1c00",
+                        "tertiary-container": "#6e2c00",
+                        "secondary-container": "#d0e1fb",
+                        "on-surface-variant": "#444651",
+                        "on-background": "#191c1e",
+                        "tertiary-fixed-dim": "#ffb691",
+                        "inverse-primary": "#b6c4ff",
+                        "on-primary-container": "#90a8ff",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-bright": "#f7f9fb",
+                        "surface-dim": "#d8dadc",
+                        "secondary-fixed": "#d3e4fe",
+                        "on-primary-fixed": "#00164e",
+                        "surface": "#f7f9fb",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "surface-variant": "#e0e3e5",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#dce1ff",
+                        "primary-container": "#1e3a8a",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-on-surface": "#eff1f3",
+                        "error": "#ba1a1a",
+                        "surface-tint": "#4059aa",
+                        "background": "#f7f9fb",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-container": "#eceef0",
+                        "tertiary-fixed": "#ffdbcb",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "on-tertiary-fixed": "#341100",
+                        "on-secondary-fixed": "#0b1c30",
+                        "on-tertiary-container": "#f39461",
+                        "outline": "#757682",
+                        "on-secondary-container": "#54647a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .signature-glow {
+            background: linear-gradient(150deg, #00236f 0%, #1e3a8a 100%);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c5c5d3;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- SideNavBar Implementation -->
+<aside class="h-screen w-72 fixed left-0 top-0 z-50 flex flex-col bg-slate-50 dark:bg-slate-900 border-r-0 backdrop-blur-xl bg-slate-100/50 dark:bg-slate-800/50 font-['Inter'] antialiased tracking-[-0.02em]">
+<div class="px-8 py-10 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined">architecture</span>
+</div>
+<div>
+<h1 class="text-2xl font-medium tracking-tighter text-[#00236f] dark:text-blue-400">Audita</h1>
+<p class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">Sovereign Architect</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#00236f] dark:hover:text-blue-300 transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#00236f] dark:hover:text-blue-300 transition-colors" href="#">
+<span class="material-symbols-outlined">published_with_changes</span>
+                Change Requests
+            </a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#00236f] dark:hover:text-blue-300 transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+                Users
+            </a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#00236f] dark:hover:text-blue-300 transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+                Groups
+            </a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#00236f] dark:hover:text-blue-300 transition-colors" href="#">
+<span class="material-symbols-outlined">history</span>
+                Audit Trail
+            </a>
+<a class="flex items-center gap-3 py-3 px-4 text-[#00236f] dark:text-blue-400 border-l-[4px] border-[#00236f] bg-slate-200/50 dark:bg-blue-900/20 font-medium transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+</nav>
+<div class="p-6">
+<button class="w-full signature-glow text-on-primary py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-xl">add</span>
+                New Change
+            </button>
+</div>
+</aside>
+<!-- TopAppBar Implementation -->
+<header class="fixed top-0 right-0 w-[calc(100%-18rem)] z-40 flex items-center justify-between px-10 h-20 bg-[#f7f9fb]/80 dark:bg-slate-950/80 backdrop-blur-2xl">
+<div class="flex items-center gap-8">
+<div class="text-lg font-bold text-[#00236f] dark:text-blue-400">Audita ITSM</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-2 text-xs font-['Inter'] tracking-wider focus:ring-2 focus:ring-primary/20 w-64" placeholder="SEARCH SYSTEM..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<button class="p-2 hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-lg text-slate-500">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-lg text-slate-500">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant/30"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-[10px] font-bold text-[#00236f] uppercase tracking-tighter">Admin User</p>
+<p class="text-[9px] text-slate-500 uppercase tracking-widest">Administrator</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
+<img alt="Administrator Profile" data-alt="close-up portrait of a professional system administrator in a modern office setting with soft ambient blue lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEZsJIoFcqps0lmpu3u7T9W2Gon6dvA9cMoe9OgQt6Y8qO9sf5_shTAF-HPQmB5B9k0PJ3ByuiRgA61eWI1Q3ZkZfUrAtu2SHIXl3HOo8fYiCC2EdgAan7l71ZfVm__YrtyAuhzERbK-9oUaAVCP95c2XRz977dBVtEo8phfPA0qdZH6eBsE_naxZfaHPYpKhimLgUXsl5gR7Z7ryxdzuFvHOfbs6dzsu88Aj9wLyuAFaVQTGWAdbwPBmYakN40hGaj6G6S1ijDg"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="ml-72 mt-20 p-10 min-h-[calc(100vh-5rem)]">
+<!-- Header Section with Asymmetry -->
+<div class="flex justify-between items-start mb-12">
+<div class="max-w-2xl">
+<h2 class="text-display-md text-4xl font-bold tracking-tight text-primary mb-2">SLA Policies</h2>
+<p class="text-on-surface-variant text-lg leading-relaxed">
+                    Define and manage your Service Level Agreements. These thresholds ensure operational excellence across all departments.
+                </p>
+<div class="mt-6 inline-flex items-center gap-3 px-4 py-2 bg-secondary-container text-on-secondary-container rounded-lg text-sm font-medium">
+<span class="material-symbols-outlined text-lg">info</span>
+<span>SLAs are calculated automatically upon CR submission based on these triggers.</span>
+</div>
+</div>
+<button class="signature-glow text-on-primary px-8 py-4 rounded-xl font-bold text-sm tracking-wide shadow-xl flex items-center gap-2">
+<span class="material-symbols-outlined">add_circle</span>
+                CREATE POLICY
+            </button>
+</div>
+<!-- Bento Grid Layout for SLA Content -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Statistics Card (Bento Item 1) -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container-low p-8 rounded-xl flex flex-col justify-between min-h-[240px]">
+<div class="label-sm uppercase tracking-widest text-on-surface-variant font-bold">Global Compliance</div>
+<div class="text-display-lg text-6xl font-bold text-primary tracking-tighter">99.2%</div>
+<div class="flex items-center gap-2 text-tertiary font-semibold">
+<span class="material-symbols-outlined">trending_up</span>
+                    +0.4% from last month
+                </div>
+</div>
+<!-- List Section (Bento Item 2) -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-xl p-2 shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="text-[10px] uppercase tracking-[0.15em] text-on-surface-variant border-b border-outline-variant/10">
+<th class="px-6 py-5 font-bold">Policy Name</th>
+<th class="px-6 py-5 font-bold">Priority Trigger</th>
+<th class="px-6 py-5 font-bold">Deadline</th>
+<th class="px-6 py-5 font-bold">Escalation</th>
+<th class="px-6 py-5 font-bold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-5">
+<div class="font-medium text-on-surface">Emergency Infra Patch</div>
+<div class="text-[11px] text-slate-400">Core Infrastructure Group</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-error-container text-on-error-container rounded-full text-[10px] font-bold uppercase tracking-wider">Critical</span>
+</td>
+<td class="px-6 py-5 font-semibold text-primary">2 Hours</td>
+<td class="px-6 py-5">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-slate-100 flex items-center justify-center text-[10px] font-bold">JD</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-slate-100 flex items-center justify-center text-[10px] font-bold">AM</div>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 hover:bg-white rounded-lg text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-5">
+<div class="font-medium text-on-surface">Standard Update</div>
+<div class="text-[11px] text-slate-400">Application Development</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-[10px] font-bold uppercase tracking-wider">Medium</span>
+</td>
+<td class="px-6 py-5 font-semibold text-primary">48 Hours</td>
+<td class="px-6 py-5 text-on-surface-variant text-sm">Dev Leads</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 hover:bg-white rounded-lg text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-5">
+<div class="font-medium text-on-surface">Security Audit Fix</div>
+<div class="text-[11px] text-slate-400">Security &amp; Compliance</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-tertiary-container text-on-tertiary-container rounded-full text-[10px] font-bold uppercase tracking-wider">High</span>
+</td>
+<td class="px-6 py-5 font-semibold text-primary">12 Hours</td>
+<td class="px-6 py-5 text-on-surface-variant text-sm">CISO Team</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 hover:bg-white rounded-lg text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-5">
+<div class="font-medium text-on-surface">UI Text Revision</div>
+<div class="text-[11px] text-slate-400">Design Systems</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant rounded-full text-[10px] font-bold uppercase tracking-wider">Low</span>
+</td>
+<td class="px-6 py-5 font-semibold text-primary">5 Days</td>
+<td class="px-6 py-5 text-on-surface-variant text-sm">Product Mgr</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 hover:bg-white rounded-lg text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Contextual Insight Card (Bento Item 3) -->
+<div class="col-span-12 lg:col-span-5 bg-tertiary-fixed text-on-tertiary-fixed p-8 rounded-xl relative overflow-hidden">
+<div class="relative z-10">
+<h4 class="text-xl font-bold mb-4">Escalation Logic</h4>
+<p class="text-sm leading-relaxed mb-6 opacity-80">
+                        When a policy deadline is within 25% of expiration, the listed contacts receive automated high-priority alerts via PagerDuty and Microsoft Teams.
+                    </p>
+<a class="text-sm font-bold underline underline-offset-4 decoration-2" href="#">Review Notification Webhooks</a>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-10">
+<span class="material-symbols-outlined text-[120px]" style="font-variation-settings: 'FILL' 1;">speed</span>
+</div>
+</div>
+<!-- Visual Component: Timeline Visualization (Bento Item 4) -->
+<div class="col-span-12 lg:col-span-7 bg-surface-container-low p-8 rounded-xl">
+<div class="flex justify-between items-center mb-8">
+<h4 class="font-bold text-primary">Policy Execution Timeline</h4>
+<div class="flex gap-2">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span class="w-3 h-3 rounded-full bg-outline-variant"></span>
+<span class="w-3 h-3 rounded-full bg-outline-variant"></span>
+</div>
+</div>
+<div class="flex items-center justify-between relative px-4">
+<!-- Horizontal Timeline Line -->
+<div class="absolute top-1/2 left-0 w-full h-[2px] bg-outline-variant opacity-20 -translate-y-1/2"></div>
+<!-- Nodes -->
+<div class="relative flex flex-col items-center gap-4 z-10">
+<div class="w-6 h-6 rounded-full bg-primary ring-8 ring-white shadow-sm flex items-center justify-center">
+<span class="w-2 h-2 rounded-full bg-white"></span>
+</div>
+<div class="text-center">
+<p class="text-[10px] font-bold uppercase tracking-tighter">Submission</p>
+<p class="text-[9px] text-slate-400">Trigger Start</p>
+</div>
+</div>
+<div class="relative flex flex-col items-center gap-4 z-10">
+<div class="w-6 h-6 rounded-full bg-primary ring-8 ring-white shadow-sm flex items-center justify-center">
+<span class="w-2 h-2 rounded-full bg-white"></span>
+</div>
+<div class="text-center">
+<p class="text-[10px] font-bold uppercase tracking-tighter">Validation</p>
+<p class="text-[9px] text-slate-400">SLA Anchored</p>
+</div>
+</div>
+<div class="relative flex flex-col items-center gap-4 z-10">
+<div class="w-6 h-6 rounded-full bg-tertiary ring-8 ring-white shadow-sm flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[14px]">warning</span>
+</div>
+<div class="text-center">
+<p class="text-[10px] font-bold uppercase tracking-tighter text-tertiary">Escalation</p>
+<p class="text-[9px] text-slate-400">T-minus 25%</p>
+</div>
+</div>
+<div class="relative flex flex-col items-center gap-4 z-10">
+<div class="w-6 h-6 rounded-full bg-error ring-8 ring-white shadow-sm flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[14px]">close</span>
+</div>
+<div class="text-center">
+<p class="text-[10px] font-bold uppercase tracking-tighter text-error">Breach</p>
+<p class="text-[9px] text-slate-400">Deadline Hit</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Help Button -->
+<button class="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shadow-2xl hover:scale-105 transition-transform">
+<span class="material-symbols-outlined">auto_awesome</span>
+</button>
+</body></html>

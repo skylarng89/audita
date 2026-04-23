@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lumina ITSM - SLA Breach Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "background": "#0b1326",
+                        "on-error": "#690005",
+                        "surface-container-highest": "#2d3449",
+                        "surface-container-low": "#131b2e",
+                        "surface-container-high": "#222a3d",
+                        "outline-variant": "#444651",
+                        "on-surface-variant": "#c5c5d3",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "surface-tint": "#adc6ff",
+                        "primary-fixed-dim": "#adc6ff",
+                        "outline": "#8f909d",
+                        "on-tertiary-fixed": "#341100",
+                        "tertiary-fixed-dim": "#ffb691",
+                        "on-error-container": "#ffdad6",
+                        "surface-container": "#171f33",
+                        "on-secondary": "#213145",
+                        "inverse-primary": "#005ac2",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "on-primary": "#002e6a",
+                        "surface-container-lowest": "#060e20",
+                        "on-primary-container": "#82abff",
+                        "tertiary": "#ffb691",
+                        "on-tertiary-fixed-variant": "#773205",
+                        "on-secondary-container": "#a9bad3",
+                        "primary-container": "#003d88",
+                        "error": "#ffb4ab",
+                        "inverse-on-surface": "#283044",
+                        "error-container": "#93000a",
+                        "secondary-fixed": "#d3e4fe",
+                        "tertiary-container": "#6e2c00",
+                        "secondary": "#b7c8e1",
+                        "primary": "#adc6ff",
+                        "surface-bright": "#31394d",
+                        "surface-dim": "#0b1326",
+                        "secondary-container": "#3a4a5f",
+                        "on-background": "#dae2fd",
+                        "on-secondary-fixed": "#0b1c30",
+                        "surface": "#0b1326",
+                        "on-surface": "#dae2fd",
+                        "on-primary-fixed-variant": "#004395",
+                        "tertiary-fixed": "#ffdbcb",
+                        "primary-fixed": "#d8e2ff",
+                        "on-tertiary-container": "#f39461",
+                        "on-primary-fixed": "#001a42",
+                        "surface-variant": "#2d3449",
+                        "on-tertiary": "#552000",
+                        "inverse-surface": "#dae2fd"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+        .glass-panel {
+            background: rgba(49, 57, 77, 0.6);
+            backdrop-filter: blur(24px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 h-16 bg-[#0b1326]/60 backdrop-blur-2xl shadow-[0_20px_40px_rgba(0,0,0,0.4)] flex justify-between items-center px-8 w-full">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black text-[#adc6ff] tracking-tighter">Lumina ITSM</span>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="text-slate-400 hover:text-slate-200 font-manrope tracking-tight font-semibold transition-all duration-300" href="#">Workspaces</a>
+<a class="text-[#adc6ff] border-b-2 border-[#adc6ff] pb-1 font-manrope tracking-tight font-semibold transition-all duration-300" href="#">Analyst Desk</a>
+<a class="text-slate-400 hover:text-slate-200 font-manrope tracking-tight font-semibold transition-all duration-300" href="#">Reports</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-400 hover:bg-[#222a3d] rounded-lg transition-all active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-slate-400 hover:bg-[#222a3d] rounded-lg transition-all active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-surface-container-high overflow-hidden">
+<img alt="System Administrator Avatar" class="h-full w-full object-cover" data-alt="Close-up portrait of a professional system administrator in a dark tech-focused environment with subtle blue lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBSZVUa-iILQ23oEbE5tNtbXyrjge8F6BVx6H_ibA7l9EVtU22YF1JT0VV62v9uBDbEw388pwJ3Oagvt2gVQdS0NHCEyL-ETI_bZx_ncwstrzrjPHbX4yA5ndt5o5c7hoKjnbdqFkzp7eK7hz3z341Zkmybzq0puJ-rPNNvBFNNERLTz3JnaQa8fcm4T0JcYVwM8l6jDU-KTdOd2Id_qj9E2WsoWkRwv-S2Q6AdBe9VhVlPxuSuV4J0oZCuaZXj8BVAFb7EPWXqQ"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 flex flex-col bg-[#131b2e] py-6 space-y-2 z-40 hidden md:flex">
+<div class="px-6 mb-8 mt-16">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-lg" data-icon="settings_applications">settings_applications</span>
+</div>
+<div>
+<h2 class="text-lg font-bold text-[#adc6ff]">Service Desk</h2>
+<p class="text-[10px] text-on-surface-variant/60 uppercase tracking-widest">Enterprise Tier</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="text-slate-400 px-4 py-2 mx-2 hover:bg-[#222a3d]/50 hover:text-[#adc6ff] transition-colors font-inter text-sm tracking-[-0.01em] font-medium flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="text-[#adc6ff] font-bold bg-[#222a3d] rounded-lg mx-2 px-4 py-2 font-inter text-sm tracking-[-0.01em] flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="report_problem">report_problem</span>
+                Incidents
+            </a>
+<a class="text-slate-400 px-4 py-2 mx-2 hover:bg-[#222a3d]/50 hover:text-[#adc6ff] transition-colors font-inter text-sm tracking-[-0.01em] font-medium flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="published_with_changes">published_with_changes</span>
+                Change Requests
+            </a>
+<a class="text-slate-400 px-4 py-2 mx-2 hover:bg-[#222a3d]/50 hover:text-[#adc6ff] transition-colors font-inter text-sm tracking-[-0.01em] font-medium flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="manage_accounts">manage_accounts</span>
+                User Management
+            </a>
+<a class="text-slate-400 px-4 py-2 mx-2 hover:bg-[#222a3d]/50 hover:text-[#adc6ff] transition-colors font-inter text-sm tracking-[-0.01em] font-medium flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+                Asset Registry
+            </a>
+<a class="text-slate-400 px-4 py-2 mx-2 hover:bg-[#222a3d]/50 hover:text-[#adc6ff] transition-colors font-inter text-sm tracking-[-0.01em] font-medium flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="settings_applications">settings_applications</span>
+                System Config
+            </a>
+</nav>
+<div class="px-4 mt-auto">
+<button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary py-2.5 rounded-lg font-semibold text-sm active:scale-[0.98] transition-transform">
+                New Request
+            </button>
+<div class="mt-6 flex flex-col gap-1 border-t border-white/5 pt-4">
+<a class="text-slate-400 px-4 py-2 hover:text-[#adc6ff] transition-colors flex items-center gap-3 text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+                    Help Center
+                </a>
+<a class="text-slate-400 px-4 py-2 hover:text-error transition-colors flex items-center gap-3 text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+                    Logout
+                </a>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:ml-64 pt-24 px-8 pb-12">
+<!-- Clarity Breadcrumb -->
+<nav class="flex gap-2 mb-8">
+<span class="bg-surface-variant text-on-surface-variant px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Incidents</span>
+<span class="bg-surface-variant text-on-surface-variant px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Critical</span>
+<span class="bg-primary/20 text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">SR-9042-BREACH</span>
+</nav>
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
+<div class="max-w-3xl">
+<h1 class="text-4xl md:text-5xl font-extrabold text-on-surface tracking-tighter leading-tight mb-2">
+                    Core Database Cluster <span class="text-error">SLA Breach</span>
+</h1>
+<p class="text-on-surface-variant text-lg font-light leading-relaxed">
+                    Identity management services are currently degraded following an unexpected failover synchronization error.
+                </p>
+</div>
+<div class="flex flex-col items-end">
+<div class="bg-error-container text-on-error-container px-6 py-3 rounded-xl flex items-center gap-3 mb-2 shadow-lg">
+<span class="material-symbols-outlined animate-pulse" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span>
+<span class="font-headline font-black text-xl">-02:44:12 OVERDUE</span>
+</div>
+<p class="text-sm text-on-surface-variant font-medium">Resolution Target: <span class="text-on-surface">14:00 UTC</span></p>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Escalation Priority Card -->
+<div class="md:col-span-8 bg-surface-container-low rounded-2xl p-8 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-8 opacity-10 pointer-events-none group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-9xl" data-icon="emergency_share">emergency_share</span>
+</div>
+<h3 class="text-primary-fixed-dim text-xs font-bold uppercase tracking-[0.2em] mb-6">Escalation Status</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="space-y-1">
+<p class="text-on-surface-variant text-xs">Current Tier</p>
+<p class="text-2xl font-bold text-on-surface">Level 3 Engineering</p>
+<p class="text-[10px] text-tertiary">Promoted 45m ago</p>
+</div>
+<div class="space-y-1">
+<p class="text-on-surface-variant text-xs">Assignee</p>
+<div class="flex items-center gap-2">
+<img alt="Assignee Avatar" class="w-6 h-6 rounded-full" data-alt="Portrait of a senior male systems engineer with glasses in a focused environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmhUetEZDU3TFETHaiUWsqedJm3K8rsrC-mAG65R6INXXmpbItvryZQsCwF5mhiHfoEOOufH3TdjWmsgYoNlMT1qQ5CbjoGaO9ypcKmP75GMbYUdKfKXeYgKc1eufhAtkijkcdZCo1VJn3nO-HxP8wQmAZaMQbrpnRCnoAJEMEqC6NAgqv_pWEw5cRSDdsB4tZfjIG8ddJBP2TmtrOXxxTvw5pTLJt7PraZu3DjkrGfLoSZ487pTOt986q8f-D3CGv4oS8d9HBsQ"/>
+<p class="text-lg font-semibold text-on-surface">Marcus Chen</p>
+</div>
+</div>
+<div class="space-y-1">
+<p class="text-on-surface-variant text-xs">Impact Area</p>
+<p class="text-lg font-semibold text-on-surface">US-EAST-1 Region</p>
+</div>
+</div>
+<div class="mt-10 p-6 bg-surface-container-high rounded-xl flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-error" data-icon="notifications_active">notifications_active</span>
+</div>
+<div>
+<p class="text-on-surface font-bold">Executive Notification Sent</p>
+<p class="text-on-surface-variant text-xs">CTO and IT Operations Director briefed.</p>
+</div>
+</div>
+<button class="bg-surface-bright hover:bg-surface-container-highest px-4 py-2 rounded-lg text-xs font-bold transition-all">
+                        View Log
+                    </button>
+</div>
+</div>
+<!-- Health Snapshot -->
+<div class="md:col-span-4 bg-surface-container-high rounded-2xl p-8 border-l-4 border-error/50">
+<h3 class="text-on-surface-variant text-xs font-bold uppercase tracking-[0.2em] mb-6">Service Health</h3>
+<div class="space-y-6">
+<div class="flex justify-between items-center">
+<span class="text-on-surface/80">API Latency</span>
+<span class="text-error font-mono font-bold">1,450ms</span>
+</div>
+<div class="w-full bg-background h-1.5 rounded-full overflow-hidden">
+<div class="bg-error h-full" style="width: 85%"></div>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-on-surface/80">Error Rate</span>
+<span class="text-error font-mono font-bold">12.4%</span>
+</div>
+<div class="w-full bg-background h-1.5 rounded-full overflow-hidden">
+<div class="bg-error h-full" style="width: 42%"></div>
+</div>
+<div class="mt-8 pt-6 border-t border-white/5">
+<div class="flex gap-2 items-center text-on-surface-variant text-xs mb-4">
+<span class="material-symbols-outlined text-sm" data-icon="cloud">cloud</span>
+                            Dependency: AWS RDS Cluster
+                        </div>
+<div class="flex items-center gap-2">
+<div class="h-2 w-2 rounded-full bg-error animate-pulse"></div>
+<span class="text-sm font-semibold">Critical Failure: Replication Lag</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Incident Timeline -->
+<div class="md:col-span-12 bg-surface-container-low rounded-2xl p-8">
+<div class="flex justify-between items-center mb-10">
+<h3 class="text-on-surface-variant text-xs font-bold uppercase tracking-[0.2em]">Escalation &amp; Audit Timeline</h3>
+<div class="flex gap-2">
+<button class="p-2 rounded-lg bg-surface-container-high text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined" data-icon="filter_list">filter_list</span>
+</button>
+</div>
+</div>
+<div class="relative">
+<div class="absolute left-[15px] top-0 bottom-0 w-[2px] bg-gradient-to-b from-error via-surface-variant to-transparent"></div>
+<div class="space-y-10">
+<!-- Timeline Item 1 -->
+<div class="relative pl-12">
+<div class="absolute left-0 top-1 w-8 h-8 rounded-full bg-error-container flex items-center justify-center ring-4 ring-background">
+<span class="material-symbols-outlined text-error text-sm" data-icon="gavel" style="font-variation-settings: 'FILL' 1;">gavel</span>
+</div>
+<div class="flex flex-col md:flex-row md:justify-between gap-2">
+<div>
+<p class="text-on-surface font-bold text-lg">SLA Breach Confirmed</p>
+<p class="text-on-surface-variant text-sm mt-1">Automatic threshold violation detected. Response timer exceeded 4-hour limit.</p>
+</div>
+<span class="text-on-surface-variant font-mono text-sm shrink-0">14:02 UTC</span>
+</div>
+</div>
+<!-- Timeline Item 2 -->
+<div class="relative pl-12">
+<div class="absolute left-0 top-1 w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center ring-4 ring-background">
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="person_alert">person_alert</span>
+</div>
+<div class="flex flex-col md:flex-row md:justify-between gap-2">
+<div>
+<p class="text-on-surface font-bold text-lg">Level 3 On-Call Paged</p>
+<p class="text-on-surface-variant text-sm mt-1">Incident auto-escalated to Database Engineering Core Team.</p>
+</div>
+<span class="text-on-surface-variant font-mono text-sm shrink-0">13:15 UTC</span>
+</div>
+</div>
+<!-- Timeline Item 3 -->
+<div class="relative pl-12">
+<div class="absolute left-0 top-1 w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center ring-4 ring-background">
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="history_edu">history_edu</span>
+</div>
+<div class="flex flex-col md:flex-row md:justify-between gap-2">
+<div>
+<p class="text-on-surface font-bold text-lg">Preliminary Analysis Attached</p>
+<p class="text-on-surface-variant text-sm mt-1">Analyst Sarah Jenkins uploaded investigation logs and initial trace results.</p>
+<div class="mt-3 flex gap-3">
+<div class="bg-surface-container-high px-3 py-2 rounded-lg flex items-center gap-2 border-l-2 border-primary">
+<span class="material-symbols-outlined text-sm" data-icon="description">description</span>
+<span class="text-xs">trace_log_9042.txt</span>
+</div>
+</div>
+</div>
+<span class="text-on-surface-variant font-mono text-sm shrink-0">11:45 UTC</span>
+</div>
+</div>
+<!-- Timeline Item 4 -->
+<div class="relative pl-12">
+<div class="absolute left-0 top-1 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center ring-4 ring-background">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="bolt">bolt</span>
+</div>
+<div class="flex flex-col md:flex-row md:justify-between gap-2">
+<div>
+<p class="text-on-surface font-bold text-lg">Incident Created</p>
+<p class="text-on-surface-variant text-sm mt-1">Automated alert triggered by system monitoring agent (Zabbix Node 4).</p>
+</div>
+<span class="text-on-surface-variant font-mono text-sm shrink-0">10:02 UTC</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Management Actions -->
+<div class="md:col-span-4 bg-surface-container-highest rounded-2xl p-8 flex flex-col justify-between group cursor-pointer hover:bg-surface-bright transition-all">
+<div>
+<div class="w-10 h-10 rounded-lg bg-tertiary-container flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-tertiary" data-icon="hub">hub</span>
+</div>
+<h4 class="text-xl font-bold mb-2">Create Bridge Call</h4>
+<p class="text-on-surface-variant text-sm">Initiate a critical incident war room for immediate stakeholder collaboration.</p>
+</div>
+<span class="material-symbols-outlined text-primary self-end group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</div>
+<div class="md:col-span-4 bg-surface-container-highest rounded-2xl p-8 flex flex-col justify-between group cursor-pointer hover:bg-surface-bright transition-all">
+<div>
+<div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-primary" data-icon="mail">mail</span>
+</div>
+<h4 class="text-xl font-bold mb-2">Internal Briefing</h4>
+<p class="text-on-surface-variant text-sm">Send a templated status update to all internal subscription lists.</p>
+</div>
+<span class="material-symbols-outlined text-primary self-end group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</div>
+<div class="md:col-span-4 bg-surface-container-highest rounded-2xl p-8 flex flex-col justify-between group cursor-pointer hover:bg-surface-bright transition-all">
+<div>
+<div class="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-on-surface" data-icon="psychology">psychology</span>
+</div>
+<h4 class="text-xl font-bold mb-2">AI Root Cause Suggestion</h4>
+<p class="text-on-surface-variant text-sm">Lumina AI has identified 3 potential fixes based on previous cluster failures.</p>
+</div>
+<span class="material-symbols-outlined text-primary self-end group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</div>
+</div>
+</main>
+</body></html>

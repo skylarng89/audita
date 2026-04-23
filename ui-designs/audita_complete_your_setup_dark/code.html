@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Complete Your Setup | Lumina ITSM</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;400;600;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "background": "#0b1326",
+                      "on-error": "#690005",
+                      "surface-container-highest": "#2d3449",
+                      "surface-container-low": "#131b2e",
+                      "surface-container-high": "#222a3d",
+                      "outline-variant": "#444651",
+                      "on-surface-variant": "#c5c5d3",
+                      "on-secondary-fixed-variant": "#38485d",
+                      "surface-tint": "#adc6ff",
+                      "primary-fixed-dim": "#adc6ff",
+                      "outline": "#8f909d",
+                      "on-tertiary-fixed": "#341100",
+                      "tertiary-fixed-dim": "#ffb691",
+                      "on-error-container": "#ffdad6",
+                      "surface-container": "#171f33",
+                      "on-secondary": "#213145",
+                      "inverse-primary": "#005ac2",
+                      "secondary-fixed-dim": "#b7c8e1",
+                      "on-primary": "#002e6a",
+                      "surface-container-lowest": "#060e20",
+                      "on-primary-container": "#82abff",
+                      "tertiary": "#ffb691",
+                      "on-tertiary-fixed-variant": "#773205",
+                      "on-secondary-container": "#a9bad3",
+                      "primary-container": "#003d88",
+                      "error": "#ffb4ab",
+                      "inverse-on-surface": "#283044",
+                      "error-container": "#93000a",
+                      "secondary-fixed": "#d3e4fe",
+                      "tertiary-container": "#6e2c00",
+                      "secondary": "#b7c8e1",
+                      "primary": "#adc6ff",
+                      "surface-bright": "#31394d",
+                      "surface-dim": "#0b1326",
+                      "secondary-container": "#3a4a5f",
+                      "on-background": "#dae2fd",
+                      "on-secondary-fixed": "#0b1c30",
+                      "surface": "#0b1326",
+                      "on-surface": "#dae2fd",
+                      "on-primary-fixed-variant": "#004395",
+                      "tertiary-fixed": "#ffdbcb",
+                      "primary-fixed": "#d8e2ff",
+                      "on-tertiary-container": "#f39461",
+                      "on-primary-fixed": "#001a42",
+                      "surface-variant": "#2d3449",
+                      "on-tertiary": "#552000",
+                      "inverse-surface": "#dae2fd"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "fontFamily": {
+                      "headline": ["Manrope"],
+                      "body": ["Inter"],
+                      "label": ["Inter"]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-glass {
+            background-color: rgba(49, 57, 77, 0.6);
+            backdrop-filter: blur(24px);
+        }
+        .cta-gradient {
+            background: linear-gradient(135deg, #adc6ff 0%, #003d88 100%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body min-h-screen flex flex-col overflow-x-hidden">
+<!-- Hero Content & Onboarding Header -->
+<header class="relative w-full h-[307px] flex items-center px-12 overflow-hidden">
+<div class="absolute inset-0 z-0">
+<div class="w-full h-full bg-cover bg-center opacity-20" data-alt="abstract cosmic digital data web flowing through a deep blue and violet space with soft glowing particles" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA9uTwvmN6vrZ6zIxv9kuwN1Eq0P49RLNjtGnu_voRXmxNsjzWRz65UoEO6EmKDIUw1osoqjgP00sALZa96b_ZMFnmqjJAH_j_pBzPmcQOp6W1pkiWNTNSn8AXAaFAusky9yuF0NIcUfFAr1fP9x_o4L1EtUL7mgJcC0UndQ9i5tIY8fADpODtAxpEOZUuDSuvJz56V-NaZnbPjAfBFVrVMelXkW7YsrKrrlQFkwTNNwdXuvEc9J0J7uZAhRdSm9F2MvKQbuBPE7w')">
+</div>
+<div class="absolute inset-0 bg-gradient-to-b from-background/0 via-background/60 to-background"></div>
+</div>
+<div class="relative z-10 max-w-4xl">
+<div class="flex items-center gap-3 mb-4">
+<span class="bg-surface-variant px-3 py-1 rounded-full text-xs font-semibold tracking-wider text-primary uppercase">Step 01 of 03</span>
+</div>
+<h1 class="font-headline text-5xl md:text-7xl font-extrabold tracking-tighter text-on-surface mb-2">Initialize Your Instance.</h1>
+<p class="font-body text-lg text-on-surface-variant max-w-2xl">Lumina ITSM Enterprise Tier is ready for your specific configuration. Let's define your architectural baseline.</p>
+</div>
+</header>
+<main class="flex-grow px-6 md:px-12 py-8 max-w-7xl mx-auto w-full">
+<!-- Bento Grid Layout for Onboarding Tasks -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Primary Task: Identity -->
+<div class="md:col-span-2 bg-surface-container-low rounded-xl p-8 flex flex-col justify-between min-h-[400px]">
+<div>
+<h2 class="font-headline text-3xl font-bold text-on-surface mb-6">Service Identity</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="space-y-4">
+<label class="block text-sm font-medium text-on-surface-variant">Primary Domain</label>
+<div class="relative">
+<input class="w-full bg-surface-container-highest border-none rounded-lg py-4 px-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/30 transition-all" placeholder="lumina.corp.internal" type="text"/>
+</div>
+</div>
+<div class="space-y-4">
+<label class="block text-sm font-medium text-on-surface-variant">System Administrator Email</label>
+<div class="relative">
+<input class="w-full bg-surface-container-highest border-none rounded-lg py-4 px-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/30 transition-all" placeholder="admin@lumina-itsm.io" type="email"/>
+</div>
+</div>
+</div>
+<div class="mt-10">
+<h3 class="text-sm font-bold text-on-surface-variant tracking-widest uppercase mb-4">Deployment Region</h3>
+<div class="flex flex-wrap gap-3">
+<button class="bg-surface-bright text-primary px-6 py-3 rounded-lg text-sm font-semibold border-2 border-primary/20 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">public</span>
+                                North America (US-East)
+                            </button>
+<button class="bg-surface-container-highest text-on-surface-variant px-6 py-3 rounded-lg text-sm font-medium hover:bg-surface-bright transition-colors">
+                                Europe (Frankfurt)
+                            </button>
+<button class="bg-surface-container-highest text-on-surface-variant px-6 py-3 rounded-lg text-sm font-medium hover:bg-surface-bright transition-colors">
+                                Asia Pacific (Singapore)
+                            </button>
+</div>
+</div>
+</div>
+<div class="mt-8 flex justify-end">
+<button class="cta-gradient text-on-primary font-headline font-extrabold px-10 py-4 rounded-xl flex items-center gap-3 active:scale-95 transition-transform">
+                        Confirm Identity
+                        <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Secondary Task: Workspace Presets -->
+<div class="bg-surface-container-high rounded-xl p-8 flex flex-col">
+<h2 class="font-headline text-2xl font-bold text-on-surface mb-6">Analyst Presets</h2>
+<div class="space-y-4 flex-grow">
+<div class="p-4 bg-surface-container-highest rounded-lg flex items-start gap-4 hover:bg-surface-bright transition-all cursor-pointer">
+<div class="bg-primary/10 p-2 rounded-lg">
+<span class="material-symbols-outlined text-primary">speed</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface text-sm">High Velocity</h4>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">Optimized for high incident volume with automated routing enabled.</p>
+</div>
+</div>
+<div class="p-4 bg-surface-container-highest rounded-lg flex items-start gap-4 hover:bg-surface-bright transition-all cursor-pointer">
+<div class="bg-tertiary/10 p-2 rounded-lg">
+<span class="material-symbols-outlined text-tertiary">security</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface text-sm">Security Focused</h4>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">Tight integration with SIEM and heightened audit logging.</p>
+</div>
+</div>
+<div class="p-4 bg-surface-container-highest rounded-lg flex items-start gap-4 hover:bg-surface-bright transition-all cursor-pointer">
+<div class="bg-secondary/10 p-2 rounded-lg">
+<span class="material-symbols-outlined text-secondary">inventory_2</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface text-sm">Asset Core</h4>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">Focused on inventory lifecycle and hardware procurement.</p>
+</div>
+</div>
+</div>
+<div class="mt-6 pt-6 border-t border-white/5">
+<p class="text-xs text-on-surface-variant italic">Presets can be modified later in System Config.</p>
+</div>
+</div>
+<!-- Support Module (Visual Only) -->
+<div class="bg-surface-container-low rounded-xl overflow-hidden relative group">
+<div class="absolute inset-0 opacity-40 grayscale group-hover:grayscale-0 transition-all duration-500">
+<img class="w-full h-full object-cover" data-alt="portrait of a confident female IT consultant in a dark professional setting with subtle blue backlighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKENd1AkYV3wGDVBR9JwmJzgco5Dp-3ugF4Oc-_T7r_tPUterHTrBkP3mnQbnABU1Tm98_wIrPuJJISNr-IVBjGumEOBSkw0zS1Amk9mOBnHi-Sl2FnXNSwp0f5AXmjT8nafX0QGojzcvdMIrmiYlAAC3V5EKHOl35NOwGFdOjgmTuIJP8U3kDhO9HuVmf88VR_GkWJKYJ3BVh7nhzPIMBOm3_JtM17dzCn9PDmzpdHu3Z1_8n_wstVGpKR--q5GDgve1gR-hvjw"/>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-background to-transparent"></div>
+<div class="relative p-8 h-full flex flex-col justify-end">
+<span class="text-tertiary font-bold text-xs uppercase tracking-widest mb-2">Concierge Assistance</span>
+<h3 class="font-headline text-xl font-bold text-on-surface mb-2">Need a guided setup?</h3>
+<p class="text-sm text-on-surface-variant mb-4">Our enterprise architects are available 24/7 to help you configure your complex data mappings.</p>
+<button class="w-full py-3 bg-surface-container-highest text-on-surface font-semibold rounded-lg hover:bg-surface-bright transition-all">Schedule Call</button>
+</div>
+</div>
+<!-- System Integration Preview -->
+<div class="md:col-span-2 bg-surface-container-low rounded-xl p-8">
+<div class="flex justify-between items-center mb-8">
+<div>
+<h2 class="font-headline text-2xl font-bold text-on-surface">External Connectors</h2>
+<p class="text-sm text-on-surface-variant">Sync your existing ecosystem with the Lumina Node.</p>
+</div>
+<span class="bg-secondary/10 text-secondary px-3 py-1 rounded-full text-xs font-medium">12 Available</span>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div class="bg-surface-container-highest p-6 rounded-xl flex flex-col items-center gap-3 border border-transparent hover:border-primary/20 transition-all cursor-pointer">
+<div class="w-12 h-12 bg-white/5 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">cloud</span>
+</div>
+<span class="text-sm font-medium text-on-surface">AWS</span>
+</div>
+<div class="bg-surface-container-highest p-6 rounded-xl flex flex-col items-center gap-3 border border-transparent hover:border-primary/20 transition-all cursor-pointer">
+<div class="w-12 h-12 bg-white/5 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">chat</span>
+</div>
+<span class="text-sm font-medium text-on-surface">Slack</span>
+</div>
+<div class="bg-surface-container-highest p-6 rounded-xl flex flex-col items-center gap-3 border border-transparent hover:border-primary/20 transition-all cursor-pointer">
+<div class="w-12 h-12 bg-white/5 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">storage</span>
+</div>
+<span class="text-sm font-medium text-on-surface">Jira</span>
+</div>
+<div class="bg-surface-container-highest p-6 rounded-xl flex flex-col items-center gap-3 border border-transparent hover:border-primary/20 transition-all cursor-pointer">
+<div class="w-12 h-12 bg-white/5 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">lock</span>
+</div>
+<span class="text-sm font-medium text-on-surface">Okta</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Contextual Footer (Onboarding specific) -->
+<footer class="w-full bg-surface-container-lowest py-8 px-12 flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex items-center gap-8">
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-[0.2em] text-outline font-bold">System Status</span>
+<span class="flex items-center gap-2 text-sm font-medium text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Core Engine Ready
+                </span>
+</div>
+<div class="h-8 w-[1px] bg-white/10 hidden md:block"></div>
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-[0.2em] text-outline font-bold">Workspace</span>
+<span class="text-sm font-medium text-on-surface-variant">Lumina-ITS-77291</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-on-surface-variant hover:text-on-surface transition-colors text-sm font-semibold tracking-tight">Save for later</button>
+<div class="flex gap-2">
+<div class="w-8 h-1.5 rounded-full bg-primary"></div>
+<div class="w-8 h-1.5 rounded-full bg-surface-variant"></div>
+<div class="w-8 h-1.5 rounded-full bg-surface-variant"></div>
+</div>
+</div>
+</footer>
+<!-- Decorative Luminescent Element -->
+<div class="fixed -bottom-64 -right-64 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
+</body></html>

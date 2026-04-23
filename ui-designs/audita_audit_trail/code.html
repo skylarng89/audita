@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Audit Trail | Audita ITSM</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#2d3133",
+                        "primary-fixed-dim": "#b6c4ff",
+                        "on-tertiary-fixed-variant": "#773205",
+                        "on-primary-fixed-variant": "#264191",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "secondary": "#505f76",
+                        "outline-variant": "#c5c5d3",
+                        "error-container": "#ffdad6",
+                        "primary": "#00236f",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#4b1c00",
+                        "tertiary-container": "#6e2c00",
+                        "secondary-container": "#d0e1fb",
+                        "on-surface-variant": "#444651",
+                        "on-background": "#191c1e",
+                        "tertiary-fixed-dim": "#ffb691",
+                        "inverse-primary": "#b6c4ff",
+                        "on-primary-container": "#90a8ff",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-bright": "#f7f9fb",
+                        "surface-dim": "#d8dadc",
+                        "secondary-fixed": "#d3e4fe",
+                        "on-primary-fixed": "#00164e",
+                        "surface": "#f7f9fb",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "surface-variant": "#e0e3e5",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#dce1ff",
+                        "primary-container": "#1e3a8a",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-on-surface": "#eff1f3",
+                        "error": "#ba1a1a",
+                        "surface-tint": "#4059aa",
+                        "background": "#f7f9fb",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-container": "#eceef0",
+                        "tertiary-fixed": "#ffdbcb",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "on-tertiary-fixed": "#341100",
+                        "on-secondary-fixed": "#0b1c30",
+                        "on-tertiary-container": "#f39461",
+                        "outline": "#757682",
+                        "on-secondary-container": "#54647a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(24px);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body antialiased">
+<!-- SideNavBar -->
+<aside class="h-screen w-72 fixed left-0 top-0 z-50 bg-slate-50 dark:bg-slate-900 bg-slate-100/50 dark:bg-slate-800/50 backdrop-blur-xl flex flex-col h-full border-r-0 font-['Inter'] antialiased tracking-[-0.02em]">
+<div class="px-8 py-10 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<div>
+<h1 class="text-2xl font-medium tracking-tighter text-[#00236f] dark:text-blue-400">Audita</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Sovereign Architect</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#00236f] dark:hover:text-blue-300 transition-colors hover:bg-slate-200/30 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#00236f] dark:hover:text-blue-300 transition-colors hover:bg-slate-200/30 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined">published_with_changes</span>
+<span>Change Requests</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#00236f] dark:hover:text-blue-300 transition-colors hover:bg-slate-200/30 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined">person</span>
+<span>Users</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#00236f] dark:hover:text-blue-300 transition-colors hover:bg-slate-200/30 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Groups</span>
+</a>
+<!-- Active Navigation -->
+<a class="flex items-center gap-3 py-3 px-4 text-[#00236f] dark:text-blue-400 border-l-[4px] border-[#00236f] bg-slate-200/50 dark:bg-blue-900/20 font-medium transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">history</span>
+<span>Audit Trail</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#00236f] dark:hover:text-blue-300 transition-colors hover:bg-slate-200/30 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="p-6">
+<button class="w-full bg-gradient-to-br from-primary to-primary-container text-white py-4 rounded-xl font-semibold shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">add</span>
+                New Change
+            </button>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-18rem)] z-40 bg-[#f7f9fb]/80 dark:bg-slate-950/80 backdrop-blur-2xl flex items-center justify-between px-10 h-20 font-['Inter'] text-sm tracking-wide font-medium">
+<div class="flex items-center gap-8 flex-1">
+<span class="text-lg font-bold text-[#00236f] dark:text-blue-400 tracking-tight uppercase">Audita ITSM</span>
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-lowest border-outline-variant/20 border rounded-lg py-2 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-xs tracking-wider" placeholder="SEARCH COMPLIANCE LOGS..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-slate-500 hover:bg-white/50 p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-slate-500 hover:bg-white/50 p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="flex items-center gap-3 ml-4 pl-6 border-l border-outline-variant/30">
+<div class="text-right">
+<p class="text-xs font-bold text-on-surface">Admin User</p>
+<p class="text-[10px] text-outline uppercase">Global Auditor</p>
+</div>
+<img alt="Administrator Profile" class="w-10 h-10 rounded-full bg-secondary-container p-1 border-2 border-white shadow-sm" data-alt="close-up portrait of a professional system administrator in a modern office environment with soft focus background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6u7JcU4Jnf7zeOC_omVjoOR2yckf55KaWLESwvJDATVd4zT30RxxJ1dq_Ry4gI1Zi_Kg-MynOCTUIHd5JilHB2rMXviLEsBi5ZIIAJX1hD-uqtN5CKJxGmSKBLsBYTmQY7BVaS-N5jWGJWxBSNSNHfz_PnlGR1hpLp0P8itnbhIUiGk3RLwYflUbp3nAlEQ7sfhSetR9Mif-rAeoz-MQY8hcGtRZPlFbrwKggM-6Q19LLyn7nSDcD9hpe6_oB_UugUuXhofdxdg"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-72 pt-28 px-10 pb-20 min-h-screen">
+<!-- Header & Action Row -->
+<div class="flex items-end justify-between mb-10">
+<div class="space-y-1">
+<p class="text-xs font-bold tracking-[0.2em] text-primary uppercase">Governance &amp; Compliance</p>
+<h2 class="text-5xl font-extrabold tracking-tight text-on-surface">Audit Trail</h2>
+</div>
+<div class="flex gap-4">
+<button class="bg-secondary-container text-on-secondary-container px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-primary-fixed-dim transition-colors">
+<span class="material-symbols-outlined">download</span>
+                    Export to CSV
+                </button>
+</div>
+</div>
+<!-- Filter Shell -->
+<div class="bg-surface-container-low rounded-xl p-6 mb-8 flex flex-wrap items-center gap-6">
+<div class="flex flex-col gap-1.5">
+<label class="text-[10px] font-bold uppercase tracking-widest text-outline px-1">Date Range</label>
+<div class="bg-surface-container-lowest px-4 py-2.5 rounded-lg border border-outline-variant/20 flex items-center gap-3">
+<span class="material-symbols-outlined text-sm text-outline">calendar_today</span>
+<span class="text-sm font-medium">Oct 12, 2023 - Oct 19, 2023</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-[10px] font-bold uppercase tracking-widest text-outline px-1">Actor (User)</label>
+<select class="bg-surface-container-lowest px-4 py-2.5 rounded-lg border border-outline-variant/20 text-sm font-medium focus:ring-primary focus:border-primary min-w-[200px]">
+<option>All Actors</option>
+<option>Sarah Jenkins (Admin)</option>
+<option>Marcus Aurelius (Lead)</option>
+</select>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-[10px] font-bold uppercase tracking-widest text-outline px-1">Action Type</label>
+<select class="bg-surface-container-lowest px-4 py-2.5 rounded-lg border border-outline-variant/20 text-sm font-medium focus:ring-primary focus:border-primary min-w-[200px]">
+<option>All Actions</option>
+<option>CR_CREATED</option>
+<option>APPROVAL_DECIDED</option>
+<option>POLICY_UPDATED</option>
+</select>
+</div>
+<button class="mt-5 ml-auto text-primary font-bold text-sm flex items-center gap-2 hover:underline">
+<span class="material-symbols-outlined">filter_list_off</span>
+                Clear All
+            </button>
+</div>
+<!-- Audit Log Table -->
+<div class="bg-surface-container-lowest rounded-xl shadow-[0px_20px_40px_rgba(0,35,111,0.04)] overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container/50 border-b border-outline-variant/10">
+<th class="px-8 py-5 text-[11px] font-extrabold uppercase tracking-widest text-outline">Timestamp</th>
+<th class="px-8 py-5 text-[11px] font-extrabold uppercase tracking-widest text-outline">Actor</th>
+<th class="px-8 py-5 text-[11px] font-extrabold uppercase tracking-widest text-outline">Action Type</th>
+<th class="px-8 py-5 text-[11px] font-extrabold uppercase tracking-widest text-outline">Entity Type</th>
+<th class="px-8 py-5 text-[11px] font-extrabold uppercase tracking-widest text-outline">Entity ID</th>
+<th class="px-8 py-5 text-[11px] font-extrabold uppercase tracking-widest text-outline">Payload Summary</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-8 py-6">
+<p class="text-sm font-medium text-on-surface">2023-10-19</p>
+<p class="text-[10px] text-outline font-mono uppercase">14:22:10 UTC</p>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-[10px] font-bold text-on-primary-fixed">SJ</div>
+<div>
+<p class="text-sm font-semibold">Sarah Jenkins</p>
+<p class="text-[10px] text-outline">s.jenkins@audita.io</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded-full tracking-wider uppercase">APPROVAL_DECIDED</span>
+</td>
+<td class="px-8 py-6 text-sm font-medium text-on-surface-variant">ChangeRequest</td>
+<td class="px-8 py-6 text-sm font-mono text-primary font-semibold">#CR-9921</td>
+<td class="px-8 py-6">
+<p class="text-sm text-on-surface-variant line-clamp-1">Approved high-impact firewall patch for production-east-1 cluster.</p>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-8 py-6">
+<p class="text-sm font-medium text-on-surface">2023-10-19</p>
+<p class="text-[10px] text-outline font-mono uppercase">12:05:44 UTC</p>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed flex items-center justify-center text-[10px] font-bold text-on-tertiary-fixed">MA</div>
+<div>
+<p class="text-sm font-semibold">Marcus Aurelius</p>
+<p class="text-[10px] text-outline">m.aurelius@audita.io</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-primary-container text-on-primary-container text-[10px] font-bold rounded-full tracking-wider uppercase">CR_CREATED</span>
+</td>
+<td class="px-8 py-6 text-sm font-medium text-on-surface-variant">ChangeRequest</td>
+<td class="px-8 py-6 text-sm font-mono text-primary font-semibold">#CR-9945</td>
+<td class="px-8 py-6">
+<p class="text-sm text-on-surface-variant line-clamp-1">Initial draft for DB migration: v12.4 to v13.0 LTS.</p>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-8 py-6">
+<p class="text-sm font-medium text-on-surface">2023-10-18</p>
+<p class="text-[10px] text-outline font-mono uppercase">18:45:12 UTC</p>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-outline-variant/30 flex items-center justify-center text-outline">
+<span class="material-symbols-outlined text-sm">robot_2</span>
+</div>
+<div>
+<p class="text-sm font-semibold">System (Auto-Bot)</p>
+<p class="text-[10px] text-outline">internal@system.service</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold rounded-full tracking-wider uppercase">STATUS_AUTO_PURGE</span>
+</td>
+<td class="px-8 py-6 text-sm font-medium text-on-surface-variant">LogArchive</td>
+<td class="px-8 py-6 text-sm font-mono text-primary font-semibold">#LOG-8822</td>
+<td class="px-8 py-6">
+<p class="text-sm text-on-surface-variant line-clamp-1">Automatic cleanup of transient audit data older than 90 days.</p>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-8 py-6">
+<p class="text-sm font-medium text-on-surface">2023-10-18</p>
+<p class="text-[10px] text-outline font-mono uppercase">09:12:01 UTC</p>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-[10px] font-bold text-on-primary-fixed">SJ</div>
+<div>
+<p class="text-sm font-semibold">Sarah Jenkins</p>
+<p class="text-[10px] text-outline">s.jenkins@audita.io</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded-full tracking-wider uppercase">USER_ROLES_MODIFIED</span>
+</td>
+<td class="px-8 py-6 text-sm font-medium text-on-surface-variant">UserIdentity</td>
+<td class="px-8 py-6 text-sm font-mono text-primary font-semibold">#UID-4401</td>
+<td class="px-8 py-6">
+<p class="text-sm text-on-surface-variant line-clamp-1">Granted 'Lead Architect' permissions to user b.wayne.</p>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-8 py-6">
+<p class="text-sm font-medium text-on-surface">2023-10-17</p>
+<p class="text-[10px] text-outline font-mono uppercase">23:59:59 UTC</p>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed flex items-center justify-center text-[10px] font-bold text-on-tertiary-fixed">MA</div>
+<div>
+<p class="text-sm font-semibold">Marcus Aurelius</p>
+<p class="text-[10px] text-outline">m.aurelius@audita.io</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-error-container text-on-error-container text-[10px] font-bold rounded-full tracking-wider uppercase">POLICY_VIOLATION</span>
+</td>
+<td class="px-8 py-6 text-sm font-medium text-on-surface-variant">AccessControl</td>
+<td class="px-8 py-6 text-sm font-mono text-primary font-semibold">#ACL-0012</td>
+<td class="px-8 py-6">
+<p class="text-sm text-on-surface-variant line-clamp-1">Failed attempt to modify core kernel policy without MFA verification.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Pagination -->
+<div class="px-8 py-6 bg-surface-container/20 border-t border-outline-variant/10 flex items-center justify-between">
+<p class="text-xs text-outline font-medium">Showing <span class="text-on-surface font-bold">1 - 5</span> of <span class="text-on-surface font-bold">1,248</span> entries</p>
+<div class="flex gap-2">
+<button class="p-2 rounded-lg border border-outline-variant/20 hover:bg-white text-outline disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="px-3 py-1 rounded-lg bg-primary text-white text-xs font-bold">1</button>
+<button class="px-3 py-1 rounded-lg border border-outline-variant/20 hover:bg-white text-xs font-bold">2</button>
+<button class="px-3 py-1 rounded-lg border border-outline-variant/20 hover:bg-white text-xs font-bold">3</button>
+<button class="p-2 rounded-lg border border-outline-variant/20 hover:bg-white text-outline">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Compliance Integrity Note (Asymmetric Editorial Element) -->
+<div class="mt-16 max-w-2xl ml-auto">
+<div class="p-8 border-l-4 border-primary bg-primary-fixed/30 rounded-r-2xl">
+<h4 class="text-lg font-bold text-primary mb-2 flex items-center gap-2">
+<span class="material-symbols-outlined">verified_user</span>
+                    Compliance Integrity Verified
+                </h4>
+<p class="text-sm text-on-primary-fixed-variant leading-relaxed">
+                    This audit log is generated by the Sovereign Architect core engine and is cryptographically hashed to prevent tampering. All entries are read-only and maintained for a minimum of 7 years as per ITIL Governance Policy 4.2. Current system hash: <span class="font-mono bg-white/50 px-1 rounded">sha256:7f83b1...a901</span>
+</p>
+</div>
+</div>
+</main>
+<!-- Contextual Info Floating Corner (Editorial Detail) -->
+<div class="fixed bottom-8 left-80 z-40">
+<div class="glass-panel p-4 rounded-xl border border-white/40 shadow-xl flex items-center gap-4">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full bg-secondary ring-2 ring-white flex items-center justify-center text-[10px] text-white">4</div>
+<div class="w-8 h-8 rounded-full bg-primary ring-2 ring-white flex items-center justify-center text-[10px] text-white">7</div>
+</div>
+<p class="text-[10px] font-bold uppercase tracking-widest text-outline">Active Auditor Presence</p>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Audita - Group Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#2d3133",
+                        "primary-fixed-dim": "#b6c4ff",
+                        "on-tertiary-fixed-variant": "#773205",
+                        "on-primary-fixed-variant": "#264191",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "secondary": "#505f76",
+                        "outline-variant": "#c5c5d3",
+                        "error-container": "#ffdad6",
+                        "primary": "#00236f",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#4b1c00",
+                        "tertiary-container": "#6e2c00",
+                        "secondary-container": "#d0e1fb",
+                        "on-surface-variant": "#444651",
+                        "on-background": "#191c1e",
+                        "tertiary-fixed-dim": "#ffb691",
+                        "inverse-primary": "#b6c4ff",
+                        "on-primary-container": "#90a8ff",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-bright": "#f7f9fb",
+                        "surface-dim": "#d8dadc",
+                        "secondary-fixed": "#d3e4fe",
+                        "on-primary-fixed": "#00164e",
+                        "surface": "#f7f9fb",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "surface-variant": "#e0e3e5",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#dce1ff",
+                        "primary-container": "#1e3a8a",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-on-surface": "#eff1f3",
+                        "error": "#ba1a1a",
+                        "surface-tint": "#4059aa",
+                        "background": "#f7f9fb",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-container": "#eceef0",
+                        "tertiary-fixed": "#ffdbcb",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "on-tertiary-fixed": "#341100",
+                        "on-secondary-fixed": "#0b1c30",
+                        "on-tertiary-container": "#f39461",
+                        "outline": "#757682",
+                        "on-secondary-container": "#54647a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "1rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .signature-glow {
+            background: linear-gradient(150deg, #00236f 0%, #1e3a8a 100%);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(24px);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body antialiased">
+<!-- SideNavBar -->
+<aside class="h-screen w-72 fixed left-0 top-0 z-50 bg-slate-100/50 backdrop-blur-xl flex flex-col border-r-0">
+<div class="px-8 py-10">
+<div class="flex items-center gap-3 mb-10">
+<div class="w-10 h-10 signature-glow rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">architecture</span>
+</div>
+<div>
+<h1 class="text-2xl font-medium tracking-tighter text-[#00236f]">Audita</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Sovereign Architect</p>
+</div>
+</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 hover:text-[#00236f] transition-colors rounded-lg hover:bg-slate-200/30" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 hover:text-[#00236f] transition-colors rounded-lg hover:bg-slate-200/30" href="#">
+<span class="material-symbols-outlined">published_with_changes</span>
+<span class="font-medium">Change Requests</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 hover:text-[#00236f] transition-colors rounded-lg hover:bg-slate-200/30" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-medium">Users</span>
+</a>
+<!-- Active State: Groups -->
+<a class="flex items-center gap-3 py-3 px-4 text-[#00236f] border-l-[4px] border-[#00236f] bg-slate-200/50 font-medium transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-medium">Groups</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 hover:text-[#00236f] transition-colors rounded-lg hover:bg-slate-200/30" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-medium">Audit Trail</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 hover:text-[#00236f] transition-colors rounded-lg hover:bg-slate-200/30" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-medium">Settings</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto px-8 pb-10">
+<button class="w-full py-4 px-6 signature-glow text-white rounded-lg font-semibold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-95 duration-150 ease-in-out">
+<span class="material-symbols-outlined">add</span>
+                New Change
+            </button>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-18rem)] z-40 bg-[#f7f9fb]/80 backdrop-blur-2xl flex items-center justify-between px-10 h-20">
+<div class="flex items-center gap-8">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">search</span>
+<input class="bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-2 text-xs tracking-widest font-bold focus:ring-2 focus:ring-primary/20 w-64 transition-all outline-none" placeholder="SEARCH DIRECTORY..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<button class="p-2 hover:bg-white/50 rounded-lg transition-colors relative">
+<span class="material-symbols-outlined text-slate-600">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 hover:bg-white/50 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-slate-600">help_outline</span>
+</button>
+</div>
+<div class="h-8 w-px bg-slate-200 mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-sm font-bold text-primary leading-tight">Admin User</p>
+<p class="text-[10px] text-slate-500 uppercase tracking-tighter">System Administrator</p>
+</div>
+<img alt="Administrator Profile" class="w-10 h-10 rounded-lg object-cover ring-2 ring-white shadow-sm" data-alt="Close up portrait of a professional man in a navy suit with a clean background and soft office lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4aNIM4GmdQWea8A91QIt6wcGphF29f8nWTm483SryGxWURG472YkuD6yydMB4TCdnqtAufYyJXL7fjlvTnVmMF1cxDRKzv2wQk64oqcfx58AWZTSOREyFU3sn1ZR27llD86MshWTwoLOnH59f0fqxCtDMfTv3rCvqEPN4B_JtWJYJkBgUwiU_Bd8bElM4O85Alnpi9ZwjfymSlWUEgXk4NtPeGBRtkEBNGToEfMMP7vzn-_W7SoFzMVvOylLYCWnROc-oQnEHmg"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-72 pt-20 min-h-screen bg-surface">
+<div class="px-10 py-12 max-w-7xl mx-auto">
+<!-- Hero Header Section (Asymmetric) -->
+<div class="flex justify-between items-end mb-12">
+<div class="max-w-2xl">
+<div class="flex items-center gap-3 mb-4">
+<span class="px-3 py-1 bg-primary-fixed text-on-primary-fixed text-[10px] font-black tracking-widest uppercase rounded-full">IAM Framework</span>
+</div>
+<h2 class="text-5xl font-medium tracking-tight text-primary mb-4 leading-none">Group Management</h2>
+<p class="text-on-surface-variant text-lg leading-relaxed max-w-xl">
+                        Architect and orchestrate permissions across your sovereign infrastructure. Manage collective identities and access protocols from a centralized terminal.
+                    </p>
+</div>
+<div>
+<button class="signature-glow text-white px-8 py-4 rounded-lg font-bold flex items-center gap-3 shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group_add</span>
+                        Add Group
+                    </button>
+</div>
+</div>
+<!-- Bento Stats Grid -->
+<div class="grid grid-cols-12 gap-6 mb-12">
+<div class="col-span-12 md:col-span-4 bg-surface-container-low rounded-lg p-8">
+<p class="text-[11px] font-black tracking-[0.2em] text-slate-500 uppercase mb-2">Total Clusters</p>
+<p class="text-4xl font-light tracking-tighter text-primary">24 <span class="text-lg text-slate-400">Groups</span></p>
+<div class="mt-4 flex -space-x-2">
+<img alt="User 1" class="w-8 h-8 rounded-full border-2 border-surface" data-alt="portrait of woman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfuoHdqsgyXFZwM5u-cwAIXNTDA1WK4j6vtWTa6TkaqphOIUdDpxm5cVBdf4SINzdFzZmV5WDZ5Nqv30G_IVIDQy5iZ2ZiudU9UKuVBAsU2D6gasdh0enNbB0EcWqeIgKh-pCAQKrP9uP2-zS_8KrEFCvan1mALXEOck6ZDnp-Ara5zpJz7IVfPT21S0N8agOYJM8WaCYjyhnU8w0wf8Iu-umGGeLa12gsAh_21JZp1MtTNYgoRJgtWAi9DdANtliMbeqF1Koqcg"/>
+<img alt="User 2" class="w-8 h-8 rounded-full border-2 border-surface" data-alt="portrait of man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiNUZv6Awu-Uvb-a2oHeZ0CGsTy3ziZ6L9EI8N-EMzXYY7G0ZgnZbCODmxck98Ilw6wbuvwuBvRT3zrAFzYb5aZShN2PUdjwkHb6P9_njV6L227UgUn-pORmAq85WNHT68YzuYGdnJTZs3_Wanm78brCLLbe7P0veBlVVt8JEJyy1PtBgL5Cqug8PorpkpeS71NNQdOxe-ntQci9bCDqx8NQhXM_dknD0VjN_d8qwFqf5DzeZ_ekhRnAiogvl89r9fa9INWpKWJw"/>
+<img alt="User 3" class="w-8 h-8 rounded-full border-2 border-surface" data-alt="portrait of woman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAgwS9r85hBS-GC4N06h5mQI7cI802WOoJ3qBQ9H8qc7MRYs3oe_tcWpc4et2Lw-NKDAytmlV2aASaGiWJsA6oIwxp4plEdnuLSa4Ge9RRpZo0xCM5OsRpf6RYzPUyVCDwkFd0_1orbV7Oz16ogoXT8JDPmOhyFR7DYm7gnmMjDAcMzzGI0P78i0v2AkCnBks7iC_gIjVGDR2Q0XeYTqIwt3xEDsKub_wlFVWzOPOKYYyITCb9zp0jzdQ808PBH9TWVFgMWxvC2A"/>
+<div class="w-8 h-8 rounded-full border-2 border-surface bg-slate-200 flex items-center justify-center text-[10px] font-bold">+12</div>
+</div>
+</div>
+<div class="col-span-12 md:col-span-8 bg-primary text-white rounded-lg p-8 relative overflow-hidden flex flex-col justify-between">
+<div class="relative z-10">
+<p class="text-[11px] font-black tracking-[0.2em] text-blue-300 uppercase mb-2">System Health</p>
+<p class="text-3xl font-medium tracking-tight mb-4">Architecture Compliance</p>
+</div>
+<div class="flex items-end justify-between relative z-10">
+<div class="flex gap-4">
+<div>
+<p class="text-2xl font-bold">98.2%</p>
+<p class="text-[10px] uppercase tracking-widest text-blue-300">Synchronized</p>
+</div>
+<div class="w-px h-10 bg-blue-700/50"></div>
+<div>
+<p class="text-2xl font-bold">12ms</p>
+<p class="text-[10px] uppercase tracking-widest text-blue-300">Auth Latency</p>
+</div>
+</div>
+<div class="h-12 w-32 bg-blue-800/40 rounded-lg p-2 backdrop-blur-md">
+<div class="h-full w-full flex items-end gap-1">
+<div class="w-full bg-blue-400/20 h-[40%] rounded-sm"></div>
+<div class="w-full bg-blue-400/40 h-[60%] rounded-sm"></div>
+<div class="w-full bg-blue-400/60 h-[50%] rounded-sm"></div>
+<div class="w-full bg-blue-400/80 h-[90%] rounded-sm"></div>
+<div class="w-full bg-blue-400 h-[70%] rounded-sm"></div>
+</div>
+</div>
+</div>
+<!-- Decorative Element -->
+<div class="absolute -right-10 -bottom-10 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
+</div>
+</div>
+<!-- Enhanced Data Table Section -->
+<div class="bg-surface-container-lowest rounded-lg overflow-hidden">
+<div class="px-8 py-6 border-b border-outline-variant/10 flex justify-between items-center bg-white">
+<h3 class="text-lg font-medium text-primary tracking-tight">Active Identity Groups</h3>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-surface-container-low rounded-lg transition-colors">
+<span class="material-symbols-outlined text-slate-500">filter_list</span>
+</button>
+<button class="p-2 hover:bg-surface-container-low rounded-lg transition-colors">
+<span class="material-symbols-outlined text-slate-500">download</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full border-collapse">
+<thead>
+<tr class="bg-surface-container-low/30">
+<th class="text-left px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Group Name</th>
+<th class="text-left px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Description</th>
+<th class="text-left px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Members Count</th>
+<th class="text-left px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Date Created</th>
+<th class="px-8 py-5"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<!-- Row 1 -->
+<tr class="hover:bg-slate-50/50 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined">shield_person</span>
+</div>
+<div>
+<p class="font-semibold text-primary">Global Administrators</p>
+<p class="text-[10px] text-slate-400 uppercase tracking-tighter">Root Level Access</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6 max-w-xs">
+<p class="text-sm text-on-surface-variant truncate">Full administrative control across all platform domains and subsystems.</p>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="text-sm font-medium text-primary">12 Users</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<p class="text-sm text-slate-500 font-medium">Oct 12, 2023</p>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="p-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-surface-container-low rounded-lg">
+<span class="material-symbols-outlined text-slate-400">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-slate-50/50 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-tertiary-container flex items-center justify-center text-white">
+<span class="material-symbols-outlined">developer_mode</span>
+</div>
+<div>
+<p class="font-semibold text-primary">Infrastructure Devs</p>
+<p class="text-[10px] text-slate-400 uppercase tracking-tighter">Read/Write Core</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6 max-w-xs">
+<p class="text-sm text-on-surface-variant truncate">Management of CI/CD pipelines and cloud architecture resources.</p>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="text-sm font-medium text-primary">48 Users</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<p class="text-sm text-slate-500 font-medium">Jan 05, 2024</p>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="p-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-surface-container-low rounded-lg">
+<span class="material-symbols-outlined text-slate-400">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-slate-50/50 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">visibility</span>
+</div>
+<div>
+<p class="font-semibold text-primary">Audit Observers</p>
+<p class="text-[10px] text-slate-400 uppercase tracking-tighter">Read Only</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6 max-w-xs">
+<p class="text-sm text-on-surface-variant truncate">External auditors and internal compliance monitoring accounts.</p>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-slate-300"></span>
+<span class="text-sm font-medium text-primary">5 Users</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<p class="text-sm text-slate-500 font-medium">Feb 14, 2024</p>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="p-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-surface-container-low rounded-lg">
+<span class="material-symbols-outlined text-slate-400">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-slate-50/50 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined">support_agent</span>
+</div>
+<div>
+<p class="font-semibold text-primary">Level 2 Support</p>
+<p class="text-[10px] text-slate-400 uppercase tracking-tighter">Ticketing Tier</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6 max-w-xs">
+<p class="text-sm text-on-surface-variant truncate">Advanced support operations with incident remediation powers.</p>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="text-sm font-medium text-primary">124 Users</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<p class="text-sm text-slate-500 font-medium">Nov 22, 2023</p>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="p-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-surface-container-low rounded-lg">
+<span class="material-symbols-outlined text-slate-400">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-8 py-6 bg-slate-50/50 flex justify-between items-center">
+<p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Showing 1-4 of 24 Groups</p>
+<div class="flex gap-2">
+<button class="px-4 py-2 bg-white rounded-lg text-xs font-bold text-primary shadow-sm hover:bg-slate-100 transition-colors flex items-center gap-2 disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+                            PREVIOUS
+                        </button>
+<button class="px-4 py-2 bg-white rounded-lg text-xs font-bold text-primary shadow-sm hover:bg-slate-100 transition-colors flex items-center gap-2">
+                            NEXT
+                            <span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Contextual Information (Editorial Side Drawer style) -->
+<aside class="fixed right-0 top-20 w-80 h-[calc(100vh-5rem)] bg-white border-l border-outline-variant/10 p-8 hidden xl:block">
+<h4 class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-8">Architecture Insights</h4>
+<div class="space-y-10">
+<div>
+<p class="text-sm font-bold text-primary mb-2">Security Posture</p>
+<div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[85%]"></div>
+</div>
+<p class="text-[10px] mt-2 text-slate-500 uppercase font-medium">85% Optimal Configuration</p>
+</div>
+<div>
+<p class="text-sm font-bold text-primary mb-4">Recent Group Activity</p>
+<div class="relative space-y-6 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100">
+<div class="relative flex gap-4 items-start">
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center ring-4 ring-white z-10">
+<span class="material-symbols-outlined text-[12px] text-white" style="font-variation-settings: 'FILL' 1;">add</span>
+</div>
+<div>
+<p class="text-xs font-bold text-primary leading-none">Security Ops Created</p>
+<p class="text-[10px] text-slate-400 mt-1">2 hours ago</p>
+</div>
+</div>
+<div class="relative flex gap-4 items-start">
+<div class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center ring-4 ring-white z-10">
+<span class="material-symbols-outlined text-[12px] text-primary" style="font-variation-settings: 'FILL' 1;">person_add</span>
+</div>
+<div>
+<p class="text-xs font-bold text-primary leading-none">5 Users Added to Devs</p>
+<p class="text-[10px] text-slate-400 mt-1">Yesterday</p>
+</div>
+</div>
+</div>
+</div>
+<div class="pt-8">
+<div class="bg-surface-container-low p-6 rounded-lg">
+<span class="material-symbols-outlined text-primary mb-3">lightbulb</span>
+<p class="text-xs font-bold text-primary mb-2">Architect's Tip</p>
+<p class="text-[11px] text-on-surface-variant leading-relaxed">
+                        Regularly audit "Global Administrator" counts. ITIL standards recommend no more than 3% of your total user base hold root access.
+                    </p>
+</div>
+</div>
+</div>
+</aside>
+</body></html>

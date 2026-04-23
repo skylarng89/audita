@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Void ITSM - Change Request Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#c5c5d3",
+                        "surface-container-highest": "#2d3449",
+                        "on-primary-fixed-variant": "#004395",
+                        "on-background": "#dae2fd",
+                        "primary-fixed": "#d8e2ff",
+                        "on-tertiary-container": "#f39461",
+                        "tertiary-fixed-dim": "#ffb691",
+                        "on-error-container": "#ffdad6",
+                        "tertiary": "#ffb691",
+                        "inverse-on-surface": "#283044",
+                        "error-container": "#93000a",
+                        "on-secondary": "#213145",
+                        "on-tertiary": "#552000",
+                        "on-primary-container": "#82abff",
+                        "primary-container": "#003d88",
+                        "on-error": "#690005",
+                        "background": "#0b1326",
+                        "surface-container-low": "#131b2e",
+                        "tertiary-fixed": "#ffdbcb",
+                        "secondary-fixed": "#d3e4fe",
+                        "error": "#ffb4ab",
+                        "secondary-container": "#3a4a5f",
+                        "primary-fixed-dim": "#adc6ff",
+                        "inverse-primary": "#005ac2",
+                        "surface-dim": "#0b1326",
+                        "surface-container-lowest": "#060e20",
+                        "surface-container-high": "#222a3d",
+                        "surface-variant": "#2d3449",
+                        "secondary": "#b7c8e1",
+                        "surface-container": "#171f33",
+                        "on-surface": "#dae2fd",
+                        "outline": "#8f909d",
+                        "outline-variant": "#444651",
+                        "surface": "#0b1326",
+                        "on-tertiary-fixed": "#341100",
+                        "surface-bright": "#31394d",
+                        "tertiary-container": "#6e2c00",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "surface-tint": "#adc6ff",
+                        "on-tertiary-fixed-variant": "#773205",
+                        "inverse-surface": "#dae2fd",
+                        "on-primary": "#002e6a",
+                        "on-secondary-fixed": "#0b1c30",
+                        "on-primary-fixed": "#001a42",
+                        "primary": "#adc6ff",
+                        "on-secondary-container": "#a9bad3",
+                        "on-secondary-fixed-variant": "#38485d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-glass {
+            background: rgba(19, 27, 46, 0.6);
+            backdrop-filter: blur(24px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body min-h-screen">
+<!-- SideNavBar Anchor -->
+<aside class="h-screen w-64 fixed left-0 top-0 flex flex-col bg-[#131b2e] z-50">
+<div class="flex flex-col gap-2 p-4 h-full">
+<div class="flex items-center gap-3 px-2 mb-8">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-sm" data-icon="account_tree">account_tree</span>
+</div>
+<div>
+<h1 class="text-lg font-black text-[#adc6ff] font-headline leading-none">Service Desk</h1>
+<p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Enterprise Tier</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 hover:text-slate-200 hover:bg-[#222a3d] transition-all duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:text-[#adc6ff]" data-icon="dashboard">dashboard</span>
+<span class="font-['Inter'] text-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#adc6ff] bg-[#222a3d] border-r-2 border-[#adc6ff] transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="account_tree">account_tree</span>
+<span class="font-['Inter'] text-sm">Change Requests</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 hover:text-slate-200 hover:bg-[#222a3d] transition-all duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:text-[#adc6ff]" data-icon="fact_check">fact_check</span>
+<span class="font-['Inter'] text-sm">Approvals</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 hover:text-slate-200 hover:bg-[#222a3d] transition-all duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:text-[#adc6ff]" data-icon="analytics">analytics</span>
+<span class="font-['Inter'] text-sm">Reporting</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 hover:text-slate-200 hover:bg-[#222a3d] transition-all duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:text-[#adc6ff]" data-icon="settings_suggest">settings_suggest</span>
+<span class="font-['Inter'] text-sm">System Settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-slate-800/50 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 hover:text-slate-200 hover:bg-[#222a3d] transition-all duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:text-[#adc6ff]" data-icon="menu_book">menu_book</span>
+<span class="font-['Inter'] text-sm">Documentation</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 hover:text-slate-200 hover:bg-[#222a3d] transition-all duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:text-[#adc6ff]" data-icon="contact_support">contact_support</span>
+<span class="font-['Inter'] text-sm">Support</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar Anchor -->
+<header class="docked full-width top-0 sticky z-50 bg-[#0b1326]/60 backdrop-blur-3xl shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
+<div class="flex justify-between items-center w-full px-8 h-16">
+<div class="flex items-center gap-6">
+<span class="text-xl font-bold text-[#adc6ff] font-['Manrope'] tracking-tight">Void ITSM</span>
+<div class="hidden md:flex items-center bg-[#131b2e] rounded-full px-4 py-1.5 gap-2 border border-outline-variant/10">
+<span class="material-symbols-outlined text-slate-400 text-sm" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm text-slate-200 w-48 placeholder:text-slate-500" placeholder="Search resources..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition-all hover:opacity-90 scale-98 active:opacity-80">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                        New Change
+                    </button>
+<div class="flex items-center gap-2 border-l border-slate-800 ml-2 pl-4">
+<button class="p-2 text-slate-400 hover:bg-[#222a3d] rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-slate-400 hover:bg-[#222a3d] rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center ml-2 border border-primary/20 overflow-hidden">
+<img alt="Administrator Profile" class="w-full h-full object-cover" data-alt="professional portrait of an IT administrator with glasses and a friendly expression, minimalist background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDggG0uYwUlGsxYGTCJbHN4B6x7lQQ_itRJ60h0ac_RldX4PWRQhOb6zYmHyAiqEQQp3xPGHSkgA0s8Pkw28K9Tp3jO3-UCHtemHfABrwVrSTj9OLdvmS7Wj_Y_oiq8lZN6_kdcxz6RbahAdd_V2H5ChPUEl8vz9l3N2zlZUWra6mKl2KNkYNzeXZHhATf0__b24YiWJl3Vh44p69E1plTPw32JDY_We-zYGnA1g3ITFBPtdvufyOqS5GKSXpROCb5NqX6g_OznYw"/>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- Change Request Canvas -->
+<main class="flex-1 p-8 overflow-y-auto">
+<!-- Header Section -->
+<div class="flex flex-col gap-6 mb-8">
+<div class="flex items-start justify-between">
+<div class="space-y-1">
+<div class="flex items-center gap-2 mb-2">
+<div class="bg-surface-variant text-on-surface-variant px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+                                CR-88429
+                            </div>
+<span class="text-slate-500 text-sm">/</span>
+<span class="text-slate-500 text-sm font-medium">Infrastructure</span>
+</div>
+<h2 class="text-4xl font-extrabold font-headline tracking-tight text-white">Kubernetes Cluster Migration</h2>
+<div class="flex items-center gap-4 mt-2">
+<div class="flex items-center gap-2 bg-[#ffb691]/10 text-[#ffb691] px-3 py-1 rounded-full border border-[#ffb691]/20">
+<span class="material-symbols-outlined text-sm" data-icon="pending">pending</span>
+<span class="text-xs font-bold uppercase tracking-wider">Pending</span>
+</div>
+<div class="flex items-center gap-2 text-slate-400 text-sm">
+<span class="material-symbols-outlined text-sm" data-icon="person">person</span>
+<span>Requested by: Alex Chen</span>
+</div>
+<div class="flex items-center gap-2 text-slate-400 text-sm">
+<span class="material-symbols-outlined text-sm" data-icon="calendar_month">calendar_month</span>
+<span>Created: Oct 24, 2023</span>
+</div>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="px-5 py-2.5 rounded-xl border border-outline-variant/15 text-primary text-sm font-semibold hover:bg-surface-container-high transition-colors">Cancel Request</button>
+<button class="px-5 py-2.5 rounded-xl bg-gradient-to-br from-primary to-primary-container text-on-primary text-sm font-semibold shadow-lg shadow-primary/10 hover:brightness-110 transition-all">Approve Change</button>
+</div>
+</div>
+<!-- Tabs -->
+<div class="flex items-center gap-8 border-b border-slate-800/50 mt-4">
+<button class="pb-4 text-[#adc6ff] font-bold border-b-2 border-[#adc6ff] text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="info">info</span>
+                        Details
+                    </button>
+<button class="pb-4 text-slate-400 hover:text-slate-200 transition-colors text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="group">group</span>
+                        Approvers
+                        <span class="bg-surface-container-highest px-1.5 py-0.5 rounded text-[10px] text-slate-500">4</span>
+</button>
+<button class="pb-4 text-slate-400 hover:text-slate-200 transition-colors text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="chat">chat</span>
+                        Comments
+                    </button>
+<button class="pb-4 text-slate-400 hover:text-slate-200 transition-colors text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="history">history</span>
+                        Activity
+                    </button>
+</div>
+</div>
+<!-- Bento Grid Content -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Left: Detail Panels -->
+<div class="col-span-12 lg:col-span-8 flex flex-col gap-6">
+<!-- Summary Card -->
+<div class="bg-surface-container-low rounded-2xl p-6 relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-primary/10 transition-colors"></div>
+<h3 class="text-lg font-bold font-headline mb-4 text-primary-fixed-dim">Project Summary</h3>
+<p class="text-slate-300 leading-relaxed font-light mb-6">
+                            Migration of the core production Kubernetes cluster from legacy AWS EC2 instances to EKS optimized Graviton2 instances. This includes data persistent volume relocation and DNS cutover for 42 microservices.
+                        </p>
+<div class="grid grid-cols-3 gap-4">
+<div class="p-4 bg-surface-container-highest rounded-xl">
+<span class="text-[10px] text-slate-500 uppercase font-bold tracking-widest block mb-1">Impact Level</span>
+<span class="text-error text-sm font-semibold">High - Enterprise Wide</span>
+</div>
+<div class="p-4 bg-surface-container-highest rounded-xl">
+<span class="text-[10px] text-slate-500 uppercase font-bold tracking-widest block mb-1">Risk Assessment</span>
+<span class="text-tertiary text-sm font-semibold">Moderate</span>
+</div>
+<div class="p-4 bg-surface-container-highest rounded-xl">
+<span class="text-[10px] text-slate-500 uppercase font-bold tracking-widest block mb-1">Type</span>
+<span class="text-primary text-sm font-semibold">Standard Maintenance</span>
+</div>
+</div>
+</div>
+<!-- Steps / Implementation Plan -->
+<div class="bg-surface-container-low rounded-2xl p-6">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-lg font-bold font-headline text-primary-fixed-dim">Implementation Plan</h3>
+<span class="text-[10px] bg-primary/10 text-primary px-2 py-1 rounded-md font-bold">5 STEPS TOTAL</span>
+</div>
+<div class="space-y-4">
+<div class="flex gap-4 items-start group">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant/10 flex items-center justify-center shrink-0 mt-1">
+<span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">01</span>
+</div>
+<div class="flex-1 pb-4 border-b border-slate-800/40">
+<h4 class="text-sm font-bold text-slate-200 mb-1">Staging Validation</h4>
+<p class="text-xs text-slate-400">Complete smoke tests on the EKS staging cluster to ensure helm charts are Graviton compatible.</p>
+</div>
+</div>
+<div class="flex gap-4 items-start group">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant/10 flex items-center justify-center shrink-0 mt-1">
+<span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">02</span>
+</div>
+<div class="flex-1 pb-4 border-b border-slate-800/40">
+<h4 class="text-sm font-bold text-slate-200 mb-1">Persistent Volume Sync</h4>
+<p class="text-xs text-slate-400">Initiate final snapshot and rsync for all stateful workloads in the us-east-1 region.</p>
+</div>
+</div>
+<div class="flex gap-4 items-start group">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant/10 flex items-center justify-center shrink-0 mt-1">
+<span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">03</span>
+</div>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-slate-200 mb-1">Traffic Shift</h4>
+<p class="text-xs text-slate-400">Gradual Route53 weighted record adjustment starting at 10% for internal services.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right: Sidebar Visuals -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+<!-- Maintenance Window -->
+<div class="bg-surface-container-low rounded-2xl p-6 border border-primary/5">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary" data-icon="event_available">event_available</span>
+<h3 class="text-md font-bold font-headline text-white">Maintenance Window</h3>
+</div>
+<div class="relative h-24 bg-surface-container-highest rounded-xl mb-4 overflow-hidden flex items-end">
+<!-- Visual calendar/time representation -->
+<div class="absolute inset-0 grid grid-cols-7 gap-px opacity-10">
+<div class="bg-white/20"></div><div class="bg-white/20"></div><div class="bg-white/20"></div><div class="bg-white/20"></div><div class="bg-white/20"></div><div class="bg-white/20"></div><div class="bg-white/20"></div>
+</div>
+<div class="w-full h-full p-4 flex flex-col justify-center">
+<div class="text-2xl font-black text-primary font-headline">Sat, Oct 28</div>
+<div class="text-xs text-slate-400 uppercase tracking-widest font-bold">02:00 AM — 06:00 AM EST</div>
+</div>
+<div class="absolute bottom-0 left-0 h-1 bg-primary w-2/3"></div>
+</div>
+<div class="flex justify-between text-xs text-slate-500 px-1">
+<span>Duration: 4 Hours</span>
+<span>Remaining: 4d 12h</span>
+</div>
+</div>
+<!-- Impact Analysis -->
+<div class="bg-surface-container-low rounded-2xl p-6">
+<h3 class="text-md font-bold font-headline text-white mb-6">Impact Analysis</h3>
+<div class="space-y-6">
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-bold mb-1">
+<span class="text-slate-300">Service Availability</span>
+<span class="text-error">99.8% Potential Drop</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-error rounded-full" style="width: 85%;"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-bold mb-1">
+<span class="text-slate-300">User Traffic Impact</span>
+<span class="text-tertiary">~4,500 active sessions</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-tertiary rounded-full" style="width: 45%;"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-bold mb-1">
+<span class="text-slate-300">Database Load</span>
+<span class="text-primary">Read-only during cutover</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 25%;"></div>
+</div>
+</div>
+</div>
+<div class="mt-8 pt-6 border-t border-slate-800/50">
+<div class="flex items-center justify-between mb-4">
+<h4 class="text-xs font-bold text-slate-400 uppercase">Affected Assets</h4>
+<span class="text-[10px] text-primary">View Graph</span>
+</div>
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center border border-slate-800" title="EKS Cluster">
+<span class="material-symbols-outlined text-xs text-slate-400" data-icon="hub">hub</span>
+</div>
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center border border-slate-800" title="RDS Database">
+<span class="material-symbols-outlined text-xs text-slate-400" data-icon="database">database</span>
+</div>
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center border border-slate-800" title="S3 Storage">
+<span class="material-symbols-outlined text-xs text-slate-400" data-icon="cloud_queue">cloud_queue</span>
+</div>
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center border border-slate-800" title="Route 53">
+<span class="material-symbols-outlined text-xs text-slate-400" data-icon="dns">dns</span>
+</div>
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center border border-slate-800 text-[10px] font-bold text-slate-500">
+                                    +12
+                                </div>
+</div>
+</div>
+</div>
+<!-- Change Team -->
+<div class="bg-surface-container-low rounded-2xl p-6 relative overflow-hidden">
+<img alt="Technical Team working" class="absolute inset-0 w-full h-full object-cover opacity-10" data-alt="a blurred technological background with glowing network patterns and server rack lights in deep blue tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAI-NMh-6skzkiVJHFhc5MPuWaHriGf-PvY_ZxHqYKJL3F39H3wz0V1LEoVIwxdNgPuSPbrBSeiV102Knjh2il3gFymzHLlm5374uDdrjGYCKvttOcxU_hIBOUxu6XkK_JSE3CYv_g8qVHk_XVUGVWBZyq3AHeFEkRQyIVzxSeDuoR6cVnvBVyIhmGw5Qu64al0N9SnADYYXSCsxGIUQDa8GpkjQg1RfF04jEMaBuLfh_ZWme67ecQFmFfWc6Ahn5HzGarWWgytZg"/>
+<h3 class="text-md font-bold font-headline text-white mb-4 relative z-10">Change Team</h3>
+<div class="space-y-3 relative z-10">
+<div class="flex items-center gap-3">
+<img alt="Lead Engineer" class="w-7 h-7 rounded-full bg-slate-800" data-alt="portrait of a software engineer with glasses, soft cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDV4SSCbvnYE_WW_yHJ1veF7elmQsnIFoNoFvGtwd4KpMycKQ9o_FAPmc9cqyzPGw8l7UkgOfxPzE3q4cZUk7CXJ8s3_6iQLxbu71AXdsbYYXNWkOBgE3AMR4U4SUheMC2Pj74WNbXAOy-3ilT1nZH4IPEpD-sCiWBLhfOnCG6oSzLJYq9xImw5fpXYxDErm-tEYG2tozIN79vhxa9b6PIhFu8xbf4S6BSi_bigGhu_KxtCXHxj2q46Js7gC8bKBYOifh79hGnV0A"/>
+<div>
+<p class="text-xs font-bold text-slate-200">Sarah Jenkins</p>
+<p class="text-[10px] text-slate-500 uppercase">Lead Engineer</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<img alt="DevOps Lead" class="w-7 h-7 rounded-full bg-slate-800" data-alt="portrait of a technology leader in a dark modern office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzUaFZd9tkctQvkcCVAZmJl8c9pnSB-rUTKcEa5LRJXa4waqt-LC7rXI7XMQBfzB2C2Yux1Lc7YaxVKlE9N-c3B8z3KWW54Gv-xCgHFkZIKk7GvGgHzb4bAvOHGEOm59PxWgs6D2g4vBJ3KL65bsb9jkSHhDR2XxZzv-7MnmesVmzjKTn6bIHaK35Bo5MCveaBqXE0lFGvqei-LHpp8wuVEBX7K49Q1KOQHfrolCm9uEaG-Odkvvi3vqekMHPp6SnpyfNJ9LcGKw"/>
+<div>
+<p class="text-xs font-bold text-slate-200">Anita Varghese</p>
+<p class="text-[10px] text-slate-500 uppercase">DevOps SME</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

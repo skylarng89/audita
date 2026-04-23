@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed-dim": "#b6c4ff",
+                    "inverse-primary": "#b6c4ff",
+                    "secondary-container": "#d0e1fb",
+                    "error": "#ba1a1a",
+                    "surface-container-low": "#f2f4f6",
+                    "secondary-fixed": "#d3e4fe",
+                    "tertiary-fixed": "#ffdbcb",
+                    "background": "#f7f9fb",
+                    "on-primary-container": "#90a8ff",
+                    "on-tertiary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "primary-container": "#1e3a8a",
+                    "error-container": "#ffdad6",
+                    "on-secondary": "#ffffff",
+                    "inverse-on-surface": "#eff1f3",
+                    "tertiary": "#4b1c00",
+                    "tertiary-fixed-dim": "#ffb691",
+                    "on-error-container": "#93000a",
+                    "on-surface-variant": "#444651",
+                    "surface-container-highest": "#e0e3e5",
+                    "primary-fixed": "#dce1ff",
+                    "on-tertiary-container": "#f39461",
+                    "on-background": "#191c1e",
+                    "on-primary-fixed-variant": "#264191",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "on-secondary-container": "#54647a",
+                    "on-primary-fixed": "#00164e",
+                    "on-secondary-fixed": "#0b1c30",
+                    "primary": "#00236f",
+                    "surface-tint": "#4059aa",
+                    "on-tertiary-fixed-variant": "#773205",
+                    "on-primary": "#ffffff",
+                    "inverse-surface": "#2d3133",
+                    "on-tertiary-fixed": "#341100",
+                    "surface-bright": "#f7f9fb",
+                    "tertiary-container": "#6e2c00",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "outline": "#757682",
+                    "outline-variant": "#c5c5d3",
+                    "surface": "#f7f9fb",
+                    "secondary": "#505f76",
+                    "surface-container": "#eceef0",
+                    "on-surface": "#191c1e",
+                    "surface-variant": "#e0e3e5",
+                    "surface-dim": "#d8dadc",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e6e8ea"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "1rem",
+                    "xl": "1.25rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .signature-glow {
+            background: linear-gradient(150deg, #00236f 0%, #1e3a8a 100%);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+            color: #191c1e;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- SideNavBar Shell -->
+<aside class="h-screen w-72 fixed left-0 top-0 z-50 bg-slate-50 dark:bg-slate-900 bg-slate-100/50 dark:bg-slate-800/50 backdrop-blur-xl flex flex-col h-full border-r-0 font-['Inter'] antialiased tracking-[-0.02em]">
+<div class="px-8 py-10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg signature-glow flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">architecture</span>
+</div>
+<div>
+<h1 class="text-2xl font-medium tracking-tighter text-[#00236f] dark:text-blue-400">Audita</h1>
+<p class="text-[10px] uppercase tracking-[0.1em] text-slate-400 font-bold">Sovereign Architect</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 py-3 px-4 text-[#00236f] dark:text-blue-400 border-l-[4px] border-[#00236f] bg-slate-200/50 dark:bg-blue-900/20 font-medium transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#00236f] dark:hover:text-blue-300 transition-colors hover:bg-slate-200/30 dark:hover:bg-slate-800/50 rounded-r-lg" href="#">
+<span class="material-symbols-outlined">published_with_changes</span>
+<span>Change Requests</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#00236f] dark:hover:text-blue-300 transition-colors hover:bg-slate-200/30 dark:hover:bg-slate-800/50 rounded-r-lg" href="#">
+<span class="material-symbols-outlined">person</span>
+<span>Users</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#00236f] dark:hover:text-blue-300 transition-colors hover:bg-slate-200/30 dark:hover:bg-slate-800/50 rounded-r-lg" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Groups</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#00236f] dark:hover:text-blue-300 transition-colors hover:bg-slate-200/30 dark:hover:bg-slate-800/50 rounded-r-lg" href="#">
+<span class="material-symbols-outlined">history</span>
+<span>Audit Trail</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#00236f] dark:hover:text-blue-300 transition-colors hover:bg-slate-200/30 dark:hover:bg-slate-800/50 rounded-r-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="p-6">
+<button class="w-full signature-glow text-white py-4 rounded-lg font-semibold flex items-center justify-center gap-2 shadow-xl shadow-primary/20 active:scale-95 transition-all duration-150 ease-in-out">
+<span class="material-symbols-outlined text-sm">add</span>
+                New Change
+            </button>
+</div>
+</aside>
+<!-- TopAppBar Shell -->
+<header class="fixed top-0 right-0 w-[calc(100%-18rem)] z-40 bg-[#f7f9fb]/80 dark:bg-slate-950/80 backdrop-blur-2xl flex items-center justify-between px-10 h-20 font-['Inter'] text-sm tracking-wide font-medium">
+<div class="flex items-center gap-8 w-1/2">
+<div class="relative w-full max-w-md group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-lg pl-12 pr-4 py-2.5 text-xs tracking-widest focus:ring-2 focus:ring-[#1e3a8a] transition-all outline-none" placeholder="SEARCH SYSTEM ARCHIVES..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-slate-500 hover:bg-white/50 dark:hover:bg-slate-800/50 p-2 rounded-lg relative transition-all">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="text-slate-500 hover:bg-white/50 dark:hover:bg-slate-800/50 p-2 rounded-lg transition-all">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant/20 mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<p class="text-xs font-bold text-[#00236f]">ADMINISTRATOR</p>
+<p class="text-[10px] text-slate-400 tracking-tighter">Sovereign Access</p>
+</div>
+<img alt="Administrator Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover" data-alt="close-up portrait of a professional male administrator in a dark studio setting with soft cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5nU0GMOkkV7Su3hwdubOHxF167muW09MGYBZy2H2Vmi85r6jmHuXSpjAd8Izt7exmr0ltFhEA-DkcdTesksvCkO0bo8La1w3Su5FARGlrwCJtpMK8_kabDguG5twgYtLxFFSXattrKD0AkuVyh3fUqGNnlalIbchYYNL_hMH-O-zxNhryve6-GRN9VjhRsk5KuCgFIiO5BWT3rlbDn0w_KrQz-c4Ih8GWXKs58VNRIGTIpdZTlXkCDoKc0UaEfl-xJienohqOjg"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-72 pt-28 px-10 pb-12 min-h-screen">
+<!-- Summary Metrics Section (Editorial Style) -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+<div class="bg-surface-container-lowest p-8 rounded-xl flex flex-col justify-between h-40">
+<p class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">Pending Approvals</p>
+<div class="flex items-baseline gap-2">
+<span class="text-5xl font-bold tracking-tighter text-primary">12</span>
+<span class="text-xs font-medium text-tertiary-container">+2 since yesterday</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-8 rounded-xl flex flex-col justify-between h-40">
+<p class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">Active Changes</p>
+<div class="flex items-baseline gap-2">
+<span class="text-5xl font-bold tracking-tighter text-primary">48</span>
+<span class="text-xs font-medium text-on-secondary-container">6 deploying now</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-8 rounded-xl border-l-4 border-error flex flex-col justify-between h-40">
+<p class="text-[10px] font-bold uppercase tracking-[0.15em] text-error">SLA Risks</p>
+<div class="flex items-baseline gap-2">
+<span class="text-5xl font-bold tracking-tighter text-error">03</span>
+<span class="text-xs font-medium text-error">Critical response needed</span>
+</div>
+</div>
+<div class="bg-primary text-white p-8 rounded-xl flex flex-col justify-between h-40 signature-glow">
+<p class="text-[10px] font-bold uppercase tracking-[0.15em] text-on-primary-container">Success Rate</p>
+<div class="flex items-baseline gap-2">
+<span class="text-5xl font-bold tracking-tighter">99.2%</span>
+<span class="text-xs font-medium text-on-primary-container">Global KPI</span>
+</div>
+</div>
+</div>
+<!-- Asymmetric Bento Layout -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Awaiting My Action (High Priority) -->
+<div class="col-span-12 lg:col-span-8 space-y-6">
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-xl font-medium tracking-tight text-primary">Changes Awaiting My Action</h2>
+<a class="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-primary transition-colors" href="#">View All</a>
+</div>
+<div class="space-y-4">
+<!-- Action Card 1 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl group transition-all hover:bg-white hover:shadow-[0px_20px_40px_rgba(0,35,111,0.06)] flex items-center justify-between">
+<div class="flex items-center gap-6">
+<div class="w-12 h-12 rounded-lg bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">upgrade</span>
+</div>
+<div>
+<h3 class="font-medium text-on-surface">Cloud Infrastructure Scaling - AWS-East-1</h3>
+<p class="text-xs text-slate-400 mt-1">CR-9042 • Risk: <span class="text-tertiary-container font-semibold uppercase tracking-tighter">Medium</span> • Submitted by James W.</p>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="px-5 py-2.5 bg-surface-container-low text-on-surface text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-surface-container-high transition-all">Decline</button>
+<button class="px-5 py-2.5 signature-glow text-white text-xs font-bold uppercase tracking-widest rounded-lg transition-all shadow-lg shadow-primary/10">Approve</button>
+</div>
+</div>
+<!-- Action Card 2 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl group transition-all hover:bg-white hover:shadow-[0px_20px_40px_rgba(0,35,111,0.06)] flex items-center justify-between">
+<div class="flex items-center gap-6">
+<div class="w-12 h-12 rounded-lg bg-error-container/30 flex items-center justify-center text-error">
+<span class="material-symbols-outlined">security</span>
+</div>
+<div>
+<h3 class="font-medium text-on-surface">Emergency Firewall Patch - Global Edge</h3>
+<p class="text-xs text-slate-400 mt-1">CR-9055 • Risk: <span class="text-error font-bold uppercase tracking-tighter">High</span> • Submitted by Security Ops</p>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="px-5 py-2.5 bg-surface-container-low text-on-surface text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-surface-container-high transition-all">Review</button>
+<button class="px-5 py-2.5 signature-glow text-white text-xs font-bold uppercase tracking-widest rounded-lg transition-all shadow-lg shadow-primary/10">Approve</button>
+</div>
+</div>
+<!-- Action Card 3 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl group transition-all hover:bg-white hover:shadow-[0px_20px_40px_rgba(0,35,111,0.06)] flex items-center justify-between">
+<div class="flex items-center gap-6">
+<div class="w-12 h-12 rounded-lg bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">database</span>
+</div>
+<div>
+<h3 class="font-medium text-on-surface">PostgreSQL Minor Version Update</h3>
+<p class="text-xs text-slate-400 mt-1">CR-8991 • Risk: <span class="text-on-secondary-container font-semibold uppercase tracking-tighter">Low</span> • Submitted by DB Admin</p>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="px-5 py-2.5 bg-surface-container-low text-on-surface text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-surface-container-high transition-all">Decline</button>
+<button class="px-5 py-2.5 signature-glow text-white text-xs font-bold uppercase tracking-widest rounded-lg transition-all shadow-lg shadow-primary/10">Approve</button>
+</div>
+</div>
+</div>
+<!-- Activity Feed -->
+<div class="mt-12">
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-xl font-medium tracking-tight text-primary">Recent Activity</h2>
+</div>
+<div class="relative pl-8 border-l-2 border-outline-variant/10 space-y-10">
+<div class="relative">
+<div class="absolute -left-[41px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-surface shadow-sm"></div>
+<div class="bg-surface-container-low/50 p-5 rounded-xl border border-outline-variant/5">
+<p class="text-sm font-medium">You approved <span class="text-primary font-bold">CR-8812: API Gateway Refresh</span></p>
+<p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest mt-1">Today at 11:42 AM</p>
+</div>
+</div>
+<div class="relative">
+<div class="absolute -left-[41px] top-0 w-4 h-4 rounded-full bg-tertiary-container border-4 border-surface shadow-sm"></div>
+<div class="bg-surface-container-low/50 p-5 rounded-xl border border-outline-variant/5">
+<p class="text-sm font-medium">System flagged <span class="text-tertiary-container font-bold">CR-9042</span> as potential SLA risk</p>
+<p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest mt-1">Today at 09:15 AM</p>
+</div>
+</div>
+<div class="relative">
+<div class="absolute -left-[41px] top-0 w-4 h-4 rounded-full bg-slate-300 border-4 border-surface shadow-sm"></div>
+<div class="bg-surface-container-low/50 p-5 rounded-xl border border-outline-variant/5">
+<p class="text-sm font-medium">New comment on <span class="text-primary font-bold">CR-7721</span> by Sarah Miller</p>
+<p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest mt-1">Yesterday at 04:50 PM</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Side Bento Area (Chart & Metrics) -->
+<div class="col-span-12 lg:col-span-4 space-y-8">
+<!-- Category Chart Overview -->
+<div class="bg-surface-container-lowest p-8 rounded-xl">
+<h3 class="text-sm font-bold uppercase tracking-widest text-slate-400 mb-8 text-center">Change Categories</h3>
+<div class="relative w-48 h-48 mx-auto flex items-center justify-center mb-8">
+<svg class="w-full h-full transform -rotate-90">
+<circle cx="96" cy="96" fill="transparent" r="80" stroke="#f2f4f6" stroke-width="20"></circle>
+<circle cx="96" cy="96" fill="transparent" r="80" stroke="#00236f" stroke-dasharray="502" stroke-dashoffset="150" stroke-width="20"></circle>
+<circle cx="96" cy="96" fill="transparent" r="80" stroke="#1e3a8a" stroke-dasharray="502" stroke-dashoffset="350" stroke-width="20"></circle>
+<circle cx="96" cy="96" fill="transparent" r="80" stroke="#d0e1fb" stroke-dasharray="502" stroke-dashoffset="450" stroke-width="20"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+<p class="text-3xl font-bold tracking-tighter text-primary">82</p>
+<p class="text-[10px] font-bold text-slate-400 uppercase">Total Items</p>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="text-xs font-medium text-slate-600">Emergency</span>
+</div>
+<span class="text-xs font-bold">12%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-primary-container"></div>
+<span class="text-xs font-medium text-slate-600">Normal</span>
+</div>
+<span class="text-xs font-bold">64%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-secondary-container"></div>
+<span class="text-xs font-medium text-slate-600">Standard</span>
+</div>
+<span class="text-xs font-bold">24%</span>
+</div>
+</div>
+</div>
+<!-- Secondary CTA Card -->
+<div class="bg-tertiary-fixed p-8 rounded-xl relative overflow-hidden group">
+<div class="relative z-10">
+<h4 class="text-on-tertiary-fixed font-bold text-lg mb-2 leading-tight">Generate Audit Readiness Report</h4>
+<p class="text-on-tertiary-fixed-variant text-sm mb-6 opacity-80">Automatic compliance verification based on current cycle.</p>
+<button class="bg-white/40 backdrop-blur-md px-6 py-3 rounded-lg text-xs font-bold uppercase tracking-widest text-on-tertiary-fixed hover:bg-white/60 transition-all">Download PDF</button>
+</div>
+<span class="material-symbols-outlined absolute -bottom-4 -right-4 text-9xl text-white/10 rotate-12">description</span>
+</div>
+<!-- Quick Help Card -->
+<div class="bg-surface-container-low p-8 rounded-xl border border-outline-variant/10">
+<div class="flex items-center gap-4 mb-4">
+<img alt="Expert Support" class="w-12 h-12 rounded-full object-cover grayscale" data-alt="headshot of a helpful female itil expert professional with short dark hair in business attire smiling warmly" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDY1fyXmHrtVY7MvSurV-f472MGxOoz-fnfc1PB15RgJS33e3nH9OOYrrewEY14Be6CzWA9scQt4qjzMvMvpmdoB257ixTuLHcO1TDdlfNrRhedxg-gsLr1_qqi2leCgB-wDXsxK5XxKiczAqt-0I7hY5aQl-KvQ-goBRIWNrMmcGXmaVS0_81U18vQTh_v34roWGEC3XIicN6bR8KtoogPUd8ZZcqZL9gBHMiWwCN2pOK12yyEZ2aZkkJKoDdRsU6_FfqW_lyQCQ"/>
+<div>
+<p class="text-xs font-bold text-primary">ELARA AI ASSISTANT</p>
+<p class="text-[10px] text-slate-500 uppercase">ITIL Level 3 Expert</p>
+</div>
+</div>
+<p class="text-sm text-slate-600 italic leading-relaxed">"Based on your recent activity, you might want to review the CAB schedule for the upcoming Friday release window."</p>
+<button class="w-full mt-6 py-3 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-white transition-all">Ask Elara</button>
+</div>
+</div>
+</div>
+</main>
+</body></html>
