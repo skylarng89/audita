@@ -1,7 +1,7 @@
 package io.audita.api.controller;
 
 import io.audita.api.dto.request.BootstrapRequest;
-import io.audita.application.service.AuthService;
+import io.audita.infrastructure.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

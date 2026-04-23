@@ -1,0 +1,113 @@
+spring:
+  application:
+    name: audita-api
+
+  # ── Database ─────────────────────────────────────────────────────────────
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/audita}
+    username: ${DATABASE_USERNAME:audita}
+    password: ${DATABASE_PASSWORD:secret}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # ── JPA / Hibernate ──────────────────────────────────────────────────────
+  jpa:
+    # DDL managed exclusively by Flyway
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        show_sql: false
+
+  # ── Flyway (public schema bootstrap) ─────────────────────────────────────
+  flyway:
+    enabled: true
+    locations: classpath:db/migration/public
+    schemas: public
+    baseline-on-migrate: true
+    validate-on-migrate: true
+
+  # ── Mail ──────────────────────────────────────────────────────────────────
+  mail:
+    host: ${DEFAULT_SMTP_HOST:localhost}
+    port: ${DEFAULT_SMTP_PORT:1025}
+    username: ${DEFAULT_SMTP_USERNAME:}
+    password: ${DEFAULT_SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${DEFAULT_SMTP_AUTH:false}
+          starttls:
+            enable: ${DEFAULT_SMTP_TLS:false}
+
+  # ── Thymeleaf ─────────────────────────────────────────────────────────────
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
+
+  # ── Web MVC ───────────────────────────────────────────────────────────────
+  mvc:
+    problem-details:
+      enabled: true
+
+# ── Server ────────────────────────────────────────────────────────────────
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /
+  error:
+    include-message: never
+    include-stacktrace: never
+
+# ── Actuator ──────────────────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# ── Audita custom properties ──────────────────────────────────────────────
+audita:
+  jwt:
+    secret: ${JWT_SECRET:change-me-in-production-must-be-at-least-32-chars-long}
+    expiry-seconds: ${JWT_EXPIRY_SECONDS:900}
+
+  refresh-token:
+    expiry-days: ${REFRESH_TOKEN_EXPIRY_DAYS:7}
+
+  encryption:
+    key: ${APP_ENCRYPTION_KEY:0000000000000000000000000000000000000000000000000000000000000000}
+
+  app:
+    base-url: ${APP_BASE_URL:http://localhost:3000}
+
+  storage:
+    backend: ${STORAGE_BACKEND:LOCAL}
+    local:
+      base-path: ${STORAGE_LOCAL_BASE_PATH:/data/uploads}
+    s3:
+      bucket: ${STORAGE_S3_BUCKET:audita-uploads}
+      region: ${STORAGE_S3_REGION:us-east-1}
+      access-key: ${STORAGE_S3_ACCESS_KEY:}
+      secret-key: ${STORAGE_S3_SECRET_KEY:}
+
+# ── Logging ───────────────────────────────────────────────────────────────
+logging:
+  level:
+    root: INFO
+    io.audita: DEBUG
+    org.flywaydb: INFO
+  pattern:
+    console: "%d{ISO8601} %-5level [%thread] %logger{36} - %msg%n"

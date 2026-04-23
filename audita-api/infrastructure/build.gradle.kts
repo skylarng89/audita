@@ -1,4 +1,4 @@
-// Infrastructure module — database, file storage, security utilities, tenant wiring.
+// Infrastructure module — database, email, file storage, security utilities, tenant wiring.
 dependencies {
     implementation(platform("org.springframework.boot:spring-boot-dependencies:3.4.5"))
     annotationProcessor(platform("org.springframework.boot:spring-boot-dependencies:3.4.5"))
@@ -13,6 +13,10 @@ dependencies {
     // Flyway
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
+
+    // Email + templates
+    implementation("org.springframework.boot:spring-boot-starter-mail")
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
     // AWS SDK v2 (S3-compatible file storage)
     implementation(platform("software.amazon.awssdk:bom:2.31.7"))

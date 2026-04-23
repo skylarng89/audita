@@ -2,6 +2,12 @@
   "name": "audita-web",
   "private": true,
   "type": "module",
+  "version": "0.0.0",
+  "author": {
+    "name": "Patrick Aziken",
+    "email": "onaziken@gmail.com"
+  },
+  "description": "Audita web interface",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",

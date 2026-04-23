@@ -1,4 +1,4 @@
-package io.audita.application.service;
+package io.audita.infrastructure.service;
 
 import io.audita.domain.exception.DomainNotPermittedException;
 import io.audita.domain.exception.NotFoundException;

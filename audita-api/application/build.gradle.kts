@@ -1,4 +1,5 @@
-// Application module — use cases / application services.
+// Application module — port interfaces and pure application logic.
+// Depends only on domain. No infrastructure imports.
 dependencies {
     implementation(platform("org.springframework.boot:spring-boot-dependencies:3.4.5"))
     annotationProcessor(platform("org.springframework.boot:spring-boot-dependencies:3.4.5"))
@@ -8,8 +9,6 @@ dependencies {
     implementation("org.springframework:spring-context")
     implementation("org.springframework:spring-tx")
     implementation("org.springframework.security:spring-security-core")
-    implementation("org.springframework.boot:spring-boot-starter-mail")
-    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")

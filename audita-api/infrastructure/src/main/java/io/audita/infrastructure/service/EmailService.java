@@ -1,4 +1,4 @@
-package io.audita.application.service;
+package io.audita.infrastructure.service;
 
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

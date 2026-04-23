@@ -1,5 +1,5 @@
 # ── Build stage ────────────────────────────────────────────────────────────────
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM eclipse-temurin:25-jdk-alpine AS builder
 WORKDIR /app
 
 COPY settings.gradle.kts build.gradle.kts ./
@@ -19,7 +19,7 @@ COPY api/src api/src
 RUN chmod +x ./gradlew && ./gradlew :api:bootJar --no-daemon
 
 # ── Runtime stage ───────────────────────────────────────────────────────────────
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
 
 RUN addgroup -S audita && adduser -S audita -G audita

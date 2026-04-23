@@ -2,8 +2,8 @@ package io.audita.api.controller;
 
 import io.audita.api.dto.request.*;
 import io.audita.api.dto.response.AuthResponse;
-import io.audita.application.service.AuthService;
-import io.audita.application.service.AuthService.LoginResult;
+import io.audita.infrastructure.service.AuthService;
+import io.audita.infrastructure.service.AuthService.LoginResult;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
