@@ -19,6 +19,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-validation")
 
+    // JWT — needed by JwtAuthenticationFilter (not transitively visible from :infrastructure)
+    implementation("io.jsonwebtoken:jjwt-api:0.12.6")
+
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
