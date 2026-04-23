@@ -1,10 +1,22 @@
 // Application module — use cases / application services.
-// Depends on domain. Orchestrates domain objects and calls ports (interfaces).
-// No Spring web or JPA — only Spring context for @Service, @Transactional.
 dependencies {
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:3.4.5"))
+    annotationProcessor(platform("org.springframework.boot:spring-boot-dependencies:3.4.5"))
+
     implementation(project(":domain"))
 
     implementation("org.springframework:spring-context")
     implementation("org.springframework:spring-tx")
     implementation("org.springframework.security:spring-security-core")
+    implementation("org.springframework.boot:spring-boot-starter-mail")
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+
+    compileOnly("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testCompileOnly("org.projectlombok:lombok")
+    testAnnotationProcessor("org.projectlombok:lombok")
 }
+
+tasks.withType<Test> { useJUnitPlatform() }
