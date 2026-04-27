@@ -1,8 +1,8 @@
 # Audita — Active Context
 
-**Last Updated:** 2026-04-23
-**Current Phase:** Pre-development — Project initialisation & planning
-**Active Sprint:** Sprint 0 — Foundation & Scaffolding
+**Last Updated:** 2026-04-27
+**Current Phase:** Active development
+**Active Sprint:** Sprint 1 — Authentication & Platform Bootstrap
 
 ---
 
@@ -16,31 +16,33 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 
 ## Current State
 
-- No code written yet — project is at the planning and memory-bank initialisation stage.
-- Documentation complete: PRD v1.0, SRS v1.0, USER_FLOW v1.0 (all `docs/` folder).
-- UI designs complete: 40 screens across light/dark modes covering all major user journeys (all `ui-designs/` folder).
-- Memory bank initialised (this session: 2026-04-23).
+- **Sprint 0 complete (19/19 tasks).** Both repositories are scaffolded and runnable via Docker Compose.
+- Documentation complete: PRD v1.0, SRS v1.0, USER_FLOW v1.0 (`docs/`). UI designs: 40 screens (`ui-designs/`).
+- `audita-api`: hexagonal structure, JPA/Hibernate multi-tenancy, Flyway migrations, Spring Security scaffold, RFC 7807 exception handler, structured JSON logging (Logstash encoder).
+- `audita-web`: Nuxt 3, Tailwind tokens, all layouts, auth/role/tenant middleware, `plugins/api.ts`, `useAuthStore`, shared component library (AppButton, AppInput, AppBadge, AppCard, AppModal, AppTable, AppPagination).
+- README.md written with Docker Compose and standalone run instructions.
+- Known pattern: empty Gradle module `src/` dirs need `.gitkeep` files — Git ignores empty dirs, Docker `COPY` fails without them.
 
 ---
 
 ## Five User Personas
 
-| Role | Scope | Key Capability |
-|---|---|---|
-| **Super Admin** | Platform-wide | Manage tenants, domain whitelists, SSO per org |
-| **Admin** | Org-wide | Configure workflows, manage users/roles/groups, SLA, custom fields |
-| **Requester** | Org-wide | Create and track change requests |
-| **Approver** | Org-wide | Review and action change requests |
-| **Auditor** | Org-wide | Read-only: view CRs, audit trail |
+| Role            | Scope         | Key Capability                                                     |
+| --------------- | ------------- | ------------------------------------------------------------------ |
+| **Super Admin** | Platform-wide | Manage tenants, domain whitelists, SSO per org                     |
+| **Admin**       | Org-wide      | Configure workflows, manage users/roles/groups, SLA, custom fields |
+| **Requester**   | Org-wide      | Create and track change requests                                   |
+| **Approver**    | Org-wide      | Review and action change requests                                  |
+| **Auditor**     | Org-wide      | Read-only: view CRs, audit trail                                   |
 
 ---
 
 ## Application Structure (Two Repositories)
 
-| Repo | Tech | Description |
-|---|---|---|
-| `audita-api` | Java 25 + Spring Boot 4 | REST API, business logic, data layer |
-| `audita-web` | Nuxt 3 + Vue 3 | SSR frontend, component library, state management |
+| Repo         | Tech                    | Description                                       |
+| ------------ | ----------------------- | ------------------------------------------------- |
+| `audita-api` | Java 25 + Spring Boot 4 | REST API, business logic, data layer              |
+| `audita-web` | Nuxt 3 + Vue 3          | SSR frontend, component library, state management |
 
 Both served via Docker Compose (dev) or Helm/K8s (production).
 
@@ -62,6 +64,7 @@ Both served via Docker Compose (dev) or Helm/K8s (production).
 ## MVP Delivery Strategy
 
 The sprint plan is structured to deliver a **usable, end-to-end MVP** as early as Sprint 4/5, enabling:
+
 1. Organisations to be provisioned.
 2. Users to be invited and authenticated.
 3. Change requests to be created, submitted, and approved.
@@ -73,13 +76,13 @@ Advanced features (SLA, custom fields, audit export, full admin config) follow i
 
 ## Active Blockers / Open Questions
 
-- None at this time — documentation is comprehensive and clear.
+- None.
 
 ---
 
 ## Next Actions
 
-1. Scaffold `audita-api` — Gradle project, Spring Boot 4, Flyway, Docker Compose.
-2. Scaffold `audita-web` — Nuxt 3 project, Tailwind CSS, Pinia, component library baseline.
-3. Implement public schema migrations (tenants, super_admins, sso_configs, allowed_domains).
-4. Implement authentication module (local login, JWT, refresh token rotation).
+**Sprint 1 — Authentication & Platform Bootstrap:**
+
+1. Backend: platform bootstrap endpoint (Super Admin first-run), local login, JWT + refresh token cycle, forgot/reset password, Spring Security JWT filter, domain whitelist check, Google/Microsoft OIDC SSO, AES-256 SSO secret encryption.
+2. Frontend: Sign In, Forgot Password, Reset Password, Accept Invite, Platform Bootstrap pages; `useAuthStore` (Pinia) with silent refresh; role-based post-login redirect.
