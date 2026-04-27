@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Logback configuration for Audita API.
+
+  Two appenders:
+    - CONSOLE_JSON  : structured JSON output (production / default).
+                      LogstashEncoder includes all MDC fields automatically.
+                      MDC keys expected: tenant_id, user_id, request_id.
+    - CONSOLE_PLAIN : human-readable coloured output for local development.
+                      Active only when the "dev" Spring profile is loaded.
+-->
+<configuration>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       JSON appender — production / default
+       Uses net.logstash.logback.encoder.LogstashEncoder which
+       emits a single-line JSON object per event, including all
+       MDC fields, stack traces, and caller data.
+  ═══════════════════════════════════════════════════════════ -->
+  <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <!-- Rename the default "message" key to keep it concise -->
+      <fieldNames>
+        <message>msg</message>
+        <levelValue>[ignore]</levelValue>
+      </fieldNames>
+      <!-- Always emit these MDC fields even when absent (null) so
+           downstream log aggregators can rely on a stable schema. -->
+      <includeMdcKeyName>tenant_id</includeMdcKeyName>
+      <includeMdcKeyName>user_id</includeMdcKeyName>
+      <includeMdcKeyName>request_id</includeMdcKeyName>
+      <!-- Include caller class/method/line for WARN+ to aid debugging
+           without the overhead on every INFO log. -->
+      <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+        <maxDepthPerThrowable>30</maxDepthPerThrowable>
+        <maxLength>4096</maxLength>
+        <shortenedClassNameLength>36</shortenedClassNameLength>
+        <rootCauseFirst>true</rootCauseFirst>
+      </throwableConverter>
+    </encoder>
+  </appender>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       Plain / coloured appender — "dev" profile only
+       Pattern includes timestamp, level (coloured), logger name
+       (abbreviated), MDC context, and message.
+  ═══════════════════════════════════════════════════════════ -->
+  <appender name="CONSOLE_PLAIN" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>
+        %d{HH:mm:ss.SSS} %highlight(%-5level) %cyan(%logger{36}) [%X{tenant_id}|%X{user_id}|%X{request_id}] - %msg%n%rEx
+      </pattern>
+    </encoder>
+  </appender>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       Profile-based root logger wiring
+  ═══════════════════════════════════════════════════════════ -->
+
+  <!-- Default (prod / staging / test): JSON output -->
+  <springProfile name="!dev">
+    <root level="INFO">
+      <appender-ref ref="CONSOLE_JSON" />
+    </root>
+
+    <!-- Verbose debug logging for Audita application code only -->
+    <logger name="io.audita" level="DEBUG" additivity="false">
+      <appender-ref ref="CONSOLE_JSON" />
+    </logger>
+  </springProfile>
+
+  <!-- Dev profile: readable coloured output -->
+  <springProfile name="dev">
+    <root level="INFO">
+      <appender-ref ref="CONSOLE_PLAIN" />
+    </root>
+
+    <logger name="io.audita" level="DEBUG" additivity="false">
+      <appender-ref ref="CONSOLE_PLAIN" />
+    </logger>
+
+    <!-- Suppress noisy Hibernate SQL parameter binding in dev unless needed -->
+    <logger name="org.hibernate.type.descriptor.sql" level="WARN" />
+  </springProfile>
+
+</configuration>

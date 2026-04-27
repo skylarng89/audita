@@ -11,7 +11,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "7432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U audita -d audita"]
       interval: 10s
@@ -24,7 +24,7 @@ services:
     container_name: audita-mailhog
     restart: unless-stopped
     ports:
-      - "1025:1025" # SMTP
+      - "7025:1025" # SMTP
       - "8025:8025" # Web UI
 
   # ── Spring Boot API ─────────────────────────────────────────────────────────
@@ -55,7 +55,7 @@ services:
     volumes:
       - uploads:/data/uploads
     ports:
-      - "8080:8080"
+      - "7080:8080"
     healthcheck:
       test:
         ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
@@ -75,7 +75,7 @@ services:
     environment:
       NUXT_PUBLIC_API_BASE: http://api:8080
     ports:
-      - "3000:3000"
+      - "7000:3000"
 
 volumes:
   pgdata:
