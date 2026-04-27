@@ -41,6 +41,13 @@ public class UserEntity {
 
     protected UserEntity() {}
 
+    // Used by SSO JIT provisioning (no password — user authenticates via OAuth only)
+    public UserEntity(String email, String fullName) {
+        this.email = email;
+        this.fullName = fullName;
+        this.status = UserStatus.ACTIVE;
+    }
+
     @PreUpdate
     public void onUpdate() {
         this.updatedAt = OffsetDateTime.now();

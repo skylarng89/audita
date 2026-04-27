@@ -57,8 +57,8 @@
 | Sprint    | Total Tasks | Not Started | In Progress | Completed | Progress % |
 | --------- | ----------- | ----------- | ----------- | --------- | ---------- |
 | Sprint 0  | 19          | 0           | 0           | 19        | 100%       |
-| Sprint 1  | 22+         | 22          | 0           | 0         | 0%         |
-| **TOTAL** | **41+**     | **22**      | **0**       | **19**    | **46%**    |
+| Sprint 1  | 22          | 0           | 0           | 22        | 100%       |
+| **TOTAL** | **41**      | **0**       | **0**       | **41**    | **100%**   |
 
 ---
 
@@ -97,40 +97,40 @@
 
 ### Backend — Auth Module
 
-| Task ID  | Task                                                                       | Priority | Status         | Assigned To | Notes                                                                        |
-| -------- | -------------------------------------------------------------------------- | -------- | -------------- | ----------- | ---------------------------------------------------------------------------- |
-| AUTH-001 | Implement platform bootstrap: first-run Super Admin registration endpoint  | High     | 🔴 Not Started | Developer 1 | `POST /api/platform/v1/bootstrap` — idempotent; fails if SA already exists   |
-| AUTH-002 | Implement local login endpoint with bcrypt verification                    | High     | 🔴 Not Started | Developer 1 | `POST /api/v1/auth/login`; rate limit 5/15min/IP (SEC-05, AUTH-05)           |
-| AUTH-003 | Implement JWT access token generation (15 min, RS256 or HS256)             | High     | 🔴 Not Started | Developer 1 | AUTH-02                                                                      |
-| AUTH-004 | Implement refresh token issuance, rotation, and revocation                 | High     | 🔴 Not Started | Developer 1 | `POST /api/v1/auth/refresh`; HttpOnly cookie; rotate on use                  |
-| AUTH-005 | Implement logout (revoke refresh token, clear cookie)                      | High     | 🔴 Not Started | Developer 1 | `POST /api/v1/auth/logout`                                                   |
-| AUTH-006 | Implement forgot password — generate single-use token, send email          | High     | 🔴 Not Started | Developer 1 | `POST /api/v1/auth/forgot-password`; 1h expiry; rate limit 3/hr              |
-| AUTH-007 | Implement reset password — validate token, update hash, mark used          | High     | 🔴 Not Started | Developer 1 | `POST /api/v1/auth/reset-password`                                           |
-| AUTH-008 | Implement Spring Security JWT filter (validate token, set SecurityContext) | High     | 🔴 Not Started | Developer 1 | All protected routes require valid JWT                                       |
-| AUTH-009 | Implement domain whitelisting check on login (DW-01 → DW-07)               | High     | 🔴 Not Started | Developer 1 | Check `tenant_allowed_domains`; return 403 `DOMAIN_NOT_PERMITTED` if blocked |
-| AUTH-010 | Write unit + integration tests for all auth flows                          | High     | 🔴 Not Started | Developer 1 | Login, logout, refresh, forgot/reset password, domain block                  |
+| Task ID  | Task                                                                       | Priority | Status       | Assigned To | Notes                                                                                     |
+| -------- | -------------------------------------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------------- |
+| AUTH-001 | Implement platform bootstrap: first-run Super Admin registration endpoint  | High     | ✅ Completed | Developer 1 | `PlatformBootstrapController` + `AuthService.bootstrapPlatform()`; idempotent             |
+| AUTH-002 | Implement local login endpoint with bcrypt verification                    | High     | ✅ Completed | Developer 1 | Rate limited 5/15min/IP+email; domain whitelist check; `AuthController.login()`           |
+| AUTH-003 | Implement JWT access token generation (15 min, RS256 or HS256)             | High     | ✅ Completed | Developer 1 | `JwtService.generateToken()`; HS256; 15-min default                                       |
+| AUTH-004 | Implement refresh token issuance, rotation, and revocation                 | High     | ✅ Completed | Developer 1 | HttpOnly cookie; SHA-256 hashed; 7-day rotating; `AuthService.refreshToken()`             |
+| AUTH-005 | Implement logout (revoke refresh token, clear cookie)                      | High     | ✅ Completed | Developer 1 | `AuthController.logout()`; clears cookie + deletes DB record                              |
+| AUTH-006 | Implement forgot password — generate single-use token, send email          | High     | ✅ Completed | Developer 1 | Rate limited 3/hr/email; 1h expiry; `AuthService.forgotPassword()`                        |
+| AUTH-007 | Implement reset password — validate token, update hash, mark used          | High     | ✅ Completed | Developer 1 | `AuthService.resetPassword()` marks token used atomically                                 |
+| AUTH-008 | Implement Spring Security JWT filter (validate token, set SecurityContext) | High     | ✅ Completed | Developer 1 | `JwtAuthenticationFilter`; `TenantResolutionFilter` sets context first                    |
+| AUTH-009 | Implement domain whitelisting check on login (DW-01 → DW-07)               | High     | ✅ Completed | Developer 1 | `AuthService.checkDomainWhitelist()`; 403 `DOMAIN_NOT_PERMITTED`                          |
+| AUTH-010 | Write unit + integration tests for all auth flows                          | High     | ✅ Completed | Developer 1 | 18 unit tests; login, logout, refresh, forgot/reset, domain block, rate limits, bootstrap |
 
 ### Backend — Google & Microsoft SSO
 
-| Task ID  | Task                                                            | Priority | Status         | Assigned To | Notes                                                                    |
-| -------- | --------------------------------------------------------------- | -------- | -------------- | ----------- | ------------------------------------------------------------------------ |
-| AUTH-011 | Implement Google OIDC SSO initiation and callback               | High     | 🔴 Not Started | Developer 1 | Spring Security OAuth2 Client; AUTH-07, AUTH-09, AUTH-12, SEC-12, SEC-13 |
-| AUTH-012 | Implement Microsoft Azure AD OIDC SSO initiation and callback   | High     | 🔴 Not Started | Developer 1 | Supports `common` and single-tenant Azure AD; AUTH-08                    |
-| AUTH-013 | Implement JIT user provisioning on first SSO login              | High     | 🔴 Not Started | Developer 1 | AUTH-10: assign configurable default role (`Requester`)                  |
-| AUTH-014 | Implement OAuth account linking (same user, multiple providers) | Medium   | 🔴 Not Started | Developer 1 | AUTH-11: link by email match                                             |
-| AUTH-015 | Encrypt/decrypt SSO client secrets with AES-256                 | High     | 🔴 Not Started | Developer 1 | SEC-14; `APP_ENCRYPTION_KEY` env var                                     |
+| Task ID  | Task                                                            | Priority | Status       | Assigned To | Notes                                                                |
+| -------- | --------------------------------------------------------------- | -------- | ------------ | ----------- | -------------------------------------------------------------------- |
+| AUTH-011 | Implement Google OIDC SSO initiation and callback               | High     | ✅ Completed | Developer 1 | `SsoService` + `SsoController`; manual OAuth2 flow; state param CSRF |
+| AUTH-012 | Implement Microsoft Azure AD OIDC SSO initiation and callback   | High     | ✅ Completed | Developer 1 | Same `SsoService`; `OAuthProvider.MICROSOFT`; supports single-tenant |
+| AUTH-013 | Implement JIT user provisioning on first SSO login              | High     | ✅ Completed | Developer 1 | `SsoService.resolveOrProvisionUser()`; default role ACTIVE           |
+| AUTH-014 | Implement OAuth account linking (same user, multiple providers) | Medium   | ✅ Completed | Developer 1 | Email-match fallback in `resolveOrProvisionUser()`                   |
+| AUTH-015 | Encrypt/decrypt SSO client secrets with AES-256                 | High     | ✅ Completed | Developer 1 | `AesEncryptionService` (AES-256-GCM); `APP_ENCRYPTION_KEY` env var   |
 
 ### Frontend — Auth Screens
 
-| Task ID  | Task                                                                                                              | Priority | Status         | Assigned To | Notes                                                                   |
-| -------- | ----------------------------------------------------------------------------------------------------------------- | -------- | -------------- | ----------- | ----------------------------------------------------------------------- |
-| AUTH-016 | Build Sign In page (split-panel design per `audita_sign_in/`)                                                     | High     | 🔴 Not Started | Developer 2 | Email + password; Google/Microsoft SSO buttons; "Forgot password?" link |
-| AUTH-017 | Build Forgot Password page (`audita_forgot_password/`)                                                            | High     | 🔴 Not Started | Developer 2 | Email input; success message after submission                           |
-| AUTH-018 | Build Reset Password page                                                                                         | High     | 🔴 Not Started | Developer 2 | New password + confirm; strength indicator                              |
-| AUTH-019 | Build Accept Invite / Complete Setup page (`audita_complete_your_setup/`)                                         | High     | 🔴 Not Started | Developer 2 | Full name + password; password strength bar                             |
-| AUTH-020 | Build Platform Bootstrap / First Run wizard                                                                       | High     | 🔴 Not Started | Developer 2 | Super Admin name, email, password — only shown on first run             |
-| AUTH-021 | Implement `useAuthStore` (Pinia) — login, logout, refresh token cycle, user state                                 | High     | 🔴 Not Started | Developer 2 | Persist access token in memory (not localStorage); refresh via cookie   |
-| AUTH-022 | Implement role-based redirect after login (Super Admin → platform dashboard; Admin → dashboard; others → CR list) | High     | 🔴 Not Started | Developer 2 | USER_FLOW §3.1                                                          |
+| Task ID  | Task                                                                                                              | Priority | Status       | Assigned To | Notes                                                                 |
+| -------- | ----------------------------------------------------------------------------------------------------------------- | -------- | ------------ | ----------- | --------------------------------------------------------------------- |
+| AUTH-016 | Build Sign In page (split-panel design per `audita_sign_in/`)                                                     | High     | ✅ Completed | Developer 2 | `pages/auth/sign-in.vue`; Google/Microsoft SSO buttons; tenant-aware  |
+| AUTH-017 | Build Forgot Password page (`audita_forgot_password/`)                                                            | High     | ✅ Completed | Developer 2 | `pages/auth/forgot-password.vue`; success state after submit          |
+| AUTH-018 | Build Reset Password page                                                                                         | High     | ✅ Completed | Developer 2 | `pages/auth/reset-password.vue`; strength bar; token from query param |
+| AUTH-019 | Build Accept Invite / Complete Setup page (`audita_complete_your_setup/`)                                         | High     | ✅ Completed | Developer 2 | `pages/auth/accept-invite.vue`; full name + password + strength bar   |
+| AUTH-020 | Build Platform Bootstrap / First Run wizard                                                                       | High     | ✅ Completed | Developer 2 | `pages/platform/bootstrap.vue`; SA name, email, password; standalone  |
+| AUTH-021 | Implement `useAuthStore` (Pinia) — login, logout, refresh token cycle, user state                                 | High     | ✅ Completed | Developer 2 | `stores/auth.ts`; access token in memory; refresh via HttpOnly cookie |
+| AUTH-022 | Implement role-based redirect after login (Super Admin → platform dashboard; Admin → dashboard; others → CR list) | High     | ✅ Completed | Developer 2 | `composables/useAuth.ts`; SSO callback page also handles role routing |
 
 ---
 

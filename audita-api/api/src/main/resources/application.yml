@@ -86,6 +86,12 @@ audita:
   encryption:
     key: ${APP_ENCRYPTION_KEY:0000000000000000000000000000000000000000000000000000000000000000}
 
+  sso:
+    # The public base URL of this API — used as redirect_uri base for OAuth2 callbacks
+    redirect-base-url: ${API_BASE_URL:http://localhost:8080}
+    # The public base URL of the frontend — used to redirect the browser after SSO completes
+    frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
+
   app:
     base-url: ${APP_BASE_URL:http://localhost:3000}
 

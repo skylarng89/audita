@@ -70,7 +70,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
         chain.doFilter(request, response);
-        // Clear tenant context after request completes to prevent thread-pool bleed
-        TenantContext.clear();
+        // TenantContext is cleared by TenantResolutionFilter in its finally block
     }
 }

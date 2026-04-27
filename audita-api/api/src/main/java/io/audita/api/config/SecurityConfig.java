@@ -1,6 +1,7 @@
 package io.audita.api.config;
 
 import io.audita.api.security.JwtAuthenticationFilter;
+import io.audita.api.security.TenantResolutionFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -25,9 +26,12 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
+    private final TenantResolutionFilter tenantResolutionFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtFilter,
+                          TenantResolutionFilter tenantResolutionFilter) {
         this.jwtFilter = jwtFilter;
+        this.tenantResolutionFilter = tenantResolutionFilter;
     }
 
     @Bean
@@ -59,6 +63,7 @@ public class SecurityConfig {
                         // Everything else requires authentication
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(tenantResolutionFilter, JwtAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
