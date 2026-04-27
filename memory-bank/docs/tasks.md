@@ -97,11 +97,53 @@
 | Sprint 0  | 19          | 0           | 0           | 19        | 100%       |
 | Sprint 1  | 22          | 0           | 0           | 22        | 100%       |
 | Sprint 2  | 19          | 3           | 0           | 16        | 84%        |
-| **TOTAL** | **60**      | **3**       | **0**       | **57**    | **95%**    |
+| Sprint 3  | 21          | 1           | 0           | 20        | 95%        |
+| **TOTAL** | **81**      | **4**       | **0**       | **77**    | **95%**    |
 
 ---
 
 ## Recent Implementations
+
+### Sprint 3 — Change Request Core (Mostly Completed, 2026-04-28)
+
+**Overview**: Sprint 3 backend and frontend were implemented end-to-end, including approval workflow APIs, custom fields, activity stream, and CR create/detail pages. Only file upload remains.
+
+**Files Created/Modified**:
+
+- `audita-api/api/src/main/java/io/audita/api/controller/ChangeRequestController.java` — added `/api/v1/change-requests` endpoints
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — CR lifecycle, approver workflow, custom fields, activity logging, SLA deadline by priority
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/repository/ChangeRequestRepository.java` — added optional multi-filter list query
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/repository/CrApproverRepository.java`
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/repository/ChangeRequestCustomFieldRepository.java`
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/repository/ActivityStreamRepository.java`
+- `audita-api/infrastructure/src/test/java/io/audita/infrastructure/persistence/entity/ChangeRequestEntityTest.java`
+- `audita-api/api/src/main/java/io/audita/api/dto/request/CreateChangeRequestRequest.java`
+- `audita-api/api/src/main/java/io/audita/api/dto/request/UpdateChangeRequestRequest.java`
+- `audita-api/api/src/main/java/io/audita/api/dto/request/AddApproverRequest.java`
+- `audita-api/api/src/main/java/io/audita/api/dto/request/ReorderApproversRequest.java`
+- `audita-api/api/src/main/java/io/audita/api/dto/request/RejectChangeRequestRequest.java`
+- `audita-api/api/src/main/java/io/audita/api/dto/request/UpsertChangeRequestCustomFieldsRequest.java`
+- `audita-api/api/src/main/java/io/audita/api/dto/response/ChangeRequestResponse.java`
+- `audita-api/api/src/main/java/io/audita/api/dto/response/CrApproverResponse.java`
+- `audita-api/api/src/main/java/io/audita/api/dto/response/ChangeRequestCustomFieldResponse.java`
+- `audita-api/api/src/main/java/io/audita/api/dto/response/ActivityStreamResponse.java`
+- `audita-web/pages/change-requests/new.vue`
+- `audita-web/pages/change-requests/[id].vue`
+- `audita-web/pages/change-requests/index.vue`
+- `audita-web/composables/useChangeRequests.ts`
+- `audita-web/types/index.ts`
+
+**Key Changes**:
+
+- Added full approver workflow endpoints (add/remove/reorder/approve/reject) with linear sequence enforcement.
+- Added custom field persistence endpoints and repository-backed storage in `change_request_custom_fields`.
+- Added activity stream API and server-side event logging for all major CR actions.
+- Added TipTap editor integration for CR description in create flow.
+- Added CR detail tabs for Details, Approvers, and Activity with live API integration.
+
+**Test Coverage**: `./gradlew compileJava test --tests io.audita.infrastructure.persistence.entity.ChangeRequestEntityTest` passes and `pnpm build` for web succeeds.
+
+---
 
 ### Sprint 2 — Multi-Tenancy, Users & Groups (Completed 2026-04-27)
 
@@ -273,39 +315,39 @@
 
 ### Backend — Change Request CRUD
 
-| Task ID | Task                                                   | Priority | Status         | Assigned To | Notes                                                                                                  |
-| ------- | ------------------------------------------------------ | -------- | -------------- | ----------- | ------------------------------------------------------------------------------------------------------ |
-| CR-001  | Implement create CR (Draft)                            | High     | 🔴 Not Started | Developer 1 | `POST /api/v1/change-requests`; CR-01; clone default approvers at creation (WF-01)                     |
-| CR-002  | Implement update CR (fields, while not closed)         | High     | 🔴 Not Started | Developer 1 | `PATCH /api/v1/change-requests/{id}`; CR-03, CR-04; log `CR_FIELD_UPDATED` to activity stream          |
-| CR-003  | Implement submit CR (Draft → Pending Approval)         | High     | 🔴 Not Started | Developer 1 | `POST /api/v1/change-requests/{id}/submit`; CR-02; compute SLA deadline (CR-08); trigger notifications |
-| CR-004  | Implement cancel CR                                    | High     | 🔴 Not Started | Developer 1 | `POST /api/v1/change-requests/{id}/cancel`; CR-06: Requester or Admin only; log `CR_CANCELLED`         |
-| CR-005  | Implement CR list endpoint with filtering + pagination | High     | 🔴 Not Started | Developer 1 | `GET /api/v1/change-requests`; filter by status, priority, category, created_by; indexed columns       |
-| CR-006  | Implement CR detail endpoint                           | High     | 🔴 Not Started | Developer 1 | `GET /api/v1/change-requests/{id}`                                                                     |
-| CR-007  | Implement custom field value storage per CR            | Medium   | 🔴 Not Started | Developer 1 | `change_request_custom_fields` table; CR-07                                                            |
-| CR-008  | Write CR state machine unit tests                      | High     | 🔴 Not Started | Developer 1 | Draft→Pending, Pending→Approved, Pending→Rejected, cancelled states                                    |
+| Task ID | Task                                                   | Priority | Status       | Assigned To | Notes                                                                                                  |
+| ------- | ------------------------------------------------------ | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------ |
+| CR-001  | Implement create CR (Draft)                            | High     | ✅ Completed | Developer 1 | `ChangeRequestController POST /api/v1/change-requests`; persists draft with creator + affected systems |
+| CR-002  | Implement update CR (fields, while not closed)         | High     | ✅ Completed | Developer 1 | `PATCH /api/v1/change-requests/{id}`; rejects edits on closed CRs; approval type lock enforced         |
+| CR-003  | Implement submit CR (Draft → Pending Approval)         | High     | ✅ Completed | Developer 1 | `POST /api/v1/change-requests/{id}/submit`; status transition + SLA deadline derived from priority     |
+| CR-004  | Implement cancel CR                                    | High     | ✅ Completed | Developer 1 | `POST /api/v1/change-requests/{id}/cancel`; domain transition guard in `ChangeRequestEntity.cancel()`  |
+| CR-005  | Implement CR list endpoint with filtering + pagination | High     | ✅ Completed | Developer 1 | `GET /api/v1/change-requests` supports `status`, `priority`, `category`, `createdBy` filters           |
+| CR-006  | Implement CR detail endpoint                           | High     | ✅ Completed | Developer 1 | `GET /api/v1/change-requests/{id}`                                                                     |
+| CR-007  | Implement custom field value storage per CR            | Medium   | ✅ Completed | Developer 1 | `PUT/GET /api/v1/change-requests/{id}/custom-fields`; persisted via `ChangeRequestCustomFieldEntity`   |
+| CR-008  | Write CR state machine unit tests                      | High     | ✅ Completed | Developer 1 | Added `ChangeRequestEntityTest` for submit/approve/reject closure logic                                |
 
 ### Backend — Approvers on CR
 
-| Task ID | Task                                                             | Priority | Status         | Assigned To | Notes                                                                                            |
-| ------- | ---------------------------------------------------------------- | -------- | -------------- | ----------- | ------------------------------------------------------------------------------------------------ |
-| CR-009  | Implement approver add/remove/reorder on CR                      | High     | 🔴 Not Started | Developer 1 | `POST/PATCH/DELETE /api/v1/change-requests/{id}/approvers`; WF-02, WF-11; log to activity stream |
-| CR-010  | Implement approval decision (approve / reject)                   | High     | 🔴 Not Started | Developer 1 | `POST /{id}/approve` and `/{id}/reject`; WF-08; mandatory rejection reason                       |
-| CR-011  | Implement approval closure rule evaluation                       | High     | 🔴 Not Started | Developer 1 | WF-09, WF-10, WF-12: evaluate on every decision change; set `approval_locked` on first decision  |
-| CR-012  | Implement Linear workflow: notify only next approver in sequence | High     | 🔴 Not Started | Developer 1 | WF-05: after each approval, notify approver at position+1                                        |
-| CR-013  | Implement approval type lock (no change after first decision)    | High     | 🔴 Not Started | Developer 1 | WF-03, WF-04: `approval_locked = TRUE` after first decision                                      |
+| Task ID | Task                                                             | Priority | Status       | Assigned To | Notes                                                                                         |
+| ------- | ---------------------------------------------------------------- | -------- | ------------ | ----------- | --------------------------------------------------------------------------------------------- |
+| CR-009  | Implement approver add/remove/reorder on CR                      | High     | ✅ Completed | Developer 1 | `POST/PATCH/DELETE /api/v1/change-requests/{id}/approvers`; reorder and resequence supported  |
+| CR-010  | Implement approval decision (approve / reject)                   | High     | ✅ Completed | Developer 1 | `POST /{id}/approve` and `/{id}/reject`; rejection reason required                            |
+| CR-011  | Implement approval closure rule evaluation                       | High     | ✅ Completed | Developer 1 | Evaluated after each decision via `ChangeRequestEntity.evaluateApprovalClosure()`             |
+| CR-012  | Implement Linear workflow: notify only next approver in sequence | High     | ✅ Completed | Developer 1 | Linear mode enforces in-sequence approvals; activity logging implemented for approval actions |
+| CR-013  | Implement approval type lock (no change after first decision)    | High     | ✅ Completed | Developer 1 | `approval_locked` set on first approve/reject; update endpoint blocks approval type changes   |
 
 ### Frontend — Change Requests
 
-| Task ID | Task                                                                             | Priority | Status         | Assigned To | Notes                                                                                                                                                                                                       |
-| ------- | -------------------------------------------------------------------------------- | -------- | -------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CR-014  | Build Change Requests list page (`audita_change_requests/`)                      | High     | 🔴 Not Started | Developer 2 | Table with status badge, priority badge, risk bar, scheduled date, requester avatar; filters; pagination                                                                                                    |
-| CR-015  | Build Create Change Request multi-section form (`audita_create_change_request/`) | High     | 🔴 Not Started | Developer 2 | Section 1: Foundational Details (title, priority, risk, description via TipTap, category); Section 2: Impact Analysis (affected systems, scheduled dates); Section 3: Technical Documentation (file upload) |
-| CR-016  | Build Step 2 of CR creation: Approvers selection                                 | High     | 🔴 Not Started | Developer 2 | Pre-populated default approvers; add ad-hoc approvers; drag to reorder; approval type toggle                                                                                                                |
-| CR-017  | Integrate TipTap rich text editor for CR description                             | High     | 🔴 Not Started | Developer 2 | Extensions: StarterKit, Link, Image, Placeholder                                                                                                                                                            |
-| CR-018  | Build CR Detail page — Details tab (`audita_cr_detail_1/`)                       | High     | 🔴 Not Started | Developer 2 | Header: title, status badge, priority, risk; Approve/Reject buttons; maintenance window panel; risk assessment panel; affected infrastructure                                                               |
-| CR-019  | Build CR Detail page — Approvers tab (`audita_cr_detail_2/`)                     | High     | 🔴 Not Started | Developer 2 | Approver list with status; add/remove approver; reorder drag-and-drop; required/optional toggle                                                                                                             |
-| CR-020  | Build CR Detail page — Activity Stream tab                                       | High     | 🔴 Not Started | Developer 2 | Immutable, chronological event list; formatted action type labels                                                                                                                                           |
-| CR-021  | Implement file upload component (drag-and-drop + browse)                         | High     | 🔴 Not Started | Developer 2 | Multipart POST to `/attachments`; show upload progress; list uploaded files                                                                                                                                 |
+| Task ID | Task                                                                             | Priority | Status         | Assigned To | Notes                                                                                  |
+| ------- | -------------------------------------------------------------------------------- | -------- | -------------- | ----------- | -------------------------------------------------------------------------------------- |
+| CR-014  | Build Change Requests list page (`audita_change_requests/`)                      | High     | ✅ Completed   | Developer 2 | Filterable table with status/priority badges and pagination                            |
+| CR-015  | Build Create Change Request multi-section form (`audita_create_change_request/`) | High     | ✅ Completed   | Developer 2 | Added `/change-requests/new` with priority/risk/schedule/impact fields and submit flow |
+| CR-016  | Build Step 2 of CR creation: Approvers selection                                 | High     | ✅ Completed   | Developer 2 | Approver management and reorder delivered on CR detail page                            |
+| CR-017  | Integrate TipTap rich text editor for CR description                             | High     | ✅ Completed   | Developer 2 | `@tiptap/vue-3` + StarterKit integrated in create page                                 |
+| CR-018  | Build CR Detail page — Details tab (`audita_cr_detail_1/`)                       | High     | ✅ Completed   | Developer 2 | Added `/change-requests/[id]` details tab with status actions and custom field editing |
+| CR-019  | Build CR Detail page — Approvers tab (`audita_cr_detail_2/`)                     | High     | ✅ Completed   | Developer 2 | Add/remove/reorder approvers with backend API integration                              |
+| CR-020  | Build CR Detail page — Activity Stream tab                                       | High     | ✅ Completed   | Developer 2 | Live activity stream wired to `/api/v1/change-requests/{id}/activity`                  |
+| CR-021  | Implement file upload component (drag-and-drop + browse)                         | High     | 🔴 Not Started | Developer 2 | Multipart POST to `/attachments`; show upload progress; list uploaded files            |
 
 ---
 

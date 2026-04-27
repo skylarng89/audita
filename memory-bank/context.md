@@ -19,6 +19,7 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 - **Sprint 0 complete (19/19 tasks).** Both repositories are scaffolded and runnable via Docker Compose.
 - **Sprint 1 complete (22/22 tasks).** Full authentication stack: JWT + refresh tokens, SSO (Google/Microsoft), domain whitelist, rate limiting, 18 unit tests passing.
 - **Sprint 2 complete (16/19 tasks — 3 deferred tests).** Tenant provisioning, user invite/management, group CRUD, role listing, all DTOs, all controllers, all platform + admin frontend pages. Runtime crash fixed (`JpaConfig` missing `@EnableJpaRepositories`).
+- **Sprint 3 nearly complete (20/21 tasks complete).** Implemented CR create/update/submit/cancel/list/detail APIs, approver workflow APIs (add/remove/reorder/approve/reject), custom-field persistence, activity stream API, TipTap create form, and CR detail tabs (Details/Approvers/Activity). Remaining Sprint 3 item: file upload component.
 - Documentation complete: PRD v1.0, SRS v1.0, USER_FLOW v1.0 (`docs/`). UI designs: 40 screens (`ui-designs/`).
 - `audita-api`: hexagonal structure, JPA/Hibernate multi-tenancy, Flyway migrations, Spring Security scaffold, RFC 7807 exception handler, structured JSON logging (Logstash encoder).
 - `audita-web`: Nuxt 3, Tailwind tokens, all layouts, auth/role/tenant middleware, `plugins/api.ts`, `useAuthStore`, shared component library (AppButton, AppInput, AppBadge, AppCard, AppModal, AppTable, AppPagination).

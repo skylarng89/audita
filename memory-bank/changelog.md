@@ -2,6 +2,20 @@
 
 ## [0.1.0] — Unreleased (In Development)
 
+### Added (Sprint 3 — 2026-04-27)
+
+- **ChangeRequestController** (`/api/v1/change-requests`): create, update, submit, cancel, list, detail
+- **ChangeRequestService**: core CR lifecycle operations with domain transition guards
+- **CR DTOs**: `CreateChangeRequestRequest`, `UpdateChangeRequestRequest`, `ChangeRequestResponse`
+- **Filtering support**: repository-level optional filters (`status`, `priority`, `category`, `createdBy`) for paginated CR list endpoint
+- **SLA baseline logic**: submission sets initial deadline by priority (LOW 72h, MEDIUM 48h, HIGH 24h, CRITICAL 8h)
+- **Approver workflow APIs**: add/remove/reorder approvers + approve/reject decisions with rejection reason enforcement
+- **Approval closure + lock rules**: closure evaluation after decisions and `approval_locked` enforcement
+- **Custom field value APIs**: `PUT/GET /api/v1/change-requests/{id}/custom-fields` backed by `change_request_custom_fields`
+- **Activity stream API**: `GET /api/v1/change-requests/{id}/activity` with server-side event logging on CR actions
+- **Frontend CR pages**: `/change-requests/new` (TipTap description editor), `/change-requests/[id]` (Details, Approvers, Activity tabs)
+- **Frontend integration updates**: `useChangeRequests` expanded for Sprint 3 endpoints; CR list page aligned with backend response shape
+
 ### Added (Sprint 2 — 2026-04-27)
 
 - **TenantService**: `provision()` (atomic: schema creation + Flyway + Admin user + invite token), CRUD, domain whitelist management, SSO config upsert/delete

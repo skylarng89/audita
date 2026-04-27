@@ -73,7 +73,7 @@ public class ChangeRequestEntity {
     @OrderBy("position ASC")
     private List<CrApproverEntity> approvers = new ArrayList<>();
 
-    protected ChangeRequestEntity() {}
+    public ChangeRequestEntity() {}
 
     @PreUpdate
     public void onUpdate() { this.updatedAt = OffsetDateTime.now(); }
