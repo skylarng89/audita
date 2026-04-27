@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-04-27
 **Current Phase:** Active development
-**Active Sprint:** Sprint 1 — Authentication & Platform Bootstrap
+**Active Sprint:** Sprint 2 — Multi-Tenancy, Users & Groups
 
 ---
 
@@ -17,6 +17,7 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 ## Current State
 
 - **Sprint 0 complete (19/19 tasks).** Both repositories are scaffolded and runnable via Docker Compose.
+- **Sprint 1 complete (22/22 tasks).** Full authentication stack: JWT + refresh tokens, SSO (Google/Microsoft), domain whitelist, rate limiting, 18 unit tests passing.
 - Documentation complete: PRD v1.0, SRS v1.0, USER_FLOW v1.0 (`docs/`). UI designs: 40 screens (`ui-designs/`).
 - `audita-api`: hexagonal structure, JPA/Hibernate multi-tenancy, Flyway migrations, Spring Security scaffold, RFC 7807 exception handler, structured JSON logging (Logstash encoder).
 - `audita-web`: Nuxt 3, Tailwind tokens, all layouts, auth/role/tenant middleware, `plugins/api.ts`, `useAuthStore`, shared component library (AppButton, AppInput, AppBadge, AppCard, AppModal, AppTable, AppPagination).
@@ -76,7 +77,20 @@ Advanced features (SLA, custom fields, audit export, full admin config) follow i
 
 ## Active Blockers / Open Questions
 
-- None.
+- None. Sprint 2 ready to begin.
+
+---
+
+## Sprint 1 Key Patterns & Decisions
+
+- **`TenantResolutionFilter`** lives in `api` module (not `infrastructure`) — only `api` has `spring-boot-starter-webmvc` with servlet API.
+- **`infrastructure` module** has `spring-boot-starter-web` (not webmvc) for `RestClient` used by `SsoService`.
+- **JWT**: 15-min access tokens (jjwt 0.12.6), SHA-256 hashed refresh tokens (7-day rotating), stored HttpOnly cookie at path `/api/v1/auth/refresh`.
+- **AES-256-GCM**: `AesEncryptionService` for SSO client secrets. Key from `audita.encryption.key` (64 hex chars).
+- **Rate limiting**: In-memory `ConcurrentHashMap<String, LinkedList<Instant>>` sliding window. Login: 5/15min/IP+email. Forgot-password: 3/hr/email.
+- **SSO state**: `ConcurrentHashMap` with 10-min TTL, random 32-byte token.
+- **Domain whitelist**: Open tenant if no domains configured; otherwise email domain must match.
+- **BCrypt cost=12** in production; cost=4 in tests via `ReflectionTestUtils`.
 
 ---
 

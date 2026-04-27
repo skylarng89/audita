@@ -50,6 +50,44 @@
 
 ---
 
+## Sprint 1: Authentication & Platform Bootstrap (Week 3–4)
+
+> **Goal:** Full auth stack end-to-end. Users can sign in, refresh tokens, reset passwords, and authenticate via SSO. Super Admin bootstrap flow complete.
+
+### Backend — Auth Service (`audita-api`)
+
+| Task ID  | Task                                                                            | Priority | Status       | Assigned To | Notes                                                                                              |
+| -------- | ------------------------------------------------------------------------------- | -------- | ------------ | ----------- | -------------------------------------------------------------------------------------------------- |
+| AUTH-001 | Implement platform bootstrap endpoint (first Super Admin creation)              | High     | ✅ Completed | Developer 1 | `PlatformBootstrapController` + `AuthService.bootstrap()`; `POST /api/platform/v1/bootstrap`       |
+| AUTH-002 | Implement tenant user login with BCrypt password verification                   | High     | ✅ Completed | Developer 1 | `AuthService.loginTenantUser()`; BCrypt cost=12; `AuthController`; `POST /api/v1/auth/login`       |
+| AUTH-003 | Implement JWT access token generation (15-min expiry)                           | High     | ✅ Completed | Developer 1 | `JwtService`; jjwt 0.12.6; claims: userId, tenantSlug, role, email                                 |
+| AUTH-004 | Implement refresh token rotation (7-day, HttpOnly cookie, SHA-256 hashed in DB) | High     | ✅ Completed | Developer 1 | `AuthService.refreshToken()`; `POST /api/v1/auth/refresh`; rotating + cookie                       |
+| AUTH-005 | Implement logout (revoke refresh token)                                         | Medium   | ✅ Completed | Developer 1 | `AuthService.logout()`; `POST /api/v1/auth/logout`; deletes cookie                                 |
+| AUTH-006 | Implement forgot-password email flow with rate limiting (3/hr/email)            | High     | ✅ Completed | Developer 1 | `AuthService.forgotPassword()`; `EmailService`; `POST /api/v1/auth/forgot-password`                |
+| AUTH-007 | Implement reset-password token validation and password update                   | High     | ✅ Completed | Developer 1 | `AuthService.resetPassword()`; `POST /api/v1/auth/reset-password`; token expiry + used flag        |
+| AUTH-008 | Implement JWT authentication filter (`JwtAuthenticationFilter`)                 | High     | ✅ Completed | Developer 1 | Extends `OncePerRequestFilter`; validates JWT; populates `SecurityContextHolder`                   |
+| AUTH-009 | Implement tenant domain whitelist check on login                                | High     | ✅ Completed | Developer 1 | `AuthService.checkDomainWhitelist()`; open if no domains; `DomainNotPermittedException`            |
+| AUTH-010 | Write unit + integration tests for all auth flows                               | High     | ✅ Completed | Developer 1 | 18 unit tests; login, logout, refresh, forgot/reset, domain block, rate limits, bootstrap          |
+| AUTH-011 | Implement Google OIDC SSO initiation + callback                                 | High     | ✅ Completed | Developer 1 | `SsoController` + `SsoService.buildAuthorizationUrl()` + callback; `GET /api/v1/auth/oauth/google` |
+| AUTH-012 | Implement Microsoft Azure AD SSO initiation + callback                          | High     | ✅ Completed | Developer 1 | Same pattern as Google; `GET /api/v1/auth/oauth/microsoft`                                         |
+| AUTH-013 | Implement JIT user provisioning on first SSO login                              | High     | ✅ Completed | Developer 1 | `SsoService.resolveOrProvisionUser()`; creates `UserEntity` if not found by email                  |
+| AUTH-014 | Implement OAuth account linking (provider + sub → existing user)                | High     | ✅ Completed | Developer 1 | `OAuthAccountEntity` lookup by provider+sub before email fallback                                  |
+| AUTH-015 | Encrypt SSO client secrets at rest with AES-256-GCM                             | High     | ✅ Completed | Developer 1 | `AesEncryptionService`; `audita.encryption.key` (64 hex); applied in `SsoService`                  |
+
+### Frontend — Auth Pages (`audita-web`)
+
+| Task ID  | Task                                                                                 | Priority | Status       | Assigned To | Notes                                                                                          |
+| -------- | ------------------------------------------------------------------------------------ | -------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------- |
+| AUTH-016 | Build Sign In page (`/auth/sign-in`)                                                 | High     | ✅ Completed | Developer 2 | Email + password; tenant slug; SSO buttons; calls `useAuth().login()`                          |
+| AUTH-017 | Build Forgot Password page (`/auth/forgot-password`)                                 | Medium   | ✅ Completed | Developer 2 | Email field; success state; calls `useAuth().forgotPassword()`                                 |
+| AUTH-018 | Build Reset Password page (`/auth/reset-password`)                                   | Medium   | ✅ Completed | Developer 2 | Reads `?token=`; password + confirm; 4-segment strength bar; calls `useAuth().resetPassword()` |
+| AUTH-019 | Build Accept Invite page (`/auth/accept-invite`)                                     | High     | ✅ Completed | Developer 2 | Reads `?token=`; full name + password; calls `useAuth().acceptInvite()`                        |
+| AUTH-020 | Build Bootstrap/first-run page (`/platform/bootstrap`)                               | High     | ✅ Completed | Developer 2 | Full name + email + password; `POST /api/platform/v1/bootstrap`; success shows sign-in link    |
+| AUTH-021 | Build `useAuthStore` Pinia store                                                     | High     | ✅ Completed | Developer 2 | `stores/auth.ts`; accessToken, user, tenantSlug; `setAuth()`, `clearAuth()`                    |
+| AUTH-022 | Implement role-based redirect after login (SUPER_ADMIN → /platform, else /dashboard) | High     | ✅ Completed | Developer 2 | `sso-callback.vue` + `useAuth` redirect logic                                                  |
+
+---
+
 ## Progress Tracking
 
 ### Overall Progress by Sprint
