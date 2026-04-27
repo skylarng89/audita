@@ -2,7 +2,7 @@
 
 **Project:** Audita — Multi-Tenant ITIL/ITSM Change Management Platform
 **Version:** 0.1.0
-**Last Updated:** 2026-04-27
+**Last Updated:** 2026-04-28
 **Team Size:** 2–3 Developers
 
 ---
@@ -96,9 +96,9 @@
 | --------- | ----------- | ----------- | ----------- | --------- | ---------- |
 | Sprint 0  | 19          | 0           | 0           | 19        | 100%       |
 | Sprint 1  | 22          | 0           | 0           | 22        | 100%       |
-| Sprint 2  | 19          | 3           | 0           | 16        | 84%        |
+| Sprint 2  | 19          | 0           | 0           | 19        | 100%       |
 | Sprint 3  | 21          | 0           | 0           | 21        | 100%       |
-| **TOTAL** | **81**      | **3**       | **0**       | **78**    | **96%**    |
+| **TOTAL** | **81**      | **0**       | **0**       | **81**    | **100%**   |
 
 ---
 
@@ -261,26 +261,26 @@
 
 ### Backend — Tenant Management
 
-| Task ID    | Task                                                                                                | Priority | Status         | Assigned To | Notes                                                                                     |
-| ---------- | --------------------------------------------------------------------------------------------------- | -------- | -------------- | ----------- | ----------------------------------------------------------------------------------------- |
-| TENANT-001 | Implement Super Admin tenant CRUD endpoints                                                         | High     | ✅ Completed   | Developer 1 | `TenantController`; `GET/POST /api/platform/v1/tenants`; `GET/PATCH/DELETE /{id}`         |
-| TENANT-002 | Implement tenant provisioning: create schema, run Flyway migrations, create Admin user, send invite | High     | ✅ Completed   | Developer 1 | `TenantService.provision()` — atomic; schema + Flyway + Admin + invite in one transaction |
-| TENANT-003 | Implement domain whitelist management endpoints (Super Admin)                                       | High     | ✅ Completed   | Developer 1 | `GET/POST /api/platform/v1/tenants/{id}/domains`; `DELETE /{id}/domains/{domainId}`       |
-| TENANT-004 | Implement SSO config CRUD per tenant (Super Admin)                                                  | Medium   | ✅ Completed   | Developer 1 | `GET /…/sso`; `PUT /…/sso`; `DELETE /…/sso/{configId}`; AES-256 encrypted secret          |
-| TENANT-005 | Write integration tests for tenant provisioning and multi-schema isolation                          | High     | 🔴 Not Started | Developer 1 | MT-03: deferred to Sprint 5 alongside broader test pass                                   |
+| Task ID    | Task                                                                                                | Priority | Status       | Assigned To | Notes                                                                                            |
+| ---------- | --------------------------------------------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------ |
+| TENANT-001 | Implement Super Admin tenant CRUD endpoints                                                         | High     | ✅ Completed | Developer 1 | `TenantController`; `GET/POST /api/platform/v1/tenants`; `GET/PATCH/DELETE /{id}`                |
+| TENANT-002 | Implement tenant provisioning: create schema, run Flyway migrations, create Admin user, send invite | High     | ✅ Completed | Developer 1 | `TenantService.provision()` — atomic; schema + Flyway + Admin + invite in one transaction        |
+| TENANT-003 | Implement domain whitelist management endpoints (Super Admin)                                       | High     | ✅ Completed | Developer 1 | `GET/POST /api/platform/v1/tenants/{id}/domains`; `DELETE /{id}/domains/{domainId}`              |
+| TENANT-004 | Implement SSO config CRUD per tenant (Super Admin)                                                  | Medium   | ✅ Completed | Developer 1 | `GET /…/sso`; `PUT /…/sso`; `DELETE /…/sso/{configId}`; AES-256 encrypted secret                 |
+| TENANT-005 | Write integration tests for tenant provisioning and multi-schema isolation                          | High     | ✅ Completed | Developer 1 | Added `TenantSchemaIsolationIntegrationTest` using PostgreSQL Testcontainers + Flyway per schema |
 
 ### Backend — Users & Roles
 
-| Task ID | Task                                                                         | Priority | Status         | Assigned To | Notes                                                                                 |
-| ------- | ---------------------------------------------------------------------------- | -------- | -------------- | ----------- | ------------------------------------------------------------------------------------- |
-| USR-001 | Seed built-in roles on tenant creation (Admin, Requester, Approver, Auditor) | High     | ✅ Completed   | Developer 1 | V2 Flyway migration seeds 4 roles + 18 permissions per tenant schema                  |
-| USR-002 | Implement user invite endpoint                                               | High     | ✅ Completed   | Developer 1 | `UserService.inviteUser()`; `UserController`; 48h `InviteToken`; sends email          |
-| USR-003 | Implement accept-invite endpoint (set password, activate user)               | High     | ✅ Completed   | Developer 1 | Handled in Sprint 1 via `AuthController`; `POST /api/v1/auth/accept-invite`           |
-| USR-004 | Implement user list, get, update (role, status), deactivate                  | High     | ✅ Completed   | Developer 1 | `GET /users`, `GET /users/{id}`, `PATCH /users/{id}`, `POST /users/{id}/deactivate`   |
-| USR-005 | Implement role listing endpoint                                              | Medium   | ✅ Completed   | Developer 1 | `RoleService` + `RoleController`; `GET /api/v1/roles`; custom role CRUD deferred      |
-| USR-006 | Implement permission enforcement via `@PreAuthorize`                         | High     | ✅ Completed   | Developer 1 | `@EnableMethodSecurity(prePostEnabled=true)`; controllers annotated per operation     |
-| USR-007 | Implement Auditor read-only enforcement at API layer                         | High     | 🔴 Not Started | Developer 1 | USR-05: deferred — requires role-aware filter or `@PreAuthorize` on every mutating op |
-| USR-008 | Write tests for role/permission enforcement                                  | High     | 🔴 Not Started | Developer 1 | Deferred to Sprint 5 test pass                                                        |
+| Task ID | Task                                                                         | Priority | Status       | Assigned To | Notes                                                                                                         |
+| ------- | ---------------------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------- |
+| USR-001 | Seed built-in roles on tenant creation (Admin, Requester, Approver, Auditor) | High     | ✅ Completed | Developer 1 | V2 Flyway migration seeds 4 roles + 18 permissions per tenant schema                                          |
+| USR-002 | Implement user invite endpoint                                               | High     | ✅ Completed | Developer 1 | `UserService.inviteUser()`; `UserController`; 48h `InviteToken`; sends email                                  |
+| USR-003 | Implement accept-invite endpoint (set password, activate user)               | High     | ✅ Completed | Developer 1 | Handled in Sprint 1 via `AuthController`; `POST /api/v1/auth/accept-invite`                                   |
+| USR-004 | Implement user list, get, update (role, status), deactivate                  | High     | ✅ Completed | Developer 1 | `GET /users`, `GET /users/{id}`, `PATCH /users/{id}`, `POST /users/{id}/deactivate`                           |
+| USR-005 | Implement role listing endpoint                                              | Medium   | ✅ Completed | Developer 1 | `RoleService` + `RoleController`; `GET /api/v1/roles`; custom role CRUD deferred                              |
+| USR-006 | Implement permission enforcement via `@PreAuthorize`                         | High     | ✅ Completed | Developer 1 | `@EnableMethodSecurity(prePostEnabled=true)`; controllers annotated per operation                             |
+| USR-007 | Implement Auditor read-only enforcement at API layer                         | High     | ✅ Completed | Developer 1 | `UserController` read endpoints include `AUDITOR`; mutating endpoints remain Admin/Super only                 |
+| USR-008 | Write tests for role/permission enforcement                                  | High     | ✅ Completed | Developer 1 | Added `UserControllerSecurityAnnotationsTest` to verify read-only auditor policy and mutating endpoint guards |
 
 ### Backend — Groups
 

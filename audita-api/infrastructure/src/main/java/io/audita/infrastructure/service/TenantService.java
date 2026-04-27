@@ -13,9 +13,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.security.SecureRandom;
 import java.time.OffsetDateTime;
@@ -44,8 +46,8 @@ public class TenantService {
     private final InviteTokenRepository inviteTokenRepository;
     private final FlywayTenantMigrator flywayTenantMigrator;
     private final EmailService emailService;
-    private final PasswordEncoder passwordEncoder;
     private final AesEncryptionService aesEncryptionService;
+    private final TransactionTemplate transactionTemplate;
 
     public TenantService(TenantRepository tenantRepository,
                          TenantAllowedDomainRepository allowedDomainRepository,
@@ -55,8 +57,8 @@ public class TenantService {
                          InviteTokenRepository inviteTokenRepository,
                          FlywayTenantMigrator flywayTenantMigrator,
                          EmailService emailService,
-                         PasswordEncoder passwordEncoder,
-                         AesEncryptionService aesEncryptionService) {
+                         AesEncryptionService aesEncryptionService,
+                         PlatformTransactionManager transactionManager) {
         this.tenantRepository = tenantRepository;
         this.allowedDomainRepository = allowedDomainRepository;
         this.ssoConfigRepository = ssoConfigRepository;
@@ -65,8 +67,9 @@ public class TenantService {
         this.inviteTokenRepository = inviteTokenRepository;
         this.flywayTenantMigrator = flywayTenantMigrator;
         this.emailService = emailService;
-        this.passwordEncoder = passwordEncoder;
         this.aesEncryptionService = aesEncryptionService;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+        this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     // ── List / Get ─────────────────────────────────────────────────────────────
@@ -115,9 +118,10 @@ public class TenantService {
         // 3. Switch context to the new tenant schema to create Admin user
         TenantContext.setCurrentTenant(normalisedSlug);
         try {
+            transactionTemplate.executeWithoutResult(status -> {
             RoleEntity adminRole = roleRepository.findByName("Admin")
-                    .orElseThrow(() -> new IllegalStateException(
-                            "Admin role not found after migration for tenant: " + normalisedSlug));
+                .orElseThrow(() -> new IllegalStateException(
+                    "Admin role not found after migration for tenant: " + normalisedSlug));
 
             UserEntity adminUser = new UserEntity(adminEmail, adminFullName);
             adminUser.setRole(adminRole);
@@ -128,13 +132,14 @@ public class TenantService {
             String rawToken = generateSecureToken();
             String tokenHash = AuthService.sha256(rawToken);
             InviteTokenEntity invite = new InviteTokenEntity(
-                    adminUser, tokenHash, OffsetDateTime.now().plusHours(48));
+                adminUser, tokenHash, OffsetDateTime.now().plusHours(48));
             inviteTokenRepository.save(invite);
 
             // 5. Send invite email asynchronously — failure logged but never rethrows
             emailService.sendInviteEmail(adminEmail, adminFullName, rawToken, name);
 
             log.info("Admin invited for tenant={} email={}", normalisedSlug, adminEmail);
+            });
         } finally {
             TenantContext.clear();
         }
