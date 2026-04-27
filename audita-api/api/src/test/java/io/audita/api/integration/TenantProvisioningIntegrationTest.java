@@ -19,7 +19,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Testcontainers
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class TenantProvisioningIntegrationTest {
 
     @Container
@@ -56,17 +56,17 @@ class TenantProvisioningIntegrationTest {
 
     @Test
     void provisionCreatesTenantSchemaAndKeepsUsersIsolatedPerTenant() {
-        tenantService.provision("Alpha Org", "alpha-org", "admin.alpha@example.com", "Alpha Admin");
-        tenantService.provision("Beta Org", "beta-org", "admin.beta@example.com", "Beta Admin");
+        tenantService.provision("Alpha Org", "alphaorg", "admin.alpha@example.com", "Alpha Admin");
+        tenantService.provision("Beta Org", "betaorg", "admin.beta@example.com", "Beta Admin");
 
-        assertThat(tenantRepository.findBySlug("alpha-org")).isPresent();
-        assertThat(tenantRepository.findBySlug("beta-org")).isPresent();
+        assertThat(tenantRepository.findBySlug("alphaorg")).isPresent();
+        assertThat(tenantRepository.findBySlug("betaorg")).isPresent();
 
-        TenantContext.setCurrentTenant("alpha-org");
+        TenantContext.setCurrentTenant("alphaorg");
         assertThat(userRepository.findByEmail("admin.alpha@example.com")).isPresent();
         assertThat(userRepository.findByEmail("admin.beta@example.com")).isNotPresent();
 
-        TenantContext.setCurrentTenant("beta-org");
+        TenantContext.setCurrentTenant("betaorg");
         assertThat(userRepository.findByEmail("admin.beta@example.com")).isPresent();
         assertThat(userRepository.findByEmail("admin.alpha@example.com")).isNotPresent();
     }

@@ -63,8 +63,8 @@ public class SecurityConfig {
                         // Everything else requires authentication
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(tenantResolutionFilter, JwtAuthenticationFilter.class)
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(tenantResolutionFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(jwtFilter, TenantResolutionFilter.class)
                 .build();
     }
 
