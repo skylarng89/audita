@@ -52,8 +52,11 @@ public class TenantSsoConfigEntity {
     public TenantEntity getTenant() { return tenant; }
     public OAuthProvider getProvider() { return provider; }
     public String getClientId() { return clientId; }
+    public void setClientId(String clientId) { this.clientId = clientId; }
     public String getClientSecret() { return clientSecret; }
+    public void setClientSecret(String clientSecret) { this.clientSecret = clientSecret; }
     public String getMsTenantId() { return msTenantId; }
+    public void setMsTenantId(String msTenantId) { this.msTenantId = msTenantId; }
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
     public OffsetDateTime getCreatedAt() { return createdAt; }

@@ -11,6 +11,9 @@ dependencies {
     // Spring Boot 4: spring-boot-starter-web was renamed to spring-boot-starter-webmvc
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
 
+    // Spring Data for Pageable/Page support in controllers (Spring Data JPA is in :infrastructure)
+    implementation("org.springframework.data:spring-data-commons")
+
     implementation("org.springframework.boot:spring-boot-starter-security")
 
     // Spring Boot 4: spring-boot-starter-oauth2-client renamed to spring-boot-starter-security-oauth2-client

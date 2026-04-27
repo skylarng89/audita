@@ -2,6 +2,22 @@
 
 ## [0.1.0] — Unreleased (In Development)
 
+### Added (Sprint 2 — 2026-04-27)
+
+- **TenantService**: `provision()` (atomic: schema creation + Flyway + Admin user + invite token), CRUD, domain whitelist management, SSO config upsert/delete
+- **UserService**: invite user (48h token + email), list, get, update, deactivate, reactivate
+- **GroupService**: group CRUD + member add/remove; `GroupEntity`, `GroupMemberEntity` (composite key)
+- **RoleService**: thin listing wrapper keeping JPA out of the `api` module
+- **TenantController** (`/api/platform/v1/tenants`): full CRUD + domains + SSO; `@PreAuthorize("hasRole('SUPER_ADMIN')")`
+- **UserController** (`/api/v1/users`): invite, list, get, update, deactivate, reactivate
+- **RoleController** (`/api/v1/roles`): list roles with permissions
+- **GroupController** (`/api/v1/groups`): group CRUD + member management
+- **V3 Flyway migration** (`V3__create_groups.sql`): `groups` + `group_members` tables per tenant
+- **All DTOs**: request/response objects for tenants, users, roles, groups, domains, SSO configs
+- **Frontend — Platform**: `pages/platform/index.vue` (dashboard), `tenants/index.vue`, `tenants/new.vue` (slug auto-suggest), `tenants/[id].vue` (Overview | Domains | SSO tabs)
+- **Frontend — Admin**: `pages/admin/users/index.vue` (invite modal), `admin/roles/index.vue` (permission matrix), `admin/groups/index.vue` (member management)
+- **`JpaConfig` fix**: added `@EnableJpaRepositories`, `@EnableTransactionManagement`, and `JpaTransactionManager` — custom `EntityManagerFactory` caused Spring Boot JPA auto-config to back off, leaving 0 repositories registered
+
 ### Added (Sprint 1 — 2026-04-27)
 
 - **Authentication stack**: JWT access tokens (15-min, jjwt 0.12.6), SHA-256 hashed refresh tokens (7-day rotating, HttpOnly cookie), BCrypt cost=12

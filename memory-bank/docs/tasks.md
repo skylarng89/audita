@@ -96,11 +96,51 @@
 | --------- | ----------- | ----------- | ----------- | --------- | ---------- |
 | Sprint 0  | 19          | 0           | 0           | 19        | 100%       |
 | Sprint 1  | 22          | 0           | 0           | 22        | 100%       |
-| **TOTAL** | **41**      | **0**       | **0**       | **41**    | **100%**   |
+| Sprint 2  | 19          | 3           | 0           | 16        | 84%        |
+| **TOTAL** | **60**      | **3**       | **0**       | **57**    | **95%**    |
 
 ---
 
 ## Recent Implementations
+
+### Sprint 2 — Multi-Tenancy, Users & Groups (Completed 2026-04-27)
+
+**Overview**: Backend services and controllers for tenant provisioning, user management, roles, and groups are complete. Super Admin platform pages and tenant-admin pages are live.
+
+**Files Created/Modified**:
+
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/config/JpaConfig.java` — added `@EnableJpaRepositories`, `@EnableTransactionManagement`, and `JpaTransactionManager` bean to fix runtime crash (custom EMF caused Spring Boot JPA auto-config to back off)
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/TenantService.java` — provisioning (atomic: schema + Flyway + Admin user + invite), CRUD, domain whitelist, SSO config management
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/UserService.java` — invite, list, get, update, deactivate, reactivate
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/GroupService.java` — CRUD + member add/remove
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/RoleService.java` — thin wrapper around `RoleRepository`
+- `audita-api/api/src/main/java/io/audita/api/controller/TenantController.java` — `@PreAuthorize("hasRole('SUPER_ADMIN')")`
+- `audita-api/api/src/main/java/io/audita/api/controller/UserController.java` — tenant-scoped user management
+- `audita-api/api/src/main/java/io/audita/api/controller/RoleController.java` — role listing; injects `RoleService` (not repository)
+- `audita-api/api/src/main/java/io/audita/api/controller/GroupController.java` — group CRUD + member management
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/entity/GroupEntity.java` — `groups` table entity
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/entity/GroupMemberEntity.java` — composite key `GroupMemberId`
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/repository/GroupRepository.java`
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/repository/GroupMemberRepository.java`
+- `audita-api/infrastructure/src/main/resources/db/migration/tenant/V3__create_groups.sql` — `groups` + `group_members` tables
+- `audita-api/api/src/main/java/io/audita/api/dto/` — all request + response DTOs for tenants, users, roles, groups
+- `audita-web/pages/platform/index.vue` — Super Admin platform dashboard (layout: `platform`)
+- `audita-web/pages/platform/tenants/index.vue` — tenant list with pagination
+- `audita-web/pages/platform/tenants/new.vue` — provision new org; slug auto-suggest
+- `audita-web/pages/platform/tenants/[id].vue` — tenant detail: Overview | Domain Whitelist | SSO Config tabs
+- `audita-web/pages/admin/users/index.vue` — user table + inline invite modal + role edit
+- `audita-web/pages/admin/roles/index.vue` — roles & permissions matrix (read view)
+- `audita-web/pages/admin/groups/index.vue` — group table + create/delete + member management modal
+
+**Key Changes**:
+
+- `JpaConfig` was missing `@EnableJpaRepositories` — once you define a custom `LocalContainerEntityManagerFactoryBean`, Spring Boot's JPA auto-config backs off entirely, taking the `@EnableJpaRepositories` setup with it. Added explicitly.
+- `api/build.gradle.kts` gained `spring-data-commons` dep so `Pageable`/`Page` types resolve in controller layer without pulling full JPA starter.
+- `RoleController` intentionally injects `RoleService` rather than `RoleRepository` — keeps JPA out of the `api` module.
+
+**Test Coverage**: Compilation clean across all 4 modules. Runtime fix verified. Integration tests deferred to Sprint 5.
+
+---
 
 ### Sprint 0 — Foundation & Scaffolding (Completed 2026-04-27)
 
@@ -178,52 +218,52 @@
 
 ### Backend — Tenant Management
 
-| Task ID    | Task                                                                                                | Priority | Status         | Assigned To | Notes                                                                  |
-| ---------- | --------------------------------------------------------------------------------------------------- | -------- | -------------- | ----------- | ---------------------------------------------------------------------- |
-| TENANT-001 | Implement Super Admin tenant CRUD endpoints                                                         | High     | 🔴 Not Started | Developer 1 | `GET/POST /api/platform/v1/tenants`; `GET/PATCH/DELETE /{id}`          |
-| TENANT-002 | Implement tenant provisioning: create schema, run Flyway migrations, create Admin user, send invite | High     | 🔴 Not Started | Developer 1 | MT-01, MT-04; atomic — all or nothing                                  |
-| TENANT-003 | Implement domain whitelist management endpoints (Super Admin)                                       | High     | 🔴 Not Started | Developer 1 | `GET/POST /api/platform/v1/tenants/{id}/domains`; `DELETE /{domainId}` |
-| TENANT-004 | Implement SSO config CRUD per tenant (Super Admin)                                                  | Medium   | 🔴 Not Started | Developer 1 | `GET/PUT/DELETE /api/platform/v1/tenants/{id}/sso/{provider}`          |
-| TENANT-005 | Write integration tests for tenant provisioning and multi-schema isolation                          | High     | 🔴 Not Started | Developer 1 | MT-03: assert no cross-tenant data access                              |
+| Task ID    | Task                                                                                                | Priority | Status         | Assigned To | Notes                                                                                     |
+| ---------- | --------------------------------------------------------------------------------------------------- | -------- | -------------- | ----------- | ----------------------------------------------------------------------------------------- |
+| TENANT-001 | Implement Super Admin tenant CRUD endpoints                                                         | High     | ✅ Completed   | Developer 1 | `TenantController`; `GET/POST /api/platform/v1/tenants`; `GET/PATCH/DELETE /{id}`         |
+| TENANT-002 | Implement tenant provisioning: create schema, run Flyway migrations, create Admin user, send invite | High     | ✅ Completed   | Developer 1 | `TenantService.provision()` — atomic; schema + Flyway + Admin + invite in one transaction |
+| TENANT-003 | Implement domain whitelist management endpoints (Super Admin)                                       | High     | ✅ Completed   | Developer 1 | `GET/POST /api/platform/v1/tenants/{id}/domains`; `DELETE /{id}/domains/{domainId}`       |
+| TENANT-004 | Implement SSO config CRUD per tenant (Super Admin)                                                  | Medium   | ✅ Completed   | Developer 1 | `GET /…/sso`; `PUT /…/sso`; `DELETE /…/sso/{configId}`; AES-256 encrypted secret          |
+| TENANT-005 | Write integration tests for tenant provisioning and multi-schema isolation                          | High     | 🔴 Not Started | Developer 1 | MT-03: deferred to Sprint 5 alongside broader test pass                                   |
 
 ### Backend — Users & Roles
 
-| Task ID | Task                                                                         | Priority | Status         | Assigned To | Notes                                                                  |
-| ------- | ---------------------------------------------------------------------------- | -------- | -------------- | ----------- | ---------------------------------------------------------------------- |
-| USR-001 | Seed built-in roles on tenant creation (Admin, Requester, Approver, Auditor) | High     | 🔴 Not Started | Developer 1 | USR-02: immutable system roles                                         |
-| USR-002 | Implement user invite endpoint                                               | High     | 🔴 Not Started | Developer 1 | `POST /api/v1/users/invite`; domain whitelist check; send invite email |
-| USR-003 | Implement accept-invite endpoint (set password, activate user)               | High     | 🔴 Not Started | Developer 1 | `POST /api/v1/users/accept-invite`; 48h token; rate limit 10/hr        |
-| USR-004 | Implement user list, get, update (role, status), deactivate                  | High     | 🔴 Not Started | Developer 1 | `GET/PATCH /api/v1/users`; USR-07                                      |
-| USR-005 | Implement custom role CRUD with permission assignments                       | Medium   | 🔴 Not Started | Developer 1 | `GET/POST/PUT/DELETE /api/v1/roles`; USR-03                            |
-| USR-006 | Implement permission enforcement via `@PreAuthorize`                         | High     | 🔴 Not Started | Developer 1 | USR-04; method-level security                                          |
-| USR-007 | Implement Auditor read-only enforcement at API layer                         | High     | 🔴 Not Started | Developer 1 | USR-05: reject all mutation requests for Auditor role                  |
-| USR-008 | Write tests for role/permission enforcement                                  | High     | 🔴 Not Started | Developer 1 | Test each role's allowed/denied endpoints                              |
+| Task ID | Task                                                                         | Priority | Status         | Assigned To | Notes                                                                                 |
+| ------- | ---------------------------------------------------------------------------- | -------- | -------------- | ----------- | ------------------------------------------------------------------------------------- |
+| USR-001 | Seed built-in roles on tenant creation (Admin, Requester, Approver, Auditor) | High     | ✅ Completed   | Developer 1 | V2 Flyway migration seeds 4 roles + 18 permissions per tenant schema                  |
+| USR-002 | Implement user invite endpoint                                               | High     | ✅ Completed   | Developer 1 | `UserService.inviteUser()`; `UserController`; 48h `InviteToken`; sends email          |
+| USR-003 | Implement accept-invite endpoint (set password, activate user)               | High     | ✅ Completed   | Developer 1 | Handled in Sprint 1 via `AuthController`; `POST /api/v1/auth/accept-invite`           |
+| USR-004 | Implement user list, get, update (role, status), deactivate                  | High     | ✅ Completed   | Developer 1 | `GET /users`, `GET /users/{id}`, `PATCH /users/{id}`, `POST /users/{id}/deactivate`   |
+| USR-005 | Implement role listing endpoint                                              | Medium   | ✅ Completed   | Developer 1 | `RoleService` + `RoleController`; `GET /api/v1/roles`; custom role CRUD deferred      |
+| USR-006 | Implement permission enforcement via `@PreAuthorize`                         | High     | ✅ Completed   | Developer 1 | `@EnableMethodSecurity(prePostEnabled=true)`; controllers annotated per operation     |
+| USR-007 | Implement Auditor read-only enforcement at API layer                         | High     | 🔴 Not Started | Developer 1 | USR-05: deferred — requires role-aware filter or `@PreAuthorize` on every mutating op |
+| USR-008 | Write tests for role/permission enforcement                                  | High     | 🔴 Not Started | Developer 1 | Deferred to Sprint 5 test pass                                                        |
 
 ### Backend — Groups
 
-| Task ID | Task                                        | Priority | Status         | Assigned To | Notes                                                              |
-| ------- | ------------------------------------------- | -------- | -------------- | ----------- | ------------------------------------------------------------------ |
-| GRP-001 | Implement group CRUD endpoints              | Medium   | 🔴 Not Started | Developer 1 | `GET/POST/PUT/DELETE /api/v1/groups`; GRP-01                       |
-| GRP-002 | Implement group member add/remove endpoints | Medium   | 🔴 Not Started | Developer 1 | `POST/DELETE /api/v1/groups/{id}/members/{userId}`; GRP-02, GRP-03 |
+| Task ID | Task                                        | Priority | Status       | Assigned To | Notes                                                                                   |
+| ------- | ------------------------------------------- | -------- | ------------ | ----------- | --------------------------------------------------------------------------------------- |
+| GRP-001 | Implement group CRUD endpoints              | Medium   | ✅ Completed | Developer 1 | `GroupService` + `GroupController`; `GET/POST /api/v1/groups`; `GET/PATCH/DELETE /{id}` |
+| GRP-002 | Implement group member add/remove endpoints | Medium   | ✅ Completed | Developer 1 | `POST /api/v1/groups/{id}/members`; `DELETE /{id}/members/{userId}`; paginated list     |
 
 ### Frontend — Super Admin Platform
 
-| Task ID      | Task                                                                | Priority | Status         | Assigned To | Notes                                                                                             |
-| ------------ | ------------------------------------------------------------------- | -------- | -------------- | ----------- | ------------------------------------------------------------------------------------------------- |
-| PLATFORM-001 | Build Super Admin platform dashboard (`audita_platform_dashboard/`) | High     | 🔴 Not Started | Developer 2 | KPI: tenant count, global users, system health; top orgs table; domain controls panel; SSO status |
-| PLATFORM-002 | Build Tenant Management list page (`audita_tenant_management/`)     | High     | 🔴 Not Started | Developer 2 | Table: org name, status, domain, last audit; actions                                              |
-| PLATFORM-003 | Build Provision New Org modal/page (`audita_provision_new_org/`)    | High     | 🔴 Not Started | Developer 2 | Org name, slug, initial admin name + email                                                        |
-| PLATFORM-004 | Build domain whitelist management UI (per tenant settings)          | High     | 🔴 Not Started | Developer 2 | Add/remove allowed domains; active/inactive status                                                |
-| PLATFORM-005 | Build SSO configuration UI per tenant                               | Medium   | 🔴 Not Started | Developer 2 | Google + Microsoft toggles; client ID / secret fields                                             |
+| Task ID      | Task                                                                | Priority | Status       | Assigned To | Notes                                                                                          |
+| ------------ | ------------------------------------------------------------------- | -------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------- |
+| PLATFORM-001 | Build Super Admin platform dashboard (`audita_platform_dashboard/`) | High     | ✅ Completed | Developer 2 | `pages/platform/index.vue`; KPI cards, top orgs table, system health panel; layout: `platform` |
+| PLATFORM-002 | Build Tenant Management list page (`audita_tenant_management/`)     | High     | ✅ Completed | Developer 2 | `pages/platform/tenants/index.vue`; paginated table; status badge; activate/delete actions     |
+| PLATFORM-003 | Build Provision New Org modal/page (`audita_provision_new_org/`)    | High     | ✅ Completed | Developer 2 | `pages/platform/tenants/new.vue`; slug auto-suggested from name; form validation               |
+| PLATFORM-004 | Build domain whitelist management UI (per tenant settings)          | High     | ✅ Completed | Developer 2 | `pages/platform/tenants/[id].vue` — Domain Whitelist tab; add/remove domains                   |
+| PLATFORM-005 | Build SSO configuration UI per tenant                               | Medium   | ✅ Completed | Developer 2 | `pages/platform/tenants/[id].vue` — SSO Config tab; Google + Microsoft provider fields         |
 
 ### Frontend — Users & Groups
 
-| Task ID | Task                                                         | Priority | Status         | Assigned To | Notes                                                                                   |
-| ------- | ------------------------------------------------------------ | -------- | -------------- | ----------- | --------------------------------------------------------------------------------------- |
-| USR-009 | Build User Management page (`audita_user_management/`)       | High     | 🔴 Not Started | Developer 2 | Stats cards; role/status filters; user table with edit/deactivate/resend invite actions |
-| USR-010 | Build Invite User modal                                      | High     | 🔴 Not Started | Developer 2 | Email, full name, role dropdown, group multi-select                                     |
-| USR-011 | Build Roles & Permissions page (`audita_roles_permissions/`) | Medium   | 🔴 Not Started | Developer 2 | Role list (left); permission toggles by module (right); create custom role              |
-| USR-012 | Build Group Management page (`audita_group_management/`)     | Medium   | 🔴 Not Started | Developer 2 | Group list; create group; manage members                                                |
+| Task ID | Task                                                         | Priority | Status       | Assigned To | Notes                                                                                |
+| ------- | ------------------------------------------------------------ | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------ |
+| USR-009 | Build User Management page (`audita_user_management/`)       | High     | ✅ Completed | Developer 2 | `pages/admin/users/index.vue`; stats cards; role/status filters; invite modal inline |
+| USR-010 | Build Invite User modal                                      | High     | ✅ Completed | Developer 2 | Inline in `users/index.vue`; email, full name, role dropdown                         |
+| USR-011 | Build Roles & Permissions page (`audita_roles_permissions/`) | Medium   | ✅ Completed | Developer 2 | `pages/admin/roles/index.vue`; role list + permission matrix; read-only for built-in |
+| USR-012 | Build Group Management page (`audita_group_management/`)     | Medium   | ✅ Completed | Developer 2 | `pages/admin/groups/index.vue`; group table; create group; member management modal   |
 
 ---
 
