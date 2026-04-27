@@ -97,16 +97,16 @@
 | Sprint 0  | 19          | 0           | 0           | 19        | 100%       |
 | Sprint 1  | 22          | 0           | 0           | 22        | 100%       |
 | Sprint 2  | 19          | 3           | 0           | 16        | 84%        |
-| Sprint 3  | 21          | 1           | 0           | 20        | 95%        |
-| **TOTAL** | **81**      | **4**       | **0**       | **77**    | **95%**    |
+| Sprint 3  | 21          | 0           | 0           | 21        | 100%       |
+| **TOTAL** | **81**      | **3**       | **0**       | **78**    | **96%**    |
 
 ---
 
 ## Recent Implementations
 
-### Sprint 3 — Change Request Core (Mostly Completed, 2026-04-28)
+### Sprint 3 — Change Request Core (Completed, 2026-04-28)
 
-**Overview**: Sprint 3 backend and frontend were implemented end-to-end, including approval workflow APIs, custom fields, activity stream, and CR create/detail pages. Only file upload remains.
+**Overview**: Sprint 3 backend and frontend were implemented end-to-end, including approval workflow APIs, custom fields, activity stream, CR create/detail pages, and attachment upload/list support.
 
 **Files Created/Modified**:
 
@@ -140,6 +140,7 @@
 - Added activity stream API and server-side event logging for all major CR actions.
 - Added TipTap editor integration for CR description in create flow.
 - Added CR detail tabs for Details, Approvers, and Activity with live API integration.
+- Added attachment upload/list APIs and CR detail drag-and-drop file upload with uploaded files list.
 
 **Test Coverage**: `./gradlew compileJava test --tests io.audita.infrastructure.persistence.entity.ChangeRequestEntityTest` passes and `pnpm build` for web succeeds.
 
@@ -338,16 +339,16 @@
 
 ### Frontend — Change Requests
 
-| Task ID | Task                                                                             | Priority | Status         | Assigned To | Notes                                                                                  |
-| ------- | -------------------------------------------------------------------------------- | -------- | -------------- | ----------- | -------------------------------------------------------------------------------------- |
-| CR-014  | Build Change Requests list page (`audita_change_requests/`)                      | High     | ✅ Completed   | Developer 2 | Filterable table with status/priority badges and pagination                            |
-| CR-015  | Build Create Change Request multi-section form (`audita_create_change_request/`) | High     | ✅ Completed   | Developer 2 | Added `/change-requests/new` with priority/risk/schedule/impact fields and submit flow |
-| CR-016  | Build Step 2 of CR creation: Approvers selection                                 | High     | ✅ Completed   | Developer 2 | Approver management and reorder delivered on CR detail page                            |
-| CR-017  | Integrate TipTap rich text editor for CR description                             | High     | ✅ Completed   | Developer 2 | `@tiptap/vue-3` + StarterKit integrated in create page                                 |
-| CR-018  | Build CR Detail page — Details tab (`audita_cr_detail_1/`)                       | High     | ✅ Completed   | Developer 2 | Added `/change-requests/[id]` details tab with status actions and custom field editing |
-| CR-019  | Build CR Detail page — Approvers tab (`audita_cr_detail_2/`)                     | High     | ✅ Completed   | Developer 2 | Add/remove/reorder approvers with backend API integration                              |
-| CR-020  | Build CR Detail page — Activity Stream tab                                       | High     | ✅ Completed   | Developer 2 | Live activity stream wired to `/api/v1/change-requests/{id}/activity`                  |
-| CR-021  | Implement file upload component (drag-and-drop + browse)                         | High     | 🔴 Not Started | Developer 2 | Multipart POST to `/attachments`; show upload progress; list uploaded files            |
+| Task ID | Task                                                                             | Priority | Status       | Assigned To | Notes                                                                                  |
+| ------- | -------------------------------------------------------------------------------- | -------- | ------------ | ----------- | -------------------------------------------------------------------------------------- |
+| CR-014  | Build Change Requests list page (`audita_change_requests/`)                      | High     | ✅ Completed | Developer 2 | Filterable table with status/priority badges and pagination                            |
+| CR-015  | Build Create Change Request multi-section form (`audita_create_change_request/`) | High     | ✅ Completed | Developer 2 | Added `/change-requests/new` with priority/risk/schedule/impact fields and submit flow |
+| CR-016  | Build Step 2 of CR creation: Approvers selection                                 | High     | ✅ Completed | Developer 2 | Approver management and reorder delivered on CR detail page                            |
+| CR-017  | Integrate TipTap rich text editor for CR description                             | High     | ✅ Completed | Developer 2 | `@tiptap/vue-3` + StarterKit integrated in create page                                 |
+| CR-018  | Build CR Detail page — Details tab (`audita_cr_detail_1/`)                       | High     | ✅ Completed | Developer 2 | Added `/change-requests/[id]` details tab with status actions and custom field editing |
+| CR-019  | Build CR Detail page — Approvers tab (`audita_cr_detail_2/`)                     | High     | ✅ Completed | Developer 2 | Add/remove/reorder approvers with backend API integration                              |
+| CR-020  | Build CR Detail page — Activity Stream tab                                       | High     | ✅ Completed | Developer 2 | Live activity stream wired to `/api/v1/change-requests/{id}/activity`                  |
+| CR-021  | Implement file upload component (drag-and-drop + browse)                         | High     | ✅ Completed | Developer 2 | Multipart POST to `/attachments`; list uploaded files on CR detail page                |
 
 ---
 

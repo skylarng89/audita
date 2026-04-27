@@ -101,6 +101,48 @@
         </div>
       </div>
 
+      <div class="card p-5 md:col-span-2">
+        <h3 class="font-semibold mb-3">Attachments</h3>
+        <div
+          class="border-2 border-dashed border-border dark:border-border-dark rounded-lg p-6 text-center"
+          @dragover.prevent
+          @drop.prevent="onDropUpload"
+        >
+          <p class="text-sm text-muted">
+            Drag and drop files here, or choose a file.
+          </p>
+          <input
+            ref="fileInput"
+            class="hidden"
+            type="file"
+            @change="onSelectUpload"
+          />
+          <button class="btn-ghost mt-3" @click="fileInput?.click()">
+            Select File
+          </button>
+        </div>
+
+        <div class="mt-4 space-y-2">
+          <div
+            v-for="file in attachments"
+            :key="file.id"
+            class="border border-border dark:border-border-dark rounded-lg p-3 flex items-center justify-between"
+          >
+            <div>
+              <p class="text-sm font-semibold">{{ file.fileName }}</p>
+              <p class="text-xs text-muted">
+                {{ formatSize(file.sizeBytes) }} •
+                {{ file.uploaderName ?? "Unknown" }}
+              </p>
+            </div>
+            <span class="text-xs text-muted">{{ fmt(file.createdAt) }}</span>
+          </div>
+          <div v-if="!attachments.length" class="text-sm text-muted">
+            No attachments uploaded yet.
+          </div>
+        </div>
+      </div>
+
       <div class="card p-5 md:col-span-2 flex flex-wrap gap-2">
         <button
           class="btn-primary"
@@ -238,6 +280,7 @@
 <script setup lang="ts">
 import type {
   ActivityEntry,
+  Attachment,
   ChangeRequest,
   ChangeRequestCustomFieldValue,
   CrApprover,
@@ -260,18 +303,22 @@ const {
   reorderApprovers,
   listCustomFields,
   saveCustomFields,
+  listAttachments,
+  uploadAttachment,
   listActivity,
 } = useChangeRequests();
 
 const changeRequest = ref<ChangeRequest | null>(null);
 const approvers = ref<CrApprover[]>([]);
 const customFields = ref<ChangeRequestCustomFieldValue[]>([]);
+const attachments = ref<Attachment[]>([]);
 const activity = ref<ActivityEntry[]>([]);
 const tab = ref<"details" | "approvers" | "activity">("details");
 
 const showAddApprover = ref(false);
 const newApproverUserId = ref("");
 const newApproverRequired = ref(true);
+const fileInput = ref<HTMLInputElement | null>(null);
 
 const showReject = ref(false);
 const rejectReason = ref("");
@@ -280,6 +327,7 @@ async function loadAll() {
   changeRequest.value = await get(id.value);
   approvers.value = await listApprovers(id.value);
   customFields.value = await listCustomFields(id.value);
+  attachments.value = await listAttachments(id.value);
   activity.value = await listActivity(id.value);
 }
 
@@ -294,6 +342,35 @@ function addCustomField() {
 async function saveCustomFieldsAction() {
   customFields.value = await saveCustomFields(id.value, customFields.value);
   activity.value = await listActivity(id.value);
+}
+
+async function uploadSelected(file: File | null) {
+  if (!file) {
+    return;
+  }
+  await uploadAttachment(id.value, file);
+  attachments.value = await listAttachments(id.value);
+  activity.value = await listActivity(id.value);
+}
+
+function onSelectUpload(event: Event) {
+  const target = event.target as HTMLInputElement;
+  uploadSelected(target.files?.item(0) ?? null);
+  target.value = "";
+}
+
+function onDropUpload(event: DragEvent) {
+  uploadSelected(event.dataTransfer?.files?.item(0) ?? null);
+}
+
+function formatSize(bytes: number) {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 async function submitCr() {
@@ -348,7 +425,7 @@ async function moveUp(approverId: string) {
   const order = [...approvers.value]
     .sort((a, b) => a.position - b.position)
     .map((a) => a.id);
-  const index = order.findIndex((value) => value === approverId);
+  const index = order.indexOf(approverId);
   if (index <= 0) {
     return;
   }

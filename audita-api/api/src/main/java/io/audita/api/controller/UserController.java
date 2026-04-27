@@ -28,13 +28,13 @@ public class UserController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('AUDITOR', 'ADMIN', 'SUPER_ADMIN')")
     public Page<UserResponse> listUsers(@PageableDefault(size = 20) Pageable pageable) {
         return userService.listUsers(pageable).map(UserResponse::from);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN') or #id.toString() == authentication.name")
+    @PreAuthorize("hasAnyRole('AUDITOR', 'ADMIN', 'SUPER_ADMIN') or #id.toString() == authentication.name")
     public UserResponse getUser(@PathVariable UUID id) {
         return UserResponse.from(userService.getUser(id));
     }

@@ -81,6 +81,17 @@ export interface ChangeRequestCustomFieldValue {
   value: string | null;
 }
 
+export interface Attachment {
+  id: string;
+  fileName: string;
+  mimeType: string | null;
+  sizeBytes: number;
+  storagePath: string;
+  uploaderId: string | null;
+  uploaderName: string | null;
+  createdAt: string;
+}
+
 // ── Comments & Activity ───────────────────────────────────────────────────────
 
 export interface Comment {

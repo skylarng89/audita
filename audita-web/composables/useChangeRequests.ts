@@ -1,4 +1,5 @@
 import type {
+  Attachment,
   ChangeRequest,
   ChangeRequestCustomFieldValue,
   CrApprover,
@@ -121,6 +122,19 @@ export function useChangeRequests() {
     );
   }
 
+  async function listAttachments(id: string): Promise<Attachment[]> {
+    return api<Attachment[]>(`/api/v1/change-requests/${id}/attachments`);
+  }
+
+  async function uploadAttachment(id: string, file: File): Promise<Attachment> {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api<Attachment>(`/api/v1/change-requests/${id}/attachments`, {
+      method: "POST",
+      body: formData,
+    });
+  }
+
   async function listComments(id: string): Promise<Comment[]> {
     return api<Comment[]>(`/api/v1/change-requests/${id}/comments`);
   }
@@ -151,6 +165,8 @@ export function useChangeRequests() {
     reorderApprovers,
     listCustomFields,
     saveCustomFields,
+    listAttachments,
+    uploadAttachment,
     listComments,
     postComment,
     listActivity,

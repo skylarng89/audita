@@ -8,20 +8,28 @@ import io.audita.domain.model.ChangeRequestStatus;
 import io.audita.domain.model.Priority;
 import io.audita.domain.model.RiskLevel;
 import io.audita.infrastructure.persistence.entity.ActivityStreamEntity;
+import io.audita.infrastructure.persistence.entity.AttachmentEntity;
 import io.audita.infrastructure.persistence.entity.ChangeRequestEntity;
 import io.audita.infrastructure.persistence.entity.ChangeRequestCustomFieldEntity;
 import io.audita.infrastructure.persistence.entity.CrApproverEntity;
 import io.audita.infrastructure.persistence.entity.UserEntity;
 import io.audita.infrastructure.persistence.repository.ActivityStreamRepository;
+import io.audita.infrastructure.persistence.repository.AttachmentRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestCustomFieldRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestRepository;
 import io.audita.infrastructure.persistence.repository.CrApproverRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
+import io.audita.infrastructure.tenant.TenantContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -37,17 +45,20 @@ public class ChangeRequestService {
     private final CrApproverRepository crApproverRepository;
     private final ChangeRequestCustomFieldRepository customFieldRepository;
     private final ActivityStreamRepository activityStreamRepository;
+    private final AttachmentRepository attachmentRepository;
     private final UserRepository userRepository;
 
     public ChangeRequestService(ChangeRequestRepository changeRequestRepository,
                                 CrApproverRepository crApproverRepository,
                                 ChangeRequestCustomFieldRepository customFieldRepository,
                                 ActivityStreamRepository activityStreamRepository,
+                                AttachmentRepository attachmentRepository,
                                 UserRepository userRepository) {
         this.changeRequestRepository = changeRequestRepository;
         this.crApproverRepository = crApproverRepository;
         this.customFieldRepository = customFieldRepository;
         this.activityStreamRepository = activityStreamRepository;
+        this.attachmentRepository = attachmentRepository;
         this.userRepository = userRepository;
     }
 
@@ -287,6 +298,51 @@ public class ChangeRequestService {
     public List<ActivityStreamEntity> listActivity(UUID changeRequestId) {
         getById(changeRequestId);
         return activityStreamRepository.findByChangeRequestIdOrderByCreatedAtDesc(changeRequestId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AttachmentEntity> listAttachments(UUID changeRequestId) {
+        getById(changeRequestId);
+        return attachmentRepository.findByChangeRequestIdOrderByCreatedAtDesc(changeRequestId);
+    }
+
+    public AttachmentEntity uploadAttachment(UUID changeRequestId, UUID uploaderId, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new DomainNotPermittedException("EMPTY_FILE", "Attachment file is required.");
+        }
+
+        ChangeRequestEntity changeRequest = getById(changeRequestId);
+        UserEntity uploader = userRepository.findById(uploaderId)
+                .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Uploader not found."));
+
+        String tenant = TenantContext.getCurrentTenant();
+        String safeOriginalName = file.getOriginalFilename() == null ? "attachment.bin" : file.getOriginalFilename();
+        String storedName = UUID.randomUUID() + "-" + safeOriginalName.replaceAll("[^a-zA-Z0-9._-]", "_");
+
+        Path storageDir = Path.of("/tmp/audita/uploads", tenant == null ? "public" : tenant, changeRequestId.toString());
+        Path outputPath = storageDir.resolve(storedName);
+
+        try {
+            Files.createDirectories(storageDir);
+            Files.copy(file.getInputStream(), outputPath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException ex) {
+            throw new DomainNotPermittedException("UPLOAD_FAILED", "Could not persist uploaded file.");
+        }
+
+        AttachmentEntity attachment = new AttachmentEntity(
+                changeRequest,
+                uploader,
+                safeOriginalName,
+                file.getContentType(),
+                file.getSize(),
+                outputPath.toString()
+        );
+        AttachmentEntity saved = attachmentRepository.save(attachment);
+        logActivity(changeRequest, uploader, "CR_ATTACHMENT_UPLOADED", Map.of(
+                "attachmentId", saved.getId().toString(),
+                "fileName", safeOriginalName
+        ));
+        return saved;
     }
 
     @Transactional(readOnly = true)

@@ -6,6 +6,7 @@ import io.audita.api.dto.request.RejectChangeRequestRequest;
 import io.audita.api.dto.request.ReorderApproversRequest;
 import io.audita.api.dto.request.UpsertChangeRequestCustomFieldsRequest;
 import io.audita.api.dto.response.ActivityStreamResponse;
+import io.audita.api.dto.response.AttachmentResponse;
 import io.audita.api.dto.request.UpdateChangeRequestRequest;
 import io.audita.api.dto.response.ChangeRequestCustomFieldResponse;
 import io.audita.api.dto.response.ChangeRequestResponse;
@@ -23,6 +24,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -185,5 +187,24 @@ public class ChangeRequestController {
         return changeRequestService.listActivity(id).stream()
                 .map(ActivityStreamResponse::from)
                 .toList();
+    }
+
+    @GetMapping("/{id}/attachments")
+    @PreAuthorize("isAuthenticated()")
+    public List<AttachmentResponse> attachments(@PathVariable UUID id) {
+        return changeRequestService.listAttachments(id).stream()
+                .map(AttachmentResponse::from)
+                .toList();
+    }
+
+    @PostMapping(value = "/{id}/attachments", consumes = "multipart/form-data")
+    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<AttachmentResponse> uploadAttachment(
+            @PathVariable UUID id,
+            @RequestPart("file") MultipartFile file,
+            @AuthenticationPrincipal UserDetails principal) {
+
+        var saved = changeRequestService.uploadAttachment(id, UUID.fromString(principal.getUsername()), file);
+        return ResponseEntity.status(HttpStatus.CREATED).body(AttachmentResponse.from(saved));
     }
 }
