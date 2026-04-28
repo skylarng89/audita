@@ -49,7 +49,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/logout",
                                 "/api/v1/auth/forgot-password",
                                 "/api/v1/auth/reset-password",
-                                "/api/v1/users/accept-invite",
+                                "/api/v1/auth/accept-invite",
                                 "/api/platform/v1/bootstrap"
                         ).permitAll()
                         // SSO redirect initiation (GET — browser navigates here)
