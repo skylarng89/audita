@@ -21,6 +21,10 @@ RUN chmod +x ./gradlew && ./gradlew :api:bootJar --no-daemon
 FROM eclipse-temurin:25-jre-noble
 WORKDIR /app
 
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends curl \
+	&& rm -rf /var/lib/apt/lists/*
+
 RUN addgroup --system audita && adduser --system --ingroup audita audita
 USER audita
 

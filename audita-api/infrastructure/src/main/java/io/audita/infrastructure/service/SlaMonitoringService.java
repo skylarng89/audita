@@ -1,12 +1,18 @@
 package io.audita.infrastructure.service;
 
+import io.audita.domain.model.TenantStatus;
 import io.audita.infrastructure.persistence.entity.ActivityStreamEntity;
 import io.audita.infrastructure.persistence.entity.ChangeRequestEntity;
 import io.audita.infrastructure.persistence.entity.CrApproverEntity;
+import io.audita.infrastructure.persistence.entity.TenantEntity;
 import io.audita.infrastructure.persistence.entity.UserEntity;
 import io.audita.infrastructure.persistence.repository.ActivityStreamRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestRepository;
 import io.audita.infrastructure.persistence.repository.CrApproverRepository;
+import io.audita.infrastructure.persistence.repository.TenantRepository;
+import io.audita.infrastructure.tenant.TenantContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,29 +27,46 @@ import java.util.Set;
 @Transactional
 public class SlaMonitoringService {
 
+    private static final Logger log = LoggerFactory.getLogger(SlaMonitoringService.class);
+
     private final ChangeRequestRepository changeRequestRepository;
     private final CrApproverRepository crApproverRepository;
     private final ActivityStreamRepository activityStreamRepository;
     private final NotificationService notificationService;
     private final EmailService emailService;
+    private final TenantRepository tenantRepository;
 
     public SlaMonitoringService(ChangeRequestRepository changeRequestRepository,
                                 CrApproverRepository crApproverRepository,
                                 ActivityStreamRepository activityStreamRepository,
                                 NotificationService notificationService,
-                                EmailService emailService) {
+                                EmailService emailService,
+                                TenantRepository tenantRepository) {
         this.changeRequestRepository = changeRequestRepository;
         this.crApproverRepository = crApproverRepository;
         this.activityStreamRepository = activityStreamRepository;
         this.notificationService = notificationService;
         this.emailService = emailService;
+        this.tenantRepository = tenantRepository;
     }
 
     @Scheduled(fixedDelayString = "${audita.sla.monitor-delay-ms:60000}")
     public void evaluate() {
+        List<TenantEntity> activeTenants = tenantRepository.findByStatus(TenantStatus.ACTIVE);
         OffsetDateTime now = OffsetDateTime.now();
-        processWarnings(now);
-        processBreaches(now);
+
+        for (TenantEntity tenant : activeTenants) {
+            String tenantSlug = tenant.getSlug();
+            try {
+                TenantContext.setCurrentTenant(tenantSlug);
+                processWarnings(now);
+                processBreaches(now);
+            } catch (Exception ex) {
+                log.error("SLA monitoring failed for tenant {}", tenantSlug, ex);
+            } finally {
+                TenantContext.clear();
+            }
+        }
     }
 
     private void processWarnings(OffsetDateTime now) {
