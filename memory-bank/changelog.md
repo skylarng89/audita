@@ -14,6 +14,8 @@
 - **Frontend comments tab**: CR detail page now supports comments list + compose/post flow
 - **Frontend notification hydration**: bell now fetches initial notification list before live SSE updates
 - **SSE client auth hardening**: stream connects with access-token query parameter and robust payload mapping
+- **Endpoint-level controller tests**: added `CommentControllerWebMvcTest` and `NotificationControllerWebMvcTest` for request/response contract coverage
+- **Mention extraction fix**: corrected `CommentService` mention parsing to evaluate raw comment text prior to HTML sanitization
 
 ### Added (Sprint 3 — 2026-04-27)
 

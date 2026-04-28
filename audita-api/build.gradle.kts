@@ -43,3 +43,7 @@ configure(subprojects.filter { it.name != "api" }) {
     tasks.named<BootJar>("bootJar") { enabled = false }
     tasks.named<Jar>("jar") { enabled = true }
 }
+
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+}

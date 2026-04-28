@@ -21,6 +21,7 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 - **Sprint 2 complete (19/19 tasks).** Remaining tasks (USR-007, USR-008, TENANT-005) were completed with controller policy tests and tenant-schema isolation integration coverage.
 - **Sprint 3 complete (21/21 tasks).** Added CR attachments API and frontend upload/list flows; Sprint 3 is fully closed.
 - **Sprint 4 complete (10/10 tasks).** Added comments APIs + mention extraction/persistence, notifications REST + SSE stream, SLA warning/breach scheduler automation, and frontend comments/notification wiring.
+- **Sprint 4 validation expanded.** Added endpoint-level controller tests for comments and notifications; targeted Gradle run passes.
 - Documentation complete: PRD v1.0, SRS v1.0, USER_FLOW v1.0 (`docs/`). UI designs: 40 screens (`ui-designs/`).
 - `audita-api`: hexagonal structure, JPA/Hibernate multi-tenancy, Flyway migrations, Spring Security scaffold, RFC 7807 exception handler, structured JSON logging (Logstash encoder).
 - `audita-web`: Nuxt 3, Tailwind tokens, all layouts, auth/role/tenant middleware, `plugins/api.ts`, `useAuthStore`, shared component library (AppButton, AppInput, AppBadge, AppCard, AppModal, AppTable, AppPagination).
@@ -80,7 +81,7 @@ Advanced features (SLA, custom fields, audit export, full admin config) follow i
 
 ## Active Blockers / Open Questions
 
-- No functional blocker, but true end-to-end endpoint tests are still pending for Sprint 1/2 and should be covered in a later testing sprint.
+- No functional blocker. Remaining quality gap is full workflow e2e coverage (auth + tenant provisioning + CR lifecycle).
 
 ---
 
@@ -101,6 +102,6 @@ Advanced features (SLA, custom fields, audit export, full admin config) follow i
 
 **Post-Sprint 4 Validation & Hardening:**
 
-1. Add true endpoint-level e2e coverage for Sprint 1/2/4 critical flows.
-2. Add integration tests for comments/notifications/SLA scheduler behavior.
-3. Review SSE auth approach for long-term production hardening (header/token strategy).
+1. Add true end-to-end tests for Sprint 1/2/4 critical user journeys (not only controller/service-level).
+2. Add full integration coverage for SSE stream behavior under reconnect and auth expiry conditions.
+3. Review SSE auth approach for long-term production hardening (header/cookie/token strategy).
