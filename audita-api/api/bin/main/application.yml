@@ -18,7 +18,7 @@ spring:
   # ── JPA / Hibernate ──────────────────────────────────────────────────────────
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
       naming:
         physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
     open-in-view: false

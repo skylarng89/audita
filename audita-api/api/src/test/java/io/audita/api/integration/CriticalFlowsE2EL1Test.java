@@ -333,9 +333,16 @@ class CriticalFlowsE2EL1Test {
             exec(c, "ALTER TABLE " + slug + ".notifications ADD COLUMN IF NOT EXISTS createdat TIMESTAMPTZ DEFAULT NOW()");
 
             exec(c, "ALTER TABLE " + slug + ".activity_stream ADD COLUMN IF NOT EXISTS changerequestid UUID");
+            exec(c, "ALTER TABLE " + slug + ".activity_stream ADD COLUMN IF NOT EXISTS \"changeRequest\" UUID");
             exec(c, "ALTER TABLE " + slug + ".activity_stream ADD COLUMN IF NOT EXISTS actorid UUID");
+            exec(c, "ALTER TABLE " + slug + ".activity_stream ADD COLUMN IF NOT EXISTS \"actor\" UUID");
             exec(c, "ALTER TABLE " + slug + ".activity_stream ADD COLUMN IF NOT EXISTS actiontype VARCHAR(100)");
+            exec(c, "ALTER TABLE " + slug + ".activity_stream ADD COLUMN IF NOT EXISTS \"actionType\" VARCHAR(100)");
             exec(c, "ALTER TABLE " + slug + ".activity_stream ADD COLUMN IF NOT EXISTS createdat TIMESTAMPTZ DEFAULT NOW()");
+            exec(c, "ALTER TABLE " + slug + ".activity_stream ADD COLUMN IF NOT EXISTS \"createdAt\" TIMESTAMPTZ DEFAULT NOW()");
+            exec(c, "ALTER TABLE " + slug + ".activity_stream ALTER COLUMN action_type DROP NOT NULL");
+            exec(c, "ALTER TABLE " + slug + ".activity_stream ALTER COLUMN change_request_id DROP NOT NULL");
+            exec(c, "ALTER TABLE " + slug + ".activity_stream ALTER COLUMN created_at DROP NOT NULL");
         } catch (Exception e) {
             throw new IllegalStateException("Failed to patch tenant compatibility columns", e);
         }

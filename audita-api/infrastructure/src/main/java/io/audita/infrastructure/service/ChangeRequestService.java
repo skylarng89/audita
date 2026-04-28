@@ -88,6 +88,7 @@ public class ChangeRequestService {
         changeRequest.setAffectedSystems(normalizeAffectedSystems(affectedSystems));
         ChangeRequestEntity created = changeRequestRepository.save(changeRequest);
         logActivity(created, createdBy, "CR_CREATED", Map.of("status", created.getStatus().name()));
+        initializeCreator(created);
         return created;
     }
 
@@ -139,6 +140,7 @@ public class ChangeRequestService {
 
         ChangeRequestEntity updated = changeRequestRepository.save(current);
         logActivity(updated, updated.getCreatedBy(), "CR_UPDATED", Map.of("status", updated.getStatus().name()));
+        initializeCreator(updated);
         return updated;
     }
 
@@ -148,6 +150,7 @@ public class ChangeRequestService {
         changeRequest.setSlaDeadline(OffsetDateTime.now().plusHours(resolveSlaHours(changeRequest.getPriority())));
         ChangeRequestEntity submitted = changeRequestRepository.save(changeRequest);
         logActivity(submitted, submitted.getCreatedBy(), "CR_SUBMITTED", Map.of("status", submitted.getStatus().name()));
+        initializeCreator(submitted);
         return submitted;
     }
 
@@ -267,6 +270,7 @@ public class ChangeRequestService {
         crApproverRepository.save(approver);
         ChangeRequestEntity updated = changeRequestRepository.save(changeRequest);
         logActivity(updated, actor, "CR_APPROVED", Map.of("approverId", approver.getId().toString(), "status", updated.getStatus().name()));
+        initializeCreator(updated);
         return updated;
     }
 
@@ -291,6 +295,7 @@ public class ChangeRequestService {
         crApproverRepository.save(approver);
         ChangeRequestEntity updated = changeRequestRepository.save(changeRequest);
         logActivity(updated, actor, "CR_REJECTED", Map.of("approverId", approver.getId().toString(), "reason", reason, "status", updated.getStatus().name()));
+        initializeCreator(updated);
         return updated;
     }
 
@@ -395,6 +400,12 @@ public class ChangeRequestService {
                              String actionType,
                              Map<String, Object> payload) {
         activityStreamRepository.save(new ActivityStreamEntity(changeRequest, actor, actionType, payload));
+    }
+
+    private void initializeCreator(ChangeRequestEntity changeRequest) {
+        if (changeRequest.getCreatedBy() != null) {
+            changeRequest.getCreatedBy().getEmail();
+        }
     }
 
     private String[] normalizeAffectedSystems(String[] affectedSystems) {
