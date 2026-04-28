@@ -148,6 +148,26 @@
 
 ## Recent Implementations
 
+### Security Review — Adversarial Audit (Completed 2026-04-28)
+
+**Overview**: Completed a full adversarial security review of backend/frontend authentication, multi-tenant isolation, authorization depth, token transport, and upload paths.
+
+**Files Created/Modified**:
+
+- `docs/SECURITY_AUDIT_2026-04-28.md` — comprehensive findings report with severity ranking, attack chains, and prioritized remediation plan
+
+**Key Findings**:
+
+- Critical tenant boundary risk in schema switching path due to unsanitized tenant slug flowing into `search_path` SQL.
+- High-risk token exposure due to SSO access token being transported in URL query params.
+- High-risk object-level authorization gaps on change request mutation paths.
+- High-risk CORS policy mismatch (`*` patterns + credentials enabled).
+
+**Implementation Guidance Included**:
+
+- Immediate fixes (tenant slug validation + safe schema switching, SSO callback redesign, CR ownership policy checks, CORS tightening).
+- Follow-on hardening (secure config defaults, upload guardrails, Redis-backed anti-abuse state, stronger password/session controls).
+
 ### Sprint 4 — Collaboration, Notifications & SLA Automation (Completed 2026-04-28)
 
 **Overview**: Implemented comments with mention handling, in-app notification APIs + SSE streaming, SLA warning/breach scheduler automation, and frontend comments/notification wiring.

@@ -100,6 +100,18 @@ Advanced features (SLA, custom fields, audit export, full admin config) follow i
 
 ## Next Actions
 
-1. Define Sprint 6 scope and tasks (feature expansion + non-functional polish).
-2. Keep critical e2e suite as a mandatory CI gate.
+1. Execute immediate security hardening actions from `docs/SECURITY_AUDIT_2026-04-28.md` (tenant isolation, SSO token transport, BOLA controls, CORS tightening).
+2. Keep critical e2e suite as a mandatory CI gate and add security regression gates (tenant fuzz/BOLA/SSO token handling).
 3. Continue replacing compatibility shim logic with permanent entity/migration alignment incrementally.
+
+---
+
+## Security Review Snapshot (2026-04-28)
+
+- Completed adversarial security review and published findings in `docs/SECURITY_AUDIT_2026-04-28.md`.
+- Highest-risk issues identified:
+  - Tenant schema switching surface relies on unsanitized header-derived slug concatenated into SQL (`search_path`).
+  - SSO callback currently transports access token in URL query string.
+  - Change request mutation paths lack object-level authorization checks for requester-level actors.
+  - CORS is configured with wildcard origin patterns while credentials are enabled.
+- Recommended immediate path: fix those four findings before further feature expansion.

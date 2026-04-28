@@ -17,3 +17,10 @@
 - S5-003: Response mapping stability hardening and regression test coverage ✅
 - S5-004: Final verification runs (backend critical suite + frontend build) ✅
 - S5-005: Update memory-bank + repo memory with Sprint 5 closure ✅
+
+## Post-Sprint Security Follow-Up (2026-04-28)
+
+- SEC-001: Eliminate tenant slug injection surface in schema switching path.
+- SEC-002: Remove URL query token transport from SSO callback flow.
+- SEC-003: Add object-level authorization checks for change request mutations.
+- SEC-004: Tighten CORS to explicit allowlist with environment-specific profiles.

@@ -2,6 +2,11 @@
 
 ## [0.1.0] — Unreleased (In Development)
 
+### Added (Security Review — 2026-04-28)
+
+- Published adversarial security audit report: `docs/SECURITY_AUDIT_2026-04-28.md`.
+- Documented prioritized vulnerabilities and remediation plan covering tenant isolation, SSO token handling, object-level authorization, CORS hardening, secret/config hygiene, and upload controls.
+
 ### Added (Sprint 5 — 2026-04-28)
 
 - **Principal identity regression tests**: added `UserPrincipalTest` to ensure `getUsername()` returns UUID string for both tenant and super-admin principals.
