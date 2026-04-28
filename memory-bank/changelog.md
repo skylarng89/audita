@@ -16,6 +16,16 @@
 - **SSE client auth hardening**: added short-lived stream-token issuance endpoint (`POST /api/v1/notifications/stream-token`) and stream validation via `streamToken` query parameter
 - **Endpoint-level controller tests**: added `CommentControllerWebMvcTest` and `NotificationControllerWebMvcTest` for request/response contract coverage
 - **Mention extraction fix**: corrected `CommentService` mention parsing to evaluate raw comment text prior to HTML sanitization
+- **SSE resilience integration coverage**: added runtime integration test for stream-token issuance and unauthorized stream access guards
+
+### Changed (Sprint 4 Hardening — 2026-04-28)
+
+- **Principal username semantics**: `UserPrincipal#getUsername()` now returns `userId` string to align with controller paths that parse `authentication.name` as UUID.
+
+### Verification (2026-04-28)
+
+- Backend critical harness run: `CriticalFlowsE2EL1Test` currently **3/4 passing** with remaining failure in CR lifecycle add-approver step.
+- Frontend production build (`pnpm build`) succeeds.
 
 ### Added (Sprint 3 — 2026-04-27)
 

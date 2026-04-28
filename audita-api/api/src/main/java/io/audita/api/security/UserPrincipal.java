@@ -33,7 +33,7 @@ public record UserPrincipal(
 
     @Override public Collection<? extends GrantedAuthority> getAuthorities() { return authorities; }
     @Override public String getPassword() { return null; }
-    @Override public String getUsername() { return email; }
+    @Override public String getUsername() { return userId.toString(); }
     @Override public boolean isAccountNonExpired() { return true; }
     @Override public boolean isAccountNonLocked() { return true; }
     @Override public boolean isCredentialsNonExpired() { return true; }

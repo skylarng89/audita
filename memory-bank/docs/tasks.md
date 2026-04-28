@@ -176,7 +176,27 @@
 - `audita-api/api/src/test/java/io/audita/api/integration/CriticalFlowsE2EL1Test.java` — isolated tenant schema setup with passing auth login/refresh/logout and invite acceptance/login e2e flows
 - `audita-api/api/src/main/java/io/audita/api/config/SecurityConfig.java` — corrected public route allowlist to include `/api/v1/auth/accept-invite`
 
-**Validation**: `./gradlew :api:test --tests "io.audita.api.integration.CriticalFlowsE2EL1Test"` passes.
+**Validation**: harness expanded to 4 tests; current run is 3/4 passing with one remaining CR lifecycle failure on add-approver endpoint.
+
+### Post-Sprint 4 Hardening — SSE Resilience Integration (Completed 2026-04-28)
+
+**Overview**: Added integration coverage for stream-token issuance and unauthorized SSE stream guards.
+
+**Files Created/Modified**:
+
+- `audita-api/api/src/test/java/io/audita/api/integration/CriticalFlowsE2EL1Test.java` — added `tenant_notification_stream_token_resilience_e2e`
+
+**Key Changes**:
+
+- Added runtime integration assertion for `POST /api/v1/notifications/stream-token` with authenticated tenant user.
+- Added negative-path assertions for `/api/v1/notifications/stream` with invalid and missing stream tokens.
+
+**Test Coverage**: `./gradlew :api:test --tests "io.audita.api.integration.CriticalFlowsE2EL1Test.tenant_notification_stream_token_resilience_e2e"` passes.
+
+### Final Verification Snapshot (2026-04-28)
+
+- Backend: `./gradlew :api:test --tests "io.audita.api.integration.CriticalFlowsE2EL1Test"` => 4 tests run, 1 failed (`tenant_change_request_lifecycle_e2e`, add-approver step).
+- Frontend: `cd audita-web && pnpm build` => success.
 
 ### Sprint 3 — Change Request Core (Completed, 2026-04-28)
 

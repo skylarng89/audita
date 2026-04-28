@@ -81,7 +81,8 @@ Advanced features (SLA, custom fields, audit export, full admin config) follow i
 
 ## Active Blockers / Open Questions
 
-- No functional blocker for Sprint 4 features. Remaining quality gap is full workflow e2e coverage under the current multi-tenant test runtime configuration.
+- Critical flow e2e harness now covers auth/login-refresh/logout, invite acceptance/login, and SSE stream-token guard paths, but CR lifecycle still has one failing step (`POST /api/v1/change-requests/{id}/approvers`) due entity/schema mapping mismatch in full runtime path.
+- `ChangeRequestController` uses `UUID.fromString(principal.getUsername())`; principal username semantics were corrected to user ID to align identity usage, but CR lifecycle still requires deeper mapping cleanup.
 
 ---
 
@@ -102,6 +103,6 @@ Advanced features (SLA, custom fields, audit export, full admin config) follow i
 
 **Post-Sprint 4 Validation & Hardening:**
 
-1. Stabilize multi-tenant full-context test harness so full workflow e2e tests can execute reliably in CI.
-2. Add full integration coverage for SSE reconnect/auth-expiry once the harness is stable.
-3. Keep short-lived stream-token SSE auth strategy as default and monitor production telemetry.
+1. Resolve CR approver persistence mapping mismatch so `CriticalFlowsE2EL1Test` fully passes (currently 3/4).
+2. Keep and extend SSE integration coverage (`stream-token` issuance and unauthorized stream guards are now passing).
+3. Preserve short-lived stream-token SSE auth strategy as default and monitor production telemetry.
