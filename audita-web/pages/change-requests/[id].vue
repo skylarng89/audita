@@ -40,6 +40,13 @@
       >
         Activity
       </button>
+      <button
+        class="btn-ghost"
+        :class="{ 'ring-2 ring-primary': tab === 'comments' }"
+        @click="tab = 'comments'"
+      >
+        Comments
+      </button>
     </div>
 
     <section
@@ -228,7 +235,7 @@
       </div>
     </section>
 
-    <section v-else class="card p-5">
+    <section v-else-if="tab === 'activity'" class="card p-5">
       <h2 class="font-semibold mb-2">Activity Stream</h2>
       <div v-if="!activity.length" class="text-sm text-muted">
         No activity yet.
@@ -248,6 +255,43 @@
             class="text-xs mt-2 p-2 bg-surface dark:bg-surface-dark rounded"
             >{{ JSON.stringify(event.payload, null, 2) }}</pre
           >
+        </div>
+      </div>
+    </section>
+
+    <section v-else class="card p-5 space-y-4">
+      <h2 class="font-semibold">Comments</h2>
+      <div class="space-y-3">
+        <div
+          v-for="comment in comments"
+          :key="comment.id"
+          class="border border-border dark:border-border-dark rounded-lg p-3"
+        >
+          <p class="text-xs text-muted">
+            {{ comment.author?.fullName ?? "Unknown" }} •
+            {{ fmt(comment.createdAt) }}
+          </p>
+          <div
+            class="text-sm mt-2 text-gray-800 dark:text-gray-200"
+            v-html="comment.body"
+          />
+        </div>
+        <div v-if="!comments.length" class="text-sm text-muted">
+          No comments yet.
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <textarea
+          v-model="newComment"
+          class="input"
+          rows="4"
+          placeholder="Add a comment. Mention users with @user@example.com"
+        />
+        <div class="flex justify-end">
+          <button class="btn-primary" @click="postCommentAction">
+            Post Comment
+          </button>
         </div>
       </div>
     </section>
@@ -283,6 +327,7 @@ import type {
   Attachment,
   ChangeRequest,
   ChangeRequestCustomFieldValue,
+  Comment,
   CrApprover,
 } from "~/types";
 import { format, parseISO } from "date-fns";
@@ -306,6 +351,8 @@ const {
   listAttachments,
   uploadAttachment,
   listActivity,
+  listComments,
+  postComment,
 } = useChangeRequests();
 
 const changeRequest = ref<ChangeRequest | null>(null);
@@ -313,7 +360,9 @@ const approvers = ref<CrApprover[]>([]);
 const customFields = ref<ChangeRequestCustomFieldValue[]>([]);
 const attachments = ref<Attachment[]>([]);
 const activity = ref<ActivityEntry[]>([]);
-const tab = ref<"details" | "approvers" | "activity">("details");
+const comments = ref<Comment[]>([]);
+const tab = ref<"details" | "approvers" | "activity" | "comments">("details");
+const newComment = ref("");
 
 const showAddApprover = ref(false);
 const newApproverUserId = ref("");
@@ -329,6 +378,7 @@ async function loadAll() {
   customFields.value = await listCustomFields(id.value);
   attachments.value = await listAttachments(id.value);
   activity.value = await listActivity(id.value);
+  comments.value = await listComments(id.value);
 }
 
 function fmt(value: string | null) {
@@ -433,6 +483,17 @@ async function moveUp(approverId: string) {
   order[index - 1] = approverId;
   order[index] = previous;
   approvers.value = await reorderApprovers(id.value, order);
+  activity.value = await listActivity(id.value);
+}
+
+async function postCommentAction() {
+  const body = newComment.value.trim();
+  if (!body) {
+    return;
+  }
+  await postComment(id.value, body);
+  newComment.value = "";
+  comments.value = await listComments(id.value);
   activity.value = await listActivity(id.value);
 }
 

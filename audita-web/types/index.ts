@@ -96,9 +96,18 @@ export interface Attachment {
 
 export interface Comment {
   id: string;
-  author: User;
+  author: {
+    id: string;
+    email: string;
+    fullName: string;
+    roleId: string | null;
+    roleName: string | null;
+    status: UserStatus;
+    createdAt: string;
+  } | null;
   body: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface ActivityEntry {

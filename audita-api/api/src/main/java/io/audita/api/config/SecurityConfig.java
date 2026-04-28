@@ -56,6 +56,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/auth/oauth/**"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/notifications/stream"
+                        ).permitAll()
                         // Actuator health (for container probes)
                         .requestMatchers("/actuator/health").permitAll()
                         // Platform (Super Admin) routes

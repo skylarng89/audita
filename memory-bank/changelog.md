@@ -2,6 +2,19 @@
 
 ## [0.1.0] — Unreleased (In Development)
 
+### Added (Sprint 4 — 2026-04-28)
+
+- **Comments API**: `GET/POST /api/v1/change-requests/{id}/comments` via `CommentController` + `CommentService`
+- **Comment sanitization + mentions**: OWASP sanitization, mention extraction (`@email`), `comment_mentions` persistence
+- **Mention fan-out**: in-app notifications and mention email dispatch via `EmailService.sendMentionEmail`
+- **Notifications API**: `GET /api/v1/notifications`, `PATCH /api/v1/notifications/{id}/read`, `POST /api/v1/notifications/read-all`
+- **Unread count header**: `X-Unread-Count` included on notifications list endpoint
+- **SSE notifications stream**: `GET /api/v1/notifications/stream` with server-side emitter registry for real-time pushes
+- **SLA automation**: scheduled warning/breach evaluator (`SlaMonitoringService`) with activity stream events, in-app notifications, and breach emails
+- **Frontend comments tab**: CR detail page now supports comments list + compose/post flow
+- **Frontend notification hydration**: bell now fetches initial notification list before live SSE updates
+- **SSE client auth hardening**: stream connects with access-token query parameter and robust payload mapping
+
 ### Added (Sprint 3 — 2026-04-27)
 
 - **ChangeRequestController** (`/api/v1/change-requests`): create, update, submit, cancel, list, detail
