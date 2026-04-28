@@ -106,11 +106,11 @@
 
 ### Frontend — Collaboration & Realtime (`audita-web`)
 
-| Task ID   | Task                                                    | Priority | Status       | Assigned To | Notes                                                               |
-| --------- | ------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------- |
-| CR-024    | Add Comments tab to CR detail page with list + compose  | High     | ✅ Completed | Developer 2 | Added comments tab in CR detail with render + compose + post action |
-| NOTIF-004 | Wire notification bell to backend list endpoint on load | Medium   | ✅ Completed | Developer 2 | Added startup hydration in `AppNotificationBell`                    |
-| NOTIF-005 | Stabilise SSE plugin auth/connection behavior           | Medium   | ✅ Completed | Developer 2 | SSE now includes token query auth and robust payload mapping        |
+| Task ID   | Task                                                    | Priority | Status       | Assigned To | Notes                                                                |
+| --------- | ------------------------------------------------------- | -------- | ------------ | ----------- | -------------------------------------------------------------------- |
+| CR-024    | Add Comments tab to CR detail page with list + compose  | High     | ✅ Completed | Developer 2 | Added comments tab in CR detail with render + compose + post action  |
+| NOTIF-004 | Wire notification bell to backend list endpoint on load | Medium   | ✅ Completed | Developer 2 | Added startup hydration in `AppNotificationBell`                     |
+| NOTIF-005 | Stabilise SSE plugin auth/connection behavior           | Medium   | ✅ Completed | Developer 2 | Hardened SSE with short-lived stream-token issuance + reconnect flow |
 
 ---
 
@@ -142,6 +142,7 @@
 - `audita-api/api/src/main/java/io/audita/api/dto/request/CreateCommentRequest.java`
 - `audita-api/api/src/main/java/io/audita/api/dto/response/CommentResponse.java`
 - `audita-api/api/src/main/java/io/audita/api/dto/response/NotificationResponse.java`
+- `audita-api/api/src/main/java/io/audita/api/dto/response/StreamTokenResponse.java`
 - `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/CommentService.java` — sanitisation, mention extraction, mention persistence, notifications
 - `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/NotificationService.java` — notification persistence, unread count, SSE emitter registry
 - `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/SlaMonitoringService.java` — scheduled SLA warning/breach monitor
@@ -154,13 +155,14 @@
 - `audita-web/pages/change-requests/[id].vue` — added comments tab and compose flow
 - `audita-web/components/shared/AppNotificationBell.vue` — initial notifications hydration
 - `audita-web/plugins/sse.client.ts` — tokenized SSE stream URL and payload normalization
+- `audita-api/api/src/test/java/io/audita/api/controller/NotificationControllerWebMvcTest.java` — added stream-token issuance and invalid-token rejection coverage
 - `audita-web/types/index.ts` — comment author shape update
 
 **Key Changes**:
 
 - Added immutable comments endpoints with HTML sanitization and mention-based notifications.
 - Added notification REST endpoints and unread-count header for bell state.
-- Added SSE push channel and client reconnection/auth compatibility.
+- Added SSE push channel hardening via short-lived stream tokens, with client reconnect behavior and invalid-token rejection coverage.
 - Added scheduled SLA warning/breach event processing with activity + notification fan-out.
 
 **Test Coverage**: Backend compile succeeded (`./gradlew compileJava`), frontend production build succeeded (`pnpm build`), Sprint 4 service tests pass (`CommentServiceTest`, `NotificationServiceTest`, `SlaMonitoringServiceTest`), and endpoint-level controller tests pass (`CommentControllerWebMvcTest`, `NotificationControllerWebMvcTest`).

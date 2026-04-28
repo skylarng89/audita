@@ -1,6 +1,7 @@
 package io.audita.api.controller;
 
 import io.audita.api.dto.response.NotificationResponse;
+import io.audita.api.dto.response.StreamTokenResponse;
 import io.audita.api.security.UserPrincipal;
 import io.audita.infrastructure.security.JwtService;
 import io.audita.infrastructure.service.NotificationService;
@@ -67,17 +68,23 @@ public class NotificationController {
 
     @GetMapping("/stream")
     public SseEmitter stream(@AuthenticationPrincipal UserPrincipal principal,
-                             @RequestParam(required = false) String accessToken) {
-        UUID userId = resolveUserId(principal, accessToken);
+                             @RequestParam(required = false) String streamToken) {
+        UUID userId = resolveUserId(principal, streamToken);
         return notificationService.subscribe(userId);
     }
 
-    private UUID resolveUserId(UserPrincipal principal, String accessToken) {
+    @PostMapping("/stream-token")
+    @PreAuthorize("isAuthenticated()")
+    public StreamTokenResponse issueStreamToken(@AuthenticationPrincipal UserPrincipal principal) {
+        return new StreamTokenResponse(jwtService.issueStreamToken(principal.userId(), principal.tenantSlug()));
+    }
+
+    private UUID resolveUserId(UserPrincipal principal, String streamToken) {
         if (principal != null) {
             return principal.userId();
         }
-        if (accessToken != null && !accessToken.isBlank() && jwtService.isValid(accessToken)) {
-            Claims claims = jwtService.parse(accessToken);
+        if (streamToken != null && !streamToken.isBlank() && jwtService.isValidStreamToken(streamToken)) {
+            Claims claims = jwtService.parse(streamToken);
             return UUID.fromString(claims.getSubject());
         }
         throw new org.springframework.security.access.AccessDeniedException("Not authenticated");

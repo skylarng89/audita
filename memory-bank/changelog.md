@@ -13,7 +13,7 @@
 - **SLA automation**: scheduled warning/breach evaluator (`SlaMonitoringService`) with activity stream events, in-app notifications, and breach emails
 - **Frontend comments tab**: CR detail page now supports comments list + compose/post flow
 - **Frontend notification hydration**: bell now fetches initial notification list before live SSE updates
-- **SSE client auth hardening**: stream connects with access-token query parameter and robust payload mapping
+- **SSE client auth hardening**: added short-lived stream-token issuance endpoint (`POST /api/v1/notifications/stream-token`) and stream validation via `streamToken` query parameter
 - **Endpoint-level controller tests**: added `CommentControllerWebMvcTest` and `NotificationControllerWebMvcTest` for request/response contract coverage
 - **Mention extraction fix**: corrected `CommentService` mention parsing to evaluate raw comment text prior to HTML sanitization
 

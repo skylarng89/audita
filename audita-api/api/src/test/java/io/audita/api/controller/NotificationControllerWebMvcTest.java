@@ -11,11 +11,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,6 +25,8 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -132,4 +136,52 @@ class NotificationControllerWebMvcTest {
 
         verify(notificationService).markAllRead(eq(userId));
     }
+
+        @Test
+        void issue_stream_token_returns_token_for_authenticated_user() throws Exception {
+                UUID userId = UUID.randomUUID();
+                UserPrincipal principal = UserPrincipal.ofTenantUser(
+                                userId,
+                                "user@example.com",
+                                "APPROVER",
+                                "tenant-acme"
+                );
+
+                when(jwtService.issueStreamToken(userId, "tenant-acme")).thenReturn("stream-token-123");
+
+                SecurityContextHolder.getContext().setAuthentication(
+                                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())
+                );
+                try {
+                        mockMvc.perform(post("/api/v1/notifications/stream-token"))
+                                        .andExpect(status().isOk())
+                                        .andExpect(jsonPath("$.streamToken").value("stream-token-123"));
+                } finally {
+                        SecurityContextHolder.clearContext();
+                }
+        }
+
+        @Test
+        void stream_accepts_valid_stream_token_and_subscribes() throws Exception {
+                UUID userId = UUID.randomUUID();
+                SseEmitter emitter = new SseEmitter();
+
+                when(jwtService.isValidStreamToken("valid-stream")).thenReturn(true);
+                when(jwtService.parse("valid-stream")).thenReturn(io.jsonwebtoken.Jwts.claims().subject(userId.toString()).build());
+                when(notificationService.subscribe(userId)).thenReturn(emitter);
+
+                mockMvc.perform(get("/api/v1/notifications/stream").param("streamToken", "valid-stream"))
+                                .andExpect(status().isOk());
+
+                verify(notificationService).subscribe(userId);
+        }
+
+        @Test
+        void stream_rejects_invalid_stream_token_when_principal_missing() throws Exception {
+                when(jwtService.isValidStreamToken("invalid-stream")).thenReturn(false);
+
+                jakarta.servlet.ServletException ex = assertThrows(jakarta.servlet.ServletException.class,
+                                () -> mockMvc.perform(get("/api/v1/notifications/stream").param("streamToken", "invalid-stream")));
+                assertInstanceOf(AccessDeniedException.class, ex.getCause());
+        }
 }
