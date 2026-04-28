@@ -24,3 +24,8 @@
 - SEC-002: Remove URL query token transport from SSO callback flow.
 - SEC-003: Add object-level authorization checks for change request mutations.
 - SEC-004: Tighten CORS to explicit allowlist with environment-specific profiles.
+
+## Post-Sprint UX Follow-Up (2026-04-28)
+
+- UX-001: Add public onboarding status endpoint and first-run redirect gating so initial startup always lands on setup wizard.
+- UX-002: Prevent setup wizard reuse after onboarding completion by redirecting bootstrap route to sign-in.

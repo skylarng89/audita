@@ -234,6 +234,10 @@ public class AuthService {
         log.info("Platform bootstrapped. Super Admin created: {}", email);
     }
 
+    public boolean isOnboardingCompleted() {
+        return superAdminRepository.count() > 0;
+    }
+
     // ── Helpers ─────────────────────────────────────────────────────────────────
 
     private LoginResult issueTokensForUser(UserEntity user,

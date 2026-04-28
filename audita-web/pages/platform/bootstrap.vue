@@ -36,11 +36,13 @@
       <form @submit.prevent="handleSubmit" novalidate class="space-y-4">
         <div>
           <label
+            for="bootstrap-full-name"
             class="block text-xs font-semibold uppercase tracking-wide text-muted mb-1.5"
           >
             Full Name
           </label>
           <input
+            id="bootstrap-full-name"
             v-model="form.fullName"
             type="text"
             autocomplete="name"
@@ -52,11 +54,13 @@
 
         <div>
           <label
+            for="bootstrap-email"
             class="block text-xs font-semibold uppercase tracking-wide text-muted mb-1.5"
           >
             Email Address
           </label>
           <input
+            id="bootstrap-email"
             v-model="form.email"
             type="email"
             autocomplete="email"
@@ -68,11 +72,13 @@
 
         <div>
           <label
+            for="bootstrap-password"
             class="block text-xs font-semibold uppercase tracking-wide text-muted mb-1.5"
           >
             Password
           </label>
           <input
+            id="bootstrap-password"
             v-model="form.password"
             type="password"
             autocomplete="new-password"
@@ -112,16 +118,20 @@
 </template>
 
 <script setup lang="ts">
-import type { AuthResponse } from "~/types";
-
 definePageMeta({ layout: "auth" });
 
 const api = useApi();
+const { fetchStatus } = useOnboarding();
 
 const form = reactive({ fullName: "", email: "", password: "" });
 const error = ref("");
 const done = ref(false);
 const isLoading = ref(false);
+
+const onboarding = await fetchStatus();
+if (onboarding.onboardingCompleted) {
+  await navigateTo("/auth/sign-in");
+}
 
 const strengthScore = computed(() => {
   const p = form.password;
@@ -129,7 +139,7 @@ const strengthScore = computed(() => {
   let score = 0;
   if (p.length >= 8) score++;
   if (p.length >= 12) score++;
-  if (/[A-Z]/.test(p) && /[0-9]/.test(p)) score++;
+  if (/[A-Z]/.test(p) && /\d/.test(p)) score++;
   if (/[^A-Za-z0-9]/.test(p)) score++;
   return score;
 });
@@ -174,6 +184,7 @@ async function handleSubmit() {
       },
     });
     done.value = true;
+    await navigateTo("/auth/sign-in?setup=done");
   } catch (e: unknown) {
     const err = e as { data?: { detail?: string } };
     error.value =

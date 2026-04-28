@@ -58,6 +58,9 @@ public class SecurityConfig {
                                 "/api/v1/auth/oauth/exchange",
                                 "/api/platform/v1/bootstrap"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/platform/v1/bootstrap/status"
+                        ).permitAll()
                         // SSO redirect initiation (GET — browser navigates here)
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/auth/oauth/**"

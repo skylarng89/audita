@@ -39,4 +39,9 @@ public class PlatformBootstrapController {
         return ResponseEntity.ok(Map.of("message",
                 "Platform bootstrapped. You can now sign in as Super Admin."));
     }
+
+    @GetMapping("/bootstrap/status")
+    public ResponseEntity<Map<String, Boolean>> bootstrapStatus() {
+        return ResponseEntity.ok(Map.of("onboardingCompleted", authService.isOnboardingCompleted()));
+    }
 }

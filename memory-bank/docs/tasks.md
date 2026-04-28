@@ -148,6 +148,28 @@
 
 ## Recent Implementations
 
+### Post-Sprint UX — First-Time Onboarding Gate (Completed 2026-04-28)
+
+**Overview**: Added backend onboarding status tracking endpoint and frontend first-run navigation guards so fresh instances route directly to setup and completed instances skip setup.
+
+**Files Created/Modified**:
+
+- `audita-api/api/src/main/java/io/audita/api/controller/PlatformBootstrapController.java` — added `GET /api/platform/v1/bootstrap/status`
+- `audita-api/api/src/main/java/io/audita/api/config/SecurityConfig.java` — permit public access to onboarding status route
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/AuthService.java` — exposed onboarding completion check
+- `audita-web/composables/useOnboarding.ts` — added status fetch composable
+- `audita-web/pages/index.vue` — root redirects to bootstrap on first run, sign-in after onboarding complete
+- `audita-web/pages/auth/sign-in.vue` — blocks sign-in page when onboarding is incomplete; shows setup-complete banner
+- `audita-web/pages/platform/bootstrap.vue` — redirects away when onboarding already completed
+
+**Key Changes**:
+
+- Introduced explicit onboarding completion status contract: `{ onboardingCompleted: boolean }`.
+- Centralized frontend status fetch in a dedicated composable to avoid duplicate endpoint wiring.
+- Enforced one-time onboarding UX by checking status in root, sign-in, and bootstrap entry points.
+
+**Test Coverage**: `./gradlew :infrastructure:test :api:test` passes and `cd audita-web && pnpm build` passes.
+
 ### Security Review — Adversarial Audit (Completed 2026-04-28)
 
 **Overview**: Completed a full adversarial security review of backend/frontend authentication, multi-tenant isolation, authorization depth, token transport, and upload paths.
