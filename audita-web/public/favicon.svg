@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Audita">
+  <rect width="64" height="64" rx="12" fill="#0B132B"/>
+  <path d="M32 10l18 8v12c0 12.5-7.5 24-18 28C21.5 54 14 42.5 14 30V18l18-8z" fill="#5BC0BE"/>
+  <path d="M24 31l5 5 11-11" fill="none" stroke="#0B132B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

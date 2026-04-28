@@ -38,12 +38,5 @@ export default defineNuxtConfig({
     typeCheck: false,
   },
 
-  // Route rules: API calls are proxied in dev
-  routeRules: {
-    "/api/**": {
-      proxy: process.env.NUXT_API_INTERNAL_BASE ?? "http://api:8080",
-    },
-  },
-
   compatibilityDate: "2025-04-01",
 });
