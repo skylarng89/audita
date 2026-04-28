@@ -6,7 +6,6 @@ import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Disabled;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -26,6 +25,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.time.OffsetDateTime;
+import java.util.Base64;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -94,7 +94,6 @@ class CriticalFlowsE2EL1Test {
     }
 
     @Test
-    @Disabled("Temporarily disabled until legacy invite endpoint/security wiring is stabilized in integration runtime")
     void tenant_accept_invite_and_login_e2e() throws Exception {
         String slug = uniqueSlug("e2einvite");
         String email = "invite+" + slug + "@example.com";
@@ -110,7 +109,9 @@ class CriticalFlowsE2EL1Test {
         HttpResponse<String> accept = postJson("/api/v1/auth/accept-invite", slug,
                 "{\"token\":\"" + rawToken + "\",\"fullName\":\"Accepted User\",\"password\":\"" + password + "\"}",
                 null);
-        assertThat(accept.statusCode()).isEqualTo(200);
+        assertThat(accept.statusCode())
+            .withFailMessage("Accept invite failed. Status=%s Body=%s", accept.statusCode(), accept.body())
+            .isEqualTo(200);
 
         HttpResponse<String> login = postJson("/api/v1/auth/login", slug,
                 "{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}", null);
@@ -289,11 +290,7 @@ class CriticalFlowsE2EL1Test {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hex = new StringBuilder(hash.length * 2);
-            for (byte b : hash) {
-                hex.append(String.format("%02x", b));
-            }
-            return hex.toString();
+            return Base64.getEncoder().encodeToString(hash);
         } catch (Exception e) {
             throw new IllegalStateException("Unable to hash token", e);
         }

@@ -167,13 +167,13 @@
 
 **Test Coverage**: Backend compile succeeded (`./gradlew compileJava`), frontend production build succeeded (`pnpm build`), Sprint 4 service tests pass (`CommentServiceTest`, `NotificationServiceTest`, `SlaMonitoringServiceTest`), and endpoint-level controller tests pass (`CommentControllerWebMvcTest`, `NotificationControllerWebMvcTest`).
 
-### Post-Sprint 4 Hardening — E2E Harness (In Progress 2026-04-28)
+### Post-Sprint 4 Hardening — E2E Harness (Completed 2026-04-28)
 
 **Overview**: Implemented a fast isolated Layer-1 e2e harness for critical multi-tenant auth flow using Testcontainers + real HTTP server runtime.
 
 **Files Created/Modified**:
 
-- `audita-api/api/src/test/java/io/audita/api/integration/CriticalFlowsE2EL1Test.java` — isolated tenant schema setup, auth login/refresh/logout e2e flow, invite flow scaffold (temporarily disabled)
+- `audita-api/api/src/test/java/io/audita/api/integration/CriticalFlowsE2EL1Test.java` — isolated tenant schema setup with passing auth login/refresh/logout and invite acceptance/login e2e flows
 - `audita-api/api/src/main/java/io/audita/api/config/SecurityConfig.java` — corrected public route allowlist to include `/api/v1/auth/accept-invite`
 
 **Validation**: `./gradlew :api:test --tests "io.audita.api.integration.CriticalFlowsE2EL1Test"` passes.
