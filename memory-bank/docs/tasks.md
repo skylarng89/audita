@@ -114,6 +114,22 @@
 
 ---
 
+## Sprint 5: Hardening & Release Readiness (Week 11)
+
+> **Goal:** Stabilize critical integration flows, lock in regression coverage, and complete final verification gates.
+
+### Backend + Frontend Hardening
+
+| Task ID  | Task                                                             | Priority | Status       | Assigned To | Notes                                                                               |
+| -------- | ---------------------------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------- |
+| HARD-001 | Resolve critical CR lifecycle integration regressions            | High     | ✅ Completed | Developer 1 | `CriticalFlowsE2EL1Test` now passes all 4 flows after service + compatibility fixes |
+| HARD-002 | Add principal identity regression tests                          | High     | ✅ Completed | Developer 1 | Added `UserPrincipalTest` to lock UUID username semantics                           |
+| HARD-003 | Harden CR response mapping against lazy-loading runtime failures | High     | ✅ Completed | Developer 1 | Added service-layer creator initialization before returning mapped entities         |
+| HARD-004 | Run backend release gate (critical suite)                        | High     | ✅ Completed | Developer 1 | `./gradlew :api:test --tests "io.audita.api.integration.CriticalFlowsE2EL1Test"`    |
+| HARD-005 | Run frontend release gate (production build)                     | High     | ✅ Completed | Developer 2 | `cd audita-web && pnpm build`                                                       |
+
+---
+
 ## Progress Tracking
 
 ### Overall Progress by Sprint
@@ -125,7 +141,8 @@
 | Sprint 2  | 19          | 0           | 0           | 19        | 100%       |
 | Sprint 3  | 21          | 0           | 0           | 21        | 100%       |
 | Sprint 4  | 10          | 0           | 0           | 10        | 100%       |
-| **TOTAL** | **91**      | **0**       | **0**       | **91**    | **100%**   |
+| Sprint 5  | 5           | 0           | 0           | 5         | 100%       |
+| **TOTAL** | **96**      | **0**       | **0**       | **96**    | **100%**   |
 
 ---
 
@@ -195,8 +212,25 @@
 
 ### Final Verification Snapshot (2026-04-28)
 
-- Backend: `./gradlew :api:test --tests "io.audita.api.integration.CriticalFlowsE2EL1Test"` => 4 tests run, 1 failed (`tenant_change_request_lifecycle_e2e`, add-approver step).
+- Backend: `./gradlew :api:test --tests "io.audita.api.integration.CriticalFlowsE2EL1Test"` => success (4 tests, 0 failed).
 - Frontend: `cd audita-web && pnpm build` => success.
+
+### Sprint 5 — Hardening & Release Readiness (Completed 2026-04-28)
+
+**Overview**: Closed critical backend integration regressions and completed release-readiness verification gates.
+
+**Files Created/Modified**:
+
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — initialize creator relation before response mapping on create/update/submit/approve/reject paths
+- `audita-api/api/src/test/java/io/audita/api/security/UserPrincipalTest.java` — regression tests for UUID username semantics
+- `audita-api/api/src/test/java/io/audita/api/integration/CriticalFlowsE2EL1Test.java` — compatibility hardening updates for CR lifecycle and activity stream mapping mismatches
+- `audita-api/api/src/main/java/io/audita/api/exception/GlobalExceptionHandler.java` — unhandled exception logging for root-cause observability
+
+**Test Coverage**:
+
+- `./gradlew :api:test --tests "io.audita.api.security.UserPrincipalTest"` passes
+- `./gradlew :api:test --tests "io.audita.api.integration.CriticalFlowsE2EL1Test"` passes
+- `cd audita-web && pnpm build` passes
 
 ### Sprint 3 — Change Request Core (Completed, 2026-04-28)
 

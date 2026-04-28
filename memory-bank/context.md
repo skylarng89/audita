@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-04-28
 **Current Phase:** Active development
-**Active Sprint:** Sprint 4 — Collaboration, Notifications & SLA Automation (Completed)
+**Active Sprint:** Sprint 5 — Hardening & Release Readiness (Completed)
 
 ---
 
@@ -81,8 +81,7 @@ Advanced features (SLA, custom fields, audit export, full admin config) follow i
 
 ## Active Blockers / Open Questions
 
-- Critical flow e2e harness now covers auth/login-refresh/logout, invite acceptance/login, and SSE stream-token guard paths, but CR lifecycle still has one failing step (`POST /api/v1/change-requests/{id}/approvers`) due entity/schema mapping mismatch in full runtime path.
-- `ChangeRequestController` uses `UUID.fromString(principal.getUsername())`; principal username semantics were corrected to user ID to align identity usage, but CR lifecycle still requires deeper mapping cleanup.
+- No current Sprint 5 blocker. Critical e2e suite and frontend build gate are passing.
 
 ---
 
@@ -101,8 +100,6 @@ Advanced features (SLA, custom fields, audit export, full admin config) follow i
 
 ## Next Actions
 
-**Post-Sprint 4 Validation & Hardening:**
-
-1. Resolve CR approver persistence mapping mismatch so `CriticalFlowsE2EL1Test` fully passes (currently 3/4).
-2. Keep and extend SSE integration coverage (`stream-token` issuance and unauthorized stream guards are now passing).
-3. Preserve short-lived stream-token SSE auth strategy as default and monitor production telemetry.
+1. Define Sprint 6 scope and tasks (feature expansion + non-functional polish).
+2. Keep critical e2e suite as a mandatory CI gate.
+3. Continue replacing compatibility shim logic with permanent entity/migration alignment incrementally.

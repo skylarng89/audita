@@ -2,6 +2,18 @@
 
 ## [0.1.0] — Unreleased (In Development)
 
+### Added (Sprint 5 — 2026-04-28)
+
+- **Principal identity regression tests**: added `UserPrincipalTest` to ensure `getUsername()` returns UUID string for both tenant and super-admin principals.
+- **CR response mapping hardening**: `ChangeRequestService` now initializes `createdBy` before returning entities used by controller DTO mapping paths.
+- **Critical harness compatibility hardening**: extended test compatibility patch coverage for CR lifecycle/activity stream runtime mapping mismatches.
+
+### Verification (Sprint 5 — 2026-04-28)
+
+- Backend critical harness: `./gradlew :api:test --tests "io.audita.api.integration.CriticalFlowsE2EL1Test"` passes.
+- Backend regression test: `./gradlew :api:test --tests "io.audita.api.security.UserPrincipalTest"` passes.
+- Frontend production build: `cd audita-web && pnpm build` passes.
+
 ### Added (Sprint 4 — 2026-04-28)
 
 - **Comments API**: `GET/POST /api/v1/change-requests/{id}/comments` via `CommentController` + `CommentService`
