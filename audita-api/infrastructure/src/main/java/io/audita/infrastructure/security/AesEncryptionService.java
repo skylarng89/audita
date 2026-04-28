@@ -29,6 +29,12 @@ public class AesEncryptionService {
     private final SecureRandom secureRandom = new SecureRandom();
 
     public AesEncryptionService(@Value("${audita.encryption.key}") String hexKey) {
+        if (hexKey == null || hexKey.isBlank()) {
+            throw new IllegalArgumentException("APP_ENCRYPTION_KEY must be provided.");
+        }
+        if (!hexKey.matches("^[0-9a-fA-F]{64}$")) {
+            throw new IllegalArgumentException("APP_ENCRYPTION_KEY must be exactly 64 hex characters.");
+        }
         byte[] keyBytes = hexToBytes(hexKey);
         if (keyBytes.length != 32) {
             throw new IllegalArgumentException("APP_ENCRYPTION_KEY must be exactly 32 bytes (64 hex chars)");

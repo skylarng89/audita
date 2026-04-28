@@ -4,6 +4,7 @@ import io.audita.api.security.JwtAuthenticationFilter;
 import io.audita.api.security.TenantResolutionFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -19,6 +20,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -27,11 +29,14 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
     private final TenantResolutionFilter tenantResolutionFilter;
+        private final String corsAllowedOrigins;
 
     public SecurityConfig(JwtAuthenticationFilter jwtFilter,
-                          TenantResolutionFilter tenantResolutionFilter) {
+                                                  TenantResolutionFilter tenantResolutionFilter,
+                                                  @Value("${audita.cors.allowed-origins:http://localhost:3000}") String corsAllowedOrigins) {
         this.jwtFilter = jwtFilter;
         this.tenantResolutionFilter = tenantResolutionFilter;
+                this.corsAllowedOrigins = corsAllowedOrigins;
     }
 
     @Bean
@@ -50,6 +55,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/forgot-password",
                                 "/api/v1/auth/reset-password",
                                 "/api/v1/auth/accept-invite",
+                                "/api/v1/auth/oauth/exchange",
                                 "/api/platform/v1/bootstrap"
                         ).permitAll()
                         // SSO redirect initiation (GET — browser navigates here)
@@ -80,10 +86,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        // Populated from environment — see CorsProperties
-        config.setAllowedOriginPatterns(List.of("*")); // Tightened in production via env var
+        List<String> allowedOrigins = Arrays.stream(corsAllowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+        config.setAllowedOrigins(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Tenant-Slug", "X-Setup-Token"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 

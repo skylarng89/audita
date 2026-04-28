@@ -20,6 +20,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 
 @Service
 @Transactional
@@ -42,6 +44,9 @@ public class AuthService {
     // login: 5 attempts per 15 minutes per IP+email
     // forgot-password: 3 attempts per hour per email
     private final ConcurrentHashMap<String, LinkedList<Instant>> rateBuckets = new ConcurrentHashMap<>();
+        private final AtomicInteger rateLimitChecks = new AtomicInteger(0);
+        private static final Pattern STRONG_PASSWORD_PATTERN = Pattern.compile(
+            "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{12,128}$");
 
     @Value("${audita.jwt.expiry-seconds:900}")
     private long jwtExpirySeconds;
@@ -73,7 +78,11 @@ public class AuthService {
 
     // ── Login ──────────────────────────────────────────────────────────────────
 
-    public LoginResult loginTenantUser(String email, String rawPassword, String tenantSlug, String clientIp) {
+    public LoginResult loginTenantUser(String email,
+                                       String rawPassword,
+                                       String tenantSlug,
+                                       String clientIp,
+                                       String userAgent) {
         // Rate limit: 5 attempts per 15 minutes per IP+email composite key
         String rateLimitKey = "login:" + clientIp + ":" + email.toLowerCase();
         enforceRateLimit(rateLimitKey, 5, Duration.ofMinutes(15), "TOO_MANY_ATTEMPTS",
@@ -96,7 +105,7 @@ public class AuthService {
         // the user's email domain must be in the list.
         checkDomainWhitelist(email, tenantSlug);
 
-        return issueTokensForUser(user, tenantSlug);
+        return issueTokensForUser(user, tenantSlug, clientIp, userAgent);
     }
 
     public LoginResult loginSuperAdmin(String email, String rawPassword) {
@@ -115,7 +124,7 @@ public class AuthService {
 
     // ── Refresh ────────────────────────────────────────────────────────────────
 
-    public LoginResult refreshToken(String rawRefreshToken) {
+    public LoginResult refreshToken(String rawRefreshToken, String clientIp, String userAgent) {
         String hash = sha256(rawRefreshToken);
         RefreshTokenEntity token = refreshTokenRepository.findByTokenHash(hash)
                 .orElseThrow(() -> new DomainNotPermittedException(
@@ -124,13 +133,16 @@ public class AuthService {
         if (!token.isValid()) {
             throw new DomainNotPermittedException("INVALID_TOKEN", "Refresh token is invalid or expired.");
         }
+        if (!isSessionContextValid(token, clientIp, userAgent)) {
+            throw new DomainNotPermittedException("INVALID_TOKEN", "Refresh token context is invalid.");
+        }
 
         token.setRevoked(true);
         refreshTokenRepository.save(token);
 
         // TenantContext is already set by TenantResolutionFilter from X-Tenant-Slug header
         String tenantSlug = TenantContext.getCurrentTenant();
-        return issueTokensForUser(token.getUser(), tenantSlug);
+        return issueTokensForUser(token.getUser(), tenantSlug, clientIp, userAgent);
     }
 
     // ── Logout ─────────────────────────────────────────────────────────────────
@@ -163,6 +175,7 @@ public class AuthService {
     }
 
     public void resetPassword(String rawToken, String newPassword) {
+        validatePasswordStrength(newPassword);
         String hash = sha256(rawToken);
         PasswordResetTokenEntity token = passwordResetTokenRepository.findByTokenHash(hash)
                 .orElseThrow(() -> new DomainNotPermittedException(
@@ -186,6 +199,7 @@ public class AuthService {
     // ── Accept invite ───────────────────────────────────────────────────────────
 
     public void acceptInvite(String rawToken, String fullName, String password) {
+        validatePasswordStrength(password);
         String hash = sha256(rawToken);
         InviteTokenEntity token = inviteTokenRepository.findByTokenHash(hash)
                 .orElseThrow(() -> new DomainNotPermittedException(
@@ -214,6 +228,7 @@ public class AuthService {
             throw new DomainNotPermittedException("ALREADY_BOOTSTRAPPED",
                     "Platform has already been bootstrapped.");
         }
+        validatePasswordStrength(rawPassword);
         SuperAdminEntity sa = new SuperAdminEntity(email, passwordEncoder.encode(rawPassword), fullName);
         superAdminRepository.save(sa);
         log.info("Platform bootstrapped. Super Admin created: {}", email);
@@ -221,14 +236,20 @@ public class AuthService {
 
     // ── Helpers ─────────────────────────────────────────────────────────────────
 
-    private LoginResult issueTokensForUser(UserEntity user, String tenantSlug) {
+    private LoginResult issueTokensForUser(UserEntity user,
+                                           String tenantSlug,
+                                           String clientIp,
+                                           String userAgent) {
         String role = user.getRole() != null ? user.getRole().getName() : "Requester";
         String accessToken = jwtService.issue(user.getId(), user.getEmail(), role, tenantSlug);
 
         String rawRefreshToken = generateSecureToken();
         RefreshTokenEntity refreshToken = new RefreshTokenEntity(
-                user, sha256(rawRefreshToken),
-                java.time.OffsetDateTime.now().plusDays(refreshExpiryDays));
+                user,
+                sha256(rawRefreshToken),
+                java.time.OffsetDateTime.now().plusDays(refreshExpiryDays),
+                hashNullable(userAgent),
+                hashNullable(clientIp));
         refreshTokenRepository.save(refreshToken);
 
         return new LoginResult(accessToken, rawRefreshToken, user.getId(),
@@ -270,6 +291,44 @@ public class AuthService {
             }
             bucket.add(Instant.now());
         }
+
+        if (rateLimitChecks.incrementAndGet() % 100 == 0) {
+            Instant staleCutoff = Instant.now().minus(Duration.ofHours(2));
+            rateBuckets.entrySet().removeIf(entry -> {
+                LinkedList<Instant> list = entry.getValue();
+                synchronized (list) {
+                    list.removeIf(t -> t.isBefore(staleCutoff));
+                    return list.isEmpty();
+                }
+            });
+        }
+    }
+
+    private void validatePasswordStrength(String password) {
+        if (password == null || !STRONG_PASSWORD_PATTERN.matcher(password).matches()) {
+            throw new DomainNotPermittedException(
+                    "WEAK_PASSWORD",
+                    "Password must be 12+ chars with upper, lower, number, and symbol.");
+        }
+    }
+
+    private boolean isSessionContextValid(RefreshTokenEntity token, String clientIp, String userAgent) {
+        String expectedIpHash = token.getIpHash();
+        String expectedUaHash = token.getUserAgentHash();
+        if (expectedIpHash != null && !expectedIpHash.equals(hashNullable(clientIp))) {
+            return false;
+        }
+        if (expectedUaHash != null && !expectedUaHash.equals(hashNullable(userAgent))) {
+            return false;
+        }
+        return true;
+    }
+
+    private String hashNullable(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return sha256(value);
     }
 
     private static String generateSecureToken() {

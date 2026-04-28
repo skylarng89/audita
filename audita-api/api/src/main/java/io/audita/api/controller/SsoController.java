@@ -1,14 +1,14 @@
 package io.audita.api.controller;
 
+import io.audita.api.dto.response.AuthResponse;
 import io.audita.domain.model.OAuthProvider;
 import io.audita.infrastructure.service.SsoService;
 import io.audita.infrastructure.service.SsoService.SsoResult;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 
@@ -83,26 +83,38 @@ public class SsoController {
         SsoResult result;
         try {
             result = ssoService.handleCallback(provider, code, state);
-        } catch (Exception e) {
+        } catch (Exception _) {
             // Redirect to sign-in with error code so the frontend can show a message
             redirect(response, frontendBaseUrl + "/auth/sign-in?sso_error=CALLBACK_FAILED");
             return;
         }
 
         // Set refresh token as HttpOnly cookie — access token goes to frontend via query param
-        // (access tokens are short-lived 15 min; the more critical secret is the refresh cookie)
+        // (refresh token remains the durable credential; access token is exchanged server-side)
         setRefreshCookie(response, result.rawRefreshToken());
 
-        // Redirect to the SSO callback page on the frontend — it reads the access token,
-        // stores it in Pinia, then navigates to the appropriate dashboard.
+        String exchangeCode = ssoService.issueFrontendExchangeCode(result);
+
+        // Redirect to frontend with a short-lived one-time exchange code (never with access tokens).
         String redirectUrl = frontendBaseUrl + "/auth/sso-callback"
-                + "?access_token=" + result.accessToken()
-                + "&expires_in=" + result.expiresIn()
-                + "&role=" + result.role()
-                + "&tenant=" + result.tenantSlug();
+            + "?code=" + exchangeCode;
 
         redirect(response, redirectUrl);
     }
+
+        @PostMapping("/exchange")
+        public ResponseEntity<AuthResponse> exchangeCode(@RequestParam("code") String code) {
+        SsoResult result = ssoService.consumeFrontendExchangeCode(code);
+        AuthResponse response = AuthResponse.of(
+            result.accessToken(),
+            result.expiresIn(),
+            result.userId(),
+            result.email(),
+            result.fullName(),
+            result.role(),
+            result.tenantSlug());
+        return ResponseEntity.ok(response);
+        }
 
     private void setRefreshCookie(HttpServletResponse response, String rawToken) {
         Cookie cookie = new Cookie(REFRESH_COOKIE, rawToken);

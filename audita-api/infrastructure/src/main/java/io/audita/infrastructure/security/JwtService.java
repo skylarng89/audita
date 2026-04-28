@@ -28,6 +28,12 @@ public class JwtService {
     public JwtService(
             @Value("${audita.jwt.secret}") String secret,
             @Value("${audita.jwt.expiry-seconds:900}") long expirySeconds) {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalArgumentException("JWT secret is required.");
+        }
+        if (secret.length() < 32) {
+            throw new IllegalArgumentException("JWT secret must be at least 32 characters.");
+        }
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirySeconds = expirySeconds;
     }

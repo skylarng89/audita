@@ -1,6 +1,6 @@
 <template>
-  <!-- This page is the SSO callback landing — it reads the access token from the URL,
-       stores it in the auth store, then navigates to the appropriate dashboard. -->
+  <!-- This page is the SSO callback landing — it exchanges a one-time code for auth tokens,
+       stores auth state, then navigates to the appropriate dashboard. -->
   <div class="flex items-center justify-center min-h-screen">
     <div class="text-center">
       <div v-if="errorMessage" class="max-w-sm mx-auto">
@@ -42,13 +42,16 @@
 </template>
 
 <script setup lang="ts">
+import type { AuthResponse } from "~/types";
+
 definePageMeta({ layout: false });
 
 const route = useRoute();
 const auth = useAuthStore();
 const errorMessage = ref("");
+const config = useRuntimeConfig();
 
-onMounted(() => {
+onMounted(async () => {
   const ssoError = route.query.sso_error as string | undefined;
   if (ssoError) {
     errorMessage.value =
@@ -56,33 +59,34 @@ onMounted(() => {
     return;
   }
 
-  const accessToken = route.query.access_token as string | undefined;
-  const role = route.query.role as string | undefined;
-  const tenant = route.query.tenant as string | undefined;
-  const expiresIn = Number(route.query.expires_in ?? 900);
+  const code = route.query.code as string | undefined;
 
-  if (!accessToken || !role) {
+  if (!code) {
     errorMessage.value = "Incomplete SSO response. Please try again.";
     return;
   }
 
-  // Store access token — the refresh token is already in the HttpOnly cookie set by the server
-  auth.setAuth({
-    accessToken,
-    tokenType: "Bearer",
-    expiresIn,
-    userId: "", // not available in redirect params — will be populated on next token refresh
-    email: "",
-    fullName: "",
-    role: role as any,
-    tenantSlug: tenant ?? null,
-  });
+  try {
+    const result = await $fetch<AuthResponse>("/api/v1/auth/oauth/exchange", {
+      method: "POST",
+      baseURL: config.public.apiBase as string,
+      params: { code },
+      credentials: "include",
+    });
 
-  // Role-based redirect (AUTH-022)
-  if (role === "SUPER_ADMIN") {
-    navigateTo("/platform");
-  } else {
-    navigateTo("/dashboard");
+    auth.setAuth(result);
+
+    // Clear callback URL params to avoid code reuse and reduce sensitive URL residue.
+    window.history.replaceState({}, document.title, "/auth/sso-callback");
+
+    // Role-based redirect (AUTH-022)
+    if (result.role === "SUPER_ADMIN") {
+      await navigateTo("/platform");
+    } else {
+      await navigateTo("/dashboard");
+    }
+  } catch {
+    errorMessage.value = "Your SSO session expired. Please sign in again.";
   }
 });
 </script>

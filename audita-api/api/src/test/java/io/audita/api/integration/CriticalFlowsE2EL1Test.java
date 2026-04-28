@@ -63,7 +63,7 @@ class CriticalFlowsE2EL1Test {
     void tenant_auth_login_refresh_logout_e2e() throws Exception {
         String slug = uniqueSlug("e2eauth");
         String email = "auth+" + slug + "@example.com";
-        String password = "Password1!";
+        String password = "Password1!Aa";
 
         setupTenantSchema(slug);
         insertTenant(slug);
@@ -89,7 +89,7 @@ class CriticalFlowsE2EL1Test {
     void tenant_accept_invite_and_login_e2e() throws Exception {
         String slug = uniqueSlug("e2einvite");
         String email = "invite+" + slug + "@example.com";
-        String password = "Password1!";
+        String password = "Password1!Aa";
 
         setupTenantSchema(slug);
         insertTenant(slug);
@@ -112,7 +112,7 @@ class CriticalFlowsE2EL1Test {
         String adminEmail = "admin+" + slug + "@example.com";
         String requesterEmail = "requester+" + slug + "@example.com";
         String approverEmail = "approver+" + slug + "@example.com";
-        String password = "Password1!";
+        String password = "Password1!Aa";
 
         setupTenantSchema(slug);
         insertTenant(slug);
@@ -153,7 +153,7 @@ class CriticalFlowsE2EL1Test {
         insertTenant(slug);
 
         String email = "stream." + slug + "@audita.test";
-        String password = "P@ssw0rd!";
+        String password = "StrongPass1!A";
         insertUser(slug, email, "Stream User", "ADMIN", "ACTIVE", password);
 
         String accessToken = accessToken(login(slug, email, password));
@@ -487,7 +487,7 @@ class CriticalFlowsE2EL1Test {
     }
 
     private String uniqueSlug(String prefix) {
-        return prefix + "_" + UUID.randomUUID().toString().replace("-", "").substring(0, 10);
+        return prefix + UUID.randomUUID().toString().replace("-", "").substring(0, 10);
     }
 
     private Connection connection() throws Exception {

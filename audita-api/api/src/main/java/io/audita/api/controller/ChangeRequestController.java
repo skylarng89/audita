@@ -11,6 +11,7 @@ import io.audita.api.dto.request.UpdateChangeRequestRequest;
 import io.audita.api.dto.response.ChangeRequestCustomFieldResponse;
 import io.audita.api.dto.response.ChangeRequestResponse;
 import io.audita.api.dto.response.CrApproverResponse;
+import io.audita.api.security.UserPrincipal;
 import io.audita.domain.model.ChangeRequestStatus;
 import io.audita.domain.model.Priority;
 import io.audita.infrastructure.service.ChangeRequestService;
@@ -22,7 +23,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -43,9 +43,9 @@ public class ChangeRequestController {
     @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ChangeRequestResponse> create(
             @Valid @RequestBody CreateChangeRequestRequest req,
-            @AuthenticationPrincipal UserDetails principal) {
+            @AuthenticationPrincipal UserPrincipal principal) {
 
-        UUID createdById = UUID.fromString(principal.getUsername());
+        UUID createdById = principal.userId();
         var created = changeRequestService.create(
             req.title(),
             req.description(),
@@ -64,7 +64,8 @@ public class ChangeRequestController {
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
     public ChangeRequestResponse update(@PathVariable UUID id,
-                                        @Valid @RequestBody UpdateChangeRequestRequest req) {
+                                        @Valid @RequestBody UpdateChangeRequestRequest req,
+                                        @AuthenticationPrincipal UserPrincipal principal) {
         return ChangeRequestResponse.from(changeRequestService.update(
             id,
             req.title(),
@@ -75,21 +76,25 @@ public class ChangeRequestController {
             req.approvalType(),
             req.scheduledStart(),
             req.scheduledEnd(),
-            req.affectedSystems() == null ? null : req.affectedSystems().toArray(String[]::new)
+            req.affectedSystems() == null ? null : req.affectedSystems().toArray(String[]::new),
+            principal.userId(),
+            principal.role()
         ));
     }
 
     @PostMapping("/{id}/submit")
     @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
-    public ChangeRequestResponse submit(@PathVariable UUID id) {
-        return ChangeRequestResponse.from(changeRequestService.submit(id));
+    public ChangeRequestResponse submit(@PathVariable UUID id,
+                                        @AuthenticationPrincipal UserPrincipal principal) {
+        return ChangeRequestResponse.from(changeRequestService.submit(id, principal.userId(), principal.role()));
     }
 
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void cancel(@PathVariable UUID id) {
-        changeRequestService.cancel(id);
+    public void cancel(@PathVariable UUID id,
+                       @AuthenticationPrincipal UserPrincipal principal) {
+        changeRequestService.cancel(id, principal.userId(), principal.role());
     }
 
     @GetMapping
@@ -146,16 +151,16 @@ public class ChangeRequestController {
     @PostMapping("/{id}/approve")
     @PreAuthorize("hasAnyRole('APPROVER', 'ADMIN', 'SUPER_ADMIN')")
     public ChangeRequestResponse approve(@PathVariable UUID id,
-                                         @AuthenticationPrincipal UserDetails principal) {
-        return ChangeRequestResponse.from(changeRequestService.approve(id, UUID.fromString(principal.getUsername())));
+                                         @AuthenticationPrincipal UserPrincipal principal) {
+        return ChangeRequestResponse.from(changeRequestService.approve(id, principal.userId()));
     }
 
     @PostMapping("/{id}/reject")
     @PreAuthorize("hasAnyRole('APPROVER', 'ADMIN', 'SUPER_ADMIN')")
     public ChangeRequestResponse reject(@PathVariable UUID id,
                                         @Valid @RequestBody RejectChangeRequestRequest req,
-                                        @AuthenticationPrincipal UserDetails principal) {
-        return ChangeRequestResponse.from(changeRequestService.reject(id, UUID.fromString(principal.getUsername()), req.reason()));
+                                        @AuthenticationPrincipal UserPrincipal principal) {
+        return ChangeRequestResponse.from(changeRequestService.reject(id, principal.userId(), req.reason()));
     }
 
     @GetMapping("/{id}/custom-fields")
@@ -170,13 +175,14 @@ public class ChangeRequestController {
     @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
     public List<ChangeRequestCustomFieldResponse> upsertCustomFields(
             @PathVariable UUID id,
-            @Valid @RequestBody UpsertChangeRequestCustomFieldsRequest req) {
+            @Valid @RequestBody UpsertChangeRequestCustomFieldsRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
 
         List<ChangeRequestService.FieldValue> fields = req.fields().stream()
                 .map(f -> new ChangeRequestService.FieldValue(f.fieldId(), f.value()))
                 .toList();
 
-        return changeRequestService.upsertCustomFields(id, fields).stream()
+        return changeRequestService.upsertCustomFields(id, fields, principal.userId(), principal.role()).stream()
                 .map(ChangeRequestCustomFieldResponse::from)
                 .toList();
     }
@@ -202,9 +208,9 @@ public class ChangeRequestController {
     public ResponseEntity<AttachmentResponse> uploadAttachment(
             @PathVariable UUID id,
             @RequestPart("file") MultipartFile file,
-            @AuthenticationPrincipal UserDetails principal) {
+            @AuthenticationPrincipal UserPrincipal principal) {
 
-        var saved = changeRequestService.uploadAttachment(id, UUID.fromString(principal.getUsername()), file);
+        var saved = changeRequestService.uploadAttachment(id, principal.userId(), principal.role(), file);
         return ResponseEntity.status(HttpStatus.CREATED).body(AttachmentResponse.from(saved));
     }
 }

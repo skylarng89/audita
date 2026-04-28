@@ -44,6 +44,8 @@ public class SsoService {
 
     // State store: state-token → SsoState (expires after 10 minutes)
     private final ConcurrentHashMap<String, SsoState> pendingStates = new ConcurrentHashMap<>();
+        // Frontend exchange store: one-time exchange code → SSO login result (expires after 90 seconds)
+        private final ConcurrentHashMap<String, FrontendExchangeState> pendingExchanges = new ConcurrentHashMap<>();
 
     private final TenantSsoConfigRepository ssoConfigRepository;
     private final TenantRepository tenantRepository;
@@ -81,6 +83,7 @@ public class SsoService {
     // ── Step 1: Build authorization URL ─────────────────────────────────────────
 
     public String buildAuthorizationUrl(String tenantSlug, OAuthProvider provider) {
+                cleanupExpiredStates();
         TenantSsoConfigEntity config = loadSsoConfig(tenantSlug, provider);
 
         String state = generateState();
@@ -118,6 +121,7 @@ public class SsoService {
 
     @Transactional
     public SsoResult handleCallback(OAuthProvider provider, String code, String state) {
+                cleanupExpiredStates();
         SsoState ssoState = validateState(state);
         String tenantSlug = ssoState.tenantSlug();
 
@@ -147,6 +151,24 @@ public class SsoService {
         return new SsoResult(accessToken, rawRefreshToken, user.getId(), user.getEmail(),
                 user.getFullName(), role, tenantSlug, jwtExpirySeconds);
     }
+
+        public String issueFrontendExchangeCode(SsoResult result) {
+                cleanupExpiredStates();
+                String code = generateSecureToken();
+                long expiresAt = System.currentTimeMillis() + 90_000L;
+                pendingExchanges.put(code, new FrontendExchangeState(result, expiresAt));
+                return code;
+        }
+
+        public SsoResult consumeFrontendExchangeCode(String code) {
+                cleanupExpiredStates();
+                FrontendExchangeState exchangeState = pendingExchanges.remove(code);
+                if (exchangeState == null || System.currentTimeMillis() > exchangeState.expiresAt()) {
+                        throw new DomainNotPermittedException(
+                                        "INVALID_SSO_EXCHANGE", "SSO session has expired. Please sign in again.");
+                }
+                return exchangeState.result();
+        }
 
     // ── OAuth2 code exchange ─────────────────────────────────────────────────────
 
@@ -278,9 +300,17 @@ public class SsoService {
         return java.net.URLEncoder.encode(value, java.nio.charset.StandardCharsets.UTF_8);
     }
 
+        private void cleanupExpiredStates() {
+                long now = System.currentTimeMillis();
+                pendingStates.entrySet().removeIf(entry -> entry.getValue().expiresAt() < now);
+                pendingExchanges.entrySet().removeIf(entry -> entry.getValue().expiresAt() < now);
+        }
+
     // ── Records ──────────────────────────────────────────────────────────────────
 
     private record SsoState(String tenantSlug, OAuthProvider provider, long expiresAt) {}
+
+        private record FrontendExchangeState(SsoResult result, long expiresAt) {}
 
     private record OAuthUserInfo(String sub, String email, String name) {}
 

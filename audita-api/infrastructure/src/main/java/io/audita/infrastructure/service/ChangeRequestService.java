@@ -20,6 +20,7 @@ import io.audita.infrastructure.persistence.repository.ChangeRequestRepository;
 import io.audita.infrastructure.persistence.repository.CrApproverRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
 import io.audita.infrastructure.tenant.TenantContext;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -35,11 +37,14 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @Transactional
 public class ChangeRequestService {
+
+    private static final Set<String> ELEVATED_ROLES = Set.of("ADMIN", "SUPER_ADMIN");
 
     private final ChangeRequestRepository changeRequestRepository;
     private final CrApproverRepository crApproverRepository;
@@ -47,6 +52,15 @@ public class ChangeRequestService {
     private final ActivityStreamRepository activityStreamRepository;
     private final AttachmentRepository attachmentRepository;
     private final UserRepository userRepository;
+
+    @Value("${audita.storage.local.base-path:/data/uploads}")
+    private String storageBasePath;
+
+    @Value("${audita.upload.max-size-bytes:10485760}")
+    private long maxUploadSizeBytes;
+
+    @Value("${audita.upload.allowed-mime-types:application/pdf,image/png,image/jpeg,text/plain,text/csv,application/json,application/zip}")
+    private String allowedMimeTypes;
 
     public ChangeRequestService(ChangeRequestRepository changeRequestRepository,
                                 CrApproverRepository crApproverRepository,
@@ -101,8 +115,11 @@ public class ChangeRequestService {
                                       ApprovalType approvalType,
                                       OffsetDateTime scheduledStart,
                                       OffsetDateTime scheduledEnd,
-                                      String[] affectedSystems) {
+                                      String[] affectedSystems,
+                                      UUID actorUserId,
+                                      String actorRole) {
         ChangeRequestEntity current = getById(id);
+        assertCanMutate(current, actorUserId, actorRole);
         if (current.getStatus().isClosed()) {
             throw new InvalidStateTransitionException("Closed change requests cannot be edited.");
         }
@@ -144,8 +161,9 @@ public class ChangeRequestService {
         return updated;
     }
 
-    public ChangeRequestEntity submit(UUID id) {
+    public ChangeRequestEntity submit(UUID id, UUID actorUserId, String actorRole) {
         ChangeRequestEntity changeRequest = getById(id);
+        assertCanMutate(changeRequest, actorUserId, actorRole);
         changeRequest.submit();
         changeRequest.setSlaDeadline(OffsetDateTime.now().plusHours(resolveSlaHours(changeRequest.getPriority())));
         ChangeRequestEntity submitted = changeRequestRepository.save(changeRequest);
@@ -154,8 +172,9 @@ public class ChangeRequestService {
         return submitted;
     }
 
-    public void cancel(UUID id) {
+    public void cancel(UUID id, UUID actorUserId, String actorRole) {
         ChangeRequestEntity changeRequest = getById(id);
+        assertCanMutate(changeRequest, actorUserId, actorRole);
         changeRequest.cancel();
         ChangeRequestEntity cancelled = changeRequestRepository.save(changeRequest);
         logActivity(cancelled, cancelled.getCreatedBy(), "CR_CANCELLED", Map.of("status", cancelled.getStatus().name()));
@@ -311,12 +330,28 @@ public class ChangeRequestService {
         return attachmentRepository.findByChangeRequestIdOrderByCreatedAtDesc(changeRequestId);
     }
 
-    public AttachmentEntity uploadAttachment(UUID changeRequestId, UUID uploaderId, MultipartFile file) {
+    public AttachmentEntity uploadAttachment(UUID changeRequestId,
+                                             UUID uploaderId,
+                                             String uploaderRole,
+                                             MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new DomainNotPermittedException("EMPTY_FILE", "Attachment file is required.");
         }
+        if (file.getSize() > maxUploadSizeBytes) {
+            throw new DomainNotPermittedException("FILE_TOO_LARGE", "Attachment exceeds maximum allowed size.");
+        }
 
         ChangeRequestEntity changeRequest = getById(changeRequestId);
+        assertCanMutate(changeRequest, uploaderId, uploaderRole);
+
+        String mimeType = file.getContentType();
+        if (!isAllowedMimeType(mimeType)) {
+            throw new DomainNotPermittedException("INVALID_FILE_TYPE", "Attachment file type is not allowed.");
+        }
+        if (!isSignatureValid(file, mimeType)) {
+            throw new DomainNotPermittedException("INVALID_FILE_CONTENT", "Attachment content does not match file type.");
+        }
+
         UserEntity uploader = userRepository.findById(uploaderId)
                 .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Uploader not found."));
 
@@ -324,7 +359,7 @@ public class ChangeRequestService {
         String safeOriginalName = file.getOriginalFilename() == null ? "attachment.bin" : file.getOriginalFilename();
         String storedName = UUID.randomUUID() + "-" + safeOriginalName.replaceAll("[^a-zA-Z0-9._-]", "_");
 
-        Path storageDir = Path.of("/tmp/audita/uploads", tenant == null ? "public" : tenant, changeRequestId.toString());
+        Path storageDir = Path.of(storageBasePath, tenant == null ? "public" : tenant, changeRequestId.toString());
         Path outputPath = storageDir.resolve(storedName);
 
         try {
@@ -338,7 +373,7 @@ public class ChangeRequestService {
                 changeRequest,
                 uploader,
                 safeOriginalName,
-                file.getContentType(),
+                mimeType,
                 file.getSize(),
                 outputPath.toString()
         );
@@ -357,8 +392,11 @@ public class ChangeRequestService {
     }
 
     public List<ChangeRequestCustomFieldEntity> upsertCustomFields(UUID changeRequestId,
-                                                                    List<FieldValue> fields) {
+                                                                    List<FieldValue> fields,
+                                                                    UUID actorUserId,
+                                                                    String actorRole) {
         ChangeRequestEntity changeRequest = getById(changeRequestId);
+        assertCanMutate(changeRequest, actorUserId, actorRole);
         customFieldRepository.deleteByIdChangeRequestId(changeRequestId);
 
         List<ChangeRequestCustomFieldEntity> newRows = fields.stream()
@@ -406,6 +444,63 @@ public class ChangeRequestService {
         if (changeRequest.getCreatedBy() != null) {
             changeRequest.getCreatedBy().getEmail();
         }
+    }
+
+    private void assertCanMutate(ChangeRequestEntity changeRequest, UUID actorUserId, String actorRole) {
+        String normalizedRole = actorRole == null ? "" : actorRole.toUpperCase();
+        if (ELEVATED_ROLES.contains(normalizedRole)) {
+            return;
+        }
+        UserEntity createdBy = changeRequest.getCreatedBy();
+        if (createdBy == null || !createdBy.getId().equals(actorUserId)) {
+            throw new DomainNotPermittedException("FORBIDDEN", "You are not allowed to modify this change request.");
+        }
+    }
+
+    private boolean isAllowedMimeType(String mimeType) {
+        if (mimeType == null || mimeType.isBlank()) {
+            return false;
+        }
+        return java.util.Arrays.stream(allowedMimeTypes.split(","))
+                .map(String::trim)
+                .anyMatch(allowed -> allowed.equalsIgnoreCase(mimeType));
+    }
+
+    private boolean isSignatureValid(MultipartFile file, String mimeType) {
+        if (mimeType == null) {
+            return false;
+        }
+        try (InputStream inputStream = file.getInputStream()) {
+            byte[] header = inputStream.readNBytes(8);
+            if (mimeType.equalsIgnoreCase("application/pdf")) {
+                return startsWith(header, new byte[] {0x25, 0x50, 0x44, 0x46}); // %PDF
+            }
+            if (mimeType.equalsIgnoreCase("image/png")) {
+                return startsWith(header, new byte[] {(byte) 0x89, 0x50, 0x4E, 0x47});
+            }
+            if (mimeType.equalsIgnoreCase("image/jpeg")) {
+                return startsWith(header, new byte[] {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF});
+            }
+            if (mimeType.equalsIgnoreCase("application/zip")) {
+                return startsWith(header, new byte[] {0x50, 0x4B, 0x03, 0x04});
+            }
+            // For text-like types, allow as long as content type is allowlisted.
+            return mimeType.startsWith("text/") || mimeType.equalsIgnoreCase("application/json");
+        } catch (IOException ex) {
+            return false;
+        }
+    }
+
+    private boolean startsWith(byte[] data, byte[] signature) {
+        if (data.length < signature.length) {
+            return false;
+        }
+        for (int i = 0; i < signature.length; i++) {
+            if (data[i] != signature[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private String[] normalizeAffectedSystems(String[] affectedSystems) {

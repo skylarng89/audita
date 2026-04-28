@@ -24,7 +24,7 @@ public record AttachmentResponse(
                 entity.getFileName(),
                 entity.getMimeType(),
                 entity.getSizeBytes(),
-                entity.getStoragePath(),
+            null,
                 uploaderId,
                 uploaderName,
                 entity.getCreatedAt()

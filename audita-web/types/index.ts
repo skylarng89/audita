@@ -86,7 +86,7 @@ export interface Attachment {
   fileName: string;
   mimeType: string | null;
   sizeBytes: number;
-  storagePath: string;
+  storagePath: string | null;
   uploaderId: string | null;
   uploaderName: string | null;
   createdAt: string;

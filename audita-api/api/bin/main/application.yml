@@ -18,7 +18,7 @@ spring:
   # ── JPA / Hibernate ──────────────────────────────────────────────────────────
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${JPA_DDL_AUTO:validate}
       naming:
         physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
     open-in-view: false
@@ -80,14 +80,27 @@ management:
 # ── Audita custom properties ─────────────────────────────────────────────────────
 audita:
   jwt:
-    secret: ${JWT_SECRET:change-me-in-production-must-be-at-least-32-chars-long!!}
+    secret: ${JWT_SECRET:}
     expiry-seconds: ${JWT_EXPIRY_SECONDS:900}
 
   refresh-token:
     expiry-days: ${REFRESH_TOKEN_EXPIRY_DAYS:7}
 
   encryption:
-    key: ${APP_ENCRYPTION_KEY:0000000000000000000000000000000000000000000000000000000000000000}
+    key: ${APP_ENCRYPTION_KEY:}
+
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+
+  security:
+    trust-forwarded-headers: ${TRUST_FORWARDED_HEADERS:false}
+
+  bootstrap:
+    setup-token: ${BOOTSTRAP_SETUP_TOKEN:}
+
+  upload:
+    max-size-bytes: ${UPLOAD_MAX_SIZE_BYTES:10485760}
+    allowed-mime-types: ${UPLOAD_ALLOWED_MIME_TYPES:application/pdf,image/png,image/jpeg,text/plain,text/csv,application/json,application/zip}
 
   sso:
     # The public base URL of this API — used as redirect_uri base for OAuth2 callbacks
@@ -112,7 +125,7 @@ audita:
 logging:
   level:
     root: INFO
-    io.audita: DEBUG
+    io.audita: INFO
     org.flywaydb: INFO
   pattern:
     console: "%d{ISO8601} %-5level [%thread] %logger{36} - %msg%n"

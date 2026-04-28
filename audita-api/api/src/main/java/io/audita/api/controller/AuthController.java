@@ -30,6 +30,9 @@ public class AuthController {
     @Value("${audita.refresh-token.expiry-days:7}")
     private long refreshExpiryDays;
 
+    @Value("${audita.security.trust-forwarded-headers:false}")
+    private boolean trustForwardedHeaders;
+
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
@@ -46,7 +49,8 @@ public class AuthController {
             result = authService.loginSuperAdmin(request.email(), request.password());
         } else {
             String clientIp = resolveClientIp(servletRequest);
-            result = authService.loginTenantUser(request.email(), request.password(), tenantSlug, clientIp);
+            String userAgent = servletRequest.getHeader("User-Agent");
+            result = authService.loginTenantUser(request.email(), request.password(), tenantSlug, clientIp, userAgent);
         }
 
         setRefreshCookie(response, result.rawRefreshToken());
@@ -63,7 +67,9 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        LoginResult result = authService.refreshToken(rawToken);
+        String clientIp = resolveClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
+        LoginResult result = authService.refreshToken(rawToken, clientIp, userAgent);
         setRefreshCookie(response, result.rawRefreshToken());
         return ResponseEntity.ok(toAuthResponse(result));
     }
@@ -138,6 +144,9 @@ public class AuthController {
     }
 
     private String resolveClientIp(HttpServletRequest request) {
+        if (!trustForwardedHeaders) {
+            return request.getRemoteAddr();
+        }
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {
             // X-Forwarded-For may contain a comma-separated list; take the first (client) IP
