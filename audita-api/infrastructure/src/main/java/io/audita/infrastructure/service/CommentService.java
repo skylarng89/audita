@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 @Transactional
 public class CommentService {
 
-    private static final Pattern EMAIL_MENTION_PATTERN = Pattern.compile("@([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\\\.[A-Za-z]{2,})");
+    private static final Pattern EMAIL_MENTION_PATTERN = Pattern.compile("@([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,})");
 
     private final ChangeRequestRepository changeRequestRepository;
     private final CommentRepository commentRepository;
@@ -70,10 +70,9 @@ public class CommentService {
         UserEntity author = userRepository.findById(authorId)
                 .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Comment author not found."));
 
+        Set<UserEntity> mentionedUsers = resolveMentionedUsers(rawBody.trim(), authorId);
         String sanitisedBody = htmlPolicy.sanitize(rawBody.trim());
         CommentEntity comment = commentRepository.save(new CommentEntity(changeRequest, author, sanitisedBody));
-
-        Set<UserEntity> mentionedUsers = resolveMentionedUsers(sanitisedBody, authorId);
         for (UserEntity user : mentionedUsers) {
             commentMentionRepository.save(new CommentMentionEntity(comment, user));
             notificationService.createAndPush(

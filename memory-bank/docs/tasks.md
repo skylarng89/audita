@@ -163,7 +163,7 @@
 - Added SSE push channel and client reconnection/auth compatibility.
 - Added scheduled SLA warning/breach event processing with activity + notification fan-out.
 
-**Test Coverage**: Backend compile succeeded (`./gradlew compileJava`) and frontend production build succeeded (`pnpm build`).
+**Test Coverage**: Backend compile succeeded (`./gradlew compileJava`), frontend production build succeeded (`pnpm build`), Sprint 4 service tests pass (`CommentServiceTest`, `NotificationServiceTest`, `SlaMonitoringServiceTest`), and endpoint-level controller tests pass (`CommentControllerWebMvcTest`, `NotificationControllerWebMvcTest`).
 
 ### Sprint 3 — Change Request Core (Completed, 2026-04-28)
 
