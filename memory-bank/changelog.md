@@ -2,6 +2,21 @@
 
 ## [0.1.0] — Unreleased (In Development)
 
+### Fixed (Entity Column Mapping — 2026-04-29)
+
+- **`GroupEntity`**: Removed `updatedAt` / `updated_at` field — column does not exist in `V1__create_tenant_schema.sql`. Caused every group creation to throw a 500.
+- **`PasswordResetTokenEntity`**: Added explicit `@Column(name = "token_hash")` and `@Column(name = "expires_at")` — without these, `JpaConfig`'s custom naming strategy bypass caused Hibernate to map them as `tokenhash`/`expiresat`, breaking `forgot-password` with a 500.
+
+### Added (Comprehensive E2E Test Suite — 2026-04-29)
+
+- Created `AllSprintsE2ETest.java` (44 ordered Layer 1 integration tests) covering every endpoint across all 5 sprints:
+  - Platform bootstrap, super-admin auth, tenant CRUD + domain management
+  - User invite/accept, roles, groups + membership, deactivate/reactivate
+  - Full CR lifecycle (create → update → submit → approve → reject → cancel), approver management, attachments, activity stream
+  - Comments, notifications, SSE stream token issuance
+  - Forgot-password flow, group deletion, logout
+- All 62 backend tests pass (0 failures).
+
 ### Fixed (Bootstrap Browser 403 — 2026-04-29)
 
 - Fixed browser-only platform bootstrap failure where `POST /api/platform/v1/bootstrap` returned `403 Invalid CORS request` while CLI requests succeeded.

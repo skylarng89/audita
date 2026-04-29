@@ -296,3 +296,39 @@ Every write operation in the application layer must produce an audit entry. Patt
 ```
 
 Never skip steps 5–6. Tested via integration tests that assert audit entries are created.
+
+---
+
+## Layer 1 E2E Test Patterns (Testcontainers)
+
+### Void-return endpoints
+`deactivate`, `reactivate`, `addMember`, `deleteGroup`, `cancel` all return `void` from the controller. Spring defaults to HTTP 200 with no body. Assertions must use `isIn(200, 204)` — never check the response body.
+
+### `notifications/read-all`
+Returns HTTP 204 (No Content), not 200. Always assert `isIn(200, 204)`.
+
+### SSE stream endpoint
+`GET /api/v1/notifications/stream` is a long-lived SSE connection. **Never connect to it from tests** — `HttpClient.send()` with `BodyHandlers.discarding()` will block indefinitely. Only test token issuance (`POST /stream-token`) and verify the returned JWT is non-blank.
+
+### SSE stream query param
+The stream endpoint uses `?streamToken=xxx` (not `?token=xxx`) — matches the `@RequestParam` name in `NotificationController`.
+
+### StreamTokenResponse field name
+`POST /api/v1/notifications/stream-token` returns `{"streamToken":"..."}` — the JSON key is `streamToken`, not `token`.
+
+### Invite token injection
+Raw tokens are never stored in DB — only SHA-256 Base64 hash. Inject known tokens via SQL:
+```sql
+INSERT INTO "{slug}".invite_tokens (id, user_id, token_hash, expires_at, used)
+VALUES (gen_random_uuid(), ?::uuid, ?, NOW() + INTERVAL '48 hours', false)
+```
+Use `Base64.getEncoder().encodeToString(sha256bytes)` to compute the hash (NOT hex encoding).
+
+### Role normalization
+After `POST /api/platform/v1/tenants` (provision), roles are seeded with mixed-case names. Spring Security's `hasAnyRole('ADMIN')` requires UPPERCASE. Always call `normalizeRoleNames(slug)` (UPDATE roles SET name = UPPER(name)) before accepting invites.
+
+### Password complexity requirement
+All user passwords must be 12+ chars with uppercase, lowercase, digit, and symbol. Example: `"Admin@Acme1!Pass"`.
+
+### Test storage path
+Set `audita.storage.local.base-path=/tmp/audita-test-uploads` in `@SpringBootTest(properties=...)` and `mkdir -p /tmp/audita-test-uploads` to allow attachment upload tests to write files.

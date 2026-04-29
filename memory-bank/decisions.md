@@ -199,3 +199,27 @@
 
 - Browser fetch to `/api/platform/v1/bootstrap` changed from `403 Invalid CORS request` to `200` with success payload.
 - Onboarding state transitioned to `onboardingCompleted=true` and bootstrap page redirected to sign-in.
+
+---
+
+## ADR-011: All JPA Entities Require Explicit @Column(name=...) on camelCase Fields
+
+**Date:** 2026-04-29
+**Status:** Accepted
+
+**Decision:** Every camelCase field in every JPA entity that maps to a snake_case DB column must have an explicit `@Column(name = "snake_case_name")` annotation. Relying on Hibernate's automatic naming strategy is unsafe in this codebase.
+
+**Reasoning:**
+
+- `JpaConfig` manually constructs a `LocalContainerEntityManagerFactoryBean` to enable multi-tenant schema routing. This completely bypasses `spring.jpa.hibernate.naming.*` properties in `application.yml`.
+- The `CamelCaseToUnderscoresNamingStrategy` is added directly to `JpaConfig.hibernateProperties()` as an instance, but entity fields without explicit `@Column` annotations have been caught mapping to incorrect column names (`tokenhash`, `expiresat`, `issystem`, `createdat`, etc.) in practice.
+- Explicit `@Column(name=...)` serves as belt-and-suspenders and makes the mapping unambiguous to the next developer.
+
+**Affected entities (fixed):** `RoleEntity`, `UserEntity`, `InviteTokenEntity`, `RefreshTokenEntity`, `GroupEntity`, `PasswordResetTokenEntity`.
+
+**Rule for new entities:** Any field that would differ under camelCase → snake_case conversion must have `@Column(name = "actual_column_name")`. Fields matching exactly (e.g., `id`, `name`, `email`, `status`) may omit it.
+
+**Trade-offs:**
+
+- Slightly more verbose entities.
+- Eliminates an entire class of hard-to-debug 500 errors that only manifest at runtime.

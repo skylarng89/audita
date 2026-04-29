@@ -403,3 +403,24 @@
 - `?tenant=` query param only active when `import.meta.dev` is true — cannot be abused in production
 
 **Test Coverage**: Sprint 0 is scaffold-only; no business logic tests required at this stage.
+
+---
+
+### Comprehensive E2E Test Coverage (Completed 2026-04-29)
+
+**Overview**: Created `AllSprintsE2ETest.java` — 44 ordered Layer 1 integration tests covering every implemented endpoint across all 5 sprints. Uncovered and fixed 2 production bugs in the process.
+
+**Files Created/Modified**:
+
+- `audita-api/api/src/test/java/io/audita/api/integration/AllSprintsE2ETest.java` — 44 ordered tests, full sprint coverage
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/entity/GroupEntity.java` — removed phantom `updatedAt` field (column not in schema)
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/entity/PasswordResetTokenEntity.java` — added `@Column(name="token_hash")` and `@Column(name="expires_at")`
+
+**Key Changes**:
+
+- `GroupEntity` had `private OffsetDateTime updatedAt` with a `@PreUpdate` hook, but the `groups` DB table has no `updated_at` column — Hibernate threw on every INSERT/UPDATE
+- `PasswordResetTokenEntity` fields lacked explicit `@Column(name=...)` — JpaConfig bypasses `application.yml` naming strategy; Hibernate mapped `tokenHash` → `tokenhash` causing `forgot-password` 500
+- Test uses `@SpringBootTest(properties={"audita.storage.local.base-path=/tmp/audita-test-uploads"})` to provide a writable storage directory
+- SSE stream (`GET /notifications/stream`) intentionally not connected in tests — long-lived connection blocks indefinitely; token issuance verified instead
+
+**Test Coverage**: 62/62 tests passing (0 failures). Covers Sprint 1–5 full API surface.

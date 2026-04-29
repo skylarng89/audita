@@ -1,8 +1,8 @@
 # Audita — Active Context
 
 **Last Updated:** 2026-04-29
-**Current Phase:** Active development
-**Active Sprint:** Sprint 5 — Hardening & Release Readiness (Completed)
+**Current Phase:** Active development — comprehensive E2E test coverage complete
+**Active Sprint:** All sprints complete; hardening + test coverage ongoing
 
 ---
 
@@ -21,7 +21,9 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 - **Sprint 2 complete (19/19 tasks).** Remaining tasks (USR-007, USR-008, TENANT-005) were completed with controller policy tests and tenant-schema isolation integration coverage.
 - **Sprint 3 complete (21/21 tasks).** Added CR attachments API and frontend upload/list flows; Sprint 3 is fully closed.
 - **Sprint 4 complete (10/10 tasks).** Added comments APIs + mention extraction/persistence, notifications REST + SSE stream, SLA warning/breach scheduler automation, and frontend comments/notification wiring.
-- **Sprint 4 validation expanded.** Added endpoint-level controller tests for comments and notifications, including stream-token issuance and invalid-token SSE access rejection; targeted Gradle run passes.
+- **Sprint 5 validation expanded.** Added endpoint-level controller tests for comments and notifications, including stream-token issuance and invalid-token SSE access rejection; targeted Gradle run passes.
+- **Comprehensive E2E test coverage complete.** `AllSprintsE2ETest.java` — 44 ordered integration tests covering every implemented endpoint across all 5 sprints. 62/62 tests passing.
+- **Production entity bugs fixed (cumulative):** `GroupEntity` (phantom `updated_at` column), `PasswordResetTokenEntity` (`tokenHash`/`expiresAt` column name mapping), `RoleEntity`, `UserEntity`, `InviteTokenEntity`, `RefreshTokenEntity` — all now have explicit `@Column(name=...)` to survive the `JpaConfig` naming-strategy bypass.
 - Documentation complete: PRD v1.0, SRS v1.0, USER_FLOW v1.0 (`docs/`). UI designs: 40 screens (`ui-designs/`).
 - `audita-api`: hexagonal structure, JPA/Hibernate multi-tenancy, Flyway migrations, Spring Security scaffold, RFC 7807 exception handler, structured JSON logging (Logstash encoder).
 - `audita-web`: Nuxt 3, Tailwind tokens, all layouts, auth/role/tenant middleware, `plugins/api.ts`, `useAuthStore`, shared component library (AppButton, AppInput, AppBadge, AppCard, AppModal, AppTable, AppPagination).
