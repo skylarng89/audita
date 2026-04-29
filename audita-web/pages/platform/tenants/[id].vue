@@ -190,7 +190,7 @@ definePageMeta({ layout: "platform" });
 
 const api = useApi();
 const route = useRoute();
-const { addToast } = useToast();
+const { success: toastSuccess, error: toastError } = useToast();
 const tenantId = route.params.id as string;
 
 interface Tenant {
@@ -246,7 +246,7 @@ async function addDomain() {
     newDomain.value = "";
     refreshDomains();
   } catch {
-    addToast({ type: "error", message: "Failed to add domain." });
+    toastError("Failed to add domain.");
   }
 }
 
@@ -257,17 +257,14 @@ async function removeDomain(domainId: string) {
     });
     refreshDomains();
   } catch {
-    addToast({ type: "error", message: "Failed to remove domain." });
+    toastError("Failed to remove domain.");
   }
 }
 
 async function saveSso(provider: string) {
   const form = ssoForms[provider];
   if (!form.clientId || !form.clientSecret) {
-    addToast({
-      type: "error",
-      message: "Client ID and Client Secret are required.",
-    });
+    toastError("Client ID and Client Secret are required.");
     return;
   }
   try {
@@ -280,12 +277,9 @@ async function saveSso(provider: string) {
         msTenantId: form.msTenantId || null,
       },
     });
-    addToast({
-      type: "success",
-      message: `${provider} SSO configuration saved.`,
-    });
+    toastSuccess(`${provider} SSO configuration saved.`);
   } catch {
-    addToast({ type: "error", message: "Failed to save SSO configuration." });
+    toastError("Failed to save SSO configuration.");
   }
 }
 

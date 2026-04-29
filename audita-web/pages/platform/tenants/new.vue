@@ -104,7 +104,7 @@ definePageMeta({ layout: "platform" });
 
 const api = useApi();
 const router = useRouter();
-const { addToast } = useToast();
+const { success: toastSuccess } = useToast();
 
 const form = reactive({
   name: "",
@@ -130,10 +130,7 @@ async function handleSubmit() {
       method: "POST",
       body: form,
     });
-    addToast({
-      type: "success",
-      message: `Organisation "${form.name}" provisioned. Invite email sent.`,
-    });
+    toastSuccess(`Organisation "${form.name}" provisioned. Invite email sent.`);
     router.push("/platform/tenants");
   } catch (e: unknown) {
     const err = e as {

@@ -137,7 +137,7 @@
 definePageMeta({ layout: "default" });
 
 const api = useApi();
-const { addToast } = useToast();
+const { success: toastSuccess, error: toastError } = useToast();
 
 interface Group {
   id: string;
@@ -175,23 +175,23 @@ const addMemberId = ref("");
 async function createGroup() {
   try {
     await api("/api/v1/groups", { method: "POST", body: createForm });
-    addToast({ type: "success", message: "Group created." });
+    toastSuccess("Group created.");
     showCreateModal.value = false;
     createForm.name = "";
     createForm.description = "";
     refresh();
   } catch {
-    addToast({ type: "error", message: "Failed to create group." });
+    toastError("Failed to create group.");
   }
 }
 
 async function deleteGroup(id: string) {
   try {
     await api(`/api/v1/groups/${id}`, { method: "DELETE" });
-    addToast({ type: "success", message: "Group deleted." });
+    toastSuccess("Group deleted.");
     refresh();
   } catch {
-    addToast({ type: "error", message: "Failed to delete group." });
+    toastError("Failed to delete group.");
   }
 }
 
@@ -218,7 +218,7 @@ async function addMember() {
     addMemberId.value = "";
     openDetail(detailGroup.value);
   } catch {
-    addToast({ type: "error", message: "Failed to add member." });
+    toastError("Failed to add member.");
   }
 }
 
@@ -230,7 +230,7 @@ async function removeMember(userId: string) {
     });
     openDetail(detailGroup.value);
   } catch {
-    addToast({ type: "error", message: "Failed to remove member." });
+    toastError("Failed to remove member.");
   }
 }
 

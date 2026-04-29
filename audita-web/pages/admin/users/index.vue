@@ -169,7 +169,7 @@
 definePageMeta({ layout: "default" });
 
 const api = useApi();
-const { addToast } = useToast();
+const { success: toastSuccess, error: toastError } = useToast();
 
 interface UserRow {
   id: string;
@@ -227,7 +227,7 @@ async function inviteUser() {
   inviting.value = true;
   try {
     await api("/api/v1/users/invite", { method: "POST", body: inviteForm });
-    addToast({ type: "success", message: "Invite sent!" });
+    toastSuccess("Invite sent!");
     showInviteModal.value = false;
     refresh();
   } catch (e: unknown) {
@@ -245,23 +245,23 @@ async function updateUser() {
       method: "PATCH",
       body: { roleId: editForm.roleId },
     });
-    addToast({ type: "success", message: "User updated." });
+    toastSuccess("User updated.");
     editUser.value = null;
     refresh();
   } catch {
-    addToast({ type: "error", message: "Failed to update user." });
+    toastError("Failed to update user.");
   }
 }
 
 async function deactivate(id: string) {
   await api(`/api/v1/users/${id}/deactivate`, { method: "POST" });
-  addToast({ type: "success", message: "User deactivated." });
+  toastSuccess("User deactivated.");
   refresh();
 }
 
 async function reactivate(id: string) {
   await api(`/api/v1/users/${id}/reactivate`, { method: "POST" });
-  addToast({ type: "success", message: "User reactivated." });
+  toastSuccess("User reactivated.");
   refresh();
 }
 

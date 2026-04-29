@@ -79,6 +79,7 @@ const { data, pending, refresh } = await useAsyncData<PageData>(
     api(`/api/platform/v1/tenants?page=${page.value}&size=20`, {
       method: "GET",
     }) as Promise<PageData>,
+  { getCachedData: () => null },
 );
 
 watch(page, () => refresh());
