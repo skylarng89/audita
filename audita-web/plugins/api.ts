@@ -11,6 +11,10 @@ export default defineNuxtPlugin(() => {
     baseURL,
 
     onRequest({ request, options }) {
+      if (!auth.isAuthenticated) {
+        auth.hydrateFromCookie();
+      }
+
       let requestPath = "";
       if (typeof request === "string") {
         requestPath = request;
@@ -58,7 +62,7 @@ export default defineNuxtPlugin(() => {
               baseURL,
             },
           );
-          auth.accessToken = refreshed.accessToken;
+          auth.setAccessToken(refreshed.accessToken);
         } catch {
           // Refresh failed — force logout
           await auth.logout();

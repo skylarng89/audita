@@ -3,6 +3,10 @@ import { useAuthStore } from "~/stores/auth";
 export default defineNuxtRouteMiddleware((to) => {
   const auth = useAuthStore();
 
+  if (!auth.isAuthenticated && typeof auth.hydrateFromCookie === "function") {
+    auth.hydrateFromCookie();
+  }
+
   // Public routes that must remain reachable without a session.
   const publicRoutes = [
     "/auth/sign-in",
