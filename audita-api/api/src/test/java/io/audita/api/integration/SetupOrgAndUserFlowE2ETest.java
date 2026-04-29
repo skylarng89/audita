@@ -2,25 +2,23 @@ package io.audita.api.integration;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.UUID;
@@ -67,9 +65,6 @@ class SetupOrgAndUserFlowE2ETest {
 
     @LocalServerPort
     int port;
-
-    @Autowired
-    PasswordEncoder passwordEncoder;
 
     private final ObjectMapper mapper = new ObjectMapper();
     private final HttpClient http = HttpClient.newHttpClient();
@@ -145,8 +140,8 @@ class SetupOrgAndUserFlowE2ETest {
 
         // ── 4. Accept invite — org admin sets password ─────────────────────────
 
-        // Provisioning sends an invite email but we read the raw token from DB in tests
-        String orgAdminRawToken = readInviteToken(orgSlug);
+        // Provisioning sends an invite email but raw token is not stored; inject a known one
+        String orgAdminRawToken = injectInviteToken(orgSlug);
         assertThat(orgAdminRawToken).as("Invite token for org admin").isNotBlank();
 
         String orgAdminPassword = "OrgAdmin1!Aa";
@@ -194,7 +189,7 @@ class SetupOrgAndUserFlowE2ETest {
 
         // ── 7. Second user accepts invite and logs in ─────────────────────────
 
-        String user2RawToken = readInviteToken(orgSlug, user2Email);
+        String user2RawToken = injectInviteToken(orgSlug, user2Email);
         assertThat(user2RawToken).as("Invite token for user 2").isNotBlank();
 
         String user2Password = "UserTwo1!Aa";
@@ -268,41 +263,44 @@ class SetupOrgAndUserFlowE2ETest {
     // ── DB helpers ─────────────────────────────────────────────────────────────
 
     /**
-     * Reads the most-recently-created raw invite token for the first PENDING user
-     * in the tenant schema (the org admin).
+     * Inserts a fresh invite token with a known raw value for the first user
+     * in the tenant (the org admin). Returns the raw token so the test can use it
+     * with the accept-invite API.
+     *
+     * The real provisioning flow stores only the SHA-256 hash; in tests we can't
+     * recover the raw token from the hash, so we inject a predictable one instead.
      */
-    private String readInviteToken(String slug) throws Exception {
-        String sql = """
-                SELECT it.raw_token
-                FROM "%s".invite_tokens it
-                JOIN "%s".users u ON it.user_id = u.id
-                ORDER BY it.created_at DESC
-                LIMIT 1
-                """.formatted(slug, slug);
-        return queryFirstString(sql);
+    private String injectInviteToken(String slug) throws Exception {
+        String userId = queryFirstString("""
+                SELECT id FROM "%s".users ORDER BY created_at LIMIT 1
+                """.formatted(slug));
+        return injectInviteTokenForUser(slug, userId);
     }
 
     /**
-     * Reads the invite token for a specific user email within the tenant schema.
+     * Inserts a fresh invite token for a specific user (looked up by email).
      */
-    private String readInviteToken(String slug, String email) throws Exception {
-        String sql = """
-                SELECT it.raw_token
-                FROM "%s".invite_tokens it
-                JOIN "%s".users u ON it.user_id = u.id
-                WHERE u.email = ?
-                ORDER BY it.created_at DESC
-                LIMIT 1
-                """.formatted(slug, slug);
+    private String injectInviteToken(String slug, String email) throws Exception {
+        String userId = queryFirstString("""
+                SELECT id FROM "%s".users WHERE email = '%s'
+                """.formatted(slug, email));
+        return injectInviteTokenForUser(slug, userId);
+    }
 
+    private String injectInviteTokenForUser(String slug, String userId) throws Exception {
+        String rawToken = UUID.randomUUID().toString();
+        String tokenHash = sha256hex(rawToken);
+        String sql = """
+                INSERT INTO "%s".invite_tokens (id, user_id, token_hash, expires_at, used)
+                VALUES (gen_random_uuid(), ?::uuid, ?, NOW() + INTERVAL '48 hours', false)
+                """.formatted(slug);
         try (Connection c = connection();
              PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, email);
-            try (ResultSet rs = ps.executeQuery()) {
-                assertThat(rs.next()).as("Invite token row for %s", email).isTrue();
-                return rs.getString(1);
-            }
+            ps.setString(1, userId);
+            ps.setString(2, tokenHash);
+            ps.executeUpdate();
         }
+        return rawToken;
     }
 
     private String queryFirstString(String sql) throws Exception {
@@ -317,6 +315,17 @@ class SetupOrgAndUserFlowE2ETest {
     private Connection connection() throws Exception {
         return DriverManager.getConnection(
                 postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
+    }
+
+    private static String sha256hex(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            // Must match AuthService.sha256() which uses Base64 encoding
+            return java.util.Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private String readRoleId(String slug, String roleName) throws Exception {
