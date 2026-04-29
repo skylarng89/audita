@@ -2,6 +2,21 @@
 
 ## [0.1.0] — Unreleased (In Development)
 
+### Fixed (Bootstrap Browser 403 — 2026-04-29)
+
+- Fixed browser-only platform bootstrap failure where `POST /api/platform/v1/bootstrap` returned `403 Invalid CORS request` while CLI requests succeeded.
+- Updated Nuxt internal API proxy route (`audita-web/server/routes/api/[...path].ts`) to strip forwarded `Origin`, `Referer`, and `Host` headers before proxying upstream.
+- Preserved existing bootstrap request hardening in frontend API flow (anonymous bootstrap calls with credentials omitted).
+
+### Added (Diagnostics — 2026-04-29)
+
+- Added targeted bootstrap diagnostics in API security/controller/exception layers to isolate browser-vs-CLI behavior:
+  - `JwtAuthenticationFilter`
+  - `TenantResolutionFilter`
+  - `PlatformBootstrapController`
+  - `GlobalExceptionHandler`
+- Captured root-cause evidence from browser-side fetch response body (`Invalid CORS request`) and confirmed post-fix 200 response.
+
 ### Added (Security Review — 2026-04-28)
 
 - Published adversarial security audit report: `docs/SECURITY_AUDIT_2026-04-28.md`.

@@ -1,6 +1,6 @@
 # Audita — Active Context
 
-**Last Updated:** 2026-04-28
+**Last Updated:** 2026-04-29
 **Current Phase:** Active development
 **Active Sprint:** Sprint 5 — Hardening & Release Readiness (Completed)
 
@@ -81,7 +81,10 @@ Advanced features (SLA, custom fields, audit export, full admin config) follow i
 
 ## Active Blockers / Open Questions
 
-- No current Sprint 5 blocker. Critical e2e suite and frontend build gate are passing.
+- Resolved this session: browser-only bootstrap submit returned 403 while CLI succeeded.
+- Root cause confirmed as CORS rejection (`Invalid CORS request`) on proxied browser requests.
+- Fix landed in Nuxt proxy route by stripping forwarded `Origin`/`Referer`/`Host` before upstream hop.
+- No active blocker currently after fix validation (browser bootstrap now succeeds and redirects to sign-in).
 
 ---
 
@@ -103,6 +106,7 @@ Advanced features (SLA, custom fields, audit export, full admin config) follow i
 1. Execute immediate security hardening actions from `docs/SECURITY_AUDIT_2026-04-28.md` (tenant isolation, SSO token transport, BOLA controls, CORS tightening).
 2. Keep critical e2e suite as a mandatory CI gate and add security regression gates (tenant fuzz/BOLA/SSO token handling).
 3. Continue replacing compatibility shim logic with permanent entity/migration alignment incrementally.
+4. Add regression coverage for the Nuxt proxy bootstrap path (ensure upstream bootstrap POST is not CORS-rejected).
 
 ---
 

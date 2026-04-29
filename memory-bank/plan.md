@@ -29,3 +29,4 @@
 
 - UX-001: Add public onboarding status endpoint and first-run redirect gating so initial startup always lands on setup wizard.
 - UX-002: Prevent setup wizard reuse after onboarding completion by redirecting bootstrap route to sign-in.
+- UX-003: Resolve browser-only bootstrap 403 by stripping `Origin`/`Referer`/`Host` in Nuxt internal API proxy route. ✅ (Completed 2026-04-29)

@@ -2,7 +2,7 @@
 
 **Project:** Audita — Multi-Tenant ITIL/ITSM Change Management Platform
 **Version:** 0.1.0
-**Last Updated:** 2026-04-28
+**Last Updated:** 2026-04-29
 **Team Size:** 2–3 Developers
 
 ---
@@ -147,6 +147,30 @@
 ---
 
 ## Recent Implementations
+
+### Post-Sprint UX Hardening — Bootstrap Browser 403 Resolution (Completed 2026-04-29)
+
+**Overview**: Resolved browser-only platform bootstrap failures by fixing an internal proxy/CORS interaction in the Nuxt server route and validated end-to-end onboarding completion.
+
+**Files Created/Modified**:
+
+- `audita-web/server/routes/api/[...path].ts` — strip `Origin`/`Referer`/`Host` before upstream proxying
+- `audita-web/plugins/api.ts` — bootstrap endpoint detection and anonymous header handling hardening
+- `audita-web/pages/platform/bootstrap.vue` — bootstrap submit credentials omitted for anonymous first-run setup
+- `audita-web/composables/useOnboarding.ts` — onboarding status request credentials omitted
+- `audita-api/api/src/main/java/io/audita/api/security/JwtAuthenticationFilter.java` — bootstrap-path diagnostics
+- `audita-api/api/src/main/java/io/audita/api/security/TenantResolutionFilter.java` — bootstrap-path diagnostics
+- `audita-api/api/src/main/java/io/audita/api/controller/PlatformBootstrapController.java` — bootstrap request diagnostics
+- `audita-api/api/src/main/java/io/audita/api/exception/GlobalExceptionHandler.java` — 403 context diagnostics
+
+**Key Changes**:
+
+- Confirmed browser response body for failing submit was exactly `Invalid CORS request`.
+- Confirmed API application-layer bootstrap POST logs were absent during failures, indicating pre-controller rejection.
+- Implemented Nuxt proxy header stripping to prevent upstream CORS rejection for same-origin app calls.
+- Verified browser bootstrap returns 200 success payload and onboarding status flips to `true`.
+
+**Test Coverage**: Docker Compose rebuild + browser repro + CLI status verification completed; bootstrap browser path is now successful.
 
 ### Post-Sprint UX — First-Time Onboarding Gate (Completed 2026-04-28)
 
