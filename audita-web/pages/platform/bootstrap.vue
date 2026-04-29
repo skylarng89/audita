@@ -158,6 +158,10 @@ function strengthColor(bar: number) {
 }
 
 async function handleSubmit() {
+  if (isLoading.value) {
+    return;
+  }
+
   error.value = "";
 
   if (!form.fullName.trim()) {
@@ -186,7 +190,25 @@ async function handleSubmit() {
     done.value = true;
     await navigateTo("/auth/sign-in?setup=done");
   } catch (e: unknown) {
-    const err = e as { data?: { detail?: string } };
+    const err = e as {
+      status?: number;
+      data?: { detail?: string; errorCode?: string };
+    };
+
+    // If the page double-submits and backend has already bootstrapped,
+    // treat that as a successful setup completion.
+    if (
+      err?.status === 403 &&
+      err?.data?.errorCode === "ALREADY_BOOTSTRAPPED"
+    ) {
+      const status = await fetchStatus();
+      if (status.onboardingCompleted) {
+        done.value = true;
+        await navigateTo("/auth/sign-in?setup=done");
+        return;
+      }
+    }
+
     error.value =
       err?.data?.detail ??
       "Setup failed. The platform may already be initialised.";
