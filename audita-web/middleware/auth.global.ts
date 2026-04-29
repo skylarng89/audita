@@ -14,6 +14,7 @@ export default defineNuxtRouteMiddleware((to) => {
     "/auth/reset-password",
     "/auth/accept-invite",
     "/platform/bootstrap",
+    "/setup",
   ];
 
   if (publicRoutes.some((route) => to.path.startsWith(route))) {

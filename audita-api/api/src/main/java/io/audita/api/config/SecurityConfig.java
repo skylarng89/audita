@@ -56,7 +56,8 @@ public class SecurityConfig {
                                 "/api/v1/auth/reset-password",
                                 "/api/v1/auth/accept-invite",
                                 "/api/v1/auth/oauth/exchange",
-                                "/api/platform/v1/bootstrap"
+                                "/api/platform/v1/bootstrap",
+                                "/api/platform/v1/setup"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/platform/v1/bootstrap/status"

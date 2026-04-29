@@ -8,6 +8,7 @@ import io.audita.infrastructure.persistence.entity.*;
 import io.audita.infrastructure.persistence.repository.*;
 import io.audita.infrastructure.security.AesEncryptionService;
 import io.audita.infrastructure.tenant.FlywayTenantMigrator;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import io.audita.infrastructure.tenant.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +76,14 @@ public class TenantService {
     // ── List / Get ─────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
+    public String findFirstTenantSlug() {
+        return tenantRepository.findAll().stream()
+                .findFirst()
+                .map(TenantEntity::getSlug)
+                .orElse(null);
+    }
+
+    @Transactional(readOnly = true)
     public Page<TenantEntity> listTenants(Pageable pageable) {
         return tenantRepository.findAll(pageable);
     }
@@ -139,6 +148,53 @@ public class TenantService {
             emailService.sendInviteEmail(adminEmail, adminFullName, rawToken, name);
 
             log.info("Admin invited for tenant={} email={}", normalisedSlug, adminEmail);
+            });
+        } finally {
+            TenantContext.clear();
+        }
+
+        return tenant;
+    }
+
+    // ── Single-tenant first-run setup ──────────────────────────────────────────
+
+    /**
+     * Single-tenant first-run setup.
+     * Creates the tenant and the Admin user with a password set directly (no invite).
+     * Guard: fails if any tenant already exists.
+     */
+    public TenantEntity setupSingleTenant(String orgName, String slug, String adminFullName,
+                                           String adminEmail, String rawPassword,
+                                           PasswordEncoder passwordEncoder) {
+        if (tenantRepository.count() > 0) {
+            throw new DomainNotPermittedException("ALREADY_SETUP",
+                    "Organisation has already been set up.");
+        }
+
+        String normalisedSlug = slug.toLowerCase().replaceAll("[^a-z0-9-]", "-");
+
+        // 1. Persist tenant record in public schema
+        TenantEntity tenant = tenantRepository.save(new TenantEntity(orgName, normalisedSlug));
+        log.info("Single-tenant setup: tenant created id={} slug={}", tenant.getId(), normalisedSlug);
+
+        // 2. Run per-tenant Flyway migrations
+        flywayTenantMigrator.migrate(normalisedSlug);
+
+        // 3. Create Admin user with password directly (no invite)
+        TenantContext.setCurrentTenant(normalisedSlug);
+        try {
+            transactionTemplate.executeWithoutResult(status -> {
+                RoleEntity adminRole = roleRepository.findByName("Admin")
+                        .orElseThrow(() -> new IllegalStateException(
+                                "Admin role not found after migration for tenant: " + normalisedSlug));
+
+                UserEntity adminUser = new UserEntity(adminEmail, adminFullName);
+                adminUser.setRole(adminRole);
+                adminUser.setPasswordHash(passwordEncoder.encode(rawPassword));
+                adminUser.setStatus(UserStatus.ACTIVE);
+                userRepository.save(adminUser);
+
+                log.info("Admin user created for tenant={} email={}", normalisedSlug, adminEmail);
             });
         } finally {
             TenantContext.clear();

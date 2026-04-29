@@ -235,7 +235,8 @@ public class AuthService {
     }
 
     public boolean isOnboardingCompleted() {
-        return superAdminRepository.count() > 0;
+        // True if either the legacy SUPER_ADMIN bootstrap or the single-tenant setup has run.
+        return superAdminRepository.count() > 0 || tenantRepository.count() > 0;
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────────

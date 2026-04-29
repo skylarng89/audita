@@ -1,5 +1,6 @@
 export interface OnboardingStatusResponse {
   onboardingCompleted: boolean;
+  tenantSlug?: string | null;
 }
 
 export function useOnboarding() {
@@ -16,7 +17,7 @@ export function useOnboarding() {
       );
     } catch {
       // Keep auth/bootstrap routes renderable even if API is temporarily unavailable.
-      return { onboardingCompleted: true };
+      return { onboardingCompleted: true, tenantSlug: null };
     }
   }
 

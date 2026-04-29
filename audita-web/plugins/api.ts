@@ -24,9 +24,9 @@ export default defineNuxtPlugin(() => {
         requestPath = request.toString();
       }
 
-      const isBootstrapEndpoint = requestPath.includes(
-        "/api/platform/v1/bootstrap",
-      );
+      const isBootstrapEndpoint =
+        requestPath.includes("/api/platform/v1/bootstrap") ||
+        requestPath.includes("/api/platform/v1/setup");
 
       if (isBootstrapEndpoint) {
         // Bootstrap must remain anonymous and tenant-agnostic.

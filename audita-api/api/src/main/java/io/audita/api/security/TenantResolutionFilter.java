@@ -69,6 +69,7 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
     }
 
     private boolean isBootstrapRequest(HttpServletRequest request) {
-        return request.getRequestURI().startsWith("/api/platform/v1/bootstrap");
+        String uri = request.getRequestURI();
+        return uri.startsWith("/api/platform/v1/bootstrap") || uri.startsWith("/api/platform/v1/setup");
     }
 }

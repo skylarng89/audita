@@ -11,7 +11,7 @@ if (auth.isAuthenticated) {
 } else {
   const destination = onboarding.onboardingCompleted
     ? "/auth/sign-in"
-    : "/platform/bootstrap";
+    : "/setup";
   await navigateTo(destination);
 }
 </script>
