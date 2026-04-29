@@ -15,6 +15,15 @@ export default defineNuxtPlugin(() => {
 
   let eventSource: EventSource | null = null;
 
+  function buildStreamUrl(streamToken: string) {
+    const normalizedBase = (config.public.apiBase || "").replace(/\/+$/, "");
+    const streamPath = normalizedBase.endsWith("/api")
+      ? "/v1/notifications/stream"
+      : "/api/v1/notifications/stream";
+    const token = encodeURIComponent(streamToken);
+    return `${normalizedBase}${streamPath}?streamToken=${token}`;
+  }
+
   function connect() {
     if (!auth.isAuthenticated || eventSource?.readyState === EventSource.OPEN)
       return;
@@ -23,8 +32,7 @@ export default defineNuxtPlugin(() => {
       method: "POST",
     })
       .then(({ streamToken }) => {
-        const token = encodeURIComponent(streamToken);
-        const url = `${config.public.apiBase}/api/v1/notifications/stream?streamToken=${token}`;
+        const url = buildStreamUrl(streamToken);
         eventSource = new EventSource(url, { withCredentials: true });
 
         eventSource.onopen = () => {
