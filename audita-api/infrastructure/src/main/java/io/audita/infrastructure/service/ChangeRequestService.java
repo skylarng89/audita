@@ -186,13 +186,19 @@ public class ChangeRequestService {
                                           String category,
                                           UUID createdBy,
                                           Pageable pageable) {
-        return changeRequestRepository.findAllFiltered(status, priority, category, createdBy, pageable);
+        return changeRequestRepository.findAllFiltered(status, priority, category, createdBy, pageable)
+                .map(changeRequest -> {
+                    initializeCreator(changeRequest);
+                    return changeRequest;
+                });
     }
 
     @Transactional(readOnly = true)
     public ChangeRequestEntity getById(UUID id) {
-        return changeRequestRepository.findById(id)
+        ChangeRequestEntity changeRequest = changeRequestRepository.findById(id)
                 .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Change request not found."));
+        initializeCreator(changeRequest);
+        return changeRequest;
     }
 
     @Transactional(readOnly = true)

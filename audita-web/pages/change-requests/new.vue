@@ -113,12 +113,12 @@
       <div class="flex justify-end gap-2">
         <button
           type="button"
-          class="btn-ghost"
+          class="btn-ghost btn-md"
           @click="navigateTo('/change-requests')"
         >
           Cancel
         </button>
-        <button class="btn-primary" :disabled="isSaving">
+        <button class="btn-primary btn-md" :disabled="isSaving">
           {{ isSaving ? "Creating…" : "Create Draft" }}
         </button>
       </div>

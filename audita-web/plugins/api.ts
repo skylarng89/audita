@@ -52,7 +52,10 @@ export default defineNuxtPlugin(() => {
     },
 
     async onResponseError({ response }) {
-      if (response.status === 401 && auth.isAuthenticated) {
+      if (
+        (response.status === 401 || response.status === 403) &&
+        auth.isAuthenticated
+      ) {
         // Attempt silent refresh via the HttpOnly cookie
         try {
           const refreshed = await $fetch<{ accessToken: string }>(
