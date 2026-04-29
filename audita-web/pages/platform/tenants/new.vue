@@ -1,29 +1,36 @@
 <template>
-  <div class="max-w-xl mx-auto">
-    <div class="flex items-center gap-3 mb-6">
-      <NuxtLink
-        to="/platform/tenants"
-        class="text-muted hover:text-foreground text-sm"
-        >← Back</NuxtLink
-      >
-      <h1 class="text-2xl font-bold">Provision New Organisation</h1>
+  <div class="mx-auto max-w-3xl space-y-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <p
+          class="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70"
+        >
+          Architect Action
+        </p>
+        <div class="mt-1 flex items-center gap-3">
+          <NuxtLink
+            to="/platform/tenants"
+            class="text-muted hover:text-foreground text-sm"
+            ><- Back</NuxtLink
+          >
+          <h1 class="text-3xl font-bold tracking-tight">
+            Provision New Organisation
+          </h1>
+        </div>
+      </div>
     </div>
 
-    <div class="card p-6 space-y-4">
+    <div class="card p-8 space-y-4 shadow-card-hover">
       <div
         v-if="error"
-        class="rounded-md bg-danger-light border border-danger-border px-4 py-3 text-sm text-danger"
+        class="rounded-lg bg-danger-light border border-danger-border px-4 py-3 text-sm text-danger"
       >
         {{ error }}
       </div>
 
-      <form @submit.prevent="handleSubmit" novalidate class="space-y-4">
+      <form @submit.prevent="handleSubmit" novalidate class="space-y-5">
         <div>
-          <label
-            class="block text-xs font-semibold uppercase tracking-wide text-muted mb-1.5"
-          >
-            Organisation Name
-          </label>
+          <label class="field-label">Organisation Name</label>
           <input
             v-model="form.name"
             @input="suggestSlug"
@@ -35,11 +42,10 @@
         </div>
 
         <div>
-          <label
-            class="block text-xs font-semibold uppercase tracking-wide text-muted mb-1.5"
-          >
+          <label class="field-label">
             Slug
-            <span class="text-muted font-normal normal-case"
+            <span
+              class="normal-case tracking-normal text-xs font-medium text-muted"
               >(used in URLs, lowercase, hyphens only)</span
             >
           </label>
@@ -53,34 +59,28 @@
           />
         </div>
 
-        <div>
-          <label
-            class="block text-xs font-semibold uppercase tracking-wide text-muted mb-1.5"
-          >
-            Admin Email
-          </label>
-          <input
-            v-model="form.adminEmail"
-            type="email"
-            class="input"
-            placeholder="admin@acme.com"
-            required
-          />
-        </div>
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div>
+            <label class="field-label">Admin Email</label>
+            <input
+              v-model="form.adminEmail"
+              type="email"
+              class="input"
+              placeholder="admin@acme.com"
+              required
+            />
+          </div>
 
-        <div>
-          <label
-            class="block text-xs font-semibold uppercase tracking-wide text-muted mb-1.5"
-          >
-            Admin Full Name
-          </label>
-          <input
-            v-model="form.adminFullName"
-            type="text"
-            class="input"
-            placeholder="Jane Smith"
-            required
-          />
+          <div>
+            <label class="field-label">Admin Full Name</label>
+            <input
+              v-model="form.adminFullName"
+              type="text"
+              class="input"
+              placeholder="Jane Smith"
+              required
+            />
+          </div>
         </div>
 
         <button
@@ -88,7 +88,7 @@
           class="btn-primary btn-lg w-full !mt-6"
           :disabled="loading"
         >
-          {{ loading ? "Provisioning…" : "Provision Organisation →" }}
+          {{ loading ? "Provisioning..." : "Provision Organisation ->" }}
         </button>
       </form>
     </div>

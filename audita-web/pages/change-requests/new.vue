@@ -1,11 +1,15 @@
 <template>
-  <div class="max-w-4xl mx-auto space-y-6">
+  <div class="max-w-5xl mx-auto space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <p class="text-xs text-muted uppercase tracking-widest mb-1">
+        <p
+          class="text-xs text-primary/70 uppercase tracking-[0.16em] font-semibold mb-1"
+        >
           Change Requests
         </p>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+        <h1
+          class="text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
+        >
           Create Change Request
         </h1>
       </div>
@@ -14,20 +18,24 @@
       </button>
     </div>
 
-    <form class="card p-6 space-y-5" @submit.prevent="createChangeRequest">
+    <form
+      class="card p-8 space-y-7 shadow-card-hover"
+      @submit.prevent="createChangeRequest"
+    >
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="md:col-span-2">
-          <label class="text-sm font-semibold">Title</label>
+          <label class="field-label">Change Title</label>
           <input
             v-model="form.title"
             class="input mt-1"
+            placeholder="e.g., Kubernetes Cluster Migration - Q3"
             maxlength="500"
             required
           />
         </div>
 
         <div>
-          <label class="text-sm font-semibold">Priority</label>
+          <label class="field-label">Priority Level</label>
           <select v-model="form.priority" class="input mt-1" required>
             <option value="LOW">LOW</option>
             <option value="MEDIUM">MEDIUM</option>
@@ -37,7 +45,7 @@
         </div>
 
         <div>
-          <label class="text-sm font-semibold">Risk Level</label>
+          <label class="field-label">Risk Assessment</label>
           <select v-model="form.riskLevel" class="input mt-1" required>
             <option value="LOW">LOW</option>
             <option value="MEDIUM">MEDIUM</option>
@@ -47,7 +55,7 @@
         </div>
 
         <div>
-          <label class="text-sm font-semibold">Approval Type</label>
+          <label class="field-label">Approval Type</label>
           <select v-model="form.approvalType" class="input mt-1" required>
             <option value="LINEAR">LINEAR</option>
             <option value="NON_LINEAR">NON_LINEAR</option>
@@ -55,12 +63,17 @@
         </div>
 
         <div>
-          <label class="text-sm font-semibold">Category</label>
-          <input v-model="form.category" class="input mt-1" maxlength="255" />
+          <label class="field-label">Category</label>
+          <input
+            v-model="form.category"
+            class="input mt-1"
+            maxlength="255"
+            placeholder="Infrastructure / Application / Security"
+          />
         </div>
 
         <div>
-          <label class="text-sm font-semibold">Scheduled Start</label>
+          <label class="field-label">Scheduled Start</label>
           <input
             v-model="form.scheduledStart"
             class="input mt-1"
@@ -69,7 +82,7 @@
         </div>
 
         <div>
-          <label class="text-sm font-semibold">Scheduled End</label>
+          <label class="field-label">Scheduled End</label>
           <input
             v-model="form.scheduledEnd"
             class="input mt-1"
@@ -78,9 +91,7 @@
         </div>
 
         <div class="md:col-span-2">
-          <label class="text-sm font-semibold"
-            >Affected Systems (comma separated)</label
-          >
+          <label class="field-label">Affected Systems (comma separated)</label>
           <input
             v-model="form.affectedSystemsInput"
             class="input mt-1"
@@ -89,10 +100,13 @@
         </div>
 
         <div class="md:col-span-2">
-          <label class="text-sm font-semibold">Description</label>
+          <label class="field-label">Scope and Description</label>
           <ClientOnly>
-            <EditorContent :editor="editor" class="input mt-1 min-h-40 p-3" />
+            <EditorContent :editor="editor" class="input mt-1 min-h-44 p-4" />
           </ClientOnly>
+          <p class="field-hint">
+            Define technical scope, constraints, and rollback strategy.
+          </p>
         </div>
       </div>
 
