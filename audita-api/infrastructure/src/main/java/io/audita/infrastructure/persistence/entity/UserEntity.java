@@ -16,9 +16,10 @@ public class UserEntity {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(name = "password_hash")
     private String passwordHash;
 
-    @Column(nullable = false)
+    @Column(name = "full_name", nullable = false)
     private String fullName;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -33,10 +34,10 @@ public class UserEntity {
     @JoinColumn(name = "invited_by")
     private UserEntity invitedBy;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt = OffsetDateTime.now();
 
     protected UserEntity() {}

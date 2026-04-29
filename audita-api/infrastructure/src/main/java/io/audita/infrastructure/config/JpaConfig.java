@@ -55,6 +55,9 @@ public class JpaConfig {
         props.put("hibernate.show_sql", "false");
         // DDL is managed by Flyway — never by Hibernate
         props.put("hibernate.hbm2ddl.auto", "none");
+        // Convert camelCase field names to snake_case DB columns (e.g. createdAt → created_at)
+        props.put("hibernate.physical_naming_strategy",
+                  new org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy());
         return props;
     }
 
