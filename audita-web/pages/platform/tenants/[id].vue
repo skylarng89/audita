@@ -1,13 +1,18 @@
 <template>
-  <div>
-    <div class="flex items-center gap-3 mb-6">
+  <div class="space-y-6">
+    <div class="flex items-center gap-3">
       <NuxtLink
         to="/platform/tenants"
         class="text-muted hover:text-foreground text-sm"
         >← Back</NuxtLink
       >
       <div>
-        <h1 class="text-2xl font-bold">{{ tenant?.name }}</h1>
+        <p
+          class="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70 mb-1"
+        >
+          Organization Settings
+        </p>
+        <h1 class="text-3xl font-bold tracking-tight">{{ tenant?.name }}</h1>
         <div class="flex items-center gap-2 mt-1">
           <span class="text-xs font-mono text-muted">{{ tenant?.slug }}</span>
           <AppBadge
@@ -19,17 +24,16 @@
       </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="flex gap-1 border-b border-border dark:border-border-dark mb-6">
+    <div class="flex gap-1 border-b border-border dark:border-border-dark">
       <button
         v-for="tab in tabs"
         :key="tab.key"
         @click="activeTab = tab.key"
-        class="px-4 py-2 text-sm font-medium transition-colors"
+        class="px-4 py-2 text-sm font-medium transition-colors rounded-t-md"
         :class="
           activeTab === tab.key
-            ? 'text-primary border-b-2 border-primary -mb-px'
-            : 'text-muted hover:text-foreground'
+            ? 'text-primary border-b-2 border-primary -mb-px bg-primary/5'
+            : 'text-muted hover:text-foreground hover:bg-slate-100'
         "
       >
         {{ tab.label }}
@@ -41,7 +45,7 @@
       v-if="activeTab === 'overview'"
       class="grid grid-cols-1 sm:grid-cols-2 gap-4"
     >
-      <div class="card p-5">
+      <div class="card p-5 shadow-card-hover">
         <p
           class="text-xs font-semibold text-muted uppercase tracking-wide mb-1"
         >
@@ -69,7 +73,7 @@
           </button>
         </div>
       </div>
-      <div class="card p-5">
+      <div class="card p-5 shadow-card-hover">
         <p
           class="text-xs font-semibold text-muted uppercase tracking-wide mb-1"
         >
@@ -82,7 +86,7 @@
     </div>
 
     <!-- Domain Whitelist -->
-    <div v-if="activeTab === 'domains'" class="card">
+    <div v-if="activeTab === 'domains'" class="card shadow-card-hover">
       <div
         class="flex items-center justify-between px-5 py-4 border-b border-border dark:border-border-dark"
       >
@@ -124,7 +128,7 @@
       <div
         v-for="provider in ['GOOGLE', 'MICROSOFT']"
         :key="provider"
-        class="card p-5"
+        class="card p-5 shadow-card-hover"
       >
         <h3 class="font-semibold mb-3">
           {{

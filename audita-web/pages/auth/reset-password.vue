@@ -1,7 +1,12 @@
 <template>
   <div>
-    <h1 class="text-2xl font-bold mb-1">Reset Password</h1>
-    <p class="text-sm text-muted mb-8">
+    <p
+      class="text-xs font-semibold uppercase tracking-[0.14em] text-primary/70 mb-2"
+    >
+      Recovery Access
+    </p>
+    <h1 class="text-3xl font-bold tracking-tight mb-1">Reset Password</h1>
+    <p class="text-sm text-muted mb-8 leading-relaxed">
       Choose a strong new password for your account.
     </p>
 
@@ -86,6 +91,16 @@
       <NuxtLink to="/auth/sign-in" class="text-sm text-primary hover:underline">
         &larr; Back to Sign In
       </NuxtLink>
+    </div>
+
+    <div
+      class="mt-6 rounded-xl border border-border bg-slate-50 px-4 py-3 text-xs text-muted leading-relaxed"
+    >
+      <p class="font-semibold uppercase tracking-wider text-slate-600 mb-1">
+        Session Security
+      </p>
+      Use at least 12 characters with mixed case, numbers, and symbols for
+      stronger protection.
     </div>
   </div>
 </template>

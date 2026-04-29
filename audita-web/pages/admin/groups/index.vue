@@ -1,18 +1,26 @@
 <template>
-  <div>
-    <div class="flex items-center justify-between mb-6">
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold">Group Management</h1>
+        <p
+          class="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70 mb-1"
+        >
+          IAM Framework
+        </p>
+        <h1 class="text-3xl font-bold tracking-tight">Group Management</h1>
         <p class="text-sm text-muted mt-1">
           Organise users into groups for bulk approvals and notifications.
         </p>
       </div>
-      <button @click="showCreateModal = true" class="btn-primary btn-sm">
+      <button
+        @click="showCreateModal = true"
+        class="btn-primary btn-sm shadow-lg shadow-primary/20"
+      >
         + New Group
       </button>
     </div>
 
-    <div class="card">
+    <div class="card shadow-card-hover">
       <AppTable :columns="columns" :rows="groups" :loading="pending">
         <template #cell-actions="{ row }">
           <div class="flex gap-2">

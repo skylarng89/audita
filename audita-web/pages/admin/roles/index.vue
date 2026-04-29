@@ -1,7 +1,12 @@
 <template>
-  <div>
-    <div class="mb-6">
-      <h1 class="text-2xl font-bold">Roles & Permissions</h1>
+  <div class="space-y-6">
+    <div>
+      <p
+        class="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70 mb-1"
+      >
+        Identity and Governance
+      </p>
+      <h1 class="text-3xl font-bold tracking-tight">Roles & Permissions</h1>
       <p class="text-sm text-muted mt-1">
         View the built-in roles and their associated permissions.
       </p>
@@ -10,7 +15,11 @@
     <div v-if="pending" class="text-muted text-sm">Loading roles…</div>
 
     <div v-else class="space-y-4">
-      <div v-for="role in roles" :key="role.id" class="card p-5">
+      <div
+        v-for="role in roles"
+        :key="role.id"
+        class="card p-5 shadow-card-hover"
+      >
         <div class="flex items-center gap-2 mb-3">
           <h2 class="font-semibold text-base">{{ role.name }}</h2>
           <AppBadge v-if="role.isSystem" variant="default">System</AppBadge>

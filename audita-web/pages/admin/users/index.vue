@@ -1,18 +1,26 @@
 <template>
-  <div>
-    <div class="flex items-center justify-between mb-6">
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold">User Management</h1>
+        <p
+          class="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70 mb-1"
+        >
+          Identity and Access
+        </p>
+        <h1 class="text-3xl font-bold tracking-tight">User Management</h1>
         <p class="text-sm text-muted mt-1">
           Manage users in your organisation.
         </p>
       </div>
-      <button @click="showInviteModal = true" class="btn-primary btn-sm">
+      <button
+        @click="showInviteModal = true"
+        class="btn-primary btn-sm shadow-lg shadow-primary/20"
+      >
         + Invite User
       </button>
     </div>
 
-    <div class="card">
+    <div class="card shadow-card-hover">
       <AppTable :columns="columns" :rows="users" :loading="pending">
         <template #cell-roleName="{ row }">
           <AppBadge variant="default">{{ row.roleName ?? "—" }}</AppBadge>

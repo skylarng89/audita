@@ -5,7 +5,9 @@
         <p class="text-xs text-muted uppercase tracking-widest mb-1">
           Change Request
         </p>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+        <h1
+          class="text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
+        >
           {{ changeRequest.title }}
         </h1>
         <p class="text-sm text-muted mt-1">
@@ -21,28 +23,36 @@
     <div class="card p-4 flex flex-wrap gap-2">
       <button
         class="btn-ghost"
-        :class="{ 'ring-2 ring-primary': tab === 'details' }"
+        :class="{
+          'ring-2 ring-primary bg-primary/10 text-primary': tab === 'details',
+        }"
         @click="tab = 'details'"
       >
         Details
       </button>
       <button
         class="btn-ghost"
-        :class="{ 'ring-2 ring-primary': tab === 'approvers' }"
+        :class="{
+          'ring-2 ring-primary bg-primary/10 text-primary': tab === 'approvers',
+        }"
         @click="tab = 'approvers'"
       >
         Approvers
       </button>
       <button
         class="btn-ghost"
-        :class="{ 'ring-2 ring-primary': tab === 'activity' }"
+        :class="{
+          'ring-2 ring-primary bg-primary/10 text-primary': tab === 'activity',
+        }"
         @click="tab = 'activity'"
       >
         Activity
       </button>
       <button
         class="btn-ghost"
-        :class="{ 'ring-2 ring-primary': tab === 'comments' }"
+        :class="{
+          'ring-2 ring-primary bg-primary/10 text-primary': tab === 'comments',
+        }"
         @click="tab = 'comments'"
       >
         Comments
@@ -53,7 +63,7 @@
       v-if="tab === 'details'"
       class="grid grid-cols-1 md:grid-cols-2 gap-4"
     >
-      <div class="card p-5 md:col-span-2">
+      <div class="card p-5 md:col-span-2 shadow-card-hover">
         <h2 class="font-semibold mb-2">Description</h2>
         <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
           {{ changeRequest.description || "No description." }}
