@@ -4,13 +4,32 @@ export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig();
   const auth = useAuthStore();
   const baseURL = import.meta.server
-    ? (config.apiInternalBase as string)
-    : (config.public.apiBase as string);
+    ? config.apiInternalBase
+    : config.public.apiBase;
 
   const $api = $fetch.create({
     baseURL,
 
-    onRequest({ options }) {
+    onRequest({ request, options }) {
+      let requestPath = "";
+      if (typeof request === "string") {
+        requestPath = request;
+      } else if (request instanceof Request) {
+        requestPath = request.url;
+      } else {
+        requestPath = request.toString();
+      }
+
+      const isBootstrapEndpoint = requestPath.includes(
+        "/api/platform/v1/bootstrap",
+      );
+
+      if (isBootstrapEndpoint) {
+        // Bootstrap must remain anonymous and tenant-agnostic.
+        options.headers = {};
+        return;
+      }
+
       // Inject Bearer token on every authenticated request
       if (auth.accessToken) {
         options.headers = {

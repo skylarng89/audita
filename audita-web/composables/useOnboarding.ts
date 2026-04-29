@@ -8,6 +8,7 @@ export function useOnboarding() {
   async function fetchStatus() {
     return api<OnboardingStatusResponse>("/api/platform/v1/bootstrap/status", {
       method: "GET",
+      credentials: "omit",
     });
   }
 

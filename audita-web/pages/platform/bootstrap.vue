@@ -164,6 +164,13 @@ async function handleSubmit() {
 
   error.value = "";
 
+  // Guard stale tabs: onboarding might have completed in another tab/session.
+  const latestStatus = await fetchStatus();
+  if (latestStatus.onboardingCompleted) {
+    await navigateTo("/auth/sign-in?setup=done");
+    return;
+  }
+
   if (!form.fullName.trim()) {
     error.value = "Full name is required.";
     return;
@@ -181,6 +188,7 @@ async function handleSubmit() {
   try {
     await api("/api/platform/v1/bootstrap", {
       method: "POST",
+      credentials: "omit",
       body: {
         fullName: form.fullName,
         email: form.email,
@@ -192,21 +200,37 @@ async function handleSubmit() {
   } catch (e: unknown) {
     const err = e as {
       status?: number;
-      data?: { detail?: string; errorCode?: string };
+      statusCode?: number;
+      response?: { status?: number };
+      data?: { detail?: string; title?: string; errorCode?: string };
     };
+    const statusCode = err?.status ?? err?.statusCode ?? err?.response?.status;
+    const detail = err?.data?.detail ?? "";
+    const title = err?.data?.title ?? "";
+    const alreadyBootstrapped =
+      err?.data?.errorCode === "ALREADY_BOOTSTRAPPED" ||
+      /already\s+been\s+bootstrapped/i.test(detail) ||
+      /already\s+bootstrapped/i.test(detail) ||
+      /already\s+bootstrapped/i.test(title);
 
     // If the page double-submits and backend has already bootstrapped,
     // treat that as a successful setup completion.
-    if (
-      err?.status === 403 &&
-      err?.data?.errorCode === "ALREADY_BOOTSTRAPPED"
-    ) {
+    if (statusCode === 403 && alreadyBootstrapped) {
       const status = await fetchStatus();
       if (status.onboardingCompleted) {
         done.value = true;
         await navigateTo("/auth/sign-in?setup=done");
         return;
       }
+    }
+
+    // Final fallback: if a race completed setup before this request resolved,
+    // redirect instead of showing an error.
+    const status = await fetchStatus();
+    if (status.onboardingCompleted) {
+      done.value = true;
+      await navigateTo("/auth/sign-in?setup=done");
+      return;
     }
 
     error.value =
