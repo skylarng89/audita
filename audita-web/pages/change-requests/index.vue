@@ -1,12 +1,15 @@
 <template>
-  <div>
-    <!-- Page header -->
-    <div class="flex items-start justify-between mb-6">
+  <div class="space-y-6">
+    <div class="flex items-start justify-between">
       <div>
-        <p class="text-xs text-muted uppercase tracking-widest mb-1">
+        <p
+          class="text-xs text-primary/70 uppercase tracking-[0.16em] font-semibold mb-1"
+        >
           Operations / Infrastructure
         </p>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+        <h1
+          class="text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
+        >
           Change Requests
         </h1>
         <p class="text-sm text-muted mt-1 max-w-md">
@@ -21,14 +24,16 @@
             {{ page?.totalElements ?? 0 }}
           </p>
         </div>
-        <button class="btn-primary" @click="navigateTo('/change-requests/new')">
+        <button
+          class="btn-primary shadow-lg shadow-primary/20"
+          @click="navigateTo('/change-requests/new')"
+        >
           Create Change
         </button>
       </div>
     </div>
 
-    <!-- Filters -->
-    <div class="card p-4 mb-4 flex flex-wrap gap-3 items-center">
+    <div class="card p-4 flex flex-wrap gap-3 items-center shadow-card-hover">
       <div class="flex items-center gap-2">
         <label class="text-xs font-semibold text-muted uppercase"
           >Status:</label
@@ -64,8 +69,7 @@
       </div>
     </div>
 
-    <!-- Table -->
-    <div class="card overflow-hidden">
+    <div class="card overflow-hidden shadow-card-hover">
       <table class="w-full">
         <thead>
           <tr class="border-b border-border dark:border-border-dark">

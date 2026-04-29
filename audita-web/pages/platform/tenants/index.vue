@@ -1,18 +1,26 @@
 <template>
-  <div>
-    <div class="flex items-center justify-between mb-6">
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold">Tenant Management</h1>
+        <p
+          class="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70 mb-1"
+        >
+          Tenant Ecosystem
+        </p>
+        <h1 class="text-3xl font-bold tracking-tight">Tenant Management</h1>
         <p class="text-sm text-muted mt-1">
           Provision and manage all organisations on the platform.
         </p>
       </div>
-      <NuxtLink to="/platform/tenants/new" class="btn-primary btn-sm">
+      <NuxtLink
+        to="/platform/tenants/new"
+        class="btn-primary btn-sm shadow-lg shadow-primary/20"
+      >
         + Provision New Org
       </NuxtLink>
     </div>
 
-    <div class="card">
+    <div class="card shadow-card-hover">
       <AppTable :columns="columns" :rows="tenants" :loading="pending">
         <template #cell-status="{ row }">
           <AppBadge :variant="row.status === 'ACTIVE' ? 'success' : 'danger'">{{

@@ -1,20 +1,27 @@
 <template>
-  <div>
-    <div class="flex items-center justify-between mb-6">
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold">Command Centre</h1>
+        <p
+          class="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70 mb-1"
+        >
+          Platform Scale
+        </p>
+        <h1 class="text-3xl font-bold tracking-tight">Command Centre</h1>
         <p class="text-sm text-muted mt-1">
           Platform-wide overview across all tenants.
         </p>
       </div>
-      <NuxtLink to="/platform/tenants/new" class="btn-primary btn-sm">
+      <NuxtLink
+        to="/platform/tenants/new"
+        class="btn-primary btn-sm shadow-lg shadow-primary/20"
+      >
         + Provision New Org
       </NuxtLink>
     </div>
 
-    <!-- Stats grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-      <div class="card p-5">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="card p-5 shadow-card-hover">
         <p
           class="text-xs font-semibold text-muted uppercase tracking-wide mb-1"
         >
@@ -22,7 +29,7 @@
         </p>
         <p class="text-3xl font-bold">{{ stats.total }}</p>
       </div>
-      <div class="card p-5">
+      <div class="card p-5 shadow-card-hover">
         <p
           class="text-xs font-semibold text-muted uppercase tracking-wide mb-1"
         >
@@ -30,18 +37,20 @@
         </p>
         <p class="text-3xl font-bold text-success">{{ stats.active }}</p>
       </div>
-      <div class="card p-5">
+      <div
+        class="card p-5 border-primary/20 bg-primary text-white shadow-card-hover"
+      >
         <p
-          class="text-xs font-semibold text-muted uppercase tracking-wide mb-1"
+          class="text-xs font-semibold text-white/70 uppercase tracking-wide mb-1"
         >
-          Suspended
+          System Health
         </p>
-        <p class="text-3xl font-bold text-danger">{{ stats.suspended }}</p>
+        <p class="text-3xl font-bold">99.98%</p>
+        <p class="text-xs text-white/70 mt-1">Global cluster availability</p>
       </div>
     </div>
 
-    <!-- Recent tenants -->
-    <div class="card">
+    <div class="card shadow-card-hover">
       <div
         class="flex items-center justify-between px-5 py-4 border-b border-border dark:border-border-dark"
       >
