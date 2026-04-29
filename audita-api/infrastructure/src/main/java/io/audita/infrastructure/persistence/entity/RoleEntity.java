@@ -18,7 +18,7 @@ public class RoleEntity {
 
     private String description;
 
-    @Column(nullable = false)
+    @Column(name = "is_system", nullable = false)
     private boolean isSystem = false;
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -29,7 +29,7 @@ public class RoleEntity {
     )
     private Set<PermissionEntity> permissions = new HashSet<>();
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
     protected RoleEntity() {}
