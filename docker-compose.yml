@@ -48,6 +48,7 @@ services:
       REFRESH_TOKEN_EXPIRY_DAYS: 7
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY}
       APP_BASE_URL: http://localhost:3000
+      DEFAULT_SMTP_FROM: noreply@audita.io
       DEFAULT_SMTP_HOST: mailhog
       DEFAULT_SMTP_PORT: 1025
       DEFAULT_SMTP_AUTH: "false"

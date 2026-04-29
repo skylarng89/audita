@@ -111,6 +111,9 @@ audita:
   app:
     base-url: ${APP_BASE_URL:http://localhost:3000}
 
+  mail:
+    from: ${DEFAULT_SMTP_FROM:noreply@audita.io}
+
   storage:
     backend: ${STORAGE_BACKEND:LOCAL}
     local:
