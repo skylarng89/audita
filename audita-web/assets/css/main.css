@@ -30,6 +30,14 @@
            disabled:cursor-not-allowed;
   }
 
+  /* Variant buttons get a consistent default size even if btn-sm|md|lg is omitted. */
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .btn-ghost {
+    @apply btn text-sm px-4 py-2;
+  }
+
   .btn-sm {
     @apply btn text-sm px-3 py-1.5;
   }

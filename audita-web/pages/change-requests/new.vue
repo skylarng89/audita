@@ -13,7 +13,7 @@
           Create Change Request
         </h1>
       </div>
-      <button class="btn-ghost" @click="navigateTo('/change-requests')">
+      <button class="btn-ghost btn-md" @click="navigateTo('/change-requests')">
         Back
       </button>
     </div>

@@ -22,7 +22,7 @@
 
     <div class="card p-4 flex flex-wrap gap-2">
       <button
-        class="btn-ghost"
+        class="btn-ghost btn-md"
         :class="{
           'ring-2 ring-primary bg-primary/10 text-primary': tab === 'details',
         }"
@@ -31,7 +31,7 @@
         Details
       </button>
       <button
-        class="btn-ghost"
+        class="btn-ghost btn-md"
         :class="{
           'ring-2 ring-primary bg-primary/10 text-primary': tab === 'approvers',
         }"
@@ -40,7 +40,7 @@
         Approvers
       </button>
       <button
-        class="btn-ghost"
+        class="btn-ghost btn-md"
         :class="{
           'ring-2 ring-primary bg-primary/10 text-primary': tab === 'activity',
         }"
@@ -49,7 +49,7 @@
         Activity
       </button>
       <button
-        class="btn-ghost"
+        class="btn-ghost btn-md"
         :class="{
           'ring-2 ring-primary bg-primary/10 text-primary': tab === 'comments',
         }"
@@ -65,8 +65,13 @@
     >
       <div class="card p-5 md:col-span-2 shadow-card-hover">
         <h2 class="font-semibold mb-2">Description</h2>
-        <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-          {{ changeRequest.description || "No description." }}
+        <div
+          v-if="changeRequest.description"
+          class="text-sm text-gray-700 dark:text-gray-300 prose dark:prose-invert max-w-none"
+          v-html="changeRequest.description"
+        />
+        <p v-else class="text-sm text-gray-700 dark:text-gray-300">
+          No description.
         </p>
       </div>
 
@@ -107,12 +112,12 @@
           <div v-if="!customFields.length" class="text-sm text-muted">
             No custom field values saved yet.
           </div>
-          <button class="btn-ghost" @click="addCustomField">
+          <button class="btn-ghost btn-md" @click="addCustomField">
             Add Custom Field Row
           </button>
         </div>
         <div class="mt-4">
-          <button class="btn-primary" @click="saveCustomFieldsAction">
+          <button class="btn-primary btn-md" @click="saveCustomFieldsAction">
             Save Custom Fields
           </button>
         </div>
@@ -134,7 +139,7 @@
             type="file"
             @change="onSelectUpload"
           />
-          <button class="btn-ghost mt-3" @click="fileInput?.click()">
+          <button class="btn-ghost btn-md mt-3" @click="fileInput?.click()">
             Select File
           </button>
         </div>
@@ -162,28 +167,28 @@
 
       <div class="card p-5 md:col-span-2 flex flex-wrap gap-2">
         <button
-          class="btn-primary"
+          class="btn-primary btn-md"
           :disabled="changeRequest.status !== 'DRAFT'"
           @click="submitCr"
         >
           Submit
         </button>
         <button
-          class="btn-ghost"
+          class="btn-ghost btn-md"
           :disabled="changeRequest.status === 'CANCELLED'"
           @click="cancelCr"
         >
           Cancel
         </button>
         <button
-          class="btn-ghost"
+          class="btn-ghost btn-md"
           :disabled="changeRequest.status !== 'PENDING_APPROVAL'"
           @click="approveCr"
         >
           Approve
         </button>
         <button
-          class="btn-ghost"
+          class="btn-ghost btn-md"
           :disabled="changeRequest.status !== 'PENDING_APPROVAL'"
           @click="showReject = true"
         >
@@ -195,7 +200,10 @@
     <section v-else-if="tab === 'approvers'" class="card p-5 space-y-4">
       <div class="flex items-center justify-between">
         <h2 class="font-semibold">Approvers</h2>
-        <button class="btn-ghost" @click="showAddApprover = !showAddApprover">
+        <button
+          class="btn-ghost btn-md"
+          @click="showAddApprover = !showAddApprover"
+        >
           Add Approver
         </button>
       </div>
@@ -210,7 +218,9 @@
           ><input v-model="newApproverRequired" type="checkbox" />
           Required</label
         >
-        <button class="btn-primary" @click="addApproverAction">Save</button>
+        <button class="btn-primary btn-md" @click="addApproverAction">
+          Save
+        </button>
       </div>
 
       <div class="space-y-2">
@@ -231,13 +241,16 @@
           </div>
           <div class="flex gap-2">
             <button
-              class="btn-ghost"
+              class="btn-ghost btn-md"
               @click="moveUp(a.id)"
               :disabled="a.position === 1"
             >
               Up
             </button>
-            <button class="btn-ghost" @click="removeApproverAction(a.id)">
+            <button
+              class="btn-ghost btn-md"
+              @click="removeApproverAction(a.id)"
+            >
               Remove
             </button>
           </div>
@@ -299,7 +312,7 @@
           placeholder="Add a comment. Mention users with @user@example.com"
         />
         <div class="flex justify-end">
-          <button class="btn-primary" @click="postCommentAction">
+          <button class="btn-primary btn-md" @click="postCommentAction">
             Post Comment
           </button>
         </div>
@@ -319,8 +332,12 @@
           placeholder="Reason"
         ></textarea>
         <div class="flex justify-end gap-2">
-          <button class="btn-ghost" @click="showReject = false">Close</button>
-          <button class="btn-primary" @click="rejectCr">Confirm Reject</button>
+          <button class="btn-ghost btn-md" @click="showReject = false">
+            Close
+          </button>
+          <button class="btn-primary btn-md" @click="rejectCr">
+            Confirm Reject
+          </button>
         </div>
       </div>
     </div>

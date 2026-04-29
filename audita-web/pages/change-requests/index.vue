@@ -25,7 +25,7 @@
           </p>
         </div>
         <button
-          class="btn-primary shadow-lg shadow-primary/20"
+          class="btn-primary btn-md shadow-lg shadow-primary/20"
           @click="navigateTo('/change-requests/new')"
         >
           Create Change
