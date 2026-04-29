@@ -55,7 +55,7 @@
             class="input font-mono"
             placeholder="acme-corp"
             required
-            pattern="[a-z0-9-]+"
+            pattern="[-a-z0-9]+"
           />
         </div>
 
