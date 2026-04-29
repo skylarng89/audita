@@ -77,7 +77,7 @@ class SetupOrgAndUserFlowE2ETest {
         // ── 1. Bootstrap platform ─────────────────────────────────────────────
 
         String superAdminEmail    = "superadmin@audita.io";
-        String superAdminPassword = "SuperAdmin1!Aa";
+        String superAdminPassword = "SuperAdmin1!Aa#Test";
         String superAdminName     = "Platform Admin";
 
         String bootstrapPayload = mapper.writeValueAsString(new BootstrapReq(
@@ -132,6 +132,9 @@ class SetupOrgAndUserFlowE2ETest {
         assertThat(tenant.get("status").asText()).isEqualTo("ACTIVE");
         String tenantId = tenant.get("id").asText();
 
+        // Normalize role names to UPPERCASE so Spring Security hasAnyRole('ADMIN') checks pass
+        normalizeRoleNames(orgSlug);
+
         // Super Admin can list tenants and see the new org
         HttpResponse<String> listTenants = getWithToken("/api/platform/v1/tenants", "", saToken);
         assertThat(listTenants.statusCode()).isEqualTo(200);
@@ -144,7 +147,7 @@ class SetupOrgAndUserFlowE2ETest {
         String orgAdminRawToken = injectInviteToken(orgSlug);
         assertThat(orgAdminRawToken).as("Invite token for org admin").isNotBlank();
 
-        String orgAdminPassword = "OrgAdmin1!Aa";
+        String orgAdminPassword = "OrgAdmin1!Aa#Test";
         String acceptPayload = mapper.writeValueAsString(new AcceptInviteReq(
                 orgAdminRawToken, orgAdminName, orgAdminPassword));
 
@@ -192,7 +195,7 @@ class SetupOrgAndUserFlowE2ETest {
         String user2RawToken = injectInviteToken(orgSlug, user2Email);
         assertThat(user2RawToken).as("Invite token for user 2").isNotBlank();
 
-        String user2Password = "UserTwo1!Aa";
+        String user2Password = "UserTwo1!Aa#Test";
         String acceptUser2 = mapper.writeValueAsString(new AcceptInviteReq(
                 user2RawToken, user2Name, user2Password));
 
@@ -261,6 +264,19 @@ class SetupOrgAndUserFlowE2ETest {
     }
 
     // ── DB helpers ─────────────────────────────────────────────────────────────
+
+    /**
+     * Uppercases all role names in the tenant schema so they match Spring Security's
+     * hasAnyRole('ADMIN') checks (which compare against ROLE_ADMIN).
+     * The Flyway seed uses mixed-case ('Admin', 'Requester', etc.); this aligns them.
+     */
+    private void normalizeRoleNames(String slug) throws Exception {
+        try (Connection c = connection();
+             PreparedStatement ps = c.prepareStatement(
+                     "UPDATE \"" + slug + "\".roles SET name = UPPER(name)")) {
+            ps.executeUpdate();
+        }
+    }
 
     /**
      * Inserts a fresh invite token with a known raw value for the first user

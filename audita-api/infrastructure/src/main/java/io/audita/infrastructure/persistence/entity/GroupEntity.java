@@ -21,11 +21,8 @@ public class GroupEntity {
     @JoinColumn(name = "created_by")
     private UserEntity createdBy;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
-
-    @Column(nullable = false)
-    private OffsetDateTime updatedAt = OffsetDateTime.now();
 
     protected GroupEntity() {}
 
@@ -35,11 +32,6 @@ public class GroupEntity {
         this.createdBy = createdBy;
     }
 
-    @PreUpdate
-    public void onUpdate() {
-        this.updatedAt = OffsetDateTime.now();
-    }
-
     public UUID getId() { return id; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -47,5 +39,4 @@ public class GroupEntity {
     public void setDescription(String description) { this.description = description; }
     public UserEntity getCreatedBy() { return createdBy; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
-    public OffsetDateTime getUpdatedAt() { return updatedAt; }
 }

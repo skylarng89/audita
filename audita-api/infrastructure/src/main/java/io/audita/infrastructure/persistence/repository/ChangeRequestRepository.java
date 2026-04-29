@@ -20,7 +20,7 @@ public interface ChangeRequestRepository extends JpaRepository<ChangeRequestEnti
        @Query("SELECT cr FROM ChangeRequestEntity cr " +
                  "WHERE (:status IS NULL OR cr.status = :status) " +
                  "AND (:priority IS NULL OR cr.priority = :priority) " +
-                 "AND (:category IS NULL OR LOWER(cr.category) = LOWER(:category)) " +
+                 "AND (:category IS NULL OR LOWER(cr.category) = LOWER(CAST(:category AS String))) " +
                  "AND (:createdById IS NULL OR cr.createdBy.id = :createdById)")
        Page<ChangeRequestEntity> findAllFiltered(
                      @Param("status") ChangeRequestStatus status,
