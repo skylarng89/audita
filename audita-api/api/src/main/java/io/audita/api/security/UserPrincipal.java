@@ -22,13 +22,21 @@ public record UserPrincipal(
 ) implements UserDetails {
 
     public static UserPrincipal ofTenantUser(UUID userId, String email, String role, String tenantSlug) {
+    String normalizedRole = normalizeRole(role);
         return new UserPrincipal(userId, email, role, tenantSlug, false,
-                List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+        List.of(new SimpleGrantedAuthority("ROLE_" + normalizedRole)));
     }
 
     public static UserPrincipal ofSuperAdmin(UUID userId, String email) {
         return new UserPrincipal(userId, email, "SUPER_ADMIN", null, true,
                 List.of(new SimpleGrantedAuthority("ROLE_SUPER_ADMIN")));
+    }
+
+    private static String normalizeRole(String role) {
+        if (role == null || role.isBlank()) {
+            return "REQUESTER";
+        }
+        return role.trim().replace('-', '_').replace(' ', '_').toUpperCase();
     }
 
     @Override public Collection<? extends GrantedAuthority> getAuthorities() { return authorities; }
