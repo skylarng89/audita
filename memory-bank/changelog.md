@@ -2,6 +2,15 @@
 
 ## [0.1.0] — Unreleased (In Development)
 
+### Fixed (CR Runtime + UI Consistency Hardening — 2026-04-29)
+
+- **CR details 500 after create:** fixed lazy-loading crash by initializing `createdBy` in read paths (`ChangeRequestService.list()` and `ChangeRequestService.getById()`) before DTO mapping.
+- **Role-to-authority mismatch (403s):** normalized tenant user role names in `UserPrincipal` to uppercase underscore and always prefixed authority form expected by Spring Security role checks.
+- **Frontend auth resilience:** API plugin refresh fallback now handles both `401` and `403` response paths, reducing stale-token lockouts during active sessions.
+- **Layout component resolution:** corrected shared component tags in default/platform layouts (`SharedAppSidebar`, `SharedAppUserMenu`, `SharedAppNotificationBell`, `SharedAppToastContainer`) to resolve missing sidebar/avatar/menu rendering.
+- **SLA scheduler transaction safety:** updated SLA monitor processing to execute tenant work inside explicit transaction template boundaries, preventing transaction/lifecycle edge failures.
+- **Change request UI polish:** normalized button style consistency (including default variant sizing fallback and explicit `btn-md` usage in CR pages), and fixed CR detail description to render rich HTML content correctly.
+
 ### Fixed (Entity Column Mapping — 2026-04-29)
 
 - **`GroupEntity`**: Removed `updatedAt` / `updated_at` field — column does not exist in `V1__create_tenant_schema.sql`. Caused every group creation to throw a 500.

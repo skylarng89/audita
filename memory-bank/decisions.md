@@ -223,3 +223,49 @@
 
 - Slightly more verbose entities.
 - Eliminates an entire class of hard-to-debug 500 errors that only manifest at runtime.
+
+---
+
+## ADR-012: Normalize Security Role Authorities at Principal Construction
+
+**Date:** 2026-04-29
+**Status:** Accepted
+
+**Decision:** Normalize tenant user role names in `UserPrincipal` before building authorities (uppercase + underscore canonicalization), then emit Spring-compatible role authorities consistently.
+
+**Reasoning:**
+
+- Method guards using `hasRole`/`hasAnyRole` rely on canonical role names; mixed-case or spaced role strings produced false 403 denials despite valid users.
+- Centralizing normalization in principal construction prevents repeated ad-hoc normalization in controllers/services.
+
+**Trade-offs:**
+
+- Introduces a default/fallback role behavior when source role is missing or malformed.
+- Requires role naming expectations to stay aligned with seeded role names.
+
+**Validation:**
+
+- Previously failing authorized flows returned expected responses after principal normalization.
+
+---
+
+## ADR-013: Initialize Lazy Relations in Service Read Paths Before API DTO Mapping
+
+**Date:** 2026-04-29
+**Status:** Accepted
+
+**Decision:** For change request read endpoints, initialize required lazy relations (`createdBy`) inside the transactional service boundary before entities are returned for API-layer DTO mapping.
+
+**Reasoning:**
+
+- DTO mapping in API layer accessed `createdBy` after service return, causing `LazyInitializationException` and 500 errors on CR detail retrieval after creation.
+- Read-path initialization is a low-risk fix that preserves existing API contracts and repository signatures.
+
+**Trade-offs:**
+
+- Relies on explicit relation initialization calls that must be kept in sync with DTO fields.
+- A future projection/fetch-join strategy may provide a cleaner long-term read model.
+
+**Validation:**
+
+- CR create → redirect → detail no longer fails with lazy-loading 500.

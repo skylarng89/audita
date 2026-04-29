@@ -30,3 +30,5 @@
 - UX-001: Add public onboarding status endpoint and first-run redirect gating so initial startup always lands on setup wizard.
 - UX-002: Prevent setup wizard reuse after onboarding completion by redirecting bootstrap route to sign-in.
 - UX-003: Resolve browser-only bootstrap 403 by stripping `Origin`/`Referer`/`Host` in Nuxt internal API proxy route. ✅ (Completed 2026-04-29)
+- UX-004: Fix CR create redirect blank-page failure by stabilizing lazy read mapping in change request detail flow. ✅ (Completed 2026-04-29)
+- UX-005: Complete CR pages styling consistency audit (button sizing/tab controls/rich text description rendering). ✅ (Completed 2026-04-29)

@@ -148,6 +148,34 @@
 
 ## Recent Implementations
 
+### Post-Sprint Runtime + UI Hardening (Completed 2026-04-29)
+
+**Overview**: Resolved CR detail runtime failure after create, removed recurring authorization/rendering regressions, and completed a focused style consistency audit for CR pages.
+
+**Files Created/Modified**:
+
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — initialize lazy creator relation in read paths (`list`, `getById`)
+- `audita-api/api/src/main/java/io/audita/api/security/UserPrincipal.java` — normalize role authorities for Spring role checks
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/SlaMonitoringService.java` — transaction boundary hardening for tenant SLA evaluation flow
+- `audita-web/plugins/api.ts` — refresh fallback expanded for `403` responses
+- `audita-web/layouts/default.vue` — corrected shared component tags (`SharedAppSidebar`, `SharedAppUserMenu`, `SharedAppNotificationBell`, `SharedAppToastContainer`)
+- `audita-web/layouts/platform.vue` — corrected shared toast container tag
+- `audita-web/assets/css/main.css` — default button variant sizing fallback
+- `audita-web/pages/change-requests/new.vue` — normalized button classes
+- `audita-web/pages/change-requests/index.vue` — normalized action button classes
+- `audita-web/pages/change-requests/[id].vue` — normalized button/tab classes and rich description rendering
+
+**Key Changes**:
+
+- Eliminated `LazyInitializationException` on CR detail fetch after draft creation.
+- Corrected authority normalization so valid users are not blocked by role-name mismatch.
+- Restored missing shell UI elements by aligning Nuxt auto-import component naming.
+- Standardized CR page button rendering and fixed display of rich-text description content.
+
+**Test Coverage**: Backend compile and frontend production build passed; containerized API/web redeploy completed with healthy runtime.
+
+---
+
 ### Post-Sprint UX Hardening — Bootstrap Browser 403 Resolution (Completed 2026-04-29)
 
 **Overview**: Resolved browser-only platform bootstrap failures by fixing an internal proxy/CORS interaction in the Nuxt server route and validated end-to-end onboarding completion.

@@ -121,3 +121,26 @@ Advanced features (SLA, custom fields, audit export, full admin config) follow i
   - Change request mutation paths lack object-level authorization checks for requester-level actors.
   - CORS is configured with wildcard origin patterns while credentials are enabled.
 - Recommended immediate path: fix those four findings before further feature expansion.
+
+---
+
+## Session Updates (2026-04-29)
+
+- Resolved production UX/runtime chain affecting change request creation flow:
+  - submit/create succeeded, but redirect to detail failed with 500 due to lazy `createdBy` initialization.
+  - read-path initialization added in `ChangeRequestService` to stabilize response mapping.
+- Resolved recurring authorization/rendering issues:
+  - role authority normalization in `UserPrincipal` to satisfy Spring `hasRole/hasAnyRole` checks.
+  - frontend token refresh fallback expanded to include 403 responses.
+  - layout shared-component tag alignment fixed missing sidebar/user menu/notification bell rendering.
+- Completed CR UI consistency audit pass:
+  - standardized button sizing behavior for variant buttons.
+  - patched CR list/create/detail actions and tabs for consistent button treatment.
+  - corrected CR description rendering to display editor HTML content.
+- Build and deployment validation completed:
+  - backend compile and frontend production build passed.
+  - container naming conflict resolved during compose redeploy; services returned healthy.
+
+## Current Blockers
+
+- No active blocker currently.
