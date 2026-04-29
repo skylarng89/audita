@@ -24,16 +24,31 @@
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label class="field-label">Organization Name</label>
-            <input type="text" class="input" :value="settings.name" disabled />
-          </div>
-          <div>
-            <label class="field-label">Organization Slug</label>
-            <input type="text" class="input" :value="settings.slug" disabled />
-          </div>
-          <div>
-            <label class="field-label">Primary Contact Email</label>
+            <label class="field-label" for="org-name">Organization Name</label>
             <input
+              id="org-name"
+              type="text"
+              class="input"
+              :value="settings.name"
+              disabled
+            />
+          </div>
+          <div>
+            <label class="field-label" for="org-slug">Organization Slug</label>
+            <input
+              id="org-slug"
+              type="text"
+              class="input"
+              :value="settings.slug"
+              disabled
+            />
+          </div>
+          <div>
+            <label class="field-label" for="org-email"
+              >Primary Contact Email</label
+            >
+            <input
+              id="org-email"
               type="email"
               class="input"
               :value="settings.email"
@@ -41,8 +56,9 @@
             />
           </div>
           <div>
-            <label class="field-label">Time Zone</label>
+            <label class="field-label" for="org-timezone">Time Zone</label>
             <input
+              id="org-timezone"
               type="text"
               class="input"
               :value="settings.timezone"

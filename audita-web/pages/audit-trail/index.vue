@@ -18,14 +18,19 @@
     <section class="card p-5 shadow-card-hover">
       <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
         <div>
-          <label class="field-label">Event Type</label>
-          <select v-model="filters.eventType" class="input">
+          <label class="field-label" for="audit-event-type">Event Type</label>
+          <select
+            id="audit-event-type"
+            v-model="filters.eventType"
+            class="input"
+          >
             <option value="">All Events</option>
           </select>
         </div>
         <div>
-          <label class="field-label">Actor</label>
+          <label class="field-label" for="audit-actor">Actor</label>
           <input
+            id="audit-actor"
             v-model="filters.actor"
             type="text"
             class="input"
@@ -33,12 +38,17 @@
           />
         </div>
         <div>
-          <label class="field-label">From</label>
-          <input v-model="filters.from" type="date" class="input" />
+          <label class="field-label" for="audit-from">From</label>
+          <input
+            id="audit-from"
+            v-model="filters.from"
+            type="date"
+            class="input"
+          />
         </div>
         <div>
-          <label class="field-label">To</label>
-          <input v-model="filters.to" type="date" class="input" />
+          <label class="field-label" for="audit-to">To</label>
+          <input id="audit-to" v-model="filters.to" type="date" class="input" />
         </div>
       </div>
     </section>

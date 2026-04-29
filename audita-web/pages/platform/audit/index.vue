@@ -44,20 +44,33 @@
     <section class="card p-5 shadow-card-hover">
       <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
         <div>
-          <label class="field-label">Tenant</label>
-          <select v-model="selectedTenant" class="input">
+          <label class="field-label" for="platform-audit-tenant">Tenant</label>
+          <select
+            id="platform-audit-tenant"
+            v-model="selectedTenant"
+            class="input"
+          >
             <option value="">All tenants</option>
           </select>
         </div>
         <div>
-          <label class="field-label">Action</label>
-          <select v-model="selectedAction" class="input">
+          <label class="field-label" for="platform-audit-action">Action</label>
+          <select
+            id="platform-audit-action"
+            v-model="selectedAction"
+            class="input"
+          >
             <option value="">All actions</option>
           </select>
         </div>
         <div>
-          <label class="field-label">Date</label>
-          <input v-model="selectedDate" type="date" class="input" />
+          <label class="field-label" for="platform-audit-date">Date</label>
+          <input
+            id="platform-audit-date"
+            v-model="selectedDate"
+            type="date"
+            class="input"
+          />
         </div>
       </div>
     </section>
