@@ -12,7 +12,7 @@
 
     <!-- Split-panel card matching the sign-in design -->
     <div
-      class="w-full max-w-4xl flex rounded-2xl shadow-[0px_20px_40px_rgba(0,35,111,0.08)] overflow-hidden bg-white dark:bg-slate-800 relative z-10"
+      class="w-full max-w-[900px] flex rounded-2xl shadow-[0px_24px_48px_rgba(0,35,111,0.10)] overflow-hidden bg-white dark:bg-slate-800 relative z-10"
     >
       <!-- Left: Navy hero panel -->
       <div
@@ -61,7 +61,7 @@
 
       <!-- Right: Form panel -->
       <div
-        class="flex-1 flex flex-col justify-center p-8 md:p-12 bg-white dark:bg-slate-800"
+        class="flex-1 flex flex-col justify-center px-10 py-12 md:px-14 bg-white dark:bg-slate-800"
       >
         <slot />
       </div>

@@ -2,13 +2,11 @@
   <div class="space-y-6">
     <div>
       <p
-        class="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70 mb-1"
+        class="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary/60 mb-1"
       >
         Operations Overview
       </p>
-      <h1
-        class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
-      >
+      <h1 class="text-3xl font-bold tracking-tight text-on-surface">
         Audita Dashboard
       </h1>
       <p class="text-sm text-muted mt-1">
@@ -17,43 +15,130 @@
     </div>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="card p-4 shadow-card-hover">
-        <p class="text-xs font-semibold uppercase tracking-wide text-muted">
-          Pending Approvals
-        </p>
-        <p class="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-1">
+      <div class="card p-5 shadow-card-hover">
+        <div class="flex items-start justify-between">
+          <p
+            class="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted"
+          >
+            Pending Approvals
+          </p>
+          <div
+            class="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center"
+          >
+            <svg
+              class="w-3.5 h-3.5 text-primary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-on-surface mt-2">
           {{ stats.pending }}
         </p>
         <p class="text-xs text-muted mt-1">+2 since yesterday</p>
       </div>
-      <div class="card p-4 shadow-card-hover">
-        <p class="text-xs font-semibold uppercase tracking-wide text-muted">
-          Active Changes
-        </p>
-        <p class="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-1">
+      <div class="card p-5 shadow-card-hover">
+        <div class="flex items-start justify-between">
+          <p
+            class="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted"
+          >
+            Active Changes
+          </p>
+          <div
+            class="w-7 h-7 rounded-lg bg-secondary/10 flex items-center justify-center"
+          >
+            <svg
+              class="w-3.5 h-3.5 text-secondary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
+            </svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-on-surface mt-2">
           {{ stats.active }}
         </p>
+        <p class="text-xs text-muted mt-1">Currently in progress</p>
       </div>
-      <div class="card p-4 border-danger/30 shadow-card-hover">
-        <p class="text-xs font-semibold uppercase tracking-wide text-danger">
-          SLA Risks
-        </p>
-        <p class="text-3xl font-bold text-danger mt-1">{{ stats.slaRisks }}</p>
+      <div class="card p-5 border-danger/20 shadow-card-hover bg-danger/[0.02]">
+        <div class="flex items-start justify-between">
+          <p
+            class="text-[11px] font-semibold uppercase tracking-[0.12em] text-danger/80"
+          >
+            SLA Risks
+          </p>
+          <div
+            class="w-7 h-7 rounded-lg bg-danger/10 flex items-center justify-center"
+          >
+            <svg
+              class="w-3.5 h-3.5 text-danger"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-danger mt-2">{{ stats.slaRisks }}</p>
         <p class="text-xs text-danger/70 mt-1">Critical response needed</p>
       </div>
-      <div class="card p-4 bg-primary text-white border-0 shadow-card-hover">
-        <p class="text-xs font-semibold uppercase tracking-wide text-white/70">
-          Success Rate
-        </p>
-        <p class="text-3xl font-bold mt-1">{{ stats.successRate }}%</p>
-        <p class="text-xs text-white/60 mt-1">Global KPI</p>
+      <div
+        class="card p-5 bg-primary text-white border-0 shadow-[0_4px_12px_rgba(0,35,111,0.3)]"
+      >
+        <div class="flex items-start justify-between">
+          <p
+            class="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/60"
+          >
+            Success Rate
+          </p>
+          <div
+            class="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center"
+          >
+            <svg
+              class="w-3.5 h-3.5 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold mt-2">{{ stats.successRate }}%</p>
+        <p class="text-xs text-white/50 mt-1">Global KPI</p>
       </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div class="lg:col-span-2">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="font-semibold text-gray-900 dark:text-gray-100">
+          <h2 class="font-semibold text-on-surface">
             Changes Awaiting My Action
           </h2>
           <NuxtLink
@@ -118,9 +203,7 @@
       </div>
 
       <div>
-        <h2 class="font-semibold text-gray-900 dark:text-gray-100 mb-3">
-          Recent Activity
-        </h2>
+        <h2 class="font-semibold text-on-surface mb-3">Recent Activity</h2>
         <div class="card p-4 space-y-4 shadow-card-hover">
           <div
             v-if="recentActivity.length === 0"
@@ -135,7 +218,7 @@
           >
             <div class="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
             <div class="min-w-0">
-              <p class="text-sm text-gray-700 dark:text-gray-300 leading-snug">
+              <p class="text-sm text-on-surface leading-snug">
                 {{ formatActivity(entry) }}
               </p>
               <p class="text-xs text-muted mt-0.5">
@@ -170,9 +253,7 @@ const recentActivity = ref<ActivityEntry[]>([]);
 
 async function load() {
   try {
-    const [pendingPage] = await Promise.all([
-      list({ status: "PENDING_APPROVAL", size: 3 }),
-    ]);
+    const pendingPage = await list({ status: "PENDING_APPROVAL", size: 3 });
     pendingCRs.value = pendingPage.content;
     stats.pending = pendingPage.totalElements;
   } catch {
@@ -204,7 +285,7 @@ function riskClass(level: string) {
 }
 
 function formatActivity(entry: ActivityEntry) {
-  return `${entry.actor?.fullName ?? "System"} — ${entry.actionType.replace(/_/g, " ").toLowerCase()}`;
+  return `${entry.actor?.fullName ?? "System"} — ${entry.actionType.replaceAll("_", " ").toLowerCase()}`;
 }
 
 function formatDate(iso: string) {

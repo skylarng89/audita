@@ -70,7 +70,7 @@
            placeholder:text-muted/60 shadow-none
            transition-all duration-150
            hover:border-outline hover:bg-white
-           focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/15
+           focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20
            disabled:cursor-not-allowed disabled:bg-surface-container disabled:text-muted disabled:opacity-60
            dark:bg-slate-700 dark:border-slate-600 dark:text-gray-100 dark:placeholder:text-slate-400
            dark:hover:border-slate-500 dark:focus:border-primary-light dark:focus:ring-primary-light/20;
@@ -148,7 +148,7 @@
   }
 
   .sidebar-link-active {
-    @apply sidebar-link bg-primary/8 text-primary border-l-[3px] border-primary pl-[9px]
+    @apply sidebar-link bg-primary/10 text-primary border-l-[3px] border-primary pl-[9px]
            dark:bg-primary/20 dark:text-primary-fixed;
   }
 

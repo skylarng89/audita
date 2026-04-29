@@ -3,6 +3,10 @@ export default defineNuxtConfig({
 
   modules: ["@nuxtjs/tailwindcss", "@pinia/nuxt", "@nuxt/eslint"],
 
+  tailwindcss: {
+    cssPath: "~/assets/css/main.css",
+  },
+
   runtimeConfig: {
     apiInternalBase: process.env.NUXT_API_INTERNAL_BASE ?? "http://api:8080",
     public: {
