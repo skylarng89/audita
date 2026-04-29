@@ -174,7 +174,7 @@
         </div>
       </main>
     </div>
-    <AppToastContainer />
+    <SharedAppToastContainer />
   </div>
 </template>
 

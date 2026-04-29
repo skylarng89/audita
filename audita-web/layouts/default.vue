@@ -45,7 +45,7 @@
       <!-- Right controls -->
       <div class="flex items-center gap-1">
         <!-- Notification bell -->
-        <AppNotificationBell />
+        <SharedAppNotificationBell />
 
         <!-- Help -->
         <button
@@ -68,14 +68,14 @@
         </button>
 
         <!-- User menu -->
-        <AppUserMenu />
+        <SharedAppUserMenu />
       </div>
     </header>
 
     <!-- ── Body: Sidebar + Main ────────────────────────────────────────────── -->
     <div class="flex pt-14 min-h-screen">
       <!-- Sidebar -->
-      <AppSidebar />
+      <SharedAppSidebar />
 
       <!-- Main content -->
       <main class="flex-1 ml-0 md:ml-56 p-6 min-w-0">
@@ -86,6 +86,6 @@
     </div>
 
     <!-- Toast container -->
-    <AppToastContainer />
+    <SharedAppToastContainer />
   </div>
 </template>
