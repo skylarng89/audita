@@ -3,7 +3,7 @@
     <div class="flex items-center gap-3">
       <NuxtLink
         to="/platform/tenants"
-        class="text-muted hover:text-foreground text-sm"
+        class="text-muted hover:text-on-surface text-sm"
         >← Back</NuxtLink
       >
       <div>
@@ -33,7 +33,7 @@
         :class="
           activeTab === tab.key
             ? 'text-primary border-b-2 border-primary -mb-px bg-primary/5'
-            : 'text-muted hover:text-foreground hover:bg-slate-100'
+            : 'text-muted hover:text-on-surface hover:bg-surface-container'
         "
       >
         {{ tab.label }}

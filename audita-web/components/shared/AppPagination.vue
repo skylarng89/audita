@@ -56,7 +56,7 @@ const rangeEnd = computed(() =>
       <button
         type="button"
         :disabled="page === 1"
-        class="flex h-8 w-8 items-center justify-center rounded border border-border text-muted transition-colors hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed dark:border-border-dark dark:hover:bg-slate-700"
+        class="flex h-8 w-8 items-center justify-center rounded-lg border border-outline-variant text-muted transition-colors hover:bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed dark:border-border-dark dark:hover:bg-slate-700"
         aria-label="Previous page"
         @click="emit('update:page', page - 1)"
       >
@@ -91,8 +91,8 @@ const rangeEnd = computed(() =>
           :class="[
             'flex h-8 w-8 items-center justify-center rounded text-sm font-medium transition-colors',
             p === page
-              ? 'bg-primary text-white'
-              : 'border border-border text-gray-700 hover:bg-gray-50 dark:border-border-dark dark:text-gray-300 dark:hover:bg-slate-700',
+              ? 'bg-primary text-white shadow-sm'
+              : 'border border-outline-variant text-on-surface-variant hover:bg-surface-container dark:border-border-dark dark:text-gray-300 dark:hover:bg-slate-700',
           ]"
           @click="emit('update:page', p as number)"
         >
@@ -104,7 +104,7 @@ const rangeEnd = computed(() =>
       <button
         type="button"
         :disabled="page === totalPages"
-        class="flex h-8 w-8 items-center justify-center rounded border border-border text-muted transition-colors hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed dark:border-border-dark dark:hover:bg-slate-700"
+        class="flex h-8 w-8 items-center justify-center rounded-lg border border-outline-variant text-muted transition-colors hover:bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed dark:border-border-dark dark:hover:bg-slate-700"
         aria-label="Next page"
         @click="emit('update:page', page + 1)"
       >

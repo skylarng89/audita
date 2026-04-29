@@ -129,7 +129,7 @@
     </div>
 
     <div
-      class="mt-6 rounded-xl border border-border bg-slate-50 px-4 py-3 text-xs text-muted leading-relaxed"
+      class="mt-6 rounded-xl border border-outline-variant/50 bg-primary/5 px-4 py-3 text-xs text-on-surface-variant leading-relaxed"
     >
       <p class="font-semibold uppercase tracking-wider text-slate-600 mb-1">
         System Node

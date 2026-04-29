@@ -1,22 +1,22 @@
 <template>
   <nav
-    class="fixed left-0 top-14 bottom-0 w-56 border-r border-border bg-slate-50/95 backdrop-blur dark:border-border-dark dark:bg-slate-950/95 flex flex-col overflow-y-auto z-20 hidden md:flex"
+    class="fixed left-0 top-14 bottom-0 w-56 border-r border-outline-variant/50 bg-white dark:border-border-dark dark:bg-slate-950 flex flex-col overflow-y-auto z-20 hidden md:flex"
   >
     <div
-      class="flex items-center gap-2.5 px-4 py-5 border-b border-border dark:border-border-dark"
+      class="flex items-center gap-2.5 px-4 py-5 border-b border-outline-variant/50 dark:border-border-dark"
     >
       <div
-        class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm"
+        class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm shadow-sm"
       >
         A
       </div>
       <div>
         <p
-          class="font-bold text-sm text-gray-900 dark:text-gray-100 tracking-tight"
+          class="font-bold text-sm text-on-surface dark:text-gray-100 tracking-tight"
         >
           Audita
         </p>
-        <p class="text-[10px] uppercase tracking-[0.18em] text-muted">
+        <p class="text-[10px] uppercase tracking-[0.16em] text-muted">
           Sovereign Architect
         </p>
       </div>
@@ -158,11 +158,13 @@
       </NuxtLink>
     </div>
 
-    <div class="mt-auto p-3 border-t border-border dark:border-border-dark">
+    <div
+      class="mt-auto p-3 border-t border-outline-variant/50 dark:border-border-dark"
+    >
       <NuxtLink
         v-if="auth.canCreateCR"
         to="/change-requests/new"
-        class="btn-primary btn-md w-full shadow-lg shadow-primary/20"
+        class="btn-primary btn-md w-full shadow-md shadow-primary/20 rounded-xl"
       >
         <svg
           class="w-4 h-4"
