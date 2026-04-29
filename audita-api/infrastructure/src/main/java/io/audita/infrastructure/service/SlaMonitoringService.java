@@ -15,7 +15,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.OffsetDateTime;
 import java.util.HashSet;
@@ -24,7 +27,6 @@ import java.util.Map;
 import java.util.Set;
 
 @Service
-@Transactional
 public class SlaMonitoringService {
 
     private static final Logger log = LoggerFactory.getLogger(SlaMonitoringService.class);
@@ -35,19 +37,23 @@ public class SlaMonitoringService {
     private final NotificationService notificationService;
     private final EmailService emailService;
     private final TenantRepository tenantRepository;
+    private final TransactionTemplate transactionTemplate;
 
     public SlaMonitoringService(ChangeRequestRepository changeRequestRepository,
                                 CrApproverRepository crApproverRepository,
                                 ActivityStreamRepository activityStreamRepository,
                                 NotificationService notificationService,
                                 EmailService emailService,
-                                TenantRepository tenantRepository) {
+                                TenantRepository tenantRepository,
+                                PlatformTransactionManager transactionManager) {
         this.changeRequestRepository = changeRequestRepository;
         this.crApproverRepository = crApproverRepository;
         this.activityStreamRepository = activityStreamRepository;
         this.notificationService = notificationService;
         this.emailService = emailService;
         this.tenantRepository = tenantRepository;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+        this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     @Scheduled(fixedDelayString = "${audita.sla.monitor-delay-ms:60000}")
@@ -59,8 +65,10 @@ public class SlaMonitoringService {
             String tenantSlug = tenant.getSlug();
             try {
                 TenantContext.setCurrentTenant(tenantSlug);
-                processWarnings(now);
-                processBreaches(now);
+                transactionTemplate.executeWithoutResult(status -> {
+                    processWarnings(now);
+                    processBreaches(now);
+                });
             } catch (Exception ex) {
                 log.error("SLA monitoring failed for tenant {}", tenantSlug, ex);
             } finally {
