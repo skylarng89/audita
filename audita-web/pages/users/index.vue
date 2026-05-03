@@ -12,12 +12,6 @@
           Manage account access, role assignment, and operational status.
         </p>
       </div>
-      <NuxtLink
-        to="/admin/users"
-        class="btn-primary btn-sm shadow-lg shadow-primary/20"
-      >
-        Open Admin Users
-      </NuxtLink>
     </div>
 
     <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -47,7 +41,7 @@
         :data="users"
         :loading="pending"
         row-key="id"
-        empty-message="No data returned."
+        empty-message="No users found for this organisation."
       >
         <template #cell-roleName="{ value }">
           <AppBadge variant="primary">{{ value || "Unassigned" }}</AppBadge>
@@ -78,6 +72,7 @@
 definePageMeta({ layout: "default" });
 
 const api = useApi();
+const auth = useAuthStore();
 
 interface UserRow {
   id: string;
@@ -101,12 +96,26 @@ const { data, pending, refresh } = await useAsyncData<UserPayload>(
   async () => {
     loadError.value = "";
 
+    if (!auth.tenantSlug) {
+      loadError.value =
+        "Tenant context is missing. Sign out and sign in to your organisation again.";
+      return { content: [], totalElements: 0 };
+    }
+
     try {
       return (await api(
         `/api/v1/users?page=${page.value - 1}&size=${pageSize}`,
       )) as UserPayload;
-    } catch {
-      loadError.value = "No data returned.";
+    } catch (err: unknown) {
+      const apiErr = err as { status?: number; data?: { message?: string } };
+      if (apiErr.status === 403) {
+        loadError.value =
+          "You do not have permission to view users in this organisation.";
+      } else if (apiErr.status === 401) {
+        loadError.value = "Your session expired. Please sign in again.";
+      } else {
+        loadError.value = apiErr.data?.message ?? "Failed to load users.";
+      }
       return { content: [], totalElements: 0 };
     }
   },
@@ -116,7 +125,7 @@ const { data, pending, refresh } = await useAsyncData<UserPayload>(
 const users = computed(() => data.value?.content ?? []);
 const total = computed(() => data.value?.totalElements ?? users.value.length);
 
-const totalUsers = computed(() => users.value.length);
+const totalUsers = computed(() => data.value?.totalElements ?? users.value.length);
 const activeUsers = computed(
   () => users.value.filter((user) => user.status === "ACTIVE").length,
 );
