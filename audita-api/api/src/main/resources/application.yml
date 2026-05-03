@@ -83,6 +83,7 @@ audita:
   jwt:
     secret: ${JWT_SECRET:}
     expiry-seconds: ${JWT_EXPIRY_SECONDS}
+    stream-expiry-seconds: ${JWT_STREAM_EXPIRY_SECONDS}
 
   refresh-token:
     expiry-days: ${REFRESH_TOKEN_EXPIRY_DAYS}

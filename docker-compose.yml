@@ -79,6 +79,7 @@ services:
       BOOTSTRAP_SETUP_TOKEN: ${BOOTSTRAP_SETUP_TOKEN}
       API_BASE_URL: ${API_BASE_URL}
       FRONTEND_BASE_URL: ${FRONTEND_BASE_URL}
+      JWT_STREAM_EXPIRY_SECONDS: ${JWT_STREAM_EXPIRY_SECONDS}
     volumes:
       - api_uploads:/data/uploads
     ports:
