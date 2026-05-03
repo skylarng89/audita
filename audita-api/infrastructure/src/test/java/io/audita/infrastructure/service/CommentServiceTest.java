@@ -23,7 +23,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -76,18 +75,18 @@ class CommentServiceTest {
         assertThat(created.getBody()).doesNotContain("<script>");
         verify(commentMentionRepository).save(any());
         verify(notificationService).createAndPush(
-                eq(mentionedId),
-                eq("MENTION"),
-                eq("Author One mentioned you"),
-                eq("In change request: DB migration"),
-                eq("/change-requests/" + crId)
+            mentionedId,
+            "MENTION",
+            "Author One mentioned you",
+            "In change request: DB migration",
+            "/change-requests/" + crId
         );
         verify(emailService).sendMentionEmail(
-                eq("bob@example.com"),
-                eq("Bob Two"),
-                eq("DB migration"),
-                eq(crId.toString()),
-                eq("Author One")
+            "bob@example.com",
+            "Bob Two",
+            "DB migration",
+            crId.toString(),
+            "Author One"
         );
         verify(activityStreamRepository).save(any());
     }
