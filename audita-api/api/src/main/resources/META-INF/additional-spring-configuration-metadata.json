@@ -4,6 +4,50 @@
       "name": "audita",
       "type": "java.lang.Object",
       "description": "Audita custom application properties."
+    },
+    {
+      "name": "audita.jwt",
+      "type": "java.lang.Object"
+    },
+    {
+      "name": "audita.refresh-token",
+      "type": "java.lang.Object"
+    },
+    {
+      "name": "audita.encryption",
+      "type": "java.lang.Object"
+    },
+    {
+      "name": "audita.cors",
+      "type": "java.lang.Object"
+    },
+    {
+      "name": "audita.security",
+      "type": "java.lang.Object"
+    },
+    {
+      "name": "audita.bootstrap",
+      "type": "java.lang.Object"
+    },
+    {
+      "name": "audita.upload",
+      "type": "java.lang.Object"
+    },
+    {
+      "name": "audita.sso",
+      "type": "java.lang.Object"
+    },
+    {
+      "name": "audita.app",
+      "type": "java.lang.Object"
+    },
+    {
+      "name": "audita.mail",
+      "type": "java.lang.Object"
+    },
+    {
+      "name": "audita.storage",
+      "type": "java.lang.Object"
     }
   ],
   "properties": [
