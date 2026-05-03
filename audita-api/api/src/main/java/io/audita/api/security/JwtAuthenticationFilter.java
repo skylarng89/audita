@@ -10,12 +10,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -72,6 +74,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String email = claims.get("email", String.class);
         String role = claims.get("role", String.class);
         String tenantSlug = claims.get("tenantSlug", String.class);
+        if (tenantSlug != null && !tenantSlug.isBlank()) {
+            tenantSlug = tenantSlug.toLowerCase(Locale.ROOT);
+        }
 
         if (bootstrapRequest) {
             log.warn("Bootstrap request includes authenticated JWT context: method={} path={} role={} tenantSlug={}",
@@ -85,11 +90,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if ("SUPER_ADMIN".equals(role)) {
             principal = UserPrincipal.ofSuperAdmin(userId, email);
         } else {
+            String requestTenant = TenantContext.getCurrentTenant();
+            if (tenantSlug == null || tenantSlug.isBlank()) {
+                throw new AccessDeniedException("Invalid tenant token context.");
+            }
+            if (requestTenant != null && !requestTenant.equals(tenantSlug)) {
+                throw new AccessDeniedException("Tenant context mismatch.");
+            }
             principal = UserPrincipal.ofTenantUser(userId, email, role, tenantSlug);
             // Set tenant schema context for this request
-            if (tenantSlug != null && !tenantSlug.isBlank()) {
-                TenantContext.setCurrentTenant(tenantSlug);
-            }
+            TenantContext.setCurrentTenant(tenantSlug);
         }
 
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(

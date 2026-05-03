@@ -1,16 +1,20 @@
 package io.audita.api.controller;
 
+import io.audita.api.dto.request.ExchangeSsoCodeRequest;
 import io.audita.api.dto.response.AuthResponse;
 import io.audita.domain.model.OAuthProvider;
 import io.audita.infrastructure.service.SsoService;
 import io.audita.infrastructure.service.SsoService.SsoResult;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Handles SSO initiation and OAuth2 callbacks for Google and Microsoft.
@@ -79,7 +83,7 @@ public class SsoController {
     // ── Shared callback handler ──────────────────────────────────────────────────
 
     private void handleCallback(OAuthProvider provider, String code, String state,
-                                 HttpServletResponse response) throws IOException {
+                                HttpServletResponse response) throws IOException {
         SsoResult result;
         try {
             result = ssoService.handleCallback(provider, code, state);
@@ -89,32 +93,31 @@ public class SsoController {
             return;
         }
 
-        // Set refresh token as HttpOnly cookie — access token goes to frontend via query param
-        // (refresh token remains the durable credential; access token is exchanged server-side)
+        // Set refresh token as HttpOnly cookie; frontend exchanges a short-lived code for access token.
         setRefreshCookie(response, result.rawRefreshToken());
 
         String exchangeCode = ssoService.issueFrontendExchangeCode(result);
 
-        // Redirect to frontend with a short-lived one-time exchange code (never with access tokens).
+        // Use URL fragment so one-time code is never sent in HTTP requests/referrer headers.
         String redirectUrl = frontendBaseUrl + "/auth/sso-callback"
-            + "?code=" + exchangeCode;
+                + "#code=" + URLEncoder.encode(exchangeCode, StandardCharsets.UTF_8);
 
         redirect(response, redirectUrl);
     }
 
-        @PostMapping("/exchange")
-        public ResponseEntity<AuthResponse> exchangeCode(@RequestParam("code") String code) {
-        SsoResult result = ssoService.consumeFrontendExchangeCode(code);
+    @PostMapping("/exchange")
+    public ResponseEntity<AuthResponse> exchangeCode(@Valid @RequestBody ExchangeSsoCodeRequest request) {
+        SsoResult result = ssoService.consumeFrontendExchangeCode(request.code());
         AuthResponse response = AuthResponse.of(
-            result.accessToken(),
-            result.expiresIn(),
-            result.userId(),
-            result.email(),
-            result.fullName(),
-            result.role(),
-            result.tenantSlug());
+                result.accessToken(),
+                result.expiresIn(),
+                result.userId(),
+                result.email(),
+                result.fullName(),
+                result.role(),
+                result.tenantSlug());
         return ResponseEntity.ok(response);
-        }
+    }
 
     private void setRefreshCookie(HttpServletResponse response, String rawToken) {
         Cookie cookie = new Cookie(REFRESH_COOKIE, rawToken);

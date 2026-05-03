@@ -20,10 +20,10 @@
 
 ## Post-Sprint Security Follow-Up (2026-04-28)
 
-- SEC-001: Eliminate tenant slug injection surface in schema switching path.
-- SEC-002: Remove URL query token transport from SSO callback flow.
-- SEC-003: Add object-level authorization checks for change request mutations.
-- SEC-004: Tighten CORS to explicit allowlist with environment-specific profiles.
+- SEC-001: Eliminate tenant slug injection surface in schema switching path. ✅ (Completed 2026-05-02)
+- SEC-002: Remove URL query token transport from SSO callback flow. ✅ (Completed 2026-05-02)
+- SEC-003: Add object-level authorization checks for change request mutations. ✅ (Completed 2026-05-02)
+- SEC-004: Tighten CORS to explicit allowlist with environment-specific profiles. ✅ (Completed 2026-05-02)
 
 ## Post-Sprint UX Follow-Up (2026-04-28)
 

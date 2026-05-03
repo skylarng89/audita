@@ -242,6 +242,35 @@
 - Immediate fixes (tenant slug validation + safe schema switching, SSO callback redesign, CR ownership policy checks, CORS tightening).
 - Follow-on hardening (secure config defaults, upload guardrails, Redis-backed anti-abuse state, stronger password/session controls).
 
+### Security Follow-Up Remediation (Completed 2026-05-02)
+
+**Overview**: Implemented and verified SEC-001 through SEC-004 from the security audit follow-up plan.
+
+**Files Created/Modified**:
+
+- `audita-api/api/src/main/java/io/audita/api/security/TenantResolutionFilter.java` — rejects invalid and unknown tenant slugs before request processing continues.
+- `audita-api/api/src/main/java/io/audita/api/security/JwtAuthenticationFilter.java` — enforces tenant context consistency between header-resolved tenant and JWT tenant claim.
+- `audita-api/api/src/main/java/io/audita/api/controller/SsoController.java` — changed SSO callback redirect to URL fragment code transport and body-based exchange endpoint contract.
+- `audita-api/api/src/main/java/io/audita/api/dto/request/ExchangeSsoCodeRequest.java` — request DTO for one-time SSO exchange code.
+- `audita-web/pages/auth/sso-callback.vue` — reads one-time exchange code from hash fragment and posts code in JSON body.
+- `audita-api/api/src/main/java/io/audita/api/config/SecurityConfig.java` — blocks wildcard origins and fails startup when CORS allowlist is missing.
+- `audita-api/api/src/main/resources/application.yml` — profile-specific CORS defaults for dev and explicit allowlist requirement in prod.
+- `audita-api/infrastructure/src/test/java/io/audita/infrastructure/service/ChangeRequestServiceSecurityTest.java` — regression tests for requester cross-user mutation denial.
+
+**Key Changes**:
+
+- Added strict tenant existence validation at filter boundary to reduce tenant header abuse surface.
+- Added JWT tenant mismatch guard to prevent cross-tenant context confusion.
+- Removed query-parameter style code transport from SSO callback and exchange request paths.
+- Enforced explicit CORS allowlist and blocked wildcard origins under credentialed requests.
+- Added regression tests proving non-owner requester cannot mutate another requester's change requests.
+
+**Test Coverage**:
+
+- `cd audita-api && ./gradlew :infrastructure:test --tests io.audita.infrastructure.service.ChangeRequestServiceSecurityTest` passes.
+- `cd audita-api && ./gradlew :api:test --tests io.audita.api.controller.NotificationControllerWebMvcTest` passes.
+- `cd audita-web && pnpm build` passes.
+
 ### Sprint 4 — Collaboration, Notifications & SLA Automation (Completed 2026-04-28)
 
 **Overview**: Implemented comments with mention handling, in-app notification APIs + SSE streaming, SLA warning/breach scheduler automation, and frontend comments/notification wiring.

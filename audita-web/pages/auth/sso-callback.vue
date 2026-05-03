@@ -59,7 +59,16 @@ onMounted(async () => {
     return;
   }
 
-  const code = route.query.code as string | undefined;
+  const hashCode = (() => {
+    const rawHash = window.location.hash;
+    if (!rawHash || !rawHash.startsWith("#")) {
+      return undefined;
+    }
+    const params = new URLSearchParams(rawHash.slice(1));
+    return params.get("code") ?? undefined;
+  })();
+
+  const code = hashCode ?? (route.query.code as string | undefined);
 
   if (!code) {
     errorMessage.value = "Incomplete SSO response. Please try again.";
@@ -70,7 +79,7 @@ onMounted(async () => {
     const result = await $fetch<AuthResponse>("/api/v1/auth/oauth/exchange", {
       method: "POST",
       baseURL: config.public.apiBase as string,
-      params: { code },
+      body: { code },
       credentials: "include",
     });
 

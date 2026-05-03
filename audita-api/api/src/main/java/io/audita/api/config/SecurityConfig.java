@@ -94,6 +94,12 @@ public class SecurityConfig {
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .toList();
+        if (allowedOrigins.isEmpty()) {
+            throw new IllegalStateException("audita.cors.allowed-origins must be explicitly configured.");
+        }
+        if (allowedOrigins.stream().anyMatch(origin -> origin.equals("*") || origin.contains("*"))) {
+            throw new IllegalStateException("Wildcard CORS origins are not allowed when credentials are enabled.");
+        }
         config.setAllowedOrigins(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Tenant-Slug", "X-Setup-Token"));

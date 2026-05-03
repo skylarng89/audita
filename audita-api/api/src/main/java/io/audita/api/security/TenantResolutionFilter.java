@@ -12,7 +12,12 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import javax.sql.DataSource;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
@@ -31,6 +36,11 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
 
     private static final String TENANT_HEADER = "X-Tenant-Slug";
     private static final Pattern TENANT_SLUG_PATTERN = Pattern.compile("^[a-z0-9-]{1,100}$");
+    private final DataSource dataSource;
+
+    public TenantResolutionFilter(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
@@ -48,6 +58,13 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
                         request.getHeader("Origin"),
                         request.getHeader("Referer"));
                 throw new AccessDeniedException("Invalid tenant slug.");
+            }
+            if (!tenantExists(normalizedSlug)) {
+                log.warn("Rejected request due to unknown tenant slug: method={} path={} tenantSlug={}",
+                        request.getMethod(),
+                        request.getRequestURI(),
+                        normalizedSlug);
+                throw new AccessDeniedException("Unknown tenant.");
             }
             if (bootstrapRequest) {
                 log.warn("Bootstrap request contains tenant header: method={} path={} tenantSlug={}",
@@ -71,5 +88,19 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
     private boolean isBootstrapRequest(HttpServletRequest request) {
         String uri = request.getRequestURI();
         return uri.startsWith("/api/platform/v1/bootstrap") || uri.startsWith("/api/platform/v1/setup");
+    }
+
+    private boolean tenantExists(String slug) {
+        String sql = "SELECT 1 FROM public.tenants WHERE slug = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, slug);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+        } catch (SQLException ex) {
+            log.error("Tenant slug validation query failed", ex);
+            throw new AccessDeniedException("Tenant validation failed.");
+        }
     }
 }

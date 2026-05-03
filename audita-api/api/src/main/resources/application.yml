@@ -132,3 +132,23 @@ logging:
     org.flywaydb: INFO
   pattern:
     console: "%d{ISO8601} %-5level [%thread] %logger{36} - %msg%n"
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+audita:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+audita:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
