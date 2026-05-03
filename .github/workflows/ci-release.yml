@@ -99,16 +99,17 @@ jobs:
           cache: pnpm
           cache-dependency-path: audita-web/pnpm-lock.yaml
 
-      - name: Verify API
-        working-directory: audita-api
-        run: ./gradlew :api:test --no-daemon
+      # Tests already run in dedicated api-tests and web-tests jobs via needs dependency
+      # - name: Verify API
+      #   working-directory: audita-api
+      #   run: ./gradlew :api:test --no-daemon
 
-      - name: Verify web
-        working-directory: audita-web
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm test
-          pnpm build
+      # - name: Verify web
+      #   working-directory: audita-web
+      #   run: |
+      #     pnpm install --frozen-lockfile
+      #     pnpm test
+      #     pnpm build
 
       - name: Resolve image names
         id: images

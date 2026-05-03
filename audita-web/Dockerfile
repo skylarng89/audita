@@ -1,5 +1,5 @@
 # ── Build stage ─────────────────────────────────────────────────────────────────
-FROM node:22-alpine AS builder
+FROM node:24.15.0-alpine3.22 AS builder
 WORKDIR /app
 
 # Install pnpm
@@ -12,7 +12,7 @@ COPY . .
 RUN pnpm build
 
 # ── Runtime stage ───────────────────────────────────────────────────────────────
-FROM node:22-alpine
+FROM node:24.15.0-alpine3.22
 WORKDIR /app
 
 RUN addgroup -S audita && adduser -S audita -G audita

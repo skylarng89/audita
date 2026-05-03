@@ -1,5 +1,5 @@
 # ── Build stage ─────────────────────────────────────────────────────────────────
-FROM eclipse-temurin:25-jdk-noble AS builder
+FROM eclipse-temurin:25.0.3_9-jdk-noble AS builder
 WORKDIR /app
 
 COPY settings.gradle.kts build.gradle.kts gradle.properties ./
@@ -18,7 +18,7 @@ COPY api/src api/src
 RUN chmod +x ./gradlew && ./gradlew :api:bootJar --no-daemon
 
 # ── Runtime stage ────────────────────────────────────────────────────────────────
-FROM eclipse-temurin:25-jre-noble
+FROM eclipse-temurin:25.0.3_9-jre-noble
 WORKDIR /app
 
 RUN apt-get update \
