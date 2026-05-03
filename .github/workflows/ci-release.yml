@@ -222,3 +222,31 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.version }}
           generate_release_notes: true
+
+      - name: Write job summary
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          api_image="${{ steps.images.outputs.api_image }}"
+          web_image="${{ steps.images.outputs.web_image }}"
+          sha="${{ github.sha }}"
+          short_sha="${sha:0:7}"
+          actor="${{ github.actor }}"
+          run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## Release ${version}
+
+          | Field        | Value |
+          | ------------ | ----- |
+          | Version      | \`${version}\` |
+          | Commit       | \`${short_sha}\` |
+          | Triggered by | ${actor} |
+          | Run          | [View run](${run_url}) |
+
+          ### Images pushed
+
+          | Image | Tags |
+          | ----- | ---- |
+          | \`${api_image}\` | \`latest\`, \`${version}\`, \`sha-${short_sha}\` |
+          | \`${web_image}\` | \`latest\`, \`${version}\`, \`sha-${short_sha}\` |
+          EOF
