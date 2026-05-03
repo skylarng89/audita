@@ -1,13 +1,5 @@
 name: CI and Release Images
 "on":
-  pull_request:
-    branches:
-      - main
-    types:
-      - opened
-      - synchronize
-      - reopened
-      - closed
   push:
     branches:
       - main
@@ -17,7 +9,6 @@ permissions:
 
 jobs:
   api-tests:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     name: API Tests
     runs-on: ubuntu-latest
     steps:
@@ -36,7 +27,6 @@ jobs:
         run: ./gradlew :api:test --no-daemon
 
   web-tests:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     name: Web Build and Tests
     runs-on: ubuntu-latest
     steps:
