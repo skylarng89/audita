@@ -44,17 +44,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 9
+
       - name: Set up Node
         uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: pnpm
           cache-dependency-path: audita-web/pnpm-lock.yaml
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 9
 
       - name: Install web dependencies
         working-directory: audita-web
@@ -86,17 +86,17 @@ jobs:
           java-version: "25"
           cache: gradle
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 9
+
       - name: Set up Node
         uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: pnpm
           cache-dependency-path: audita-web/pnpm-lock.yaml
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 9
 
       - name: Verify API
         working-directory: audita-api
