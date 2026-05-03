@@ -50,7 +50,17 @@ class ChangeRequestServiceSecurityTest {
         ChangeRequestEntity changeRequest = buildDraftChangeRequest(ownerId);
         when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
 
-        assertThatThrownBy(() -> changeRequestService.update(
+        assertThatThrownBy(() -> tryUnauthorizedUpdate(changeRequestId, otherRequesterId))
+                .isInstanceOf(DomainNotPermittedException.class)
+                .extracting(ex -> ((DomainNotPermittedException) ex).getErrorCode())
+                .isEqualTo("FORBIDDEN");
+
+        verifyNoInteractions(activityStreamRepository);
+        verify(changeRequestRepository).findById(changeRequestId);
+    }
+
+    private void tryUnauthorizedUpdate(UUID changeRequestId, UUID requesterId) {
+        changeRequestService.update(
                 changeRequestId,
                 "Updated by attacker",
                 "should fail",
@@ -61,15 +71,9 @@ class ChangeRequestServiceSecurityTest {
                 OffsetDateTime.now().plusHours(2),
                 OffsetDateTime.now().plusHours(3),
                 new String[] {"db"},
-                otherRequesterId,
+                requesterId,
                 "REQUESTER"
-        ))
-                .isInstanceOf(DomainNotPermittedException.class)
-                .extracting(ex -> ((DomainNotPermittedException) ex).getErrorCode())
-                .isEqualTo("FORBIDDEN");
-
-        verifyNoInteractions(activityStreamRepository);
-        verify(changeRequestRepository).findById(changeRequestId);
+        );
     }
 
     @Test
