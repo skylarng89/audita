@@ -21,3 +21,4 @@ tmp/
 *.env.development
 *.env.test
 *.env.production
+mailpit_data/

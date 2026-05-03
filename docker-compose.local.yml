@@ -1,0 +1,104 @@
+name: audita
+
+services:
+  # ── Spring Boot API ─────────────────────────────────────────────────────────
+  api:
+    image: skylarng89/audita-api:latest
+    container_name: audita-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/audita
+      DATABASE_USERNAME: your_database_username_here
+      DATABASE_PASSWORD: your_database_password_here
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRY_SECONDS: 900
+      REFRESH_TOKEN_EXPIRY_DAYS: 7
+      APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY}
+      APP_BASE_URL: http://localhost:3000
+      DEFAULT_SMTP_FROM: noreply@audita.io
+      DEFAULT_SMTP_HOST: mailpit
+      DEFAULT_SMTP_PORT: 1025
+      DEFAULT_SMTP_AUTH: "false"
+      DEFAULT_SMTP_TLS: "false"
+      STORAGE_BACKEND: LOCAL
+      STORAGE_LOCAL_BASE_PATH: /data/uploads
+    volumes:
+      - audita_uploads:/data/uploads
+    ports:
+      - "7080:8080"
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      audita-network:
+        aliases:
+          - api.audita.internal
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETUID
+      - SETGID
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+  # ── Nuxt 3 Frontend ─────────────────────────────────────────────────────────
+  web:
+    build:
+      context: ./audita-web
+      dockerfile: Dockerfile
+    container_name: audita-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NUXT_PUBLIC_API_BASE: /api
+      NUXT_API_INTERNAL_BASE: http://api:8080
+    ports:
+      - "7000:3000"
+    networks:
+      audita-network:
+        aliases:
+          - web.audita.internal
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETUID
+      - SETGID
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+volumes:
+  dbdata:
+  audita_uploads:
+
+networks:
+  audita-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: audita-bridge
+      ipv6: "false"

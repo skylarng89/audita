@@ -1,62 +1,75 @@
 name: audita
 
 services:
-  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  # ── PostgreSQL ──
   db:
-    image: postgres:17-alpine
-    container_name: audita-db
+    image: postgres:18.3-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: audita
-      POSTGRES_USER: audita
-      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql
     ports:
       - "7432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U audita -d audita"]
+      test:
+        [
+          "CMD-SHELL",
+          "PGPASSWORD=${DB_PASSWORD} psql -U ${DB_USERNAME} -d ${DB_NAME} -h ${DB_HOST} -p ${DB_PORT} -c 'SELECT 1'",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    networks:
+      audita-network:
+        aliases:
+          - db.audita.internal
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETUID
+      - SETGID
+    security_opt:
+      - no-new-privileges:true
 
-  # ── MailHog (local SMTP catcher — dev only) ─────────────────────────────────
-  mailhog:
-    image: mailhog/mailhog:latest
-    container_name: audita-mailhog
-    restart: unless-stopped
-    ports:
-      - "7025:1025" # SMTP
-      - "8025:8025" # Web UI
-
-  # ── Spring Boot API ─────────────────────────────────────────────────────────
+  # ── Spring Boot API ──
   api:
-    build:
-      context: ./audita-api
-      dockerfile: Dockerfile
-    container_name: audita-api
+    image: skylarng89/audita-api:latest
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: jdbc:postgresql://db:5432/audita
-      DATABASE_USERNAME: audita
-      DATABASE_PASSWORD: secret
+      DATABASE_URL: ${DB_URL}
+      DATABASE_USERNAME: ${DB_USERNAME}
+      DATABASE_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRY_SECONDS: 900
-      REFRESH_TOKEN_EXPIRY_DAYS: 7
+      JWT_EXPIRY_SECONDS: ${JWT_EXPIRY_SECONDS}
+      REFRESH_TOKEN_EXPIRY_DAYS: ${REFRESH_TOKEN_EXPIRY_DAYS}
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY}
-      APP_BASE_URL: http://localhost:3000
-      DEFAULT_SMTP_FROM: noreply@audita.io
-      DEFAULT_SMTP_HOST: mailhog
-      DEFAULT_SMTP_PORT: 1025
-      DEFAULT_SMTP_AUTH: "false"
-      DEFAULT_SMTP_TLS: "false"
-      STORAGE_BACKEND: LOCAL
-      STORAGE_LOCAL_BASE_PATH: /data/uploads
+      APP_BASE_URL: ${APP_BASE_URL}
+      DEFAULT_SMTP_FROM: ${SMTP_FROM}
+      DEFAULT_SMTP_HOST: ${SMTP_HOST}
+      DEFAULT_SMTP_PORT: ${SMTP_PORT}
+      DEFAULT_SMTP_AUTH: ${SMTP_AUTH}
+      DEFAULT_SMTP_TLS: ${SMTP_TLS}
+      STORAGE_BACKEND: ${STORAGE_BACKEND}
+      STORAGE_LOCAL_BASE_PATH: ${STORAGE_LOCAL_BASE_PATH}
     volumes:
-      - uploads:/data/uploads
+      - api_uploads:/data/uploads
     ports:
       - "7080:8080"
     healthcheck:
@@ -65,22 +78,67 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    networks:
+      audita-network:
+        aliases:
+          - api.audita.internal
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETUID
+      - SETGID
+    security_opt:
+      - no-new-privileges:true
 
-  # ── Nuxt 3 Frontend ─────────────────────────────────────────────────────────
+  # ── Nuxt 3 Frontend ──
   web:
-    build:
-      context: ./audita-web
-      dockerfile: Dockerfile
-    container_name: audita-web
+    image: skylarng89/audita-web:latest
     restart: unless-stopped
     depends_on:
       - api
     environment:
-      NUXT_PUBLIC_API_BASE: /api
-      NUXT_API_INTERNAL_BASE: http://api:8080
+      NUXT_PUBLIC_API_BASE: ${API_BASE_PATH}
+      NUXT_API_INTERNAL_BASE: ${API_INTERNAL_BASE_PATH}
     ports:
       - "7000:3000"
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    networks:
+      audita-network:
+        aliases:
+          - web.audita.internal
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETUID
+      - SETGID
+    security_opt:
+      - no-new-privileges:true
 
 volumes:
-  pgdata:
-  uploads:
+  db_data:
+  api_uploads:
+
+networks:
+  audita-network:
+    driver: bridge
