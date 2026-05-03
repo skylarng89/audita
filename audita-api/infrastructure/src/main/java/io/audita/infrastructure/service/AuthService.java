@@ -1,5 +1,6 @@
 package io.audita.infrastructure.service;
 
+import io.audita.application.port.AuthPort;
 import io.audita.domain.exception.DomainNotPermittedException;
 import io.audita.domain.model.UserStatus;
 import io.audita.infrastructure.persistence.entity.*;
@@ -25,7 +26,7 @@ import java.util.regex.Pattern;
 
 @Service
 @Transactional
-public class AuthService {
+public class AuthService implements AuthPort {
 
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
@@ -78,6 +79,7 @@ public class AuthService {
 
     // ── Login ──────────────────────────────────────────────────────────────────
 
+    @Override
     public LoginResult loginTenantUser(String email,
                                        String rawPassword,
                                        String tenantSlug,
@@ -108,6 +110,7 @@ public class AuthService {
         return issueTokensForUser(user, tenantSlug, clientIp, userAgent);
     }
 
+    @Override
     public LoginResult loginSuperAdmin(String email, String rawPassword) {
         SuperAdminEntity sa = superAdminRepository.findByEmail(email)
                 .orElseThrow(() -> new DomainNotPermittedException(
@@ -124,6 +127,7 @@ public class AuthService {
 
     // ── Refresh ────────────────────────────────────────────────────────────────
 
+    @Override
     public LoginResult refreshToken(String rawRefreshToken, String clientIp, String userAgent) {
         String hash = sha256(rawRefreshToken);
         RefreshTokenEntity token = refreshTokenRepository.findByTokenHash(hash)
@@ -147,6 +151,7 @@ public class AuthService {
 
     // ── Logout ─────────────────────────────────────────────────────────────────
 
+    @Override
     public void logout(String rawRefreshToken) {
         if (rawRefreshToken == null) return;
         String hash = sha256(rawRefreshToken);
@@ -158,6 +163,7 @@ public class AuthService {
 
     // ── Forgot / Reset password ─────────────────────────────────────────────────
 
+    @Override
     public void forgotPassword(String email) {
         // Rate limit: 3 requests per hour per email (prevents token flooding / email bombing)
         String rateLimitKey = "forgot:" + email.toLowerCase();
@@ -174,6 +180,7 @@ public class AuthService {
         });
     }
 
+    @Override
     public void resetPassword(String rawToken, String newPassword) {
         validatePasswordStrength(newPassword);
         String hash = sha256(rawToken);
@@ -198,6 +205,7 @@ public class AuthService {
 
     // ── Accept invite ───────────────────────────────────────────────────────────
 
+    @Override
     public void acceptInvite(String rawToken, String fullName, String password) {
         validatePasswordStrength(password);
         String hash = sha256(rawToken);
@@ -223,6 +231,7 @@ public class AuthService {
 
     // ── Bootstrap (first run) ───────────────────────────────────────────────────
 
+    @Override
     public void bootstrap(String fullName, String email, String rawPassword) {
         if (superAdminRepository.count() > 0) {
             throw new DomainNotPermittedException("ALREADY_BOOTSTRAPPED",
@@ -234,6 +243,7 @@ public class AuthService {
         log.info("Platform bootstrapped. Super Admin created: {}", email);
     }
 
+    @Override
     public boolean isOnboardingCompleted() {
         // True if either the legacy SUPER_ADMIN bootstrap or the single-tenant setup has run.
         return superAdminRepository.count() > 0 || tenantRepository.count() > 0;
@@ -351,16 +361,4 @@ public class AuthService {
             throw new RuntimeException("SHA-256 failed", e);
         }
     }
-
-    // ── Result record ─────────────────────────────────────────────────────────
-
-    public record LoginResult(
-            String accessToken,
-            String rawRefreshToken,
-            UUID userId,
-            String email,
-            String fullName,
-            String role,
-            String tenantSlug
-    ) {}
 }

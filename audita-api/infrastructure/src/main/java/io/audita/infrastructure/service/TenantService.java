@@ -1,5 +1,6 @@
 package io.audita.infrastructure.service;
 
+import io.audita.application.port.OnboardingPort;
 import io.audita.domain.exception.DomainNotPermittedException;
 import io.audita.domain.model.OAuthProvider;
 import io.audita.domain.model.TenantStatus;
@@ -34,7 +35,7 @@ import java.util.UUID;
  */
 @Service
 @Transactional
-public class TenantService {
+public class TenantService implements OnboardingPort {
 
     private static final Logger log = LoggerFactory.getLogger(TenantService.class);
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
@@ -48,6 +49,7 @@ public class TenantService {
     private final FlywayTenantMigrator flywayTenantMigrator;
     private final EmailService emailService;
     private final AesEncryptionService aesEncryptionService;
+    private final PasswordEncoder passwordEncoder;
     private final TransactionTemplate transactionTemplate;
 
     public TenantService(TenantRepository tenantRepository,
@@ -59,6 +61,7 @@ public class TenantService {
                          FlywayTenantMigrator flywayTenantMigrator,
                          EmailService emailService,
                          AesEncryptionService aesEncryptionService,
+                         PasswordEncoder passwordEncoder,
                          PlatformTransactionManager transactionManager) {
         this.tenantRepository = tenantRepository;
         this.allowedDomainRepository = allowedDomainRepository;
@@ -69,6 +72,7 @@ public class TenantService {
         this.flywayTenantMigrator = flywayTenantMigrator;
         this.emailService = emailService;
         this.aesEncryptionService = aesEncryptionService;
+        this.passwordEncoder = passwordEncoder;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
@@ -76,6 +80,7 @@ public class TenantService {
     // ── List / Get ─────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
+    @Override
     public String findFirstTenantSlug() {
         return tenantRepository.findAll().stream()
                 .findFirst()
@@ -163,9 +168,9 @@ public class TenantService {
      * Creates the tenant and the Admin user with a password set directly (no invite).
      * Guard: fails if any tenant already exists.
      */
-    public TenantEntity setupSingleTenant(String orgName, String slug, String adminFullName,
-                                           String adminEmail, String rawPassword,
-                                           PasswordEncoder passwordEncoder) {
+    @Override
+    public void setupSingleTenant(String orgName, String slug, String adminFullName,
+                                  String adminEmail, String rawPassword) {
         if (tenantRepository.count() > 0) {
             throw new DomainNotPermittedException("ALREADY_SETUP",
                     "Organisation has already been set up.");
@@ -200,7 +205,6 @@ public class TenantService {
             TenantContext.clear();
         }
 
-        return tenant;
     }
 
     // ── Update ─────────────────────────────────────────────────────────────────

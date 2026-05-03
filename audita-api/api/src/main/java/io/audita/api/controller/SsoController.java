@@ -2,9 +2,9 @@ package io.audita.api.controller;
 
 import io.audita.api.dto.request.ExchangeSsoCodeRequest;
 import io.audita.api.dto.response.AuthResponse;
+import io.audita.application.port.SsoPort;
+import io.audita.application.port.SsoPort.SsoResult;
 import io.audita.domain.model.OAuthProvider;
-import io.audita.infrastructure.service.SsoService;
-import io.audita.infrastructure.service.SsoService.SsoResult;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -34,7 +34,7 @@ public class SsoController {
 
     private static final String REFRESH_COOKIE = "refreshToken";
 
-    private final SsoService ssoService;
+    private final SsoPort ssoService;
 
     @Value("${audita.sso.frontend-base-url}")
     private String frontendBaseUrl;
@@ -42,7 +42,7 @@ public class SsoController {
     @Value("${audita.refresh-token.expiry-days:7}")
     private long refreshExpiryDays;
 
-    public SsoController(SsoService ssoService) {
+    public SsoController(SsoPort ssoService) {
         this.ssoService = ssoService;
     }
 
