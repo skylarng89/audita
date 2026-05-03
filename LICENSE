@@ -1,0 +1,32 @@
+# Audita Source-Available License
+
+Copyright (c) 2026 Audita Contributors
+
+This repository is licensed under Apache License 2.0 (see LICENSE-APACHE),
+subject to the following Commons Clause condition.
+
+The Commons Clause condition is an additional condition to the Apache 2.0
+license and modifies rights granted under Apache 2.0.
+
+Commons Clause License Condition v1.0
+
+Without limiting other conditions in the License, the grant of rights under
+this License will not include, and the License does not grant to you, the
+right to Sell the Software.
+
+For purposes of the foregoing, "Sell" means practicing any or all of the
+rights granted to you under the License to provide to third parties, for a fee
+or other consideration (including without limitation fees for hosting or
+consulting/support services related to the Software), a product or service
+whose value derives, entirely or substantially, from the functionality of the
+Software. Any license notice or attribution required by the License must also
+include this Commons Clause condition notice.
+
+Summary (non-binding):
+
+- Allowed: personal use, internal business/commercial use, modification,
+  forking, and contribution.
+- Not allowed: reselling this software, or offering hosted/managed services
+  whose value substantially derives from this software.
+
+If you cannot comply with these terms, do not use or distribute this software.

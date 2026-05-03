@@ -33,3 +33,11 @@
 - UX-003: Resolve browser-only bootstrap 403 by stripping `Origin`/`Referer`/`Host` in Nuxt internal API proxy route. ✅ (Completed 2026-04-29)
 - UX-004: Fix CR create redirect blank-page failure by stabilizing lazy read mapping in change request detail flow. ✅ (Completed 2026-04-29)
 - UX-005: Complete CR pages styling consistency audit (button sizing/tab controls/rich text description rendering). ✅ (Completed 2026-04-29)
+
+## Release Governance Implementation (2026-05-03)
+
+- REL-001: Add source-available license policy with no-resale and no managed-service resale constraints. ✅
+- REL-002: Rewrite README with full local, manual, and Docker deployment procedures. ✅
+- REL-003: Add CI/release workflow for dev -> main merges to run tests, publish Docker images, and create SemVer tags/releases. ✅
+- REL-004: Define historical tag backfill strategy (milestone tags, not per-commit tags). ✅
+- REL-005: Bootstrap milestone tags pushed to origin (`v0.1.0` .. `v0.5.0`). ✅

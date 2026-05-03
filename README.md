@@ -1,276 +1,276 @@
 # Audita
 
-**Self-hosted, multi-tenant ITIL/ITSM Change Management platform.**
+Audita is a self-hosted, multi-tenant ITIL/ITSM Change Management platform.
 
-Audita gives organisations a structured, auditable workflow for managing IT change requests — from creation through approval, SLA tracking, and immutable audit trail — across fully isolated tenants.
+It provides structured, auditable change workflows across creation, approvals,
+collaboration, SLA tracking, and immutable audit trails with schema-per-tenant
+data isolation.
 
----
+## License and Usage Terms
+
+This project is source-available.
+
+- You may use, modify, fork, and contribute to this codebase.
+- Personal and internal commercial use are allowed.
+- You may not resell this software.
+- You may not provide paid hosted/managed services where value substantially
+  derives from this software.
+
+See [LICENSE](LICENSE) and [LICENSE-APACHE](LICENSE-APACHE) for exact legal
+terms.
+
+## Contents
+
+- [Architecture](#architecture)
+- [Repository layout](#repository-layout)
+- [Requirements](#requirements)
+- [Quick start with Docker Compose](#quick-start-with-docker-compose)
+- [Manual deployment](#manual-deployment)
+- [Production deployment with Docker](#production-deployment-with-docker)
+- [Configuration reference](#configuration-reference)
+- [Versioning and release process](#versioning-and-release-process)
+- [CI and Docker publishing](#ci-and-docker-publishing)
+- [Contributing](#contributing)
+- [Security baseline](#security-baseline)
 
 ## Architecture
 
-| Service      | Technology                                       | Port            |
-| ------------ | ------------------------------------------------ | --------------- |
-| `audita-api` | Java 25 + Spring Boot 4 (hexagonal architecture) | `8080`          |
-| `audita-web` | Nuxt 3 + Vue 3 + Tailwind CSS                    | `3000`          |
-| `db`         | PostgreSQL 17                                    | `5432`          |
-| `mailhog`    | MailHog (dev SMTP catcher)                       | `1025` / `8025` |
+| Service | Technology | Default local port |
+| --- | --- | --- |
+| audita-api | Java 25 + Spring Boot 4 (hexagonal architecture) | 7080 -> 8080 |
+| audita-web | Nuxt 3 + Vue 3 + Tailwind CSS | 7000 -> 3000 |
+| db | PostgreSQL 17 | 7432 -> 5432 |
+| mailhog | MailHog (dev email capture) | 7025 SMTP, 8025 UI |
 
-The API uses a **schema-per-tenant** isolation model — each organisation gets its own PostgreSQL schema, migrated by Flyway on provisioning. The frontend resolves the active tenant from the subdomain (`acme.audita.io`).
+Tenant model:
 
-```
+- public schema: platform entities
+- tenant schema per org slug: org data and workflow records
+
+## Repository layout
+
+```text
 audita/
-├── audita-api/          # Spring Boot 4 — domain, application, infrastructure, api modules
-├── audita-web/          # Nuxt 3 frontend
-├── docker-compose.yml   # Full-stack dev environment
-└── docs/                # PRD, SRS, USER_FLOW
+├── audita-api/                  # Backend modules: domain, application, infrastructure, api
+├── audita-web/                  # Nuxt frontend
+├── docker-compose.yml           # Local full-stack runtime
+├── .github/workflows/           # CI and release automation
+├── docs/                        # Product and engineering docs
+└── memory-bank/                 # Working project context and decision logs
 ```
 
----
+## Requirements
 
-## Prerequisites
+- Docker Engine 24+ with Compose plugin
+- Java 25 (manual backend run)
+- Node.js 22 and pnpm 9 (manual frontend run)
 
-| Tool                         | Minimum version  |
-| ---------------------------- | ---------------- |
-| Docker + Docker Compose      | 24.x / v2 plugin |
-| Java (for standalone API)    | 25               |
-| Node.js (for standalone web) | 22               |
-| pnpm (for standalone web)    | 9                |
+## Quick start with Docker Compose
 
----
-
-## Quick start — Docker Compose (recommended)
-
-The fastest way to run the entire stack with a single command:
+1. Clone the repository.
+2. Create environment values.
+3. Start the stack.
 
 ```bash
 git clone <repo-url>
 cd audita
+
+cat > .env <<'EOF'
+JWT_SECRET=replace-with-random-32-plus-char-secret
+APP_ENCRYPTION_KEY=replace-with-64-hex-char-aes256-key
+EOF
+
 docker compose up --build
 ```
 
-Services will start in dependency order (PostgreSQL → API → web). Once healthy:
+Local endpoints:
 
-| URL                                   | Description                       |
-| ------------------------------------- | --------------------------------- |
-| http://localhost:3000                 | Audita web UI                     |
-| http://localhost:8080/actuator/health | API health check                  |
-| http://localhost:8025                 | MailHog — inspect outgoing emails |
+- Web: <http://localhost:7000>
+- API health: <http://localhost:7080/actuator/health>
+- MailHog UI: <http://localhost:8025>
 
-### Stop and remove containers
+Stop stack:
 
 ```bash
 docker compose down
 ```
 
-To also remove the database and uploads volumes (full reset):
+Reset all persisted volumes:
 
 ```bash
 docker compose down -v
 ```
 
-### Environment variables
+## Manual deployment
 
-The Compose file ships with safe defaults for local development. **Do not use these values in production.**
+### Backend (audita-api)
 
-| Variable                    | Default                            | Description                                       |
-| --------------------------- | ---------------------------------- | ------------------------------------------------- |
-| `DATABASE_URL`              | `jdbc:postgresql://db:5432/audita` | JDBC connection URL                               |
-| `DATABASE_USERNAME`         | `audita`                           | PostgreSQL username                               |
-| `DATABASE_PASSWORD`         | `secret`                           | PostgreSQL password                               |
-| `JWT_SECRET`                | `dev-secret-…`                     | HS256 signing key — **must be changed**           |
-| `JWT_EXPIRY_SECONDS`        | `900`                              | Access token TTL (15 min)                         |
-| `REFRESH_TOKEN_EXPIRY_DAYS` | `7`                                | Refresh token TTL                                 |
-| `APP_ENCRYPTION_KEY`        | `0000…` (64 hex chars)             | AES-256 key for SSO secrets — **must be changed** |
-| `APP_BASE_URL`              | `http://localhost:3000`            | Frontend base URL (used in email links)           |
-| `NUXT_PUBLIC_API_BASE`      | `http://api:8080`                  | API base URL seen by the web container            |
-
-To override any variable without modifying the Compose file, create a `.env` file in the project root:
-
-```dotenv
-JWT_SECRET=your-very-long-random-secret-at-least-32-chars
-APP_ENCRYPTION_KEY=<64 random hex characters>
-```
-
----
-
-## Standalone — API only (`audita-api`)
-
-### Prerequisites
-
-- Java 25 installed and on `PATH`
-- PostgreSQL 17 running locally (or adjust `DATABASE_URL`)
-
-### Run
+1. Provision PostgreSQL 17.
+2. Set runtime environment variables.
+3. Build and run Spring Boot.
 
 ```bash
 cd audita-api
 
-# Start PostgreSQL via Docker (if you don't have one)
-docker run -d \
-  --name audita-db \
-  -e POSTGRES_DB=audita \
-  -e POSTGRES_USER=audita \
-  -e POSTGRES_PASSWORD=secret \
-  -p 5432:5432 \
-  postgres:17-alpine
+export DATABASE_URL=jdbc:postgresql://localhost:5432/audita
+export DATABASE_USERNAME=audita
+export DATABASE_PASSWORD=change-me
+export JWT_SECRET=replace-with-random-32-plus-char-secret
+export APP_ENCRYPTION_KEY=replace-with-64-hex-char-aes256-key
+export APP_BASE_URL=https://your-frontend-domain
+export CORS_ALLOWED_ORIGINS=https://your-frontend-domain
 
-# Build and run with the dev Spring profile (coloured console logging)
-./gradlew :api:bootRun --args='--spring.profiles.active=dev'
+./gradlew :api:bootRun --args='--spring.profiles.active=prod'
 ```
 
-The API starts on **http://localhost:8080**. Flyway will apply the `public` schema baseline migration automatically on first boot.
-
-### Build a fat JAR
+Build artifact:
 
 ```bash
 ./gradlew :api:bootJar
 java -jar api/build/libs/audita-api.jar
 ```
 
-### Run tests
-
-```bash
-./gradlew test
-```
-
-### Environment variables (standalone)
-
-Set these before running, or pass as `--spring.datasource.url=…` arguments:
-
-```bash
-export DATABASE_URL=jdbc:postgresql://localhost:5432/audita
-export DATABASE_USERNAME=audita
-export DATABASE_PASSWORD=secret
-export JWT_SECRET=change-me-in-production-must-be-at-least-32-chars-long
-export APP_ENCRYPTION_KEY=<64 hex chars>
-export APP_BASE_URL=http://localhost:3000
-```
-
-For local email testing, start MailHog:
-
-```bash
-docker run -d -p 1025:1025 -p 8025:8025 mailhog/mailhog
-```
-
----
-
-## Standalone — Web only (`audita-web`)
-
-### Prerequisites
-
-- Node.js 22+
-- pnpm 9+ (`npm install -g pnpm` or `corepack enable && corepack prepare pnpm@latest --activate`)
-
-### Install dependencies
+### Frontend (audita-web)
 
 ```bash
 cd audita-web
-pnpm install
+pnpm install --frozen-lockfile
+NUXT_PUBLIC_API_BASE=https://your-api-domain pnpm build
+pnpm preview
 ```
 
-### Development server
+For production, run behind Nginx, Caddy, or another reverse proxy with TLS.
+
+## Production deployment with Docker
+
+Use production values only. Do not reuse local defaults.
+
+1. Build images.
+2. Push to your registry.
+3. Run with production environment.
 
 ```bash
-pnpm dev
+docker build -t <namespace>/audita-api:<version> ./audita-api
+docker build -t <namespace>/audita-web:<version> ./audita-web
+
+docker push <namespace>/audita-api:<version>
+docker push <namespace>/audita-web:<version>
 ```
 
-Opens on **http://localhost:3000**. API requests are proxied to `http://localhost:8080` by default (configured in `nuxt.config.ts`).
+Deployment hardening requirements:
 
-To point at a different API:
+- TLS termination in front of web and API
+- CORS allowlist set to explicit origins
+- Strong JWT and encryption keys
+- Backups for PostgreSQL and upload volumes
+- Persistent centralized logs and metrics
+
+## Configuration reference
+
+Important backend variables:
+
+| Variable | Purpose |
+| --- | --- |
+| DATABASE_URL | JDBC URL for PostgreSQL |
+| DATABASE_USERNAME | DB username |
+| DATABASE_PASSWORD | DB password |
+| JWT_SECRET | JWT signing secret (32+ chars) |
+| JWT_EXPIRY_SECONDS | Access token TTL |
+| REFRESH_TOKEN_EXPIRY_DAYS | Refresh token TTL |
+| APP_ENCRYPTION_KEY | 64-char hex AES key for sensitive config values |
+| APP_BASE_URL | Frontend base URL for links |
+| API_BASE_URL | Public API base URL used in SSO callback generation |
+| FRONTEND_BASE_URL | Frontend base URL used after SSO flow |
+| CORS_ALLOWED_ORIGINS | Comma-separated explicit origin allowlist |
+
+Important frontend variables:
+
+| Variable | Purpose |
+| --- | --- |
+| NUXT_PUBLIC_API_BASE | Browser-visible API base path or URL |
+| NUXT_API_INTERNAL_BASE | Internal server-side API target for proxy routes |
+
+## Versioning and release process
+
+Versioning model:
+
+- Semantic Versioning tags with a v prefix (example: v0.1.0)
+- v0.x series while APIs are still evolving rapidly
+- One release tag per dev -> main merge
+
+Historical commits already pushed:
+
+- Do not tag every commit.
+- Tag meaningful release milestones only.
+
+Recommended bootstrap command sequence:
 
 ```bash
-NUXT_PUBLIC_API_BASE=http://localhost:8080 pnpm dev
+# choose the milestone commit you want as first release baseline
+git tag -a v0.1.0 <commit-sha> -m "Release v0.1.0"
+git push origin v0.1.0
 ```
 
-### Tenant resolution in development
+For additional historical milestones, repeat with v0.2.0, v0.3.0, and so on
+only at meaningful cut points.
 
-The frontend resolves the active tenant from the subdomain. For local development without a real subdomain, append `?tenant=<slug>` to any URL:
+## CI and Docker publishing
 
-```
-http://localhost:3000?tenant=acme
-```
+Workflow file: [.github/workflows/ci-release.yml](.github/workflows/ci-release.yml)
 
-This sets the `X-Tenant-Slug` header on all API requests for the duration of that navigation session.
+Behavior:
 
-### Build for production
+- Pull requests targeting main run backend and frontend CI checks.
+- Pushes to main also run CI checks.
+- When dev is merged into main, CI verifies the merged code, then:
+  - computes next SemVer tag from existing tags
+  - builds and pushes audita-api and audita-web Docker images
+  - tags images as latest, vX.Y.Z, vX.Y, and `sha-<git-sha>`
+  - creates or reuses git tag and publishes a GitHub release
 
-```bash
-pnpm build
-pnpm preview   # Preview the production build locally
-```
+Required GitHub secrets:
 
-### Lint and type-check
+- DOCKERHUB_USERNAME
+- DOCKERHUB_TOKEN
 
-```bash
-pnpm lint
-pnpm typecheck
-```
+Optional GitHub variables:
 
----
+- DOCKERHUB_NAMESPACE
+- DOCKERHUB_API_IMAGE_NAME
+- DOCKERHUB_WEB_IMAGE_NAME
 
-## Database
+Defaults if optional variables are unset:
 
-### Schema design
+- namespace uses DOCKERHUB_USERNAME
+- image names use audita-api and audita-web
 
-- `public` schema — platform-wide tables: `tenants`, `super_admins`, `tenant_allowed_domains`, `tenant_sso_configs`
-- `<tenant_slug>` schema — per-tenant tables: `users`, `roles`, `change_requests`, `approvers`, `comments`, `notifications`, `audit_logs`, etc.
+## Contributing
 
-### Migrations
+Contributions are welcome through forks and pull requests.
 
-Migrations are managed by **Flyway** and run automatically on startup:
+Basic flow:
 
-- `audita-api/infrastructure/src/main/resources/db/migration/public/` — public schema baseline
-- `audita-api/infrastructure/src/main/resources/db/migration/tenant/` — per-tenant schema (applied when a new org is provisioned)
+1. Fork the repository.
+2. Create a feature branch from dev.
+3. Open a pull request to dev.
+4. Merge dev into main for release publication.
 
-### Connect directly (Docker Compose)
+By contributing, you agree your contributions are licensed under the same
+license terms in [LICENSE](LICENSE).
 
-```bash
-docker exec -it audita-db psql -U audita -d audita
-```
+## Security baseline
 
----
+- Use strong secrets in every non-local environment.
+- Keep CORS origins explicit and minimal.
+- Never expose development SMTP endpoints in production.
+- Run automated tests and security scans before release.
+- Audit role and tenant boundaries when adding new endpoints.
 
-## Logs
+## Project documents
 
-The API emits structured JSON logs in non-dev environments. Every log line includes:
-
-```json
-{
-  "@timestamp": "2026-04-27T12:00:00.000Z",
-  "level": "INFO",
-  "logger_name": "io.audita.service.AuthService",
-  "msg": "User login successful",
-  "tenant_id": "acme",
-  "user_id": "usr_01J…",
-  "request_id": "req_7f3a…"
-}
-```
-
-In the `dev` Spring profile, logs are coloured and human-readable. Activate it with:
-
-```bash
-./gradlew :api:bootRun --args='--spring.profiles.active=dev'
-```
-
----
-
-## Project documentation
-
-| Document                                  | Location                                               |
-| ----------------------------------------- | ------------------------------------------------------ |
-| Product Requirements (PRD)                | [docs/PRD.md](docs/PRD.md)                             |
-| Software Requirements Specification (SRS) | [docs/SRS.md](docs/SRS.md)                             |
-| User Flow                                 | [docs/USER_FLOW.md](docs/USER_FLOW.md)                 |
-| Architecture decisions                    | [memory-bank/decisions.md](memory-bank/decisions.md)   |
-| Technology stack                          | [memory-bank/tech-stack.md](memory-bank/tech-stack.md) |
-| Sprint task list                          | [memory-bank/docs/tasks.md](memory-bank/docs/tasks.md) |
-
----
-
-## Security notes
-
-- `JWT_SECRET` must be at least 32 characters and randomly generated in production
-- `APP_ENCRYPTION_KEY` must be a cryptographically random 64-character hex string (256-bit AES key)
-- The default PostgreSQL password `secret` must be changed before any internet-facing deployment
-- MailHog is a development tool — replace with a real SMTP provider in production
-- The `?tenant=` query param for tenant resolution is only active in development builds (`import.meta.dev`)
+- [docs/PRD.md](docs/PRD.md)
+- [docs/SRS.md](docs/SRS.md)
+- [docs/USER_FLOW.md](docs/USER_FLOW.md)
+- [memory-bank/decisions.md](memory-bank/decisions.md)
+- [memory-bank/tech-stack.md](memory-bank/tech-stack.md)
+- [memory-bank/docs/tasks.md](memory-bank/docs/tasks.md)

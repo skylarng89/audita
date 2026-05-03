@@ -295,6 +295,37 @@
 - `cd audita-api && ./gradlew :api:test --tests io.audita.api.security.TenantResolutionFilterTest --tests io.audita.infrastructure.service.ChangeRequestServiceSecurityTest` passes.
 - `cd audita-web && pnpm build` passes.
 
+### Release Governance Foundation (Completed 2026-05-03)
+
+**Overview**: Added source-available licensing, comprehensive README deployment/release documentation, and CI automation to publish Docker images and release tags on dev -> main merges.
+
+**Files Created/Modified**:
+
+- `LICENSE` — source-available policy with no resale and no managed-service resale terms.
+- `LICENSE-APACHE` — Apache 2.0 base license reference linked by project license terms.
+- `README.md` — complete project handbook with licensing, architecture, local/manual/Docker deployment, versioning strategy, and CI release behavior.
+- `.github/workflows/ci-release.yml` — CI checks for PR/push and release automation on merged dev -> main PRs.
+
+**Key Changes**:
+
+- Enforced explicit no-resale and no hosted-service resale license condition while preserving personal and internal commercial use.
+- Documented manual and Docker deployment procedures end-to-end for contributors and operators.
+- Automated Docker Hub publishing with `latest`, `vX.Y.Z`, `vX.Y`, and `sha-<git-sha>` tags.
+- Automated SemVer git tag and GitHub release generation on release merges.
+- Standardized recommendation for historical versioning using milestone tags only.
+
+### Release Tag Bootstrap (Completed 2026-05-03)
+
+**Overview**: Created and pushed historical milestone SemVer tags to bootstrap release history before automated release flow takes over.
+
+**Tags Created**:
+
+- `v0.1.0` -> `50453f6` (Sprint 1 auth/bootstrap completion)
+- `v0.2.0` -> `6ed7794` (Sprint 4 collaboration/notifications/SLA completion)
+- `v0.3.0` -> `5cea0f4` (comprehensive E2E and entity mapping hardening)
+- `v0.4.0` -> `98df35a` (security hardening pass)
+- `v0.5.0` -> `dba36ce` (security refinement pass)
+
 ### Sprint 4 — Collaboration, Notifications & SLA Automation (Completed 2026-04-28)
 
 **Overview**: Implemented comments with mention handling, in-app notification APIs + SSE streaming, SLA warning/breach scheduler automation, and frontend comments/notification wiring.
