@@ -9,6 +9,7 @@ import io.audita.api.dto.response.ActivityStreamResponse;
 import io.audita.api.dto.response.AttachmentResponse;
 import io.audita.api.dto.request.UpdateChangeRequestRequest;
 import io.audita.api.dto.response.ChangeRequestCustomFieldResponse;
+import io.audita.api.dto.response.PageResponse;
 import io.audita.api.dto.response.ChangeRequestResponse;
 import io.audita.api.dto.response.CrApproverResponse;
 import io.audita.api.security.UserPrincipal;
@@ -16,7 +17,6 @@ import io.audita.domain.model.ChangeRequestStatus;
 import io.audita.domain.model.Priority;
 import io.audita.infrastructure.service.ChangeRequestService;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -99,15 +99,17 @@ public class ChangeRequestController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public Page<ChangeRequestResponse> list(
+    public PageResponse<ChangeRequestResponse> list(
             @RequestParam(required = false) ChangeRequestStatus status,
             @RequestParam(required = false) Priority priority,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) UUID createdBy,
             @PageableDefault(size = 20) Pageable pageable) {
 
-        return changeRequestService.list(status, priority, category, createdBy, pageable)
-                .map(ChangeRequestResponse::from);
+        return PageResponse.from(
+                changeRequestService.list(status, priority, category, createdBy, pageable),
+                ChangeRequestResponse::from
+        );
     }
 
     @GetMapping("/{id}")

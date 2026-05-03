@@ -12,6 +12,13 @@
           View all users in your organisation and their assigned roles.
         </p>
       </div>
+      <button
+        v-if="canManageUsers"
+        @click="showInviteModal = true"
+        class="btn-primary btn-sm"
+      >
+        + Invite User
+      </button>
     </div>
 
     <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -36,7 +43,7 @@
     </div>
 
     <section class="card shadow-card-hover">
-      <AppTable
+      <SharedAppTable
         :columns="columns"
         :data="users"
         :loading="pending"
@@ -44,21 +51,23 @@
         empty-message="No users found for this organisation."
       >
         <template #cell-roleName="{ value }">
-          <AppBadge variant="primary">{{ value || "Unassigned" }}</AppBadge>
+          <SharedAppBadge variant="primary">{{
+            value || "Unassigned"
+          }}</SharedAppBadge>
         </template>
 
         <template #cell-status="{ value }">
-          <AppBadge :variant="statusVariant(value)">{{
+          <SharedAppBadge :variant="statusVariant(value)">{{
             value || "UNKNOWN"
-          }}</AppBadge>
+          }}</SharedAppBadge>
         </template>
-      </AppTable>
+      </SharedAppTable>
 
       <div
         v-if="total > pageSize"
         class="border-t border-border px-5 py-4 dark:border-border-dark"
       >
-        <AppPagination
+        <SharedAppPagination
           :page="page"
           :page-size="pageSize"
           :total="total"
@@ -66,6 +75,83 @@
         />
       </div>
     </section>
+
+    <SharedAppModal
+      v-if="showInviteModal"
+      title="Invite User"
+      @close="showInviteModal = false"
+    >
+      <form @submit.prevent="inviteUser" class="space-y-4 p-4">
+        <div
+          v-if="inviteError"
+          class="rounded-md border border-danger-border bg-danger-light px-4 py-3 text-sm text-danger"
+        >
+          {{ inviteError }}
+        </div>
+
+        <div>
+          <label
+            for="invite-email"
+            class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted"
+            >Email</label
+          >
+          <input
+            id="invite-email"
+            v-model="inviteForm.email"
+            type="email"
+            class="input"
+            required
+          />
+        </div>
+
+        <div>
+          <label
+            for="invite-full-name"
+            class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted"
+            >Full Name</label
+          >
+          <input
+            id="invite-full-name"
+            v-model="inviteForm.fullName"
+            type="text"
+            class="input"
+            required
+          />
+        </div>
+
+        <div>
+          <label
+            for="invite-role"
+            class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted"
+            >Role</label
+          >
+          <select
+            id="invite-role"
+            v-model="inviteForm.roleId"
+            class="input"
+            required
+          >
+            <option value="" disabled>Select a role</option>
+            <option v-for="role in roles" :key="role.id" :value="role.id">
+              {{ role.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button
+            type="button"
+            @click="showInviteModal = false"
+            class="btn-ghost btn-sm"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="btn-primary btn-sm" :disabled="inviting">
+            {{ inviting ? "Sending..." : "Send Invite" }}
+          </button>
+        </div>
+      </form>
+    </SharedAppModal>
 
     <p v-if="loadError" class="text-sm text-danger">{{ loadError }}</p>
   </div>
@@ -76,6 +162,7 @@ definePageMeta({ layout: "default" });
 
 const api = useApi();
 const auth = useAuthStore();
+const { success: toastSuccess } = useToast();
 
 interface UserRow {
   id: string;
@@ -88,11 +175,27 @@ interface UserRow {
 interface UserPayload {
   content?: UserRow[];
   totalElements?: number;
+  page?: {
+    totalElements?: number;
+  };
+}
+
+interface Role {
+  id: string;
+  name: string;
 }
 
 const page = ref(1);
 const pageSize = 20;
 const loadError = ref("");
+const showInviteModal = ref(false);
+const inviteError = ref("");
+const inviting = ref(false);
+const inviteForm = reactive({
+  email: "",
+  fullName: "",
+  roleId: "",
+});
 
 const { data, pending, refresh } = await useAsyncData<UserPayload>(
   "users-index-page",
@@ -124,8 +227,28 @@ const { data, pending, refresh } = await useAsyncData<UserPayload>(
   { watch: [page] },
 );
 
+const { data: rolesData } = await useAsyncData<Role[]>(
+  "users-roles",
+  async () => {
+    try {
+      return (await api("/api/v1/roles")) as Role[];
+    } catch {
+      return [];
+    }
+  },
+);
+
 const users = computed(() => data.value?.content ?? []);
-const total = computed(() => data.value?.totalElements ?? users.value.length);
+const total = computed(
+  () =>
+    data.value?.totalElements ??
+    data.value?.page?.totalElements ??
+    users.value.length,
+);
+const roles = computed(() => rolesData.value ?? []);
+const canManageUsers = computed(
+  () => auth.role === "ADMIN" || auth.role === "SUPER_ADMIN",
+);
 
 const totalUsers = computed(
   () => data.value?.totalElements ?? users.value.length,
@@ -152,6 +275,34 @@ function statusVariant(status: unknown): "success" | "danger" | "neutral" {
 function onPageChange(nextPage: number) {
   page.value = nextPage;
   refresh();
+}
+
+async function inviteUser() {
+  inviteError.value = "";
+  inviting.value = true;
+
+  try {
+    await api("/api/v1/users/invite", {
+      method: "POST",
+      body: {
+        email: inviteForm.email,
+        fullName: inviteForm.fullName,
+        roleId: inviteForm.roleId,
+      },
+    });
+
+    toastSuccess("Invite sent.");
+    showInviteModal.value = false;
+    inviteForm.email = "";
+    inviteForm.fullName = "";
+    inviteForm.roleId = "";
+    refresh();
+  } catch (err: unknown) {
+    const apiErr = err as { data?: { message?: string } };
+    inviteError.value = apiErr.data?.message ?? "Failed to send invite.";
+  } finally {
+    inviting.value = false;
+  }
 }
 
 const columns = [

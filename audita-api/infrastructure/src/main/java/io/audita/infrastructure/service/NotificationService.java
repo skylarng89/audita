@@ -5,6 +5,7 @@ import io.audita.infrastructure.persistence.entity.NotificationEntity;
 import io.audita.infrastructure.persistence.entity.UserEntity;
 import io.audita.infrastructure.persistence.repository.NotificationRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
+import jakarta.annotation.PreDestroy;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -17,14 +18,26 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Transactional
 public class NotificationService {
 
+    private static final long HEARTBEAT_INTERVAL_SECONDS = 25;
+
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final Map<UUID, CopyOnWriteArrayList<SseEmitter>> emittersByUser = new ConcurrentHashMap<>();
+    private final Map<SseEmitter, ScheduledFuture<?>> heartbeatTasks = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService heartbeatExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread thread = new Thread(r, "sse-heartbeat");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     public NotificationService(NotificationRepository notificationRepository,
                                UserRepository userRepository) {
@@ -85,10 +98,16 @@ public class NotificationService {
 
         try {
             emitter.send(SseEmitter.event().name("connected").data("ok"));
+            scheduleHeartbeat(recipientId, emitter);
         } catch (IOException ignored) {
             removeEmitter(recipientId, emitter);
         }
         return emitter;
+    }
+
+    @PreDestroy
+    void shutdownHeartbeatExecutor() {
+        heartbeatExecutor.shutdownNow();
     }
 
     private void pushToUser(UUID recipientId, NotificationEntity notification) {
@@ -116,6 +135,11 @@ public class NotificationService {
     }
 
     private void removeEmitter(UUID recipientId, SseEmitter emitter) {
+        ScheduledFuture<?> heartbeatTask = heartbeatTasks.remove(emitter);
+        if (heartbeatTask != null) {
+            heartbeatTask.cancel(true);
+        }
+
         List<SseEmitter> emitters = emittersByUser.get(recipientId);
         if (emitters == null) {
             return;
@@ -124,5 +148,16 @@ public class NotificationService {
         if (emitters.isEmpty()) {
             emittersByUser.remove(recipientId);
         }
+    }
+
+    private void scheduleHeartbeat(UUID recipientId, SseEmitter emitter) {
+        ScheduledFuture<?> task = heartbeatExecutor.scheduleAtFixedRate(() -> {
+            try {
+                emitter.send(SseEmitter.event().name("keepalive").data("ping"));
+            } catch (IOException e) {
+                removeEmitter(recipientId, emitter);
+            }
+        }, HEARTBEAT_INTERVAL_SECONDS, HEARTBEAT_INTERVAL_SECONDS, TimeUnit.SECONDS);
+        heartbeatTasks.put(emitter, task);
     }
 }

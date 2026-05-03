@@ -3,10 +3,10 @@ package io.audita.api.controller;
 import io.audita.api.dto.request.CreateGroupRequest;
 import io.audita.api.dto.request.GroupMemberRequest;
 import io.audita.api.dto.response.GroupResponse;
+import io.audita.api.dto.response.PageResponse;
 import io.audita.api.dto.response.UserResponse;
 import io.audita.infrastructure.service.GroupService;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -30,8 +30,8 @@ public class GroupController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public Page<GroupResponse> listGroups(@PageableDefault(size = 20) Pageable pageable) {
-        return groupService.listGroups(pageable).map(GroupResponse::from);
+    public PageResponse<GroupResponse> listGroups(@PageableDefault(size = 20) Pageable pageable) {
+        return PageResponse.from(groupService.listGroups(pageable), GroupResponse::from);
     }
 
     @GetMapping("/{id}")
@@ -65,10 +65,12 @@ public class GroupController {
 
     @GetMapping("/{id}/members")
     @PreAuthorize("isAuthenticated()")
-    public Page<UserResponse> listMembers(@PathVariable UUID id,
-                                          @PageableDefault(size = 20) Pageable pageable) {
-        return groupService.listMembers(id, pageable)
-                .map(m -> UserResponse.from(m.getUser()));
+        public PageResponse<UserResponse> listMembers(@PathVariable UUID id,
+                              @PageableDefault(size = 20) Pageable pageable) {
+        return PageResponse.from(
+            groupService.listMembers(id, pageable),
+            m -> UserResponse.from(m.getUser())
+        );
     }
 
     @PostMapping("/{id}/members")
