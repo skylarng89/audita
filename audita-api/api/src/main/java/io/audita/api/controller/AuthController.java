@@ -2,8 +2,8 @@ package io.audita.api.controller;
 
 import io.audita.api.dto.request.*;
 import io.audita.api.dto.response.AuthResponse;
-import io.audita.infrastructure.service.AuthService;
-import io.audita.infrastructure.service.AuthService.LoginResult;
+import io.audita.application.port.AuthPort;
+import io.audita.application.port.AuthPort.LoginResult;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,7 +22,7 @@ public class AuthController {
 
     private static final String REFRESH_COOKIE = "refreshToken";
 
-    private final AuthService authService;
+    private final AuthPort authService;
 
     @Value("${audita.jwt.expiry-seconds:900}")
     private long jwtExpirySeconds;
@@ -33,7 +33,7 @@ public class AuthController {
     @Value("${audita.security.trust-forwarded-headers:false}")
     private boolean trustForwardedHeaders;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthPort authService) {
         this.authService = authService;
     }
 

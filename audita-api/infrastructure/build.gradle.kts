@@ -1,6 +1,13 @@
+plugins {
+    `java-library`
+}
+
 // Infrastructure module — database, email, file storage, security utilities, tenant wiring.
 dependencies {
     implementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.6"))
+
+    // Exposed because :api compiles against infrastructure types annotated with jakarta.persistence.*
+    api("jakarta.persistence:jakarta.persistence-api")
 
     implementation(project(":domain"))
     implementation(project(":application"))

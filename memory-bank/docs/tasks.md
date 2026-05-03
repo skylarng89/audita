@@ -120,13 +120,14 @@
 
 ### Backend + Frontend Hardening
 
-| Task ID  | Task                                                             | Priority | Status       | Assigned To | Notes                                                                               |
-| -------- | ---------------------------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------- |
-| HARD-001 | Resolve critical CR lifecycle integration regressions            | High     | ✅ Completed | Developer 1 | `CriticalFlowsE2EL1Test` now passes all 4 flows after service + compatibility fixes |
-| HARD-002 | Add principal identity regression tests                          | High     | ✅ Completed | Developer 1 | Added `UserPrincipalTest` to lock UUID username semantics                           |
-| HARD-003 | Harden CR response mapping against lazy-loading runtime failures | High     | ✅ Completed | Developer 1 | Added service-layer creator initialization before returning mapped entities         |
-| HARD-004 | Run backend release gate (critical suite)                        | High     | ✅ Completed | Developer 1 | `./gradlew :api:test --tests "io.audita.api.integration.CriticalFlowsE2EL1Test"`    |
-| HARD-005 | Run frontend release gate (production build)                     | High     | ✅ Completed | Developer 2 | `cd audita-web && pnpm build`                                                       |
+| Task ID  | Task                                                                          | Priority | Status       | Assigned To | Notes                                                                                                                                     |
+| -------- | ----------------------------------------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| HARD-001 | Resolve critical CR lifecycle integration regressions                         | High     | ✅ Completed | Developer 1 | `CriticalFlowsE2EL1Test` now passes all 4 flows after service + compatibility fixes                                                       |
+| HARD-002 | Add principal identity regression tests                                       | High     | ✅ Completed | Developer 1 | Added `UserPrincipalTest` to lock UUID username semantics                                                                                 |
+| HARD-003 | Harden CR response mapping against lazy-loading runtime failures              | High     | ✅ Completed | Developer 1 | Added service-layer creator initialization before returning mapped entities                                                               |
+| HARD-004 | Run backend release gate (critical suite)                                     | High     | ✅ Completed | Developer 1 | `./gradlew :api:test --tests "io.audita.api.integration.CriticalFlowsE2EL1Test"`                                                          |
+| HARD-005 | Run frontend release gate (production build)                                  | High     | ✅ Completed | Developer 2 | `cd audita-web && pnpm build`                                                                                                             |
+| ARCH-001 | Introduce application ports + controller inversion (auth/SSO/bootstrap slice) | High     | ✅ Completed | Developer 1 | Added `AuthPort`, `SsoPort`, `OnboardingPort`; rewired `AuthController`, `SsoController`, `PlatformBootstrapController`; compile verified |
 
 ---
 

@@ -1,5 +1,6 @@
 package io.audita.infrastructure.service;
 
+import io.audita.application.port.SsoPort;
 import io.audita.domain.exception.DomainException;
 import io.audita.domain.exception.DomainNotPermittedException;
 import io.audita.domain.model.OAuthProvider;
@@ -38,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * cross-tenant session fixation attacks.
  */
 @Service
-public class SsoService {
+public class SsoService implements SsoPort {
 
     private static final Logger log = LoggerFactory.getLogger(SsoService.class);
 
@@ -82,7 +83,8 @@ public class SsoService {
 
     // ── Step 1: Build authorization URL ─────────────────────────────────────────
 
-    public String buildAuthorizationUrl(String tenantSlug, OAuthProvider provider) {
+        @Override
+        public String buildAuthorizationUrl(String tenantSlug, OAuthProvider provider) {
                 cleanupExpiredStates();
         TenantSsoConfigEntity config = loadSsoConfig(tenantSlug, provider);
 
@@ -120,6 +122,7 @@ public class SsoService {
     // ── Step 2: Handle callback, issue tokens ────────────────────────────────────
 
     @Transactional
+        @Override
     public SsoResult handleCallback(OAuthProvider provider, String code, String state) {
                 cleanupExpiredStates();
         SsoState ssoState = validateState(state);
@@ -152,15 +155,17 @@ public class SsoService {
                 user.getFullName(), role, tenantSlug, jwtExpirySeconds);
     }
 
-        public String issueFrontendExchangeCode(SsoResult result) {
+    @Override
+    public String issueFrontendExchangeCode(SsoResult result) {
                 cleanupExpiredStates();
                 String code = generateSecureToken();
                 long expiresAt = System.currentTimeMillis() + 90_000L;
                 pendingExchanges.put(code, new FrontendExchangeState(result, expiresAt));
                 return code;
-        }
+    }
 
-        public SsoResult consumeFrontendExchangeCode(String code) {
+    @Override
+    public SsoResult consumeFrontendExchangeCode(String code) {
                 cleanupExpiredStates();
                 FrontendExchangeState exchangeState = pendingExchanges.remove(code);
                 if (exchangeState == null || System.currentTimeMillis() > exchangeState.expiresAt()) {
@@ -314,14 +319,4 @@ public class SsoService {
 
     private record OAuthUserInfo(String sub, String email, String name) {}
 
-    public record SsoResult(
-            String accessToken,
-            String rawRefreshToken,
-            UUID userId,
-            String email,
-            String fullName,
-            String role,
-            String tenantSlug,
-            long expiresIn
-    ) {}
 }

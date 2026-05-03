@@ -2,15 +2,14 @@ package io.audita.api.controller;
 
 import io.audita.api.dto.request.BootstrapRequest;
 import io.audita.api.dto.request.SetupRequest;
-import io.audita.infrastructure.service.AuthService;
-import io.audita.infrastructure.service.TenantService;
+import io.audita.application.port.AuthPort;
+import io.audita.application.port.OnboardingPort;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -23,19 +22,16 @@ public class PlatformBootstrapController {
 
     private static final Logger log = LoggerFactory.getLogger(PlatformBootstrapController.class);
 
-    private final AuthService authService;
-    private final TenantService tenantService;
-    private final PasswordEncoder passwordEncoder;
+    private final AuthPort authService;
+    private final OnboardingPort onboardingPort;
 
     @Value("${audita.bootstrap.setup-token:}")
     private String setupToken;
 
-    public PlatformBootstrapController(AuthService authService,
-                                       TenantService tenantService,
-                                       PasswordEncoder passwordEncoder) {
+    public PlatformBootstrapController(AuthPort authService,
+                                       OnboardingPort onboardingPort) {
         this.authService = authService;
-        this.tenantService = tenantService;
-        this.passwordEncoder = passwordEncoder;
+        this.onboardingPort = onboardingPort;
     }
 
     /**
@@ -71,13 +67,12 @@ public class PlatformBootstrapController {
         log.info("Single-tenant setup attempt: orgName={} slug={} emailDomain={}",
                 request.orgName(), request.slug(), extractDomain(request.email()));
 
-        tenantService.setupSingleTenant(
+        onboardingPort.setupSingleTenant(
                 request.orgName(),
                 request.slug(),
                 request.fullName(),
                 request.email(),
-                request.password(),
-                passwordEncoder);
+            request.password());
 
         log.info("Single-tenant setup succeeded: slug={}", request.slug());
         return ResponseEntity.ok(Map.of(
@@ -95,7 +90,7 @@ public class PlatformBootstrapController {
 
         // Include the tenant slug so the frontend can use it for single-tenant login
         // without requiring a subdomain or query param.
-        String slug = tenantService.findFirstTenantSlug();
+        String slug = onboardingPort.findFirstTenantSlug();
         if (slug != null) {
             body.put("tenantSlug", slug);
         }

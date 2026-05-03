@@ -41,3 +41,9 @@
 - REL-003: Add CI/release workflow for dev -> main merges to run tests, publish Docker images, and create SemVer tags/releases. ✅
 - REL-004: Define historical tag backfill strategy (milestone tags, not per-commit tags). ✅
 - REL-005: Bootstrap milestone tags pushed to origin (`v0.1.0` .. `v0.5.0`). ✅
+
+## Architecture Follow-Up (2026-05-03)
+
+- ARCH-001: Introduce application ports for authentication, SSO orchestration, and onboarding bootstrap/setup flows. ✅
+- ARCH-002: Refactor API controllers to depend on application ports instead of concrete infrastructure services for auth/SSO/bootstrap endpoints. ✅
+- ARCH-003: Internalize setup password hashing inside infrastructure tenant service and remove controller-level password encoder coupling. ✅
