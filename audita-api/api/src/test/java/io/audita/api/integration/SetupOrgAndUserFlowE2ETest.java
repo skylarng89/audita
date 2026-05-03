@@ -73,145 +73,167 @@ class SetupOrgAndUserFlowE2ETest {
 
     @Test
     void full_setup_provision_invite_login_flow() throws Exception {
+        FlowContext flow = initializeFlowContext();
+        bootstrapPlatform(flow);
+        flow.saToken = loginSuperAdmin(flow);
+        provisionTenant(flow);
+        acceptOrgAdminInvite(flow);
+        flow.orgAdminToken = loginOrgAdmin(flow);
+        inviteSecondUser(flow);
+        acceptSecondUserInviteAndVerifyAccess(flow);
+    }
 
-        // ── 1. Bootstrap platform ─────────────────────────────────────────────
+    private FlowContext initializeFlowContext() {
+        FlowContext flow = new FlowContext();
+        flow.superAdminEmail = "superadmin@audita.io";
+        flow.superAdminPassword = "SuperAdmin1!Aa#Test";
+        flow.superAdminName = "Platform Admin";
+        flow.orgSlug = "acme-" + uniqueSuffix();
+        flow.orgName = "Acme Corp";
+        flow.orgAdminEmail = "alice@" + flow.orgSlug + ".com";
+        flow.orgAdminName = "Alice Admin";
+        flow.orgAdminPassword = "OrgAdmin1!Aa#Test";
+        flow.user2Email = "bob@" + flow.orgSlug + ".com";
+        flow.user2Name = "Bob Requester";
+        flow.user2Password = "UserTwo1!Aa#Test";
+        return flow;
+    }
 
-        String superAdminEmail    = "superadmin@audita.io";
-        String superAdminPassword = "SuperAdmin1!Aa#Test";
-        String superAdminName     = "Platform Admin";
-
+    private void bootstrapPlatform(FlowContext flow) throws Exception {
         String bootstrapPayload = mapper.writeValueAsString(new BootstrapReq(
-                superAdminName, superAdminEmail, superAdminPassword));
+                flow.superAdminName, flow.superAdminEmail, flow.superAdminPassword));
 
-        // Verify status is not yet bootstrapped
         HttpResponse<String> statusBefore = getAnon("/api/platform/v1/bootstrap/status");
         assertThat(statusBefore.statusCode()).isEqualTo(200);
         assertThat(mapper.readTree(statusBefore.body()).get("onboardingCompleted").asBoolean())
-                .as("Should not be bootstrapped yet").isFalse();
+                .as("Should not be bootstrapped yet")
+                .isFalse();
 
         HttpResponse<String> bootstrap = postAnon("/api/platform/v1/bootstrap", bootstrapPayload);
         assertThat(bootstrap.statusCode())
                 .withFailMessage("Bootstrap failed: %s", bootstrap.body())
                 .isEqualTo(200);
 
-        // Idempotency: second call must fail (already bootstrapped)
         HttpResponse<String> bootstrapAgain = postAnon("/api/platform/v1/bootstrap", bootstrapPayload);
         assertThat(bootstrapAgain.statusCode())
                 .withFailMessage("Second bootstrap should be rejected")
                 .isIn(400, 409, 403);
 
-        // Status should now be true
         HttpResponse<String> statusAfter = getAnon("/api/platform/v1/bootstrap/status");
         assertThat(mapper.readTree(statusAfter.body()).get("onboardingCompleted").asBoolean())
-                .as("Should be bootstrapped after first call").isTrue();
+                .as("Should be bootstrapped after first call")
+                .isTrue();
+    }
 
-        // ── 2. Super Admin login ──────────────────────────────────────────────
+    private String loginSuperAdmin(FlowContext flow) throws Exception {
+        String token = loginAndGetToken("", flow.superAdminEmail, flow.superAdminPassword);
+        assertThat(token).as("Super Admin access token").isNotBlank();
+        return token;
+    }
 
-        // Super Admin has no tenant slug — use empty string
-        String saToken = loginAndGetToken("", superAdminEmail, superAdminPassword);
-        assertThat(saToken).as("Super Admin access token").isNotBlank();
-
-        // ── 3. Provision organisation ─────────────────────────────────────────
-
-        String orgSlug      = "acme-" + uniqueSuffix();
-        String orgName      = "Acme Corp";
-        String orgAdminEmail = "alice@" + orgSlug + ".com";
-        String orgAdminName  = "Alice Admin";
-
+    private void provisionTenant(FlowContext flow) throws Exception {
         String provisionPayload = mapper.writeValueAsString(new ProvisionReq(
-                orgName, orgSlug, orgAdminEmail, orgAdminName));
+                flow.orgName, flow.orgSlug, flow.orgAdminEmail, flow.orgAdminName));
 
         HttpResponse<String> provision = postWithToken(
-                "/api/platform/v1/tenants", "", provisionPayload, saToken);
+                "/api/platform/v1/tenants", "", provisionPayload, flow.saToken);
         assertThat(provision.statusCode())
                 .withFailMessage("Provision failed: %s", provision.body())
                 .isEqualTo(201);
 
         JsonNode tenant = mapper.readTree(provision.body());
-        assertThat(tenant.get("slug").asText()).isEqualTo(orgSlug);
+        assertThat(tenant.get("slug").asText()).isEqualTo(flow.orgSlug);
         assertThat(tenant.get("status").asText()).isEqualTo("ACTIVE");
 
-        // Normalize role names to UPPERCASE so Spring Security hasAnyRole('ADMIN') checks pass
-        normalizeRoleNames(orgSlug);
+        normalizeRoleNames(flow.orgSlug);
 
-        // Super Admin can list tenants and see the new org
-        HttpResponse<String> listTenants = getWithToken("/api/platform/v1/tenants", "", saToken);
+        HttpResponse<String> listTenants = getWithToken("/api/platform/v1/tenants", "", flow.saToken);
         assertThat(listTenants.statusCode()).isEqualTo(200);
         JsonNode tenantPage = mapper.readTree(listTenants.body());
         assertThat(tenantPage.get("totalElements").asInt()).isGreaterThanOrEqualTo(1);
+    }
 
-        // ── 4. Accept invite — org admin sets password ─────────────────────────
-
-        // Provisioning sends an invite email but raw token is not stored; inject a known one
-        String orgAdminRawToken = injectInviteToken(orgSlug);
+    private void acceptOrgAdminInvite(FlowContext flow) throws Exception {
+        String orgAdminRawToken = injectInviteToken(flow.orgSlug);
         assertThat(orgAdminRawToken).as("Invite token for org admin").isNotBlank();
 
-        String orgAdminPassword = "OrgAdmin1!Aa#Test";
         String acceptPayload = mapper.writeValueAsString(new AcceptInviteReq(
-                orgAdminRawToken, orgAdminName, orgAdminPassword));
+                orgAdminRawToken, flow.orgAdminName, flow.orgAdminPassword));
 
         HttpResponse<String> accept = post(
-                "/api/v1/auth/accept-invite", orgSlug, acceptPayload, null);
+                "/api/v1/auth/accept-invite", flow.orgSlug, acceptPayload, null);
         assertThat(accept.statusCode())
                 .withFailMessage("Accept invite failed: %s", accept.body())
                 .isEqualTo(200);
+    }
 
-        // ── 5. Org admin logs in ──────────────────────────────────────────────
+    private String loginOrgAdmin(FlowContext flow) throws Exception {
+        String token = loginAndGetToken(flow.orgSlug, flow.orgAdminEmail, flow.orgAdminPassword);
+        assertThat(token).as("Org admin access token").isNotBlank();
 
-        String orgAdminToken = loginAndGetToken(orgSlug, orgAdminEmail, orgAdminPassword);
-        assertThat(orgAdminToken).as("Org admin access token").isNotBlank();
-
-        // Org admin can list users in their tenant (only themselves so far)
-        HttpResponse<String> listUsers = getWithToken("/api/v1/users", orgSlug, orgAdminToken);
+        HttpResponse<String> listUsers = getWithToken("/api/v1/users", flow.orgSlug, token);
         assertThat(listUsers.statusCode()).isEqualTo(200);
         JsonNode usersPage = mapper.readTree(listUsers.body());
         assertThat(usersPage.get("totalElements").asInt()).isEqualTo(1);
+        return token;
+    }
 
-        // ── 6. Org admin invites a second user ────────────────────────────────
-
-        // Read Requester role ID directly from DB (avoids Hibernate camelCase column mapping bug)
-        String requesterRoleId = readRoleId(orgSlug, "Requester");
+    private void inviteSecondUser(FlowContext flow) throws Exception {
+        String requesterRoleId = readRoleId(flow.orgSlug, "Requester");
         assertThat(requesterRoleId).as("Requester role ID").isNotBlank();
 
-        String user2Email = "bob@" + orgSlug + ".com";
-        String user2Name  = "Bob Requester";
-
         String invitePayload = mapper.writeValueAsString(
-                new InviteReq(user2Email, user2Name, requesterRoleId));
+                new InviteReq(flow.user2Email, flow.user2Name, requesterRoleId));
 
         HttpResponse<String> invite = post(
-                "/api/v1/users/invite", orgSlug, invitePayload, orgAdminToken);
+                "/api/v1/users/invite", flow.orgSlug, invitePayload, flow.orgAdminToken);
         assertThat(invite.statusCode())
                 .withFailMessage("Invite user failed: %s", invite.body())
                 .isEqualTo(201);
 
         JsonNode invitedUser = mapper.readTree(invite.body());
-        assertThat(invitedUser.get("email").asText()).isEqualTo(user2Email);
+        assertThat(invitedUser.get("email").asText()).isEqualTo(flow.user2Email);
         assertThat(invitedUser.get("status").asText()).isEqualTo("PENDING");
+    }
 
-        // ── 7. Second user accepts invite and logs in ─────────────────────────
-
-        String user2RawToken = injectInviteToken(orgSlug, user2Email);
+    private void acceptSecondUserInviteAndVerifyAccess(FlowContext flow) throws Exception {
+        String user2RawToken = injectInviteToken(flow.orgSlug, flow.user2Email);
         assertThat(user2RawToken).as("Invite token for user 2").isNotBlank();
 
-        String user2Password = "UserTwo1!Aa#Test";
         String acceptUser2 = mapper.writeValueAsString(new AcceptInviteReq(
-                user2RawToken, user2Name, user2Password));
+                user2RawToken, flow.user2Name, flow.user2Password));
 
         HttpResponse<String> acceptUser2Resp = post(
-                "/api/v1/auth/accept-invite", orgSlug, acceptUser2, null);
+                "/api/v1/auth/accept-invite", flow.orgSlug, acceptUser2, null);
         assertThat(acceptUser2Resp.statusCode())
                 .withFailMessage("User 2 accept invite failed: %s", acceptUser2Resp.body())
                 .isEqualTo(200);
 
-        String user2Token = loginAndGetToken(orgSlug, user2Email, user2Password);
+        String user2Token = loginAndGetToken(flow.orgSlug, flow.user2Email, flow.user2Password);
         assertThat(user2Token).as("User 2 access token").isNotBlank();
 
-        // User 2 (Requester role) can see the change requests list
-        HttpResponse<String> crList = getWithToken("/api/v1/change-requests", orgSlug, user2Token);
+        HttpResponse<String> crList = getWithToken("/api/v1/change-requests", flow.orgSlug, user2Token);
         assertThat(crList.statusCode())
                 .withFailMessage("CR list for user 2 failed: %s", crList.body())
                 .isEqualTo(200);
+    }
+
+    private static class FlowContext {
+        String superAdminEmail;
+        String superAdminPassword;
+        String superAdminName;
+        String saToken;
+
+        String orgSlug;
+        String orgName;
+        String orgAdminEmail;
+        String orgAdminName;
+        String orgAdminPassword;
+        String orgAdminToken;
+
+        String user2Email;
+        String user2Name;
+        String user2Password;
     }
 
     // ── HTTP helpers ───────────────────────────────────────────────────────────
