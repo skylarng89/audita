@@ -2,6 +2,7 @@ package io.audita.infrastructure.persistence.repository;
 
 import io.audita.domain.model.UserStatus;
 import io.audita.infrastructure.persistence.entity.UserEntity;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,6 +14,10 @@ import java.util.UUID;
 
 @Repository
 public interface UserRepository extends JpaRepository<UserEntity, UUID> {
+
+    @Override
+    @EntityGraph(attributePaths = {"role"})
+    Page<UserEntity> findAll(Pageable pageable);
 
     Optional<UserEntity> findByEmail(String email);
 
