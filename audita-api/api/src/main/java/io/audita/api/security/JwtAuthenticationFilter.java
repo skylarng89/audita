@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,21 +36,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain chain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain chain) throws ServletException, IOException {
         boolean bootstrapRequest = isBootstrapRequest(request);
         String header = request.getHeader("Authorization");
 
         if (header == null || !header.startsWith("Bearer ")) {
-            if (bootstrapRequest) {
-                log.info("Bootstrap request has no bearer token: method={} path={} origin={} referer={} cookiesPresent={}",
-                        request.getMethod(),
-                        request.getRequestURI(),
-                        request.getHeader("Origin"),
-                        request.getHeader("Referer"),
-                        request.getHeader("Cookie") != null);
-            }
+            logBootstrapWithoutToken(bootstrapRequest, request);
             chain.doFilter(request, response);
             return;
         }
@@ -59,12 +51,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = header.substring(7);
 
         if (!jwtService.isValid(token)) {
-            if (bootstrapRequest) {
-                log.warn("Bootstrap request provided invalid bearer token: method={} path={} userAgent={}",
-                        request.getMethod(),
-                        request.getRequestURI(),
-                        request.getHeader("User-Agent"));
-            }
+            logBootstrapInvalidToken(bootstrapRequest, request);
             chain.doFilter(request, response);
             return;
         }
@@ -78,29 +65,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             tenantSlug = tenantSlug.toLowerCase(Locale.ROOT);
         }
 
-        if (bootstrapRequest) {
-            log.warn("Bootstrap request includes authenticated JWT context: method={} path={} role={} tenantSlug={}",
-                request.getMethod(),
-                request.getRequestURI(),
-                role,
-                tenantSlug);
-        }
+        logBootstrapAuthenticated(bootstrapRequest, request, role, tenantSlug);
 
-        UserPrincipal principal;
-        if ("SUPER_ADMIN".equals(role)) {
-            principal = UserPrincipal.ofSuperAdmin(userId, email);
-        } else {
-            String requestTenant = TenantContext.getCurrentTenant();
-            if (tenantSlug == null || tenantSlug.isBlank()) {
-                throw new AccessDeniedException("Invalid tenant token context.");
-            }
-            if (requestTenant != null && !requestTenant.equals(tenantSlug)) {
-                throw new AccessDeniedException("Tenant context mismatch.");
-            }
-            principal = UserPrincipal.ofTenantUser(userId, email, role, tenantSlug);
-            // Set tenant schema context for this request
-            TenantContext.setCurrentTenant(tenantSlug);
-        }
+        UserPrincipal principal = resolvePrincipal(userId, email, role, tenantSlug);
 
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                 principal, null, principal.getAuthorities());
@@ -113,5 +80,56 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private boolean isBootstrapRequest(HttpServletRequest request) {
         String uri = request.getRequestURI();
         return uri.startsWith("/api/platform/v1/bootstrap") || uri.startsWith("/api/platform/v1/setup");
+    }
+
+    private UserPrincipal resolvePrincipal(UUID userId, String email, String role, String tenantSlug) {
+        if ("SUPER_ADMIN".equals(role)) {
+            return UserPrincipal.ofSuperAdmin(userId, email);
+        }
+
+        String requestTenant = TenantContext.getCurrentTenant();
+        if (tenantSlug == null || tenantSlug.isBlank()) {
+            throw new AccessDeniedException("Invalid tenant token context.");
+        }
+        if (requestTenant != null && !requestTenant.equals(tenantSlug)) {
+            throw new AccessDeniedException("Tenant context mismatch.");
+        }
+
+        TenantContext.setCurrentTenant(tenantSlug);
+        return UserPrincipal.ofTenantUser(userId, email, role, tenantSlug);
+    }
+
+    private void logBootstrapWithoutToken(boolean bootstrapRequest, HttpServletRequest request) {
+        if (bootstrapRequest && log.isInfoEnabled()) {
+            String method = request.getMethod();
+            String path = request.getRequestURI();
+            String origin = request.getHeader("Origin");
+            String referer = request.getHeader("Referer");
+            boolean cookiesPresent = request.getHeader("Cookie") != null;
+            log.info("Bootstrap request has no bearer token: method={} path={} origin={} referer={} cookiesPresent={}",
+                    method, path, origin, referer, cookiesPresent);
+        }
+    }
+
+    private void logBootstrapInvalidToken(boolean bootstrapRequest, HttpServletRequest request) {
+        if (bootstrapRequest && log.isWarnEnabled()) {
+            String method = request.getMethod();
+            String path = request.getRequestURI();
+            String userAgent = request.getHeader("User-Agent");
+            log.warn("Bootstrap request provided invalid bearer token: method={} path={} userAgent={}",
+                    method, path, userAgent);
+        }
+    }
+
+    private void logBootstrapAuthenticated(boolean bootstrapRequest,
+                                           HttpServletRequest request,
+                                           String role,
+                                           String tenantSlug) {
+        if (bootstrapRequest && log.isWarnEnabled()) {
+            String method = request.getMethod();
+            String path = request.getRequestURI();
+            log.warn("Bootstrap request includes authenticated JWT context: method={} path={} role={} tenantSlug={}",
+                    method, path, role, tenantSlug);
+        }
     }
 }
