@@ -1,0 +1,33 @@
+{
+  "groups": [
+    {
+      "name": "audita",
+      "type": "java.lang.Object",
+      "description": "Audita custom application properties."
+    }
+  ],
+  "properties": [
+    { "name": "audita.jwt.secret", "type": "java.lang.String" },
+    { "name": "audita.jwt.expiry-seconds", "type": "java.lang.Integer" },
+    { "name": "audita.refresh-token.expiry-days", "type": "java.lang.Integer" },
+    { "name": "audita.encryption.key", "type": "java.lang.String" },
+    { "name": "audita.cors.allowed-origins", "type": "java.lang.String" },
+    {
+      "name": "audita.security.trust-forwarded-headers",
+      "type": "java.lang.Boolean"
+    },
+    { "name": "audita.bootstrap.setup-token", "type": "java.lang.String" },
+    { "name": "audita.upload.max-size-bytes", "type": "java.lang.Long" },
+    { "name": "audita.upload.allowed-mime-types", "type": "java.lang.String" },
+    { "name": "audita.sso.redirect-base-url", "type": "java.lang.String" },
+    { "name": "audita.sso.frontend-base-url", "type": "java.lang.String" },
+    { "name": "audita.app.base-url", "type": "java.lang.String" },
+    { "name": "audita.mail.from", "type": "java.lang.String" },
+    { "name": "audita.storage.backend", "type": "java.lang.String" },
+    { "name": "audita.storage.local.base-path", "type": "java.lang.String" },
+    { "name": "audita.storage.s3.bucket", "type": "java.lang.String" },
+    { "name": "audita.storage.s3.region", "type": "java.lang.String" },
+    { "name": "audita.storage.s3.access-key", "type": "java.lang.String" },
+    { "name": "audita.storage.s3.secret-key", "type": "java.lang.String" }
+  ]
+}

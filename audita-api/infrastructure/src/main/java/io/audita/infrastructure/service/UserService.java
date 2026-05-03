@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 import java.util.Base64;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -28,6 +27,7 @@ public class UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final String NOT_FOUND = "NOT_FOUND";
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -56,8 +56,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserEntity getUser(UUID id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "User not found."));
+        return findUserOrThrow(id);
     }
 
     // ── Invite ─────────────────────────────────────────────────────────────────
@@ -74,7 +73,7 @@ public class UserService {
         }
 
         RoleEntity role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Role not found."));
+            .orElseThrow(() -> new DomainNotPermittedException(NOT_FOUND, "Role not found."));
 
         UserEntity invitedBy = userRepository.findById(invitedByUserId).orElse(null);
 
@@ -103,7 +102,7 @@ public class UserService {
     // ── Update ─────────────────────────────────────────────────────────────────
 
     public UserEntity updateUser(UUID id, String fullName, UUID roleId) {
-        UserEntity user = getUser(id);
+        UserEntity user = findUserOrThrow(id);
 
         if (fullName != null && !fullName.isBlank()) {
             user.setFullName(fullName);
@@ -111,7 +110,7 @@ public class UserService {
 
         if (roleId != null) {
             RoleEntity role = roleRepository.findById(roleId)
-                    .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Role not found."));
+                    .orElseThrow(() -> new DomainNotPermittedException(NOT_FOUND, "Role not found."));
             user.setRole(role);
         }
 
@@ -119,14 +118,14 @@ public class UserService {
     }
 
     public void deactivateUser(UUID id) {
-        UserEntity user = getUser(id);
+        UserEntity user = findUserOrThrow(id);
         user.setStatus(UserStatus.SUSPENDED);
         userRepository.save(user);
         log.info("User deactivated: id={}", id);
     }
 
     public void reactivateUser(UUID id) {
-        UserEntity user = getUser(id);
+        UserEntity user = findUserOrThrow(id);
         if (user.getStatus() != UserStatus.SUSPENDED) {
             throw new DomainNotPermittedException("INVALID_STATE",
                     "User is not suspended and cannot be reactivated.");
@@ -142,5 +141,10 @@ public class UserService {
         byte[] bytes = new byte[32];
         SECURE_RANDOM.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private UserEntity findUserOrThrow(UUID id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new DomainNotPermittedException(NOT_FOUND, "User not found."));
     }
 }

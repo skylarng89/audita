@@ -42,7 +42,7 @@ class ChangeRequestServiceSecurityTest {
     ChangeRequestService changeRequestService;
 
     @Test
-    void update_denies_requester_who_does_not_own_change_request() {
+    void updateDeniesRequesterWhoDoesNotOwnChangeRequest() {
         UUID changeRequestId = UUID.randomUUID();
         UUID ownerId = UUID.randomUUID();
         UUID otherRequesterId = UUID.randomUUID();
@@ -50,7 +50,17 @@ class ChangeRequestServiceSecurityTest {
         ChangeRequestEntity changeRequest = buildDraftChangeRequest(ownerId);
         when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
 
-        assertThatThrownBy(() -> changeRequestService.update(
+        assertThatThrownBy(() -> tryUnauthorizedUpdate(changeRequestId, otherRequesterId))
+                .isInstanceOf(DomainNotPermittedException.class)
+                .extracting(ex -> ((DomainNotPermittedException) ex).getErrorCode())
+                .isEqualTo("FORBIDDEN");
+
+        verifyNoInteractions(activityStreamRepository);
+        verify(changeRequestRepository).findById(changeRequestId);
+    }
+
+    private void tryUnauthorizedUpdate(UUID changeRequestId, UUID requesterId) {
+        changeRequestService.update(
                 changeRequestId,
                 "Updated by attacker",
                 "should fail",
@@ -61,19 +71,13 @@ class ChangeRequestServiceSecurityTest {
                 OffsetDateTime.now().plusHours(2),
                 OffsetDateTime.now().plusHours(3),
                 new String[] {"db"},
-                otherRequesterId,
+                requesterId,
                 "REQUESTER"
-        ))
-                .isInstanceOf(DomainNotPermittedException.class)
-                .extracting(ex -> ((DomainNotPermittedException) ex).getErrorCode())
-                .isEqualTo("FORBIDDEN");
-
-        verifyNoInteractions(activityStreamRepository);
-        verify(changeRequestRepository).findById(changeRequestId);
+        );
     }
 
     @Test
-    void submit_denies_requester_who_does_not_own_change_request() {
+    void submitDeniesRequesterWhoDoesNotOwnChangeRequest() {
         UUID changeRequestId = UUID.randomUUID();
         UUID ownerId = UUID.randomUUID();
         UUID otherRequesterId = UUID.randomUUID();

@@ -57,7 +57,7 @@ public class JpaConfig {
         props.put("hibernate.hbm2ddl.auto", "none");
         // Convert camelCase field names to snake_case DB columns (e.g. createdAt → created_at)
         props.put("hibernate.physical_naming_strategy",
-                  new org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy());
+                  new org.hibernate.boot.model.naming.PhysicalNamingStrategySnakeCaseImpl());
         return props;
     }
 

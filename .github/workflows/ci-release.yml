@@ -1,6 +1,5 @@
 name: CI and Release Images
-
-on:
+"on":
   pull_request:
     branches:
       - main
