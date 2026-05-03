@@ -12,7 +12,10 @@
     { "name": "audita.refresh-token.expiry-days", "type": "java.lang.Integer" },
     { "name": "audita.encryption.key", "type": "java.lang.String" },
     { "name": "audita.cors.allowed-origins", "type": "java.lang.String" },
-    { "name": "audita.security.trust-forwarded-headers", "type": "java.lang.Boolean" },
+    {
+      "name": "audita.security.trust-forwarded-headers",
+      "type": "java.lang.Boolean"
+    },
     { "name": "audita.bootstrap.setup-token", "type": "java.lang.String" },
     { "name": "audita.upload.max-size-bytes", "type": "java.lang.Long" },
     { "name": "audita.upload.allowed-mime-types", "type": "java.lang.String" },
