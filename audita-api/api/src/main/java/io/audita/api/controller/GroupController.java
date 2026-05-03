@@ -5,7 +5,6 @@ import io.audita.api.dto.request.GroupMemberRequest;
 import io.audita.api.dto.response.GroupResponse;
 import io.audita.api.dto.response.UserResponse;
 import io.audita.infrastructure.service.GroupService;
-import io.audita.infrastructure.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,11 +23,9 @@ import java.util.UUID;
 public class GroupController {
 
     private final GroupService groupService;
-    private final UserService userService;
 
-    public GroupController(GroupService groupService, UserService userService) {
+    public GroupController(GroupService groupService) {
         this.groupService = groupService;
-        this.userService = userService;
     }
 
     @GetMapping
