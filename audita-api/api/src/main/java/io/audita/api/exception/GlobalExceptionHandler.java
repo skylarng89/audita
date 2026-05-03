@@ -96,7 +96,7 @@ public class GlobalExceptionHandler {
                         (a, b) -> a
                 ));
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(
-                HttpStatus.UNPROCESSABLE_ENTITY, "Validation failed.");
+            HttpStatus.UNPROCESSABLE_CONTENT, "Validation failed.");
         detail.setTitle("Validation Error");
         detail.setType(URI.create("https://audita.io/errors/validation"));
         detail.setProperty("errors", errors);
