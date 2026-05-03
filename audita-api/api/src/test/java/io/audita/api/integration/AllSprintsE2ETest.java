@@ -16,7 +16,6 @@ import java.net.http.HttpResponse;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
-import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -647,7 +646,7 @@ class AllSprintsE2ETest {
     void s4_list_notifications() throws Exception {
         var r = getWithToken("/api/v1/notifications", orgSlug, requesterToken);
         assertThat(r.statusCode()).isEqualTo(200);
-        JsonNode content = mapper.readTree(r.body()).path("content");
+        mapper.readTree(r.body()).path("content");
         // May be empty or have notifications — just ensure 200
     }
 
