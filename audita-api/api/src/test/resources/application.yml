@@ -6,6 +6,8 @@ spring:
     port: 1025
 
 audita:
+  cors:
+    allowed-origins: http://localhost:3000
   jwt:
     secret: test-jwt-secret-at-least-32-chars-long-1234
   encryption:

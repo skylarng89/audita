@@ -60,7 +60,7 @@ onMounted(async () => {
   }
 
   const hashCode = (() => {
-    const rawHash = window.location.hash;
+    const rawHash = globalThis.location.hash;
     if (!rawHash || !rawHash.startsWith("#")) {
       return undefined;
     }
@@ -68,7 +68,7 @@ onMounted(async () => {
     return params.get("code") ?? undefined;
   })();
 
-  const code = hashCode ?? (route.query.code as string | undefined);
+  const code = hashCode;
 
   if (!code) {
     errorMessage.value = "Incomplete SSO response. Please try again.";
@@ -86,7 +86,7 @@ onMounted(async () => {
     auth.setAuth(result);
 
     // Clear callback URL params to avoid code reuse and reduce sensitive URL residue.
-    window.history.replaceState({}, document.title, "/auth/sso-callback");
+    globalThis.history.replaceState({}, document.title, "/auth/sso-callback");
 
     // Role-based redirect (AUTH-022)
     if (result.role === "SUPER_ADMIN") {

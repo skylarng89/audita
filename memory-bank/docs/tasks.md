@@ -271,6 +271,30 @@
 - `cd audita-api && ./gradlew :api:test --tests io.audita.api.controller.NotificationControllerWebMvcTest` passes.
 - `cd audita-web && pnpm build` passes.
 
+### Security Follow-Up Refinement (Completed 2026-05-03)
+
+**Overview**: Completed remaining edge hardening for SEC-001, SEC-002, and SEC-004 and added targeted tenant filter regression tests.
+
+**Files Created/Modified**:
+
+- `audita-api/api/src/main/java/io/audita/api/security/TenantResolutionFilter.java` — rejects bootstrap/setup requests that include a tenant header.
+- `audita-api/api/src/test/java/io/audita/api/security/TenantResolutionFilterTest.java` — verifies bootstrap tenant-header rejection and invalid slug rejection.
+- `audita-api/api/src/main/java/io/audita/api/config/SecurityConfig.java` — removes constructor-level default CORS origin fallback.
+- `audita-api/api/src/main/resources/application.yml` — keeps profile-specific CORS values while making base value explicit-empty.
+- `audita-api/api/src/test/resources/application.yml` — supplies explicit test CORS allowlist.
+- `audita-web/pages/auth/sso-callback.vue` — removes query-parameter fallback for SSO exchange code.
+
+**Key Changes**:
+
+- Prevents tenant-context injection attempts on platform bootstrap/setup routes by denying tenant headers at filter boundary.
+- Ensures production-like explicit CORS config path by removing hidden Java fallback and relying on profile/config values.
+- Enforces fragment-only callback exchange code handling in frontend to reduce URL query token residue.
+
+**Test Coverage**:
+
+- `cd audita-api && ./gradlew :api:test --tests io.audita.api.security.TenantResolutionFilterTest --tests io.audita.infrastructure.service.ChangeRequestServiceSecurityTest` passes.
+- `cd audita-web && pnpm build` passes.
+
 ### Sprint 4 — Collaboration, Notifications & SLA Automation (Completed 2026-04-28)
 
 **Overview**: Implemented comments with mention handling, in-app notification APIs + SSE streaming, SLA warning/breach scheduler automation, and frontend comments/notification wiring.

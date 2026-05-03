@@ -24,6 +24,7 @@
 - SEC-002: Remove URL query token transport from SSO callback flow. ✅ (Completed 2026-05-02)
 - SEC-003: Add object-level authorization checks for change request mutations. ✅ (Completed 2026-05-02)
 - SEC-004: Tighten CORS to explicit allowlist with environment-specific profiles. ✅ (Completed 2026-05-02)
+- SEC hardening refinements: bootstrap tenant-header rejection + fragment-only callback code parsing + dedicated tenant filter tests. ✅ (Completed 2026-05-03)
 
 ## Post-Sprint UX Follow-Up (2026-04-28)
 

@@ -33,14 +33,14 @@ public class SecurityConfig {
 
     public SecurityConfig(JwtAuthenticationFilter jwtFilter,
                                                   TenantResolutionFilter tenantResolutionFilter,
-                                                  @Value("${audita.cors.allowed-origins:http://localhost:3000}") String corsAllowedOrigins) {
+                                                  @Value("${audita.cors.allowed-origins}") String corsAllowedOrigins) {
         this.jwtFilter = jwtFilter;
         this.tenantResolutionFilter = tenantResolutionFilter;
                 this.corsAllowedOrigins = corsAllowedOrigins;
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        public SecurityFilterChain filterChain(HttpSecurity http) {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))

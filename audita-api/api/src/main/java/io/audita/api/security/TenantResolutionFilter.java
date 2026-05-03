@@ -7,7 +7,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -43,21 +42,32 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain chain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain chain) throws ServletException, IOException {
         boolean bootstrapRequest = isBootstrapRequest(request);
         String slug = request.getHeader(TENANT_HEADER);
         if (slug != null && !slug.isBlank()) {
             String normalizedSlug = slug.trim().toLowerCase(Locale.ROOT);
             if (!TENANT_SLUG_PATTERN.matcher(normalizedSlug).matches()) {
-                log.warn("Rejected request due to invalid tenant slug: method={} path={} rawTenantSlug={} origin={} referer={}",
+                if (log.isWarnEnabled()) {
+                    String origin = request.getHeader("Origin");
+                    String referer = request.getHeader("Referer");
+                    log.warn("Rejected request due to invalid tenant slug: method={} path={} rawTenantSlug={} origin={} referer={}",
+                            request.getMethod(),
+                            request.getRequestURI(),
+                            slug,
+                            origin,
+                            referer);
+                }
+                throw new AccessDeniedException("Invalid tenant slug.");
+            }
+            if (bootstrapRequest) {
+                log.warn("Rejected bootstrap request containing tenant header: method={} path={} tenantSlug={}",
                         request.getMethod(),
                         request.getRequestURI(),
-                        slug,
-                        request.getHeader("Origin"),
-                        request.getHeader("Referer"));
-                throw new AccessDeniedException("Invalid tenant slug.");
+                        normalizedSlug);
+                throw new AccessDeniedException("Tenant header is not allowed for bootstrap requests.");
             }
             if (!tenantExists(normalizedSlug)) {
                 log.warn("Rejected request due to unknown tenant slug: method={} path={} tenantSlug={}",
@@ -65,12 +75,6 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
                         request.getRequestURI(),
                         normalizedSlug);
                 throw new AccessDeniedException("Unknown tenant.");
-            }
-            if (bootstrapRequest) {
-                log.warn("Bootstrap request contains tenant header: method={} path={} tenantSlug={}",
-                        request.getMethod(),
-                        request.getRequestURI(),
-                        normalizedSlug);
             }
             TenantContext.setCurrentTenant(normalizedSlug);
         } else if (bootstrapRequest) {

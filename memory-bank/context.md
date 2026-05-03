@@ -1,6 +1,6 @@
 # Audita — Active Context
 
-**Last Updated:** 2026-05-02
+**Last Updated:** 2026-05-03
 **Current Phase:** Active development — comprehensive E2E test coverage complete
 **Active Sprint:** All sprints complete; hardening + test coverage ongoing
 
@@ -24,6 +24,7 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 - **Sprint 5 validation expanded.** Added endpoint-level controller tests for comments and notifications, including stream-token issuance and invalid-token SSE access rejection; targeted Gradle run passes.
 - **Comprehensive E2E test coverage complete.** `AllSprintsE2ETest.java` — 44 ordered integration tests covering every implemented endpoint across all 5 sprints. 62/62 tests passing.
 - **Security follow-up complete (SEC-001..SEC-004).** Tenant slug boundary hardening, SSO callback URL transport hardening, CR object-level mutation regression coverage, and strict CORS allowlist enforcement are now implemented and verified.
+- **Security follow-up refinement complete (2026-05-03).** Bootstrap/setup now reject tenant headers, callback code parsing is fragment-only on frontend, and tenant-header hardening has dedicated filter tests.
 - **Production entity bugs fixed (cumulative):** `GroupEntity` (phantom `updated_at` column), `PasswordResetTokenEntity` (`tokenHash`/`expiresAt` column name mapping), `RoleEntity`, `UserEntity`, `InviteTokenEntity`, `RefreshTokenEntity` — all now have explicit `@Column(name=...)` to survive the `JpaConfig` naming-strategy bypass.
 - Documentation complete: PRD v1.0, SRS v1.0, USER_FLOW v1.0 (`docs/`). UI designs: 40 screens (`ui-designs/`).
 - `audita-api`: hexagonal structure, JPA/Hibernate multi-tenancy, Flyway migrations, Spring Security scaffold, RFC 7807 exception handler, structured JSON logging (Logstash encoder).
