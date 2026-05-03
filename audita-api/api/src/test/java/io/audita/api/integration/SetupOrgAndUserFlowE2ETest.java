@@ -130,7 +130,6 @@ class SetupOrgAndUserFlowE2ETest {
         JsonNode tenant = mapper.readTree(provision.body());
         assertThat(tenant.get("slug").asText()).isEqualTo(orgSlug);
         assertThat(tenant.get("status").asText()).isEqualTo("ACTIVE");
-        String tenantId = tenant.get("id").asText();
 
         // Normalize role names to UPPERCASE so Spring Security hasAnyRole('ADMIN') checks pass
         normalizeRoleNames(orgSlug);
@@ -356,17 +355,6 @@ class SetupOrgAndUserFlowE2ETest {
                 return rs.getString(1);
             }
         }
-    }
-
-    private String findRoleId(JsonNode roles, String roleName) {
-        // Roles might be a plain array or a Page wrapper
-        JsonNode content = roles.isArray() ? roles : roles.path("content");
-        for (JsonNode role : content) {
-            if (roleName.equalsIgnoreCase(role.path("name").asText())) {
-                return role.get("id").asText();
-            }
-        }
-        return "";
     }
 
     private String uniqueSuffix() {
