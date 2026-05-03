@@ -44,16 +44,25 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DomainNotPermittedException.class)
     public ProblemDetail handleDomainNotPermitted(DomainNotPermittedException ex,
                                                   HttpServletRequest request) {
-        log.warn("DomainNotPermitted: method={} path={} errorCode={} message={} origin={} referer={} authHeaderPresent={} cookiePresent={} tenantHeaderPresent={}",
-                request.getMethod(),
-                request.getRequestURI(),
+        if (log.isWarnEnabled()) {
+            String method = request.getMethod();
+            String path = request.getRequestURI();
+            String origin = request.getHeader("Origin");
+            String referer = request.getHeader("Referer");
+            boolean authHeaderPresent = request.getHeader("Authorization") != null;
+            boolean cookiePresent = request.getHeader("Cookie") != null;
+            boolean tenantHeaderPresent = request.getHeader("X-Tenant-Slug") != null;
+            log.warn("DomainNotPermitted: method={} path={} errorCode={} message={} origin={} referer={} authHeaderPresent={} cookiePresent={} tenantHeaderPresent={}",
+                method,
+                path,
                 ex.getErrorCode(),
                 ex.getMessage(),
-                request.getHeader("Origin"),
-                request.getHeader("Referer"),
-                request.getHeader("Authorization") != null,
-                request.getHeader("Cookie") != null,
-                request.getHeader("X-Tenant-Slug") != null);
+                origin,
+                referer,
+                authHeaderPresent,
+                cookiePresent,
+                tenantHeaderPresent);
+        }
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
         detail.setTitle("Action Not Permitted");
         detail.setType(URI.create("https://audita.io/errors/not-permitted"));
@@ -72,15 +81,24 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ProblemDetail handleAccessDenied(AccessDeniedException ex,
                                             HttpServletRequest request) {
-        log.warn("AccessDenied: method={} path={} message={} origin={} referer={} authHeaderPresent={} cookiePresent={} tenantHeaderPresent={}",
-                request.getMethod(),
-                request.getRequestURI(),
+        if (log.isWarnEnabled()) {
+            String method = request.getMethod();
+            String path = request.getRequestURI();
+            String origin = request.getHeader("Origin");
+            String referer = request.getHeader("Referer");
+            boolean authHeaderPresent = request.getHeader("Authorization") != null;
+            boolean cookiePresent = request.getHeader("Cookie") != null;
+            boolean tenantHeaderPresent = request.getHeader("X-Tenant-Slug") != null;
+            log.warn("AccessDenied: method={} path={} message={} origin={} referer={} authHeaderPresent={} cookiePresent={} tenantHeaderPresent={}",
+                method,
+                path,
                 ex.getMessage(),
-                request.getHeader("Origin"),
-                request.getHeader("Referer"),
-                request.getHeader("Authorization") != null,
-                request.getHeader("Cookie") != null,
-                request.getHeader("X-Tenant-Slug") != null);
+                origin,
+                referer,
+                authHeaderPresent,
+                cookiePresent,
+                tenantHeaderPresent);
+        }
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, "Access denied.");
         detail.setTitle("Forbidden");
         detail.setType(URI.create("https://audita.io/errors/forbidden"));
