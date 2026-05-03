@@ -1,11 +1,11 @@
 package io.audita.api.controller;
 
 import io.audita.api.dto.request.InviteUserRequest;
+import io.audita.api.dto.response.PageResponse;
 import io.audita.api.dto.request.UpdateUserRequest;
 import io.audita.api.dto.response.UserResponse;
 import io.audita.infrastructure.service.UserService;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -29,8 +29,8 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('AUDITOR', 'ADMIN', 'SUPER_ADMIN')")
-    public Page<UserResponse> listUsers(@PageableDefault(size = 20) Pageable pageable) {
-        return userService.listUsers(pageable).map(UserResponse::from);
+    public PageResponse<UserResponse> listUsers(@PageableDefault(size = 20) Pageable pageable) {
+        return PageResponse.from(userService.listUsers(pageable), UserResponse::from);
     }
 
     @GetMapping("/{id}")

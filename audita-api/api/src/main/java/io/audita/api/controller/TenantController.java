@@ -4,7 +4,6 @@ import io.audita.api.dto.request.*;
 import io.audita.api.dto.response.*;
 import io.audita.infrastructure.service.TenantService;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -31,8 +30,8 @@ public class TenantController {
     }
 
     @GetMapping
-    public Page<TenantResponse> listTenants(@PageableDefault(size = 20) Pageable pageable) {
-        return tenantService.listTenants(pageable).map(TenantResponse::from);
+    public PageResponse<TenantResponse> listTenants(@PageableDefault(size = 20) Pageable pageable) {
+        return PageResponse.from(tenantService.listTenants(pageable), TenantResponse::from);
     }
 
     @GetMapping("/{id}")

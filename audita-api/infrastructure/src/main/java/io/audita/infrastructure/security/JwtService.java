@@ -24,10 +24,12 @@ public class JwtService {
 
     private final SecretKey signingKey;
     private final long expirySeconds;
+    private final long streamExpirySeconds;
 
     public JwtService(
             @Value("${audita.jwt.secret}") String secret,
-            @Value("${audita.jwt.expiry-seconds:900}") long expirySeconds) {
+            @Value("${audita.jwt.expiry-seconds:900}") long expirySeconds,
+            @Value("${audita.jwt.stream-expiry-seconds:900}") long streamExpirySeconds) {
         if (secret == null || secret.isBlank()) {
             throw new IllegalArgumentException("JWT secret is required.");
         }
@@ -36,6 +38,7 @@ public class JwtService {
         }
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirySeconds = expirySeconds;
+        this.streamExpirySeconds = streamExpirySeconds;
     }
 
     public String issue(UUID userId, String email, String role, String tenantSlug) {
@@ -66,7 +69,7 @@ public class JwtService {
                 .subject(userId.toString())
                 .claims(claims)
                 .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plusSeconds(120)))
+            .expiration(Date.from(now.plusSeconds(streamExpirySeconds)))
                 .signWith(signingKey)
                 .compact();
     }
