@@ -4,7 +4,8 @@
 
 @layer base {
   html {
-    @apply text-gray-900 bg-gray-100 antialiased;
+    @apply text-[#191c1e] bg-[#f7f9fb] antialiased;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   }
 
   html.dark {
@@ -23,87 +24,163 @@
 @layer components {
   /* ── Buttons ────────────────────────────────────────────────────────────── */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-md font-semibold
-           transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2
+    @apply inline-flex items-center justify-center gap-2 rounded-lg font-semibold
+           transition-all duration-150 focus-visible:outline-none focus-visible:ring-2
            focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50
            disabled:cursor-not-allowed;
   }
 
-  .btn-sm  { @apply btn text-sm px-3 py-1.5; }
-  .btn-md  { @apply btn text-sm px-4 py-2; }
-  .btn-lg  { @apply btn text-base px-6 py-3; }
+  /* Variant buttons get a consistent default size even if btn-sm|md|lg is omitted. */
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .btn-ghost {
+    @apply btn text-sm px-4 py-2;
+  }
+
+  .btn-sm {
+    @apply btn text-sm px-3 py-1.5;
+  }
+  .btn-md {
+    @apply btn text-sm px-4 py-2;
+  }
+  .btn-lg {
+    @apply btn text-base px-6 py-3;
+  }
 
   .btn-primary {
-    @apply bg-primary text-white hover:bg-primary-dark;
+    @apply bg-primary text-white hover:bg-primary-dark shadow-sm hover:shadow-md;
   }
 
   .btn-secondary {
-    @apply border border-primary text-primary bg-white hover:bg-gray-50
-           dark:bg-transparent dark:text-primary-light dark:border-primary-light;
+    @apply border border-border text-[#444651] bg-white hover:bg-surface-container-low shadow-sm
+           dark:bg-transparent dark:text-gray-300 dark:border-border-dark;
   }
 
   .btn-danger {
-    @apply bg-danger text-white hover:bg-red-600;
+    @apply bg-danger text-white hover:brightness-90;
   }
 
   .btn-ghost {
-    @apply text-muted hover:bg-gray-100 dark:hover:bg-slate-800;
+    @apply text-muted hover:bg-surface-container hover:text-on-surface dark:hover:bg-slate-800;
   }
 
   /* ── Card ───────────────────────────────────────────────────────────────── */
   .card {
-    @apply bg-white dark:bg-surface-dark rounded-lg shadow-card border border-border
-           dark:border-border-dark;
+    @apply bg-white rounded-xl shadow-card border border-outline-variant/50
+           dark:bg-slate-800 dark:border-border-dark;
   }
 
   /* ── Input ──────────────────────────────────────────────────────────────── */
   .input {
-    @apply block w-full rounded-md border border-border bg-gray-50 px-3 py-2 text-sm
-           placeholder-muted shadow-sm transition
-           focus:border-primary focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary
-           dark:bg-slate-800 dark:border-border-dark dark:text-gray-100
-           dark:focus:border-primary-light dark:focus:ring-primary-light;
+    @apply block w-full rounded-lg border border-outline-variant bg-surface-container-low
+           px-3.5 py-2.5 text-sm text-on-surface
+           placeholder:text-muted/60 shadow-none
+           transition-all duration-150
+           hover:border-outline hover:bg-white
+           focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20
+           disabled:cursor-not-allowed disabled:bg-surface-container disabled:text-muted disabled:opacity-60
+           dark:bg-slate-700 dark:border-slate-600 dark:text-gray-100 dark:placeholder:text-slate-400
+           dark:hover:border-slate-500 dark:focus:border-primary-light dark:focus:ring-primary-light/20;
+  }
+
+  textarea.input {
+    @apply min-h-28 leading-relaxed;
+  }
+
+  select.input {
+    @apply appearance-none pr-10 cursor-pointer;
+    background-image:
+      linear-gradient(45deg, transparent 50%, #757682 50%),
+      linear-gradient(135deg, #757682 50%, transparent 50%);
+    background-position:
+      calc(100% - 18px) calc(50% - 2px),
+      calc(100% - 12px) calc(50% - 2px);
+    background-size:
+      6px 6px,
+      6px 6px;
+    background-repeat: no-repeat;
   }
 
   .input-error {
-    @apply border-danger focus:border-danger focus:ring-danger;
+    @apply border-danger focus:border-danger focus:ring-danger/20 bg-danger-light;
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted;
+  }
+
+  .field-hint {
+    @apply mt-1 text-xs text-muted;
   }
 
   /* ── Badge ──────────────────────────────────────────────────────────────── */
   .badge {
-    @apply inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold uppercase tracking-wide;
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide;
   }
 
-  .badge-draft    { @apply badge bg-gray-100 text-gray-600; }
-  .badge-pending  { @apply badge bg-amber-100 text-amber-700; }
-  .badge-approved { @apply badge bg-success-light text-green-700; }
-  .badge-rejected { @apply badge bg-danger-light text-red-700; }
-  .badge-cancelled{ @apply badge bg-gray-100 text-gray-500; }
+  .badge-draft {
+    @apply badge bg-surface-container text-on-surface-variant border border-outline-variant;
+  }
+  .badge-pending {
+    @apply badge bg-amber-50 text-amber-700 border border-amber-200;
+  }
+  .badge-approved {
+    @apply badge bg-success-light text-green-700 border border-green-200;
+  }
+  .badge-rejected {
+    @apply badge bg-danger-light text-danger border border-danger/20;
+  }
+  .badge-cancelled {
+    @apply badge bg-surface-container text-muted border border-outline-variant;
+  }
 
-  .badge-low      { @apply badge bg-gray-100 text-gray-600; }
-  .badge-medium   { @apply badge bg-info-light text-blue-700; }
-  .badge-high     { @apply badge bg-orange-100 text-orange-700; }
-  .badge-critical { @apply badge bg-danger-light text-red-700; }
+  .badge-low {
+    @apply badge bg-surface-container text-on-surface-variant border border-outline-variant;
+  }
+  .badge-medium {
+    @apply badge bg-info-light text-blue-700 border border-blue-200;
+  }
+  .badge-high {
+    @apply badge bg-orange-50 text-orange-700 border border-orange-200;
+  }
+  .badge-critical {
+    @apply badge bg-danger-light text-danger border border-danger/20;
+  }
 
   /* ── Sidebar ────────────────────────────────────────────────────────────── */
   .sidebar-link {
-    @apply flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted
-           hover:bg-gray-100 hover:text-gray-900 transition-colors
+    @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-on-surface-variant
+           hover:bg-surface-container hover:text-on-surface transition-colors
            dark:hover:bg-slate-800 dark:hover:text-gray-100;
   }
 
   .sidebar-link-active {
-    @apply sidebar-link bg-primary/10 text-primary border-l-2 border-primary pl-[10px]
-           dark:bg-primary/20 dark:text-primary-light;
+    @apply sidebar-link bg-primary/10 text-primary border-l-[3px] border-primary pl-[9px]
+           dark:bg-primary/20 dark:text-primary-fixed;
   }
 
   /* ── Table ──────────────────────────────────────────────────────────────── */
   .table-header {
-    @apply text-xs font-semibold uppercase tracking-wide text-muted;
+    @apply text-[11px] font-semibold uppercase tracking-[0.1em] text-muted;
   }
 
   .table-row {
-    @apply border-t border-border dark:border-border-dark hover:bg-gray-50 dark:hover:bg-slate-800/50
-           transition-colors cursor-pointer;
+    @apply border-t border-outline-variant/40 hover:bg-surface-container-low
+           transition-colors cursor-pointer dark:border-border-dark dark:hover:bg-slate-800/50;
+  }
+
+  /* ── Section label (eyebrow text) ───────────────────────────────────────── */
+  .section-label {
+    @apply text-xs font-semibold uppercase tracking-[0.14em] text-primary/70;
+  }
+
+  /* ── Page heading ───────────────────────────────────────────────────────── */
+  .page-title {
+    @apply text-3xl font-bold tracking-tight text-on-surface;
+  }
+
+  .page-subtitle {
+    @apply text-sm text-muted mt-1;
   }
 }

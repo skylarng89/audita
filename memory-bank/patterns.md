@@ -137,13 +137,15 @@ API calls are wrapped in typed composables. No raw `$fetch` in components.
 ```typescript
 // composables/useChangeRequests.ts
 export function useChangeRequests() {
-  const { $api } = useNuxtApp()
+  const { $api } = useNuxtApp();
 
   async function submit(id: string): Promise<ChangeRequest> {
-    return $api<ChangeRequest>(`/change-requests/${id}/submit`, { method: 'POST' })
+    return $api<ChangeRequest>(`/change-requests/${id}/submit`, {
+      method: "POST",
+    });
   }
 
-  return { submit }
+  return { submit };
 }
 ```
 
@@ -153,21 +155,24 @@ Stores own loading/error state alongside data.
 
 ```typescript
 // stores/auth.ts
-export const useAuthStore = defineStore('auth', () => {
-  const user = ref<User | null>(null)
-  const isLoading = ref(false)
+export const useAuthStore = defineStore("auth", () => {
+  const user = ref<User | null>(null);
+  const isLoading = ref(false);
 
   async function login(email: string, password: string) {
-    isLoading.value = true
+    isLoading.value = true;
     try {
-      user.value = await $api('/auth/login', { method: 'POST', body: { email, password } })
+      user.value = await $api("/auth/login", {
+        method: "POST",
+        body: { email, password },
+      });
     } finally {
-      isLoading.value = false
+      isLoading.value = false;
     }
   }
 
-  return { user, isLoading, login }
-})
+  return { user, isLoading, login };
+});
 ```
 
 ### 2.3 Route Guards (Middleware)
@@ -175,13 +180,13 @@ export const useAuthStore = defineStore('auth', () => {
 ```typescript
 // middleware/role.ts
 export default defineNuxtRouteMiddleware((to) => {
-  const auth = useAuthStore()
-  const requiredRole = to.meta.requiredRole as string | undefined
+  const auth = useAuthStore();
+  const requiredRole = to.meta.requiredRole as string | undefined;
 
   if (requiredRole && auth.user?.role !== requiredRole) {
-    return navigateTo('/dashboard')
+    return navigateTo("/dashboard");
   }
-})
+});
 ```
 
 ### 2.4 API Plugin — Auth Header Injection
@@ -189,24 +194,27 @@ export default defineNuxtRouteMiddleware((to) => {
 ```typescript
 // plugins/api.ts
 export default defineNuxtPlugin(() => {
-  const auth = useAuthStore()
+  const auth = useAuthStore();
 
   const $api = $fetch.create({
     baseURL: useRuntimeConfig().public.apiBase,
     onRequest({ options }) {
       if (auth.accessToken) {
-        options.headers = { ...options.headers, Authorization: `Bearer ${auth.accessToken}` }
+        options.headers = {
+          ...options.headers,
+          Authorization: `Bearer ${auth.accessToken}`,
+        };
       }
     },
     onResponseError({ response }) {
       if (response.status === 401) {
-        auth.logout()
+        auth.logout();
       }
-    }
-  })
+    },
+  });
 
-  return { provide: { api: $api } }
-})
+  return { provide: { api: $api } };
+});
 ```
 
 ### 2.5 TipTap Mention Extension
@@ -217,10 +225,12 @@ User mention queries the backend for active users in the tenant.
 Mention.configure({
   suggestion: {
     items: async ({ query }) => {
-      return $api<User[]>('/users', { query: { search: query, status: 'ACTIVE' } })
-    }
-  }
-})
+      return $api<User[]>("/users", {
+        query: { search: query, status: "ACTIVE" },
+      });
+    },
+  },
+});
 ```
 
 ---
@@ -229,28 +239,28 @@ Mention.configure({
 
 ### Backend
 
-| Type | Convention | Example |
-|---|---|---|
-| Packages | `lowercase.dot.separated` | `io.audita.domain.cr` |
-| Classes | `PascalCase` | `ChangeRequestService` |
-| Methods | `camelCase` | `submitChangeRequest` |
-| Constants | `UPPER_SNAKE_CASE` | `MAX_FILE_SIZE_MB` |
-| Enums | `UPPER_SNAKE_CASE` values | `Status.PENDING_APPROVAL` |
-| Async methods | `_later` suffix | `notifyApproversLater` |
-| Sync equivalents | `_now` suffix | `notifyApproversNow` |
-| DB tables | `snake_case` | `change_requests`, `cr_approvers` |
-| DB columns | `snake_case` | `created_at`, `is_required` |
+| Type             | Convention                | Example                           |
+| ---------------- | ------------------------- | --------------------------------- |
+| Packages         | `lowercase.dot.separated` | `io.audita.domain.cr`             |
+| Classes          | `PascalCase`              | `ChangeRequestService`            |
+| Methods          | `camelCase`               | `submitChangeRequest`             |
+| Constants        | `UPPER_SNAKE_CASE`        | `MAX_FILE_SIZE_MB`                |
+| Enums            | `UPPER_SNAKE_CASE` values | `Status.PENDING_APPROVAL`         |
+| Async methods    | `_later` suffix           | `notifyApproversLater`            |
+| Sync equivalents | `_now` suffix             | `notifyApproversNow`              |
+| DB tables        | `snake_case`              | `change_requests`, `cr_approvers` |
+| DB columns       | `snake_case`              | `created_at`, `is_required`       |
 
 ### Frontend
 
-| Type | Convention | Example |
-|---|---|---|
-| Components | `PascalCase` | `ChangeRequestCard.vue` |
-| Composables | `camelCase` with `use` prefix | `useChangeRequests.ts` |
-| Stores | `camelCase` with `use` prefix | `useAuthStore` |
-| Pages/routes | `kebab-case` | `change-requests/[id].vue` |
-| Types/Interfaces | `PascalCase` | `ChangeRequest`, `UserPrincipal` |
-| API response types | `PascalCase` + `Response` suffix | `ChangeRequestResponse` |
+| Type               | Convention                       | Example                          |
+| ------------------ | -------------------------------- | -------------------------------- |
+| Components         | `PascalCase`                     | `ChangeRequestCard.vue`          |
+| Composables        | `camelCase` with `use` prefix    | `useChangeRequests.ts`           |
+| Stores             | `camelCase` with `use` prefix    | `useAuthStore`                   |
+| Pages/routes       | `kebab-case`                     | `change-requests/[id].vue`       |
+| Types/Interfaces   | `PascalCase`                     | `ChangeRequest`, `UserPrincipal` |
+| API response types | `PascalCase` + `Response` suffix | `ChangeRequestResponse`          |
 
 ---
 
@@ -296,3 +306,74 @@ Every write operation in the application layer must produce an audit entry. Patt
 ```
 
 Never skip steps 5–6. Tested via integration tests that assert audit entries are created.
+
+---
+
+## Layer 1 E2E Test Patterns (Testcontainers)
+
+### Void-return endpoints
+
+`deactivate`, `reactivate`, `addMember`, `deleteGroup`, `cancel` all return `void` from the controller. Spring defaults to HTTP 200 with no body. Assertions must use `isIn(200, 204)` — never check the response body.
+
+### `notifications/read-all`
+
+Returns HTTP 204 (No Content), not 200. Always assert `isIn(200, 204)`.
+
+### SSE stream endpoint
+
+`GET /api/v1/notifications/stream` is a long-lived SSE connection. **Never connect to it from tests** — `HttpClient.send()` with `BodyHandlers.discarding()` will block indefinitely. Only test token issuance (`POST /stream-token`) and verify the returned JWT is non-blank.
+
+### SSE stream query param
+
+The stream endpoint uses `?streamToken=xxx` (not `?token=xxx`) — matches the `@RequestParam` name in `NotificationController`.
+
+### StreamTokenResponse field name
+
+`POST /api/v1/notifications/stream-token` returns `{"streamToken":"..."}` — the JSON key is `streamToken`, not `token`.
+
+### Invite token injection
+
+Raw tokens are never stored in DB — only SHA-256 Base64 hash. Inject known tokens via SQL:
+
+```sql
+INSERT INTO "{slug}".invite_tokens (id, user_id, token_hash, expires_at, used)
+VALUES (gen_random_uuid(), ?::uuid, ?, NOW() + INTERVAL '48 hours', false)
+```
+
+Use `Base64.getEncoder().encodeToString(sha256bytes)` to compute the hash (NOT hex encoding).
+
+### Role normalization
+
+After `POST /api/platform/v1/tenants` (provision), roles are seeded with mixed-case names. Spring Security's `hasAnyRole('ADMIN')` requires UPPERCASE. Always call `normalizeRoleNames(slug)` (UPDATE roles SET name = UPPER(name)) before accepting invites.
+
+### Password complexity requirement
+
+All user passwords must be 12+ chars with uppercase, lowercase, digit, and symbol. Example: `"Admin@Acme1!Pass"`.
+
+### Test storage path
+
+Set `audita.storage.local.base-path=/tmp/audita-test-uploads` in `@SpringBootTest(properties=...)` and `mkdir -p /tmp/audita-test-uploads` to allow attachment upload tests to write files.
+
+---
+
+## UI Consistency Pattern (2026-04-29)
+
+- Treat button styling as two layers:
+  - Variant (`btn-primary`, `btn-ghost`, `btn-danger`, `btn-secondary`)
+  - Size (`btn-sm`, `btn-md`, `btn-lg`)
+- To prevent broken visuals when size classes are missed, variant classes include a default base size fallback in global CSS.
+- Preferred explicit usage in templates remains `variant + size` (for example `btn-primary btn-md`) for readability and deterministic design intent.
+
+## CR Read Mapping Pattern (2026-04-29)
+
+- If API DTO mapping touches lazy relations (`createdBy`, `actor`, etc.), initialize those relations within service read methods while transaction/session is active.
+- For `ChangeRequestService`, read endpoints now initialize creator relation before returning entities used by API response mappers.
+
+## Nuxt Shared Component Naming Pattern (2026-04-29)
+
+- Components under `components/shared/` must be referenced with Nuxt auto-import naming prefix `Shared` in layouts/pages.
+- Example mappings:
+  - `AppSidebar.vue` → `SharedAppSidebar`
+  - `AppUserMenu.vue` → `SharedAppUserMenu`
+  - `AppNotificationBell.vue` → `SharedAppNotificationBell`
+  - `AppToastContainer.vue` → `SharedAppToastContainer`

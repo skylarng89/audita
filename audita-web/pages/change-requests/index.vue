@@ -1,27 +1,48 @@
 <template>
-  <div>
-    <!-- Page header -->
-    <div class="flex items-start justify-between mb-6">
+  <div class="space-y-6">
+    <div class="flex items-start justify-between">
       <div>
-        <p class="text-xs text-muted uppercase tracking-widest mb-1">Operations / Infrastructure</p>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Change Requests</h1>
+        <p
+          class="text-xs text-primary/70 uppercase tracking-[0.16em] font-semibold mb-1"
+        >
+          Operations / Infrastructure
+        </p>
+        <h1
+          class="text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
+        >
+          Change Requests
+        </h1>
         <p class="text-sm text-muted mt-1 max-w-md">
-          Managing and orchestrating infrastructure transitions with architectural precision.
+          Managing and orchestrating infrastructure transitions with
+          architectural precision.
         </p>
       </div>
       <div class="flex items-center gap-6 text-right">
         <div>
           <p class="text-xs text-muted uppercase tracking-wide">Open Changes</p>
-          <p class="text-2xl font-bold text-primary">{{ page?.totalElements ?? 0 }}</p>
+          <p class="text-2xl font-bold text-primary">
+            {{ page?.totalElements ?? 0 }}
+          </p>
         </div>
+        <button
+          class="btn-primary btn-md shadow-lg shadow-primary/20"
+          @click="navigateTo('/change-requests/new')"
+        >
+          Create Change
+        </button>
       </div>
     </div>
 
-    <!-- Filters -->
-    <div class="card p-4 mb-4 flex flex-wrap gap-3 items-center">
+    <div class="card p-4 flex flex-wrap gap-3 items-center shadow-card-hover">
       <div class="flex items-center gap-2">
-        <label class="text-xs font-semibold text-muted uppercase">Status:</label>
-        <select v-model="filters.status" @change="load" class="input py-1.5 pr-8 text-sm w-36">
+        <label class="text-xs font-semibold text-muted uppercase"
+          >Status:</label
+        >
+        <select
+          v-model="filters.status"
+          @change="load"
+          class="input py-1.5 pr-8 text-sm w-36"
+        >
           <option value="">All States</option>
           <option value="DRAFT">Draft</option>
           <option value="PENDING_APPROVAL">Pending Approval</option>
@@ -31,8 +52,14 @@
         </select>
       </div>
       <div class="flex items-center gap-2">
-        <label class="text-xs font-semibold text-muted uppercase">Priority:</label>
-        <select v-model="filters.priority" @change="load" class="input py-1.5 pr-8 text-sm w-36">
+        <label class="text-xs font-semibold text-muted uppercase"
+          >Priority:</label
+        >
+        <select
+          v-model="filters.priority"
+          @change="load"
+          class="input py-1.5 pr-8 text-sm w-36"
+        >
           <option value="">Any Priority</option>
           <option value="LOW">Low</option>
           <option value="MEDIUM">Medium</option>
@@ -42,8 +69,7 @@
       </div>
     </div>
 
-    <!-- Table -->
-    <div class="card overflow-hidden">
+    <div class="card overflow-hidden shadow-card-hover">
       <table class="w-full">
         <thead>
           <tr class="border-b border-border dark:border-border-dark">
@@ -51,16 +77,28 @@
             <th class="table-header px-4 py-3 text-left">Change Title</th>
             <th class="table-header px-4 py-3 text-left w-36">Status</th>
             <th class="table-header px-4 py-3 text-left w-24">Priority</th>
-            <th class="table-header px-4 py-3 text-left w-28 hidden lg:table-cell">Scheduled</th>
-            <th class="table-header px-4 py-3 text-left w-36 hidden lg:table-cell">Requester</th>
+            <th
+              class="table-header px-4 py-3 text-left w-28 hidden lg:table-cell"
+            >
+              Scheduled
+            </th>
+            <th
+              class="table-header px-4 py-3 text-left w-36 hidden lg:table-cell"
+            >
+              Requester
+            </th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="isLoading">
-            <td colspan="6" class="px-4 py-12 text-center text-sm text-muted">Loading…</td>
+            <td colspan="6" class="px-4 py-12 text-center text-sm text-muted">
+              Loading…
+            </td>
           </tr>
           <tr v-else-if="!crs.length">
-            <td colspan="6" class="px-4 py-12 text-center text-sm text-muted">No change requests found.</td>
+            <td colspan="6" class="px-4 py-12 text-center text-sm text-muted">
+              No change requests found.
+            </td>
           </tr>
           <tr
             v-else
@@ -70,10 +108,14 @@
             @click="navigateTo(`/change-requests/${cr.id}`)"
           >
             <td class="px-4 py-4">
-              <span class="font-mono text-xs text-primary font-semibold">CHG-{{ cr.id.slice(0,8).toUpperCase() }}</span>
+              <span class="font-mono text-xs text-primary font-semibold"
+                >CHG-{{ cr.id.slice(0, 8).toUpperCase() }}</span
+              >
             </td>
             <td class="px-4 py-4">
-              <p class="font-semibold text-sm text-gray-900 dark:text-gray-100">{{ cr.title }}</p>
+              <p class="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                {{ cr.title }}
+              </p>
               <p class="text-xs text-muted mt-0.5">{{ cr.category }}</p>
             </td>
             <td class="px-4 py-4">
@@ -83,14 +125,18 @@
               <CrPriorityBadge :priority="cr.priority" />
             </td>
             <td class="px-4 py-4 text-xs text-muted hidden lg:table-cell">
-              {{ cr.scheduledStart ? formatDate(cr.scheduledStart) : '—' }}
+              {{ cr.scheduledStart ? formatDate(cr.scheduledStart) : "—" }}
             </td>
             <td class="px-4 py-4 hidden lg:table-cell">
               <div class="flex items-center gap-2">
-                <div class="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold uppercase">
-                  {{ cr.createdBy.fullName.slice(0, 2) }}
+                <div
+                  class="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold uppercase"
+                >
+                  {{ initials(cr.createdByFullName) }}
                 </div>
-                <span class="text-xs text-gray-700 dark:text-gray-300">{{ cr.createdBy.fullName }}</span>
+                <span class="text-xs text-gray-700 dark:text-gray-300">{{
+                  cr.createdByFullName ?? "Unknown"
+                }}</span>
               </div>
             </td>
           </tr>
@@ -98,17 +144,32 @@
       </table>
 
       <!-- Pagination -->
-      <div v-if="page && page.totalPages > 1" class="px-4 py-3 border-t border-border dark:border-border-dark flex items-center justify-between">
+      <div
+        v-if="page && page.totalPages > 1"
+        class="px-4 py-3 border-t border-border dark:border-border-dark flex items-center justify-between"
+      >
         <p class="text-xs text-muted">
-          Showing {{ page.number * page.size + 1 }}–{{ Math.min((page.number + 1) * page.size, page.totalElements) }}
+          Showing {{ page.number * page.size + 1 }}–{{
+            Math.min((page.number + 1) * page.size, page.totalElements)
+          }}
           of {{ page.totalElements }} entries
         </p>
         <div class="flex items-center gap-1">
-          <button @click="setPage(currentPage - 1)" :disabled="currentPage === 0" class="btn-ghost btn-sm px-2">
+          <button
+            @click="setPage(currentPage - 1)"
+            :disabled="currentPage === 0"
+            class="btn-ghost btn-sm px-2"
+          >
             &lsaquo;
           </button>
-          <span class="text-xs text-muted px-2">Page {{ currentPage + 1 }} of {{ page.totalPages }}</span>
-          <button @click="setPage(currentPage + 1)" :disabled="currentPage >= page.totalPages - 1" class="btn-ghost btn-sm px-2">
+          <span class="text-xs text-muted px-2"
+            >Page {{ currentPage + 1 }} of {{ page.totalPages }}</span
+          >
+          <button
+            @click="setPage(currentPage + 1)"
+            :disabled="currentPage >= page.totalPages - 1"
+            class="btn-ghost btn-sm px-2"
+          >
             &rsaquo;
           </button>
         </div>
@@ -118,42 +179,53 @@
 </template>
 
 <script setup lang="ts">
-import type { ChangeRequest, Page } from '~/types'
-import { format, parseISO } from 'date-fns'
+import type { ChangeRequest, Page } from "~/types";
+import { format, parseISO } from "date-fns";
 
-definePageMeta({ middleware: 'auth' })
+definePageMeta({ middleware: "auth" });
 
-const { list } = useChangeRequests()
+const { list } = useChangeRequests();
 
-const filters = reactive({ status: '', priority: '' })
-const currentPage = ref(0)
-const isLoading = ref(false)
-const page = ref<Page<ChangeRequest> | null>(null)
-const crs = computed(() => page.value?.content ?? [])
+const filters = reactive({ status: "", priority: "" });
+const currentPage = ref(0);
+const isLoading = ref(false);
+const page = ref<Page<ChangeRequest> | null>(null);
+const crs = computed(() => page.value?.content ?? []);
 
 async function load() {
-  isLoading.value = true
+  isLoading.value = true;
   try {
     page.value = await list({
       status: filters.status || undefined,
       priority: filters.priority || undefined,
       page: currentPage.value,
       size: 15,
-      sort: 'createdAt,desc',
-    })
+      sort: "createdAt,desc",
+    });
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
 }
 
 function setPage(p: number) {
-  currentPage.value = p
-  load()
+  currentPage.value = p;
+  load();
 }
 
 function formatDate(iso: string) {
-  return format(parseISO(iso), 'MMM d, yyyy')
+  return format(parseISO(iso), "MMM d, yyyy");
 }
 
-onMounted(load)
+function initials(name: string | null) {
+  if (!name) {
+    return "NA";
+  }
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((n) => n.charAt(0).toUpperCase())
+    .join("");
+}
+
+onMounted(load);
 </script>

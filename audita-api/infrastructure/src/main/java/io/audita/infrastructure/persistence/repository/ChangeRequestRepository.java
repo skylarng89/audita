@@ -1,6 +1,7 @@
 package io.audita.infrastructure.persistence.repository;
 
 import io.audita.domain.model.ChangeRequestStatus;
+import io.audita.domain.model.Priority;
 import io.audita.infrastructure.persistence.entity.ChangeRequestEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +16,18 @@ import java.util.UUID;
 
 @Repository
 public interface ChangeRequestRepository extends JpaRepository<ChangeRequestEntity, UUID> {
+
+       @Query("SELECT cr FROM ChangeRequestEntity cr " +
+                 "WHERE (:status IS NULL OR cr.status = :status) " +
+                 "AND (:priority IS NULL OR cr.priority = :priority) " +
+                 "AND (:category IS NULL OR LOWER(cr.category) = LOWER(CAST(:category AS String))) " +
+                 "AND (:createdById IS NULL OR cr.createdBy.id = :createdById)")
+       Page<ChangeRequestEntity> findAllFiltered(
+                     @Param("status") ChangeRequestStatus status,
+                     @Param("priority") Priority priority,
+                     @Param("category") String category,
+                     @Param("createdById") UUID createdById,
+                     Pageable pageable);
 
     Page<ChangeRequestEntity> findByStatus(ChangeRequestStatus status, Pageable pageable);
 

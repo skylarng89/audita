@@ -16,10 +16,10 @@ public class InviteTokenEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
-    @Column(nullable = false)
+    @Column(name = "token_hash", nullable = false)
     private String tokenHash;
 
-    @Column(nullable = false)
+    @Column(name = "expires_at", nullable = false)
     private OffsetDateTime expiresAt;
 
     @Column(nullable = false)

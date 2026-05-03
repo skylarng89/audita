@@ -1,11 +1,17 @@
 <script setup lang="ts">
 // Root redirect — send authenticated users to their default page
-const auth = useAuthStore()
+const auth = useAuthStore();
+const { fetchStatus } = useOnboarding();
+
+const onboarding = await fetchStatus();
 
 if (auth.isAuthenticated) {
-  if (auth.isSuperAdmin) await navigateTo('/platform')
-  else await navigateTo('/dashboard')
+  if (auth.isSuperAdmin) await navigateTo("/platform");
+  else await navigateTo("/dashboard");
 } else {
-  await navigateTo('/auth/sign-in')
+  const destination = onboarding.onboardingCompleted
+    ? "/auth/sign-in"
+    : "/setup";
+  await navigateTo(destination);
 }
 </script>

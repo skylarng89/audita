@@ -1,8 +1,8 @@
 # Audita — Active Context
 
-**Last Updated:** 2026-04-23
-**Current Phase:** Pre-development — Project initialisation & planning
-**Active Sprint:** Sprint 0 — Foundation & Scaffolding
+**Last Updated:** 2026-05-03
+**Current Phase:** Active development — comprehensive E2E test coverage complete
+**Active Sprint:** All sprints complete; hardening + test coverage ongoing
 
 ---
 
@@ -16,31 +16,42 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 
 ## Current State
 
-- No code written yet — project is at the planning and memory-bank initialisation stage.
-- Documentation complete: PRD v1.0, SRS v1.0, USER_FLOW v1.0 (all `docs/` folder).
-- UI designs complete: 40 screens across light/dark modes covering all major user journeys (all `ui-designs/` folder).
-- Memory bank initialised (this session: 2026-04-23).
+- **Sprint 0 complete (19/19 tasks).** Both repositories are scaffolded and runnable via Docker Compose.
+- **Sprint 1 complete (22/22 tasks).** Full authentication stack: JWT + refresh tokens, SSO (Google/Microsoft), domain whitelist, rate limiting, 18 unit tests passing.
+- **Sprint 2 complete (19/19 tasks).** Remaining tasks (USR-007, USR-008, TENANT-005) were completed with controller policy tests and tenant-schema isolation integration coverage.
+- **Sprint 3 complete (21/21 tasks).** Added CR attachments API and frontend upload/list flows; Sprint 3 is fully closed.
+- **Sprint 4 complete (10/10 tasks).** Added comments APIs + mention extraction/persistence, notifications REST + SSE stream, SLA warning/breach scheduler automation, and frontend comments/notification wiring.
+- **Sprint 5 validation expanded.** Added endpoint-level controller tests for comments and notifications, including stream-token issuance and invalid-token SSE access rejection; targeted Gradle run passes.
+- **Comprehensive E2E test coverage complete.** `AllSprintsE2ETest.java` — 44 ordered integration tests covering every implemented endpoint across all 5 sprints. 62/62 tests passing.
+- **Security follow-up complete (SEC-001..SEC-004).** Tenant slug boundary hardening, SSO callback URL transport hardening, CR object-level mutation regression coverage, and strict CORS allowlist enforcement are now implemented and verified.
+- **Security follow-up refinement complete (2026-05-03).** Bootstrap/setup now reject tenant headers, callback code parsing is fragment-only on frontend, and tenant-header hardening has dedicated filter tests.
+- **Production entity bugs fixed (cumulative):** `GroupEntity` (phantom `updated_at` column), `PasswordResetTokenEntity` (`tokenHash`/`expiresAt` column name mapping), `RoleEntity`, `UserEntity`, `InviteTokenEntity`, `RefreshTokenEntity` — all now have explicit `@Column(name=...)` to survive the `JpaConfig` naming-strategy bypass.
+- Documentation complete: PRD v1.0, SRS v1.0, USER_FLOW v1.0 (`docs/`). UI designs: 40 screens (`ui-designs/`).
+- `audita-api`: hexagonal structure, JPA/Hibernate multi-tenancy, Flyway migrations, Spring Security scaffold, RFC 7807 exception handler, structured JSON logging (Logstash encoder).
+- `audita-web`: Nuxt 3, Tailwind tokens, all layouts, auth/role/tenant middleware, `plugins/api.ts`, `useAuthStore`, shared component library (AppButton, AppInput, AppBadge, AppCard, AppModal, AppTable, AppPagination).
+- README.md written with Docker Compose and standalone run instructions.
+- Known pattern: empty Gradle module `src/` dirs need `.gitkeep` files — Git ignores empty dirs, Docker `COPY` fails without them.
 
 ---
 
 ## Five User Personas
 
-| Role | Scope | Key Capability |
-|---|---|---|
-| **Super Admin** | Platform-wide | Manage tenants, domain whitelists, SSO per org |
-| **Admin** | Org-wide | Configure workflows, manage users/roles/groups, SLA, custom fields |
-| **Requester** | Org-wide | Create and track change requests |
-| **Approver** | Org-wide | Review and action change requests |
-| **Auditor** | Org-wide | Read-only: view CRs, audit trail |
+| Role            | Scope         | Key Capability                                                     |
+| --------------- | ------------- | ------------------------------------------------------------------ |
+| **Super Admin** | Platform-wide | Manage tenants, domain whitelists, SSO per org                     |
+| **Admin**       | Org-wide      | Configure workflows, manage users/roles/groups, SLA, custom fields |
+| **Requester**   | Org-wide      | Create and track change requests                                   |
+| **Approver**    | Org-wide      | Review and action change requests                                  |
+| **Auditor**     | Org-wide      | Read-only: view CRs, audit trail                                   |
 
 ---
 
 ## Application Structure (Two Repositories)
 
-| Repo | Tech | Description |
-|---|---|---|
-| `audita-api` | Java 25 + Spring Boot 4 | REST API, business logic, data layer |
-| `audita-web` | Nuxt 3 + Vue 3 | SSR frontend, component library, state management |
+| Repo         | Tech                    | Description                                       |
+| ------------ | ----------------------- | ------------------------------------------------- |
+| `audita-api` | Java 25 + Spring Boot 4 | REST API, business logic, data layer              |
+| `audita-web` | Nuxt 3 + Vue 3          | SSR frontend, component library, state management |
 
 Both served via Docker Compose (dev) or Helm/K8s (production).
 
@@ -62,6 +73,7 @@ Both served via Docker Compose (dev) or Helm/K8s (production).
 ## MVP Delivery Strategy
 
 The sprint plan is structured to deliver a **usable, end-to-end MVP** as early as Sprint 4/5, enabling:
+
 1. Organisations to be provisioned.
 2. Users to be invited and authenticated.
 3. Change requests to be created, submitted, and approved.
@@ -73,13 +85,64 @@ Advanced features (SLA, custom fields, audit export, full admin config) follow i
 
 ## Active Blockers / Open Questions
 
-- None at this time — documentation is comprehensive and clear.
+- Resolved this session: browser-only bootstrap submit returned 403 while CLI succeeded.
+- Root cause confirmed as CORS rejection (`Invalid CORS request`) on proxied browser requests.
+- Fix landed in Nuxt proxy route by stripping forwarded `Origin`/`Referer`/`Host` before upstream hop.
+- No active blocker currently after fix validation (browser bootstrap now succeeds and redirects to sign-in).
+
+---
+
+## Sprint 1 Key Patterns & Decisions
+
+- **`TenantResolutionFilter`** lives in `api` module (not `infrastructure`) — only `api` has `spring-boot-starter-webmvc` with servlet API.
+- **`infrastructure` module** has `spring-boot-starter-web` (not webmvc) for `RestClient` used by `SsoService`.
+- **JWT**: 15-min access tokens (jjwt 0.12.6), SHA-256 hashed refresh tokens (7-day rotating), stored HttpOnly cookie at path `/api/v1/auth/refresh`.
+- **AES-256-GCM**: `AesEncryptionService` for SSO client secrets. Key from `audita.encryption.key` (64 hex chars).
+- **Rate limiting**: In-memory `ConcurrentHashMap<String, LinkedList<Instant>>` sliding window. Login: 5/15min/IP+email. Forgot-password: 3/hr/email.
+- **SSO state**: `ConcurrentHashMap` with 10-min TTL, random 32-byte token.
+- **Domain whitelist**: Open tenant if no domains configured; otherwise email domain must match.
+- **BCrypt cost=12** in production; cost=4 in tests via `ReflectionTestUtils`.
 
 ---
 
 ## Next Actions
 
-1. Scaffold `audita-api` — Gradle project, Spring Boot 4, Flyway, Docker Compose.
-2. Scaffold `audita-web` — Nuxt 3 project, Tailwind CSS, Pinia, component library baseline.
-3. Implement public schema migrations (tenants, super_admins, sso_configs, allowed_domains).
-4. Implement authentication module (local login, JWT, refresh token rotation).
+1. Execute immediate security hardening actions from `docs/SECURITY_AUDIT_2026-04-28.md` (tenant isolation, SSO token transport, BOLA controls, CORS tightening).
+2. Keep critical e2e suite as a mandatory CI gate and add security regression gates (tenant fuzz/BOLA/SSO token handling).
+3. Continue replacing compatibility shim logic with permanent entity/migration alignment incrementally.
+4. Add regression coverage for the Nuxt proxy bootstrap path (ensure upstream bootstrap POST is not CORS-rejected).
+
+---
+
+## Security Review Snapshot (2026-04-28)
+
+- Completed adversarial security review and published findings in `docs/SECURITY_AUDIT_2026-04-28.md`.
+- Highest-risk issues identified:
+  - Tenant schema switching surface relies on unsanitized header-derived slug concatenated into SQL (`search_path`).
+  - SSO callback currently transports access token in URL query string.
+  - Change request mutation paths lack object-level authorization checks for requester-level actors.
+  - CORS is configured with wildcard origin patterns while credentials are enabled.
+- Recommended immediate path: fix those four findings before further feature expansion.
+
+---
+
+## Session Updates (2026-04-29)
+
+- Resolved production UX/runtime chain affecting change request creation flow:
+  - submit/create succeeded, but redirect to detail failed with 500 due to lazy `createdBy` initialization.
+  - read-path initialization added in `ChangeRequestService` to stabilize response mapping.
+- Resolved recurring authorization/rendering issues:
+  - role authority normalization in `UserPrincipal` to satisfy Spring `hasRole/hasAnyRole` checks.
+  - frontend token refresh fallback expanded to include 403 responses.
+  - layout shared-component tag alignment fixed missing sidebar/user menu/notification bell rendering.
+- Completed CR UI consistency audit pass:
+  - standardized button sizing behavior for variant buttons.
+  - patched CR list/create/detail actions and tabs for consistent button treatment.
+  - corrected CR description rendering to display editor HTML content.
+- Build and deployment validation completed:
+  - backend compile and frontend production build passed.
+  - container naming conflict resolved during compose redeploy; services returned healthy.
+
+## Current Blockers
+
+- No active blocker currently.

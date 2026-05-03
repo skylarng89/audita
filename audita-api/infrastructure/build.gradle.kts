@@ -30,6 +30,9 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
+    // Spring Web — RestClient (used by SsoService for OAuth2 token exchange)
+    implementation("org.springframework.boot:spring-boot-starter-web")
+
     // Spring Security crypto (BCrypt password hashing)
     implementation("org.springframework.security:spring-security-crypto")
 

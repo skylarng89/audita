@@ -1,3 +1,5 @@
+name: audita
+
 services:
   # ── PostgreSQL ──────────────────────────────────────────────────────────────
   db:
@@ -11,7 +13,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "7432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U audita -d audita"]
       interval: 10s
@@ -24,7 +26,7 @@ services:
     container_name: audita-mailhog
     restart: unless-stopped
     ports:
-      - "1025:1025" # SMTP
+      - "7025:1025" # SMTP
       - "8025:8025" # Web UI
 
   # ── Spring Boot API ─────────────────────────────────────────────────────────
@@ -41,11 +43,12 @@ services:
       DATABASE_URL: jdbc:postgresql://db:5432/audita
       DATABASE_USERNAME: audita
       DATABASE_PASSWORD: secret
-      JWT_SECRET: dev-secret-change-in-production-must-be-long-enough
+      JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRY_SECONDS: 900
       REFRESH_TOKEN_EXPIRY_DAYS: 7
-      APP_ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+      APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY}
       APP_BASE_URL: http://localhost:3000
+      DEFAULT_SMTP_FROM: noreply@audita.io
       DEFAULT_SMTP_HOST: mailhog
       DEFAULT_SMTP_PORT: 1025
       DEFAULT_SMTP_AUTH: "false"
@@ -55,7 +58,7 @@ services:
     volumes:
       - uploads:/data/uploads
     ports:
-      - "8080:8080"
+      - "7080:8080"
     healthcheck:
       test:
         ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
@@ -73,9 +76,10 @@ services:
     depends_on:
       - api
     environment:
-      NUXT_PUBLIC_API_BASE: http://api:8080
+      NUXT_PUBLIC_API_BASE: /api
+      NUXT_API_INTERNAL_BASE: http://api:8080
     ports:
-      - "3000:3000"
+      - "7000:3000"
 
 volumes:
   pgdata:

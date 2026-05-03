@@ -22,8 +22,9 @@ public record UserPrincipal(
 ) implements UserDetails {
 
     public static UserPrincipal ofTenantUser(UUID userId, String email, String role, String tenantSlug) {
+    String normalizedRole = normalizeRole(role);
         return new UserPrincipal(userId, email, role, tenantSlug, false,
-                List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+        List.of(new SimpleGrantedAuthority("ROLE_" + normalizedRole)));
     }
 
     public static UserPrincipal ofSuperAdmin(UUID userId, String email) {
@@ -31,9 +32,16 @@ public record UserPrincipal(
                 List.of(new SimpleGrantedAuthority("ROLE_SUPER_ADMIN")));
     }
 
+    private static String normalizeRole(String role) {
+        if (role == null || role.isBlank()) {
+            return "REQUESTER";
+        }
+        return role.trim().replace('-', '_').replace(' ', '_').toUpperCase();
+    }
+
     @Override public Collection<? extends GrantedAuthority> getAuthorities() { return authorities; }
     @Override public String getPassword() { return null; }
-    @Override public String getUsername() { return email; }
+    @Override public String getUsername() { return userId.toString(); }
     @Override public boolean isAccountNonExpired() { return true; }
     @Override public boolean isAccountNonLocked() { return true; }
     @Override public boolean isCredentialsNonExpired() { return true; }

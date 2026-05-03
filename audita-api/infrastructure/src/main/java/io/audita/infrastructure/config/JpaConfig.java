@@ -2,17 +2,27 @@ package io.audita.infrastructure.config;
 
 import io.audita.infrastructure.tenant.AuditaMultiTenantConnectionProvider;
 import io.audita.infrastructure.tenant.AuditaTenantIdentifierResolver;
+import jakarta.persistence.EntityManagerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
 import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
+@EnableTransactionManagement
+@EnableJpaRepositories(
+        basePackages = "io.audita.infrastructure.persistence.repository",
+        entityManagerFactoryRef = "entityManagerFactory",
+        transactionManagerRef = "transactionManager"
+)
 public class JpaConfig {
 
     @Bean
@@ -45,6 +55,14 @@ public class JpaConfig {
         props.put("hibernate.show_sql", "false");
         // DDL is managed by Flyway — never by Hibernate
         props.put("hibernate.hbm2ddl.auto", "none");
+        // Convert camelCase field names to snake_case DB columns (e.g. createdAt → created_at)
+        props.put("hibernate.physical_naming_strategy",
+                  new org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy());
         return props;
+    }
+
+    @Bean
+    public JpaTransactionManager transactionManager(EntityManagerFactory entityManagerFactory) {
+        return new JpaTransactionManager(entityManagerFactory);
     }
 }

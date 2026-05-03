@@ -25,7 +25,7 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
 
-    @Value("${spring.mail.username:noreply@audita.io}")
+    @Value("${audita.mail.from:noreply@audita.io}")
     private String fromAddress;
 
     @Value("${audita.app.base-url:http://localhost:3000}")

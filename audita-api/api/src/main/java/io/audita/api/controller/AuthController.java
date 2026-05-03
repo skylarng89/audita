@@ -30,6 +30,9 @@ public class AuthController {
     @Value("${audita.refresh-token.expiry-days:7}")
     private long refreshExpiryDays;
 
+    @Value("${audita.security.trust-forwarded-headers:false}")
+    private boolean trustForwardedHeaders;
+
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
@@ -38,13 +41,16 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request,
             @RequestHeader(value = "X-Tenant-Slug", required = false) String tenantSlug,
+            HttpServletRequest servletRequest,
             HttpServletResponse response) {
 
         LoginResult result;
         if (tenantSlug == null || tenantSlug.isBlank()) {
             result = authService.loginSuperAdmin(request.email(), request.password());
         } else {
-            result = authService.loginTenantUser(request.email(), request.password(), tenantSlug);
+            String clientIp = resolveClientIp(servletRequest);
+            String userAgent = servletRequest.getHeader("User-Agent");
+            result = authService.loginTenantUser(request.email(), request.password(), tenantSlug, clientIp, userAgent);
         }
 
         setRefreshCookie(response, result.rawRefreshToken());
@@ -61,7 +67,9 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        LoginResult result = authService.refreshToken(rawToken);
+        String clientIp = resolveClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
+        LoginResult result = authService.refreshToken(rawToken, clientIp, userAgent);
         setRefreshCookie(response, result.rawRefreshToken());
         return ResponseEntity.ok(toAuthResponse(result));
     }
@@ -133,5 +141,17 @@ public class AuthController {
         return AuthResponse.of(result.accessToken(), jwtExpirySeconds,
                 result.userId(), result.email(), result.fullName(),
                 result.role(), result.tenantSlug());
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        if (!trustForwardedHeaders) {
+            return request.getRemoteAddr();
+        }
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            // X-Forwarded-For may contain a comma-separated list; take the first (client) IP
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }

@@ -20,12 +20,20 @@ import java.util.UUID;
 @Service
 public class JwtService {
 
+    private static final String STREAM_TOKEN_TYPE = "NOTIFICATION_STREAM";
+
     private final SecretKey signingKey;
     private final long expirySeconds;
 
     public JwtService(
             @Value("${audita.jwt.secret}") String secret,
             @Value("${audita.jwt.expiry-seconds:900}") long expirySeconds) {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalArgumentException("JWT secret is required.");
+        }
+        if (secret.length() < 32) {
+            throw new IllegalArgumentException("JWT secret must be at least 32 characters.");
+        }
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirySeconds = expirySeconds;
     }
@@ -45,6 +53,31 @@ public class JwtService {
                 .expiration(Date.from(now.plusSeconds(expirySeconds)))
                 .signWith(signingKey)
                 .compact();
+    }
+
+    public String issueStreamToken(UUID userId, String tenantSlug) {
+        Instant now = Instant.now();
+        Map<String, Object> claims = Map.of(
+                "tokenType", STREAM_TOKEN_TYPE,
+                "tenantSlug", tenantSlug != null ? tenantSlug : ""
+        );
+
+        return Jwts.builder()
+                .subject(userId.toString())
+                .claims(claims)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusSeconds(120)))
+                .signWith(signingKey)
+                .compact();
+    }
+
+    public boolean isValidStreamToken(String token) {
+        try {
+            Claims claims = parse(token);
+            return STREAM_TOKEN_TYPE.equals(claims.get("tokenType", String.class));
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public Claims parse(String token) {
