@@ -42,7 +42,7 @@ class ChangeRequestServiceSecurityTest {
     ChangeRequestService changeRequestService;
 
     @Test
-    void update_denies_requester_who_does_not_own_change_request() {
+    void updateDeniesRequesterWhoDoesNotOwnChangeRequest() {
         UUID changeRequestId = UUID.randomUUID();
         UUID ownerId = UUID.randomUUID();
         UUID otherRequesterId = UUID.randomUUID();
@@ -73,7 +73,7 @@ class ChangeRequestServiceSecurityTest {
     }
 
     @Test
-    void submit_denies_requester_who_does_not_own_change_request() {
+    void submitDeniesRequesterWhoDoesNotOwnChangeRequest() {
         UUID changeRequestId = UUID.randomUUID();
         UUID ownerId = UUID.randomUUID();
         UUID otherRequesterId = UUID.randomUUID();
