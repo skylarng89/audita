@@ -228,6 +228,15 @@ Behavior:
   - tags images as latest, vX.Y.Z, vX.Y, and `sha-<git-sha>`
   - creates or reuses git tag and publishes a GitHub release
 
+Published Docker Hub images:
+
+| Service | Image |
+| --- | --- |
+| API | [skylarng89/audita-api](https://hub.docker.com/r/skylarng89/audita-api) |
+| Web | [skylarng89/audita-web](https://hub.docker.com/r/skylarng89/audita-web) |
+
+Image tags per release: `latest`, `vX.Y.Z`, `vX.Y`, `sha-<git-sha>`
+
 Required GitHub secrets:
 
 - DOCKERHUB_USERNAME
@@ -235,14 +244,9 @@ Required GitHub secrets:
 
 Optional GitHub variables:
 
-- DOCKERHUB_NAMESPACE
-- DOCKERHUB_API_IMAGE_NAME
-- DOCKERHUB_WEB_IMAGE_NAME
-
-Defaults if optional variables are unset:
-
-- namespace uses DOCKERHUB_USERNAME
-- image names use audita-api and audita-web
+- DOCKERHUB_NAMESPACE (default: `skylarng89`)
+- DOCKERHUB_API_IMAGE_NAME (default: `audita-api`)
+- DOCKERHUB_WEB_IMAGE_NAME (default: `audita-web`)
 
 ## Contributing
 
