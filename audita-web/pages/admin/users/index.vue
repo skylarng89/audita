@@ -60,7 +60,7 @@
           :current-page="page"
           :total-pages="totalPages"
           @change="
-            (p) => {
+            (p: number) => {
               page = p;
               refresh();
             }
@@ -84,10 +84,12 @@
         </div>
         <div>
           <label
+            for="invite-email"
             class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5"
             >Email</label
           >
           <input
+            id="invite-email"
             v-model="inviteForm.email"
             type="email"
             class="input"
@@ -96,10 +98,12 @@
         </div>
         <div>
           <label
+            for="invite-full-name"
             class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5"
             >Full Name</label
           >
           <input
+            id="invite-full-name"
             v-model="inviteForm.fullName"
             type="text"
             class="input"
@@ -108,10 +112,11 @@
         </div>
         <div>
           <label
+            for="invite-role"
             class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5"
             >Role</label
           >
-          <select v-model="inviteForm.roleId" class="input">
+          <select id="invite-role" v-model="inviteForm.roleId" class="input">
             <option v-for="r in roles" :key="r.id" :value="r.id">
               {{ r.name }}
             </option>
@@ -141,10 +146,11 @@
       <form @submit.prevent="updateUser" class="space-y-4 p-4">
         <div>
           <label
+            for="edit-role"
             class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5"
             >Role</label
           >
-          <select v-model="editForm.roleId" class="input">
+          <select id="edit-role" v-model="editForm.roleId" class="input">
             <option v-for="r in roles" :key="r.id" :value="r.id">
               {{ r.name }}
             </option>

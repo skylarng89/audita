@@ -21,7 +21,9 @@ describe("auth.global middleware", () => {
     mockUseAuthStore.mockReturnValue({ isAuthenticated: false });
 
     const { default: middleware } = await import("~/middleware/auth.global");
-    await middleware({ path: "/platform" });
+    type To = Parameters<typeof middleware>[0];
+    type From = Parameters<typeof middleware>[1];
+    await middleware({ path: "/platform" } as To, { path: "/" } as From);
 
     expect(mockNavigateTo).toHaveBeenCalledWith("/auth/sign-in");
   });
@@ -30,7 +32,12 @@ describe("auth.global middleware", () => {
     mockUseAuthStore.mockReturnValue({ isAuthenticated: false });
 
     const { default: middleware } = await import("~/middleware/auth.global");
-    const result = await middleware({ path: "/platform/bootstrap" });
+    type To = Parameters<typeof middleware>[0];
+    type From = Parameters<typeof middleware>[1];
+    const result = await middleware(
+      { path: "/platform/bootstrap" } as To,
+      { path: "/" } as From,
+    );
 
     expect(result).toBeUndefined();
     expect(mockNavigateTo).not.toHaveBeenCalled();
@@ -40,7 +47,12 @@ describe("auth.global middleware", () => {
     mockUseAuthStore.mockReturnValue({ isAuthenticated: true });
 
     const { default: middleware } = await import("~/middleware/auth.global");
-    const result = await middleware({ path: "/platform" });
+    type To = Parameters<typeof middleware>[0];
+    type From = Parameters<typeof middleware>[1];
+    const result = await middleware(
+      { path: "/platform" } as To,
+      { path: "/" } as From,
+    );
 
     expect(result).toBeUndefined();
     expect(mockNavigateTo).not.toHaveBeenCalled();

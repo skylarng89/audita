@@ -15,14 +15,12 @@ export default defineNuxtPlugin(() => {
         auth.hydrateFromCookie();
       }
 
-      let requestPath = "";
-      if (typeof request === "string") {
-        requestPath = request;
-      } else if (request instanceof Request) {
-        requestPath = request.url;
-      } else {
-        requestPath = request.toString();
-      }
+      const requestPath =
+        typeof request === "string"
+          ? request
+          : request instanceof Request
+            ? request.url
+            : "";
 
       const isBootstrapEndpoint =
         requestPath.includes("/api/platform/v1/bootstrap") ||
@@ -30,25 +28,23 @@ export default defineNuxtPlugin(() => {
 
       if (isBootstrapEndpoint) {
         // Bootstrap must remain anonymous and tenant-agnostic.
-        options.headers = {};
+        options.headers = new Headers();
         return;
       }
 
+      const headers = new Headers(options.headers);
+
       // Inject Bearer token on every authenticated request
       if (auth.accessToken) {
-        options.headers = {
-          ...options.headers,
-          Authorization: `Bearer ${auth.accessToken}`,
-        };
+        headers.set("Authorization", `Bearer ${auth.accessToken}`);
       }
 
       // Inject tenant slug for routing
       if (auth.tenantSlug) {
-        options.headers = {
-          ...(options.headers as Record<string, string>),
-          "X-Tenant-Slug": auth.tenantSlug,
-        };
+        headers.set("X-Tenant-Slug", auth.tenantSlug);
       }
+
+      options.headers = headers;
     },
 
     async onResponseError({ response }) {

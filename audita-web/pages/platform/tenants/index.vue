@@ -76,16 +76,19 @@ const page = ref(0);
 const { data, pending, refresh } = await useAsyncData<PageData>(
   "platform-tenants-list",
   () =>
-    api(`/api/platform/v1/tenants?page=${page.value}&size=20`, {
+    api<PageData>("/api/platform/v1/tenants", {
       method: "GET",
-    }) as Promise<PageData>,
-  { getCachedData: () => null },
+      query: {
+        page: page.value,
+        size: 20,
+      },
+    }),
 );
 
 watch(page, () => refresh());
 
-const tenants = computed(() => data.value?.content ?? []);
-const totalPages = computed(() => data.value?.totalPages ?? 1);
+const tenants = computed<Tenant[]>(() => data.value?.content ?? []);
+const totalPages = computed<number>(() => data.value?.totalPages ?? 1);
 
 function onPageChange(newPage: number) {
   page.value = newPage;

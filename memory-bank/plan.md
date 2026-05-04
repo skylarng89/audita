@@ -55,3 +55,9 @@
 - DATA-003: Add platform health endpoint (`/api/platform/v1/health`) using `OnboardingPort` health probe. ✅
 - DATA-004: Rewire frontend pages (`admin/settings`, `dashboard`, `platform`) to consume live backend endpoints instead of mock/stub values. ✅
 - DATA-005: Validate changed backend/frontend slices (`./gradlew :api:compileJava :infrastructure:compileJava`, targeted eslint) with clean results. ✅
+
+## Stability Follow-Up (2026-05-04)
+
+- STAB-001: Decouple `TenantSettingsController` from infrastructure service/entity types via new `TenantSettingsPort`. ✅
+- STAB-002: Restore Nuxt project-level type resolution by adding root `audita-web/tsconfig.json` extending `.nuxt/tsconfig.json`. ✅
+- STAB-003: Eliminate residual global Nuxt typecheck blockers (API typing recursion, strict route middleware test signatures, missing tailwind type package). ✅

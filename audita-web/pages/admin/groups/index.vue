@@ -44,7 +44,7 @@
           :current-page="page"
           :total-pages="totalPages"
           @change="
-            (p) => {
+            (p: number) => {
               page = p;
               refresh();
             }
@@ -62,17 +62,30 @@
       <form @submit.prevent="createGroup" class="space-y-4 p-4">
         <div>
           <label
+            for="create-group-name"
             class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5"
             >Name</label
           >
-          <input v-model="createForm.name" type="text" class="input" required />
+          <input
+            id="create-group-name"
+            v-model="createForm.name"
+            type="text"
+            class="input"
+            required
+          />
         </div>
         <div>
           <label
+            for="create-group-description"
             class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5"
             >Description</label
           >
-          <input v-model="createForm.description" type="text" class="input" />
+          <input
+            id="create-group-description"
+            v-model="createForm.description"
+            type="text"
+            class="input"
+          />
         </div>
         <div class="flex justify-end gap-2 pt-2">
           <button
@@ -158,7 +171,13 @@ interface PageData {
 const page = ref(0);
 const { data, pending, refresh } = await useAsyncData<PageData>(
   "groups-list",
-  () => api(`/api/v1/groups?page=${page.value}&size=20`) as Promise<PageData>,
+  () =>
+    api<PageData>("/api/v1/groups", {
+      query: {
+        page: page.value,
+        size: 20,
+      },
+    }),
 );
 
 const groups = computed(() => data.value?.content ?? []);
