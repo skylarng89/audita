@@ -15,12 +15,12 @@ export default defineNuxtPlugin(() => {
         auth.hydrateFromCookie();
       }
 
-      const requestPath =
-        typeof request === "string"
-          ? request
-          : request instanceof Request
-            ? request.url
-            : "";
+      let requestPath = "";
+      if (typeof request === "string") {
+        requestPath = request;
+      } else if (request instanceof Request) {
+        requestPath = request.url;
+      }
 
       const isBootstrapEndpoint =
         requestPath.includes("/api/platform/v1/bootstrap") ||
