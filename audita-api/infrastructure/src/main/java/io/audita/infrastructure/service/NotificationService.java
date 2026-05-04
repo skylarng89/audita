@@ -99,7 +99,7 @@ public class NotificationService {
         try {
             emitter.send(SseEmitter.event().name("connected").data("ok"));
             scheduleHeartbeat(recipientId, emitter);
-        } catch (IOException ignored) {
+        } catch (IOException _) {
             removeEmitter(recipientId, emitter);
         }
         return emitter;
@@ -128,7 +128,7 @@ public class NotificationService {
                         "isRead", notification.isRead(),
                         "createdAt", notification.getCreatedAt()
                 )));
-            } catch (IOException ignored) {
+            } catch (IOException _) {
                 removeEmitter(recipientId, emitter);
             }
         }
@@ -154,7 +154,7 @@ public class NotificationService {
         ScheduledFuture<?> task = heartbeatExecutor.scheduleAtFixedRate(() -> {
             try {
                 emitter.send(SseEmitter.event().name("keepalive").data("ping"));
-            } catch (IOException e) {
+            } catch (IOException _) {
                 removeEmitter(recipientId, emitter);
             }
         }, HEARTBEAT_INTERVAL_SECONDS, HEARTBEAT_INTERVAL_SECONDS, TimeUnit.SECONDS);

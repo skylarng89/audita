@@ -6,7 +6,8 @@ import io.audita.domain.exception.DomainNotPermittedException;
 import io.audita.domain.model.OAuthProvider;
 import io.audita.domain.model.UserStatus;
 import io.audita.infrastructure.persistence.entity.*;
-import io.audita.infrastructure.persistence.repository.*;import io.audita.infrastructure.security.AesEncryptionService;
+import io.audita.infrastructure.persistence.repository.*;
+import io.audita.infrastructure.security.AesEncryptionService;
 import io.audita.infrastructure.security.JwtService;
 import io.audita.infrastructure.tenant.TenantContext;
 import org.slf4j.Logger;
@@ -23,7 +24,6 @@ import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -42,6 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SsoService implements SsoPort {
 
     private static final Logger log = LoggerFactory.getLogger(SsoService.class);
+        private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     // State store: state-token → SsoState (expires after 10 minutes)
     private final ConcurrentHashMap<String, SsoState> pendingStates = new ConcurrentHashMap<>();
@@ -183,9 +184,13 @@ public class SsoService implements SsoPort {
         RestClient client = RestClient.create();
 
         // Exchange authorization code for tokens
-        String tokenEndpoint = provider == OAuthProvider.GOOGLE
-                ? "https://oauth2.googleapis.com/token"
-                : "https://login.microsoftonline.com/" + (msTenantId != null ? msTenantId : "common") + "/oauth2/v2.0/token";
+                String tokenEndpoint;
+                if (provider == OAuthProvider.GOOGLE) {
+                        tokenEndpoint = "https://oauth2.googleapis.com/token";
+                } else {
+                        String microsoftTenantId = msTenantId != null ? msTenantId : "common";
+                        tokenEndpoint = "https://login.microsoftonline.com/" + microsoftTenantId + "/oauth2/v2.0/token";
+                }
 
         @SuppressWarnings("unchecked")
         Map<String, Object> tokenResponse = client.post()
@@ -230,7 +235,7 @@ public class SsoService implements SsoPort {
             throw new DomainException("Incomplete user info received from SSO provider.");
         }
 
-        return new OAuthUserInfo(sub, email.toLowerCase(), (String) name);
+        return new OAuthUserInfo(sub, email.toLowerCase(), name);
     }
 
     // ── JIT user provisioning (AUTH-013) + account linking (AUTH-014) ───────────
@@ -290,14 +295,16 @@ public class SsoService implements SsoPort {
     }
 
     private static String generateState() {
-        byte[] bytes = new byte[32];
-        new SecureRandom().nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+                return generateToken();
     }
 
     private static String generateSecureToken() {
+                return generateToken();
+        }
+
+        private static String generateToken() {
         byte[] bytes = new byte[32];
-        new SecureRandom().nextBytes(bytes);
+                SECURE_RANDOM.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 

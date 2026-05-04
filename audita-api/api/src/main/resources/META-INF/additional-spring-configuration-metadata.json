@@ -53,6 +53,7 @@
   "properties": [
     { "name": "audita.jwt.secret", "type": "java.lang.String" },
     { "name": "audita.jwt.expiry-seconds", "type": "java.lang.Integer" },
+    { "name": "audita.jwt.stream-expiry-seconds", "type": "java.lang.Integer" },
     { "name": "audita.refresh-token.expiry-days", "type": "java.lang.Integer" },
     { "name": "audita.encryption.key", "type": "java.lang.String" },
     { "name": "audita.cors.allowed-origins", "type": "java.lang.String" },

@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
@@ -29,6 +30,8 @@ import java.util.regex.Pattern;
 public class AuthService implements AuthPort {
 
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+    private static final String INVALID_TOKEN_CODE = "INVALID_TOKEN";
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final UserRepository userRepository;
     private final SuperAdminRepository superAdminRepository;
@@ -45,8 +48,8 @@ public class AuthService implements AuthPort {
     // login: 5 attempts per 15 minutes per IP+email
     // forgot-password: 3 attempts per hour per email
     private final ConcurrentHashMap<String, LinkedList<Instant>> rateBuckets = new ConcurrentHashMap<>();
-        private final AtomicInteger rateLimitChecks = new AtomicInteger(0);
-        private static final Pattern STRONG_PASSWORD_PATTERN = Pattern.compile(
+    private final AtomicInteger rateLimitChecks = new AtomicInteger(0);
+    private static final Pattern STRONG_PASSWORD_PATTERN = Pattern.compile(
             "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{12,128}$");
 
     @Value("${audita.jwt.expiry-seconds:900}")
@@ -132,13 +135,13 @@ public class AuthService implements AuthPort {
         String hash = sha256(rawRefreshToken);
         RefreshTokenEntity token = refreshTokenRepository.findByTokenHash(hash)
                 .orElseThrow(() -> new DomainNotPermittedException(
-                        "INVALID_TOKEN", "Refresh token is invalid or expired."));
+                        INVALID_TOKEN_CODE, "Refresh token is invalid or expired."));
 
         if (!token.isValid()) {
-            throw new DomainNotPermittedException("INVALID_TOKEN", "Refresh token is invalid or expired.");
+            throw new DomainNotPermittedException(INVALID_TOKEN_CODE, "Refresh token is invalid or expired.");
         }
         if (!isSessionContextValid(token, clientIp, userAgent)) {
-            throw new DomainNotPermittedException("INVALID_TOKEN", "Refresh token context is invalid.");
+            throw new DomainNotPermittedException(INVALID_TOKEN_CODE, "Refresh token context is invalid.");
         }
 
         token.setRevoked(true);
@@ -186,10 +189,10 @@ public class AuthService implements AuthPort {
         String hash = sha256(rawToken);
         PasswordResetTokenEntity token = passwordResetTokenRepository.findByTokenHash(hash)
                 .orElseThrow(() -> new DomainNotPermittedException(
-                        "INVALID_TOKEN", "Password reset link is invalid or has expired."));
+                INVALID_TOKEN_CODE, "Password reset link is invalid or has expired."));
 
         if (!token.isValid()) {
-            throw new DomainNotPermittedException("INVALID_TOKEN",
+            throw new DomainNotPermittedException(INVALID_TOKEN_CODE,
                     "Password reset link is invalid or has expired.");
         }
 
@@ -211,10 +214,10 @@ public class AuthService implements AuthPort {
         String hash = sha256(rawToken);
         InviteTokenEntity token = inviteTokenRepository.findByTokenHash(hash)
                 .orElseThrow(() -> new DomainNotPermittedException(
-                        "INVALID_TOKEN", "Invite link is invalid or has expired."));
+                INVALID_TOKEN_CODE, "Invite link is invalid or has expired."));
 
         if (!token.isValid()) {
-            throw new DomainNotPermittedException("INVALID_TOKEN",
+            throw new DomainNotPermittedException(INVALID_TOKEN_CODE,
                     "Invite link is invalid or has expired.");
         }
 
@@ -330,13 +333,8 @@ public class AuthService implements AuthPort {
     private boolean isSessionContextValid(RefreshTokenEntity token, String clientIp, String userAgent) {
         String expectedIpHash = token.getIpHash();
         String expectedUaHash = token.getUserAgentHash();
-        if (expectedIpHash != null && !expectedIpHash.equals(hashNullable(clientIp))) {
-            return false;
-        }
-        if (expectedUaHash != null && !expectedUaHash.equals(hashNullable(userAgent))) {
-            return false;
-        }
-        return true;
+        return (expectedIpHash == null || expectedIpHash.equals(hashNullable(clientIp)))
+                && (expectedUaHash == null || expectedUaHash.equals(hashNullable(userAgent)));
     }
 
     private String hashNullable(String value) {
@@ -348,7 +346,7 @@ public class AuthService implements AuthPort {
 
     private static String generateSecureToken() {
         byte[] bytes = new byte[32];
-        new SecureRandom().nextBytes(bytes);
+        SECURE_RANDOM.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
@@ -357,8 +355,8 @@ public class AuthService implements AuthPort {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(hash);
-        } catch (Exception e) {
-            throw new RuntimeException("SHA-256 failed", e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 algorithm unavailable", e);
         }
     }
 }

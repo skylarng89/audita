@@ -39,6 +39,10 @@ Document tradeoff decisions in `memory-bank/docs/decisions.md`.
 - No noise comments, no over-generalisation, no defensive code for impossible states
 - Prefer pure functions; avoid boolean flag parameters — split into two named functions instead
 - Functions must have consistent return types — never return `string | null | undefined` arbitrarily
+- Call transactional methods via an injected dependency instead of directly via 'this'.
+- Replace generic exceptions with specific library exceptions or a custom exception.
+- MD036/no-emphasis-as-heading: Emphasis used instead of a heading
+- MD040/fenced-code-language: Fenced code blocks should have a language specified
 
 ---
 
@@ -85,10 +89,10 @@ Order methods **vertically by invocation order** — a method should appear befo
 
 ### Naming Conventions
 
-- **Bang methods** *(Ruby)*: use `!` only when a non-bang counterpart exists. Do not use `!` to signal destructive or dangerous operations — that's not its purpose.
-- **Async suffixes** *(any language with job/queue patterns)*: use `_later` for methods that enqueue work; use `_now` for the synchronous equivalent called by the job.
+- **Bang methods** _(Ruby)_: use `!` only when a non-bang counterpart exists. Do not use `!` to signal destructive or dangerous operations — that's not its purpose.
+- **Async suffixes** _(any language with job/queue patterns)_: use `_later` for methods that enqueue work; use `_now` for the synchronous equivalent called by the job.
 
-### Visibility Modifiers *(Ruby)*
+### Visibility Modifiers _(Ruby)_
 
 No blank line after the modifier; indent content beneath it.
 
@@ -117,7 +121,7 @@ module SomeModule
 end
 ```
 
-### REST Resource Modelling *(web frameworks)*
+### REST Resource Modelling _(web frameworks)_
 
 Model endpoints as CRUD on resources. When an action doesn't map to a standard verb, introduce a new resource — don't add custom actions.
 
@@ -133,7 +137,7 @@ resources :cards do
 end
 ```
 
-### Controller & Domain Layer *(MVC frameworks)*
+### Controller & Domain Layer _(MVC frameworks)_
 
 Keep controllers thin — they orchestrate, they don't implement. Business logic lives in the domain model.
 
@@ -151,7 +155,7 @@ end
 
 Services/form objects are acceptable when justified — don't treat them as mandatory infrastructure.
 
-### Async Jobs *(job queue patterns — Rails, Spring, etc.)*
+### Async Jobs _(job queue patterns — Rails, Spring, etc.)_
 
 Job classes should be shallow — delegate logic to the domain model, don't implement it in the job.
 
@@ -187,19 +191,22 @@ end
 
 ## Security Baseline
 
-**Identity & Encryption**
+### Identity & Encryption
+
 - FIDO2/Passkeys everywhere — no SMS OTP; UEBA for behavioural drift detection
 - AES-256 at rest; TLS 1.3 in transit (including internal service-to-service)
 - Zero Trust — verify every identity and device; no implicit trust
 - Validate, sanitise, and type all inputs server-side; never trust client data
 - Secrets in hardware/cloud vaults (KMS, Vault) — never hardcoded or logged
 
-**Platform**
+### Platform
+
 - Frontend: strict CSP, HSTS, `X-Frame-Options: DENY`, SameSite + HttpOnly cookies; SRI hashes on all 3rd-party assets
 - Backend/API: RBAC/ABAC with least-privilege; rotate JWTs frequently; WAF + adaptive rate limiting + egress filtering
 - Mobile: Secure Enclave/Keystore biometrics; certificate pinning; root/jailbreak detection; minimal permissions
 
-**Pre-ship Security Checklist**
+### Pre-ship Security Checklist
+
 - [ ] All external input validated, sanitised, typed
 - [ ] Secrets in env/config stores — never in code or logs
 - [ ] Auth middleware on all protected routes; resource-level authorisation enforced
@@ -246,14 +253,14 @@ end
 
 **Never use `float`/`double` for monetary values.** IEEE 754 cannot exactly represent most decimal fractions — reconciliation failures at scale are inevitable.
 
-| Language | Correct Type |
-|---|---|
-| Java | `BigDecimal` |
-| JS/TS | `decimal.js`, `big.js`, or integer minor units |
-| C# | `decimal` (128-bit) |
-| Python | `decimal.Decimal` |
-| Go | `shopspring/decimal` |
-| PostgreSQL | `NUMERIC(precision, scale)` — never `FLOAT` |
+| Language   | Correct Type                                   |
+| ---------- | ---------------------------------------------- |
+| Java       | `BigDecimal`                                   |
+| JS/TS      | `decimal.js`, `big.js`, or integer minor units |
+| C#         | `decimal` (128-bit)                            |
+| Python     | `decimal.Decimal`                              |
+| Go         | `shopspring/decimal`                           |
+| PostgreSQL | `NUMERIC(precision, scale)` — never `FLOAT`    |
 
 - Store amounts as **integer minor units** where possible
 - Use `HALF_EVEN` (Banker's rounding) for regulatory compliance
@@ -279,11 +286,12 @@ COMMIT;
 ```
 
 **Rollback on failure is mandatory:**
+
 - Wrap transaction body in try/catch; explicitly ROLLBACK on any exception
 - Never swallow exceptions inside a transaction
 - Log before rollback: operation, user ID, amount, correlation ID, error
 
-```
+```js
 BEGIN;
 try {
   // all financial operations
@@ -297,12 +305,12 @@ try {
 
 **Framework gotchas:**
 
-| Framework | Gotcha | Fix |
-|---|---|---|
-| Spring `@Transactional` | Only rolls back on `RuntimeException` — checked exceptions **commit** | Add `rollbackFor = Exception.class` |
-| Django ORM | Catching exceptions without re-raising doesn't rollback | Re-raise or use `transaction.set_rollback(True)` |
-| Sequelize | Unhandled rejections may not rollback managed transactions | Always `await t.rollback()` in catch |
-| GORM | Returned errors don't rollback; panics do | Use `db.Transaction()` helper |
+| Framework               | Gotcha                                                                | Fix                                              |
+| ----------------------- | --------------------------------------------------------------------- | ------------------------------------------------ |
+| Spring `@Transactional` | Only rolls back on `RuntimeException` — checked exceptions **commit** | Add `rollbackFor = Exception.class`              |
+| Django ORM              | Catching exceptions without re-raising doesn't rollback               | Re-raise or use `transaction.set_rollback(True)` |
+| Sequelize               | Unhandled rejections may not rollback managed transactions            | Always `await t.rollback()` in catch             |
+| GORM                    | Returned errors don't rollback; panics do                             | Use `db.Transaction()` helper                    |
 
 ---
 
@@ -330,7 +338,7 @@ Network retries are inevitable. Without idempotency, retries create duplicate tr
 - Scope by: `user_id + operation_type + idempotency_key`
 - Apply to: payments, transfers, refunds, wallet credits, ledger writes, webhook deliveries
 
-```
+```js
 Header: X-Idempotency-Key: <client-generated UUID v4>
 ```
 
@@ -368,13 +376,13 @@ Header: X-Idempotency-Key: <client-generated UUID v4>
 
 ### 8. SOLID in Fintech
 
-| Principle | What It Prevents |
-|---|---|
+| Principle                     | What It Prevents                                                                     |
+| ----------------------------- | ------------------------------------------------------------------------------------ |
 | **S** — Single Responsibility | Don't mix payment processing, ledger, notifications, and reconciliation in one class |
-| **O** — Open/Closed | New payment providers/currencies extend — never modify — existing transaction logic |
-| **L** — Liskov Substitution | All payment gateway implementations must be interchangeable |
-| **I** — Interface Segregation | Reconciliation services must not depend on payment capture interfaces |
-| **D** — Dependency Inversion | Business logic depends on abstractions — never on concrete SDKs or DB drivers |
+| **O** — Open/Closed           | New payment providers/currencies extend — never modify — existing transaction logic  |
+| **L** — Liskov Substitution   | All payment gateway implementations must be interchangeable                          |
+| **I** — Interface Segregation | Reconciliation services must not depend on payment capture interfaces                |
+| **D** — Dependency Inversion  | Business logic depends on abstractions — never on concrete SDKs or DB drivers        |
 
 ---
 
@@ -437,12 +445,12 @@ Header: X-Idempotency-Key: <client-generated UUID v4>
 
 ## Industry-Specific Requirements
 
-| Sector | Non-Negotiable |
-|---|---|
-| **Finance** | PCI-DSS v4.0; ledger reconciliation; transaction velocity limits |
-| **E-Commerce** | Server-side price validation; inventory locking; bot mitigation |
-| **Health** | PHI encryption; role-contextual audit logs; break-glass access |
-| **SaaS** | Tenant data isolation; SCIM provisioning; customer-managed keys (CMEK) |
+| Sector         | Non-Negotiable                                                         |
+| -------------- | ---------------------------------------------------------------------- |
+| **Finance**    | PCI-DSS v4.0; ledger reconciliation; transaction velocity limits       |
+| **E-Commerce** | Server-side price validation; inventory locking; bot mitigation        |
+| **Health**     | PHI encryption; role-contextual audit logs; break-glass access         |
+| **SaaS**       | Tenant data isolation; SCIM provisioning; customer-managed keys (CMEK) |
 
 ---
 
@@ -458,14 +466,14 @@ Header: X-Idempotency-Key: <client-generated UUID v4>
 
 ## AI Defense Stack
 
-| Layer | Control |
-|---|---|
-| Perimeter | Cloudflare WAF + Bot Management |
-| Identity | FIDO2 + UEBA |
-| Application | RASP (Runtime Self-Protection) |
-| Endpoint | Behavioral EDR (CrowdStrike / SentinelOne) |
-| Network | ZTNA |
-| Detection | AI-augmented SIEM + automated SOAR |
+| Layer       | Control                                    |
+| ----------- | ------------------------------------------ |
+| Perimeter   | Cloudflare WAF + Bot Management            |
+| Identity    | FIDO2 + UEBA                               |
+| Application | RASP (Runtime Self-Protection)             |
+| Endpoint    | Behavioral EDR (CrowdStrike / SentinelOne) |
+| Network     | ZTNA                                       |
+| Detection   | AI-augmented SIEM + automated SOAR         |
 
 ---
 
@@ -473,7 +481,7 @@ Header: X-Idempotency-Key: <client-generated UUID v4>
 
 Single source of truth for project context, continuity, and decisions.
 
-```
+```yaml
 memory-bank/
 ├── context.md           # Active state: current tasks, blockers, focus
 ├── decisions.md         # Append-only: architectural and non-obvious decisions
@@ -528,14 +536,15 @@ Group tasks under sprint and sub-feature headings. Each group gets its own table
 
 ### <Feature or Module Name>
 
-| Task ID   | Task                        | Priority | Status         | Assigned To | Notes                          |
-| --------- | --------------------------- | -------- | -------------- | ----------- | ------------------------------ |
-| PREFIX-001 | <Concise imperative phrase> | High     | 🔴 Not Started | Developer 1 | <Implementation detail or ref> |
-| PREFIX-002 | <Concise imperative phrase> | Medium   | 🟡 In Progress | Developer 2 | <Blocker or dependency note>   |
-| PREFIX-003 | <Concise imperative phrase> | High     | ✅ Completed   | Developer 3 | <What was done / files changed>|
+| Task ID    | Task                        | Priority | Status         | Assigned To | Notes                           |
+| ---------- | --------------------------- | -------- | -------------- | ----------- | ------------------------------- |
+| PREFIX-001 | <Concise imperative phrase> | High     | 🔴 Not Started | Developer 1 | <Implementation detail or ref>  |
+| PREFIX-002 | <Concise imperative phrase> | Medium   | 🟡 In Progress | Developer 2 | <Blocker or dependency note>    |
+| PREFIX-003 | <Concise imperative phrase> | High     | ✅ Completed   | Developer 3 | <What was done / files changed> |
 ```
 
 **Rules:**
+
 - **Task ID**: uppercase prefix reflecting the module/domain + zero-padded sequence (e.g. `AUTH-001`, `DB-012`, `INIT-005`)
 - **Task**: imperative verb phrase — "Implement JWT refresh endpoint", not "JWT refresh"
 - **Priority**: `High` / `Medium` / `Low`
@@ -576,9 +585,11 @@ Log significant completions here. Agents append to this section — never overwr
 **Overview**: <One sentence summary>
 
 **Files Created/Modified**:
+
 - `path/to/file.ts` — <what it does>
 
 **Key Changes**:
+
 - <Bullet per significant change>
 
 **Test Coverage**: <N> tests passing

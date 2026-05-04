@@ -42,18 +42,28 @@ public class PlatformBootstrapController {
     public ResponseEntity<Map<String, String>> bootstrap(
             @Valid @RequestBody BootstrapRequest request,
             @RequestHeader(value = "X-Setup-Token", required = false) String providedSetupToken) {
-        log.info("Bootstrap attempt: emailDomain={} setupTokenProvided={} onboardingCompleted={}",
-                extractDomain(request.email()),
-                providedSetupToken != null && !providedSetupToken.isBlank(),
-                authService.isOnboardingCompleted());
+        boolean setupTokenProvided = providedSetupToken != null && !providedSetupToken.isBlank();
+        boolean onboardingCompleted = authService.isOnboardingCompleted();
+        if (log.isInfoEnabled()) {
+            String emailDomain = extractDomain(request.email());
+            log.info("Bootstrap attempt: emailDomain={} setupTokenProvided={} onboardingCompleted={}",
+                    emailDomain,
+                    setupTokenProvided,
+                    onboardingCompleted);
+        }
 
         if (setupToken != null && !setupToken.isBlank() && !setupToken.equals(providedSetupToken)) {
-            log.warn("Bootstrap rejected due to invalid setup token: emailDomain={}",
-                    extractDomain(request.email()));
+            if (log.isWarnEnabled()) {
+                String emailDomain = extractDomain(request.email());
+                log.warn("Bootstrap rejected due to invalid setup token: emailDomain={}", emailDomain);
+            }
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid setup token.");
         }
         authService.bootstrap(request.fullName(), request.email(), request.password());
-        log.info("Bootstrap succeeded: emailDomain={}", extractDomain(request.email()));
+        if (log.isInfoEnabled()) {
+            String emailDomain = extractDomain(request.email());
+            log.info("Bootstrap succeeded: emailDomain={}", emailDomain);
+        }
         return ResponseEntity.ok(Map.of("message",
                 "Platform bootstrapped. You can now sign in as Super Admin."));
     }
@@ -64,8 +74,11 @@ public class PlatformBootstrapController {
      */
     @PostMapping("/setup")
     public ResponseEntity<Map<String, String>> setup(@Valid @RequestBody SetupRequest request) {
-        log.info("Single-tenant setup attempt: orgName={} slug={} emailDomain={}",
-                request.orgName(), request.slug(), extractDomain(request.email()));
+        if (log.isInfoEnabled()) {
+            String emailDomain = extractDomain(request.email());
+            log.info("Single-tenant setup attempt: orgName={} slug={} emailDomain={}",
+                request.orgName(), request.slug(), emailDomain);
+        }
 
         onboardingPort.setupSingleTenant(
                 request.orgName(),

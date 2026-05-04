@@ -95,6 +95,10 @@ public class TenantService implements OnboardingPort {
 
     @Transactional(readOnly = true)
     public TenantEntity getTenant(UUID id) {
+        return loadTenantOrThrow(id);
+    }
+
+    private TenantEntity loadTenantOrThrow(UUID id) {
         return tenantRepository.findById(id)
                 .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Tenant not found."));
     }
@@ -210,7 +214,7 @@ public class TenantService implements OnboardingPort {
     // ── Update ─────────────────────────────────────────────────────────────────
 
     public TenantEntity updateTenant(UUID id, String name, TenantStatus status) {
-        TenantEntity tenant = getTenant(id);
+        TenantEntity tenant = loadTenantOrThrow(id);
         if (name != null && !name.isBlank()) {
             tenant.setName(name);
         }
@@ -221,7 +225,7 @@ public class TenantService implements OnboardingPort {
     }
 
     public void deleteTenant(UUID id) {
-        TenantEntity tenant = getTenant(id);
+        TenantEntity tenant = loadTenantOrThrow(id);
         tenantRepository.delete(tenant);
         log.info("Tenant deleted: id={} slug={}", id, tenant.getSlug());
     }
@@ -230,12 +234,12 @@ public class TenantService implements OnboardingPort {
 
     @Transactional(readOnly = true)
     public List<TenantAllowedDomainEntity> listDomains(UUID tenantId) {
-        TenantEntity tenant = getTenant(tenantId);
+        TenantEntity tenant = loadTenantOrThrow(tenantId);
         return allowedDomainRepository.findByTenantSlug(tenant.getSlug());
     }
 
     public TenantAllowedDomainEntity addDomain(UUID tenantId, String domain) {
-        TenantEntity tenant = getTenant(tenantId);
+        TenantEntity tenant = loadTenantOrThrow(tenantId);
         String normalisedDomain = domain.toLowerCase().trim();
         TenantAllowedDomainEntity entity = new TenantAllowedDomainEntity(tenant, normalisedDomain);
         return allowedDomainRepository.save(entity);
@@ -252,14 +256,14 @@ public class TenantService implements OnboardingPort {
 
     @Transactional(readOnly = true)
     public List<TenantSsoConfigEntity> listSsoConfigs(UUID tenantId) {
-        TenantEntity tenant = getTenant(tenantId);
+        TenantEntity tenant = loadTenantOrThrow(tenantId);
         return ssoConfigRepository.findByTenantId(tenant.getId());
     }
 
     public TenantSsoConfigEntity upsertSsoConfig(UUID tenantId, OAuthProvider provider,
                                                   String clientId, String rawClientSecret,
                                                   String msTenantId) {
-        TenantEntity tenant = getTenant(tenantId);
+        TenantEntity tenant = loadTenantOrThrow(tenantId);
         String encryptedSecret = aesEncryptionService.encrypt(rawClientSecret);
 
         // Upsert: update existing or create new

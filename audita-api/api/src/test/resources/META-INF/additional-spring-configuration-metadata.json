@@ -9,6 +9,7 @@
   "properties": [
     { "name": "audita.cors.allowed-origins", "type": "java.lang.String" },
     { "name": "audita.jwt.secret", "type": "java.lang.String" },
+    { "name": "audita.jwt.stream-expiry-seconds", "type": "java.lang.Integer" },
     { "name": "audita.encryption.key", "type": "java.lang.String" },
     { "name": "audita.sso.redirect-base-url", "type": "java.lang.String" },
     { "name": "audita.sso.frontend-base-url", "type": "java.lang.String" },
