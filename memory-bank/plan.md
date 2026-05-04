@@ -61,3 +61,10 @@
 - STAB-001: Decouple `TenantSettingsController` from infrastructure service/entity types via new `TenantSettingsPort`. ✅
 - STAB-002: Restore Nuxt project-level type resolution by adding root `audita-web/tsconfig.json` extending `.nuxt/tsconfig.json`. ✅
 - STAB-003: Eliminate residual global Nuxt typecheck blockers (API typing recursion, strict route middleware test signatures, missing tailwind type package). ✅
+
+## Frontend Build-Stack Modernization (2026-05-04)
+
+- FE-TAIL-001: Migrate frontend styling pipeline from Nuxt Tailwind module v6 path to Tailwind v4 Vite plugin (`@tailwindcss/vite`). ✅
+- FE-TAIL-002: Convert Tailwind config entrypoint to v4-compatible setup (`tailwind.config.js` + CSS `@config`/`@import`). ✅
+- FE-TAIL-003: Refactor custom CSS component layer to remove unsupported Tailwind v4 custom-class `@apply` chaining. ✅
+- FE-TAIL-004: Re-verify frontend quality gates after migration (`pnpm test`, `pnpm -s nuxi typecheck`, `pnpm build`). ✅

@@ -269,3 +269,27 @@
 **Validation:**
 
 - CR create → redirect → detail no longer fails with lazy-loading 500.
+
+---
+
+## ADR-014: Adopt Tailwind v4 Native Vite Integration in Nuxt
+
+**Date:** 2026-05-04
+**Status:** Accepted
+
+**Decision:** Use Tailwind v4 with official Vite plugin integration (`@tailwindcss/vite`) in Nuxt, and stop using `@nuxtjs/tailwindcss` module integration for this project.
+
+**Reasoning:**
+
+- Build failures indicated legacy Tailwind integration path mismatch (`tailwindcss` being treated as old PostCSS plugin wiring).
+- Tailwind v4 expects the native plugin pipeline and stricter CSS composition behavior.
+- The v4 path aligns with current Nuxt/Vite toolchain behavior and reduces integration drift.
+
+**Trade-offs:**
+
+- Required CSS refactor where custom classes were chained via `@apply` (unsupported in v4).
+- Migration currently uses compatibility mode (`@config` + JS config), with future opportunity to migrate fully to v4-native theme variables.
+
+**Validation:**
+
+- Frontend verification gates passed after migration: `pnpm test`, `pnpm -s nuxi typecheck`, and `pnpm build`.

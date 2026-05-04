@@ -2,6 +2,23 @@
 
 ## [0.1.0] — Unreleased (In Development)
 
+### Changed (Tailwind v4 Migration — 2026-05-04)
+
+- Migrated frontend Tailwind integration from `@nuxtjs/tailwindcss` to Tailwind v4 Vite plugin (`@tailwindcss/vite`) in `audita-web/nuxt.config.ts`.
+- Replaced legacy Tailwind directives in `audita-web/assets/css/main.css` with v4-compatible directives:
+  - `@config "../../tailwind.config.js";`
+  - `@import "tailwindcss";`
+- Replaced `audita-web/tailwind.config.ts` with `audita-web/tailwind.config.js` for v4 `@config` compatibility mode.
+- Updated frontend dependencies and lockfile to Tailwind v4 native plugin stack.
+
+### Fixed (Tailwind v4 Compatibility — 2026-05-04)
+
+- Resolved build failure `Cannot apply unknown utility class ...` by refactoring custom component-layer classes to apply utility classes directly instead of applying custom class names with `@apply`.
+- Verified migration stability with:
+  - `pnpm test`
+  - `pnpm -s nuxi typecheck`
+  - `pnpm build`
+
 ### Fixed (CR Runtime + UI Consistency Hardening — 2026-04-29)
 
 - **CR details 500 after create:** fixed lazy-loading crash by initializing `createdBy` in read paths (`ChangeRequestService.list()` and `ChangeRequestService.getById()`) before DTO mapping.

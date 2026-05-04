@@ -2,7 +2,7 @@
 
 **Project:** Audita — Multi-Tenant ITIL/ITSM Change Management Platform
 **Version:** 0.1.0
-**Last Updated:** 2026-04-29
+**Last Updated:** 2026-05-04
 **Team Size:** 2–3 Developers
 
 ---
@@ -148,6 +148,27 @@
 ---
 
 ## Recent Implementations
+
+### Frontend Tailwind v4 Migration (Completed 2026-05-04)
+
+**Overview**: Migrated frontend styling/build integration to Tailwind v4 native Vite plugin path and completed compatibility fixes to keep CI build/test/typecheck green.
+
+**Files Created/Modified**:
+
+- `audita-web/nuxt.config.ts` — removed `@nuxtjs/tailwindcss`, added `@tailwindcss/vite`, and wired global CSS entry
+- `audita-web/assets/css/main.css` — switched to v4 directives and refactored component-layer `@apply` usage for v4 compatibility
+- `audita-web/package.json` — removed `@nuxtjs/tailwindcss`, added `@tailwindcss/vite`, pinned Tailwind v4 stack
+- `audita-web/pnpm-lock.yaml` — lockfile refresh for Tailwind v4 dependency graph
+- `audita-web/tailwind.config.js` — new v4-compatible config entrypoint used by CSS `@config`
+- `audita-web/tailwind.config.ts` — removed legacy config entrypoint
+
+**Key Changes**:
+
+- Migrated from Nuxt Tailwind module integration to official Tailwind v4 Vite plugin integration.
+- Removed invalid custom-class `@apply` chaining that Tailwind v4 rejects.
+- Preserved existing design tokens during migration through compatibility-mode config.
+
+**Test Coverage**: `cd audita-web && pnpm test && pnpm -s nuxi typecheck` passes; `cd audita-web && pnpm build` passes.
 
 ### Controller Decoupling + Nuxt Typecheck Stabilization (Completed 2026-05-04)
 

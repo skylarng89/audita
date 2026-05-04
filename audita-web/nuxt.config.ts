@@ -1,11 +1,15 @@
+import tailwindcss from "@tailwindcss/vite";
+
 export default defineNuxtConfig({
   devtools: { enabled: true },
   ssr: false,
 
-  modules: ["@nuxtjs/tailwindcss", "@pinia/nuxt", "@nuxt/eslint"],
+  modules: ["@pinia/nuxt", "@nuxt/eslint"],
 
-  tailwindcss: {
-    cssPath: "~/assets/css/main.css",
+  css: ["~/assets/css/main.css"],
+
+  vite: {
+    plugins: [tailwindcss()],
   },
 
   runtimeConfig: {
