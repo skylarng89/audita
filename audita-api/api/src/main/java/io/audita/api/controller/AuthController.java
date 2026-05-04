@@ -21,6 +21,7 @@ import java.util.Map;
 public class AuthController {
 
     private static final String REFRESH_COOKIE = "refreshToken";
+    private static final String MESSAGE_KEY = "message";
 
     private final AuthPort authService;
 
@@ -88,7 +89,7 @@ public class AuthController {
     public ResponseEntity<Map<String, String>> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request) {
         authService.forgotPassword(request.email());
-        return ResponseEntity.ok(Map.of("message",
+        return ResponseEntity.ok(Map.of(MESSAGE_KEY,
                 "If that email is registered, a reset link has been sent."));
     }
 
@@ -96,14 +97,14 @@ public class AuthController {
     public ResponseEntity<Map<String, String>> resetPassword(
             @Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request.token(), request.newPassword());
-        return ResponseEntity.ok(Map.of("message", "Password reset successfully."));
+        return ResponseEntity.ok(Map.of(MESSAGE_KEY, "Password reset successfully."));
     }
 
     @PostMapping("/accept-invite")
     public ResponseEntity<Map<String, String>> acceptInvite(
             @Valid @RequestBody AcceptInviteRequest request) {
         authService.acceptInvite(request.token(), request.fullName(), request.password());
-        return ResponseEntity.ok(Map.of("message", "Account activated. You can now sign in."));
+        return ResponseEntity.ok(Map.of(MESSAGE_KEY, "Account activated. You can now sign in."));
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────

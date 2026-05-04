@@ -149,6 +149,56 @@
 
 ## Recent Implementations
 
+### Controller Decoupling + Nuxt Typecheck Stabilization (Completed 2026-05-04)
+
+**Overview**: Completed requested follow-up refactor to remove remaining API-layer infrastructure coupling in tenant settings and resolved project-wide Nuxt typecheck failures after restoring missing tsconfig wiring.
+
+**Files Created/Modified**:
+
+- `audita-api/application/src/main/java/io/audita/application/port/TenantSettingsPort.java` — new application contract for tenant settings profile retrieval
+- `audita-api/api/src/main/java/io/audita/api/controller/TenantSettingsController.java` — now consumes `TenantSettingsPort` and `UserPrincipal`
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/TenantService.java` — implements `TenantSettingsPort`
+- `audita-web/tsconfig.json` — restored Nuxt tsconfig extension for auto-import and alias typing
+- `audita-web/composables/useApi.ts` — relaxed typed wrapper to prevent deep route-type recursion
+- `audita-web/plugins/api.ts` — strict-safe request path and headers typing
+- `audita-web/pages/admin/groups/index.vue` — pagination handler typing + query-based API calls + accessibility label wiring
+- `audita-web/pages/admin/users/index.vue` — pagination handler typing + accessibility label wiring
+- `audita-web/pages/platform/tenants/index.vue` — `useAsyncData` typing cleanup and query-based API calls
+- `audita-web/pages/users/index.vue` — strict prop typing compatibility (`SharedAppTable`, `SharedAppModal`) and role literal alignment
+- `audita-web/tests/middleware/auth.global.spec.ts` — middleware signature-compatible route argument typing
+- `audita-web/package.json` + lockfile — added `tailwindcss` dev dependency for config type resolution
+
+**Key Changes**:
+
+- Removed remaining direct infrastructure type dependency from settings controller boundary.
+- Recovered Nuxt global auto-import/type resolution and closed all blocking typecheck errors.
+- Preserved existing UI behavior while improving strict type safety and accessibility metadata.
+
+**Test Coverage**: `cd audita-api && ./gradlew :api:compileJava :infrastructure:compileJava --no-daemon` passes; `cd audita-web && pnpm -s nuxi typecheck` passes.
+
+### Mock Data Removal — Backend + Frontend Wiring (Completed 2026-05-04)
+
+**Overview**: Replaced remaining settings/dashboard/platform mock placeholders with live endpoint-driven data and fixed controller dependency boundaries that caused API compile leakage.
+
+**Files Created/Modified**:
+
+- `audita-api/api/src/main/java/io/audita/api/controller/TenantSettingsController.java` — serves tenant admin settings payload at `/api/v1/settings`
+- `audita-api/api/src/main/java/io/audita/api/controller/DashboardController.java` — now depends on `DashboardPort` for summary data
+- `audita-api/api/src/main/java/io/audita/api/controller/PlatformHealthController.java` — now depends on `OnboardingPort` and returns live health summary
+- `audita-api/application/src/main/java/io/audita/application/port/DashboardPort.java` — new application contract for dashboard aggregation
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/DashboardService.java` — repository-backed dashboard summary implementation
+- `audita-web/pages/admin/settings/index.vue` — consumes `/api/v1/settings`, renders profile/flags/security defaults
+- `audita-web/pages/dashboard/index.vue` — consumes `/api/v1/dashboard/summary` and `/api/v1/notifications`
+- `audita-web/pages/platform/index.vue` — consumes `/api/platform/v1/health` for live system health card
+
+**Key Changes**:
+
+- Removed direct Spring Data repository usage from API controller boundary for dashboard summary.
+- Eliminated hardcoded KPI and settings placeholders in the identified frontend pages.
+- Added resilient loading/error fallbacks that only activate on fetch failure.
+
+**Test Coverage**: `cd audita-api && ./gradlew :api:compileJava :infrastructure:compileJava --no-daemon` passes; `cd audita-web && pnpm -s eslint pages/admin/settings/index.vue pages/dashboard/index.vue pages/platform/index.vue` passes.
+
 ### Post-Sprint Runtime + UI Hardening (Completed 2026-04-29)
 
 **Overview**: Resolved CR detail runtime failure after create, removed recurring authorization/rendering regressions, and completed a focused style consistency audit for CR pages.

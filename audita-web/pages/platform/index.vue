@@ -45,8 +45,8 @@
         >
           System Health
         </p>
-        <p class="text-3xl font-bold">99.98%</p>
-        <p class="text-xs text-white/70 mt-1">Global cluster availability</p>
+        <p class="text-3xl font-bold">{{ health.availabilityPercent }}%</p>
+        <p class="text-xs text-white/70 mt-1">{{ health.detail }}</p>
       </div>
     </div>
 
@@ -98,6 +98,12 @@ interface PageData {
   totalElements: number;
 }
 
+interface PlatformHealth {
+  status: string;
+  availabilityPercent: number;
+  detail: string;
+}
+
 const { data, pending } = await useAsyncData<PageData>(
   "platform-tenants",
   () =>
@@ -106,7 +112,20 @@ const { data, pending } = await useAsyncData<PageData>(
     }) as Promise<PageData>,
 );
 
+const { data: healthData } = await useAsyncData<PlatformHealth>(
+  "platform-health",
+  () =>
+    api("/api/platform/v1/health", {
+      method: "GET",
+    }) as Promise<PlatformHealth>,
+);
+
 const recentTenants = computed(() => data.value?.content ?? []);
+const health = computed(() => ({
+  status: healthData.value?.status ?? "UNKNOWN",
+  availabilityPercent: healthData.value?.availabilityPercent ?? 0,
+  detail: healthData.value?.detail ?? "Health data unavailable",
+}));
 
 const stats = computed(() => {
   const all = data.value?.content ?? [];

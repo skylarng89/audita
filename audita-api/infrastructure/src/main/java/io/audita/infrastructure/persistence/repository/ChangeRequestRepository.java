@@ -31,6 +31,10 @@ public interface ChangeRequestRepository extends JpaRepository<ChangeRequestEnti
 
     Page<ChangeRequestEntity> findByStatus(ChangeRequestStatus status, Pageable pageable);
 
+       long countByStatus(ChangeRequestStatus status);
+
+       long countByStatusInAndSlaBreachedTrue(List<ChangeRequestStatus> statuses);
+
     Page<ChangeRequestEntity> findByCreatedById(UUID userId, Pageable pageable);
 
     // CRs pending SLA breach evaluation: deadline passed and not yet flagged

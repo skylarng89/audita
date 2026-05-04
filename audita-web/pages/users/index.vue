@@ -45,7 +45,7 @@
     <section class="card shadow-card-hover">
       <SharedAppTable
         :columns="columns"
-        :data="users"
+        :data="users as unknown as Record<string, unknown>[]"
         :loading="pending"
         row-key="id"
         empty-message="No users found for this organisation."
@@ -78,6 +78,7 @@
 
     <SharedAppModal
       v-if="showInviteModal"
+      :open="showInviteModal"
       title="Invite User"
       @close="showInviteModal = false"
     >
@@ -247,7 +248,7 @@ const total = computed(
 );
 const roles = computed(() => rolesData.value ?? []);
 const canManageUsers = computed(
-  () => auth.role === "ADMIN" || auth.role === "SUPER_ADMIN",
+  () => auth.role === "Admin" || auth.role === "SUPER_ADMIN",
 );
 
 const totalUsers = computed(

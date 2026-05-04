@@ -69,7 +69,7 @@ public class JwtService {
                 .subject(userId.toString())
                 .claims(claims)
                 .issuedAt(Date.from(now))
-            .expiration(Date.from(now.plusSeconds(streamExpirySeconds)))
+                .expiration(Date.from(now.plusSeconds(streamExpirySeconds)))
                 .signWith(signingKey)
                 .compact();
     }
@@ -78,7 +78,7 @@ public class JwtService {
         try {
             Claims claims = parse(token);
             return STREAM_TOKEN_TYPE.equals(claims.get("tokenType", String.class));
-        } catch (Exception e) {
+        } catch (Exception _) {
             return false;
         }
     }
@@ -95,7 +95,7 @@ public class JwtService {
         try {
             parse(token);
             return true;
-        } catch (Exception e) {
+        } catch (Exception _) {
             return false;
         }
     }

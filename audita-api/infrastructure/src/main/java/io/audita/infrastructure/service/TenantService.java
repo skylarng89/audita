@@ -1,6 +1,7 @@
 package io.audita.infrastructure.service;
 
 import io.audita.application.port.OnboardingPort;
+import io.audita.application.port.TenantSettingsPort;
 import io.audita.domain.exception.DomainNotPermittedException;
 import io.audita.domain.model.OAuthProvider;
 import io.audita.domain.model.TenantStatus;
@@ -35,7 +36,7 @@ import java.util.UUID;
  */
 @Service
 @Transactional
-public class TenantService implements OnboardingPort {
+public class TenantService implements OnboardingPort, TenantSettingsPort {
 
     private static final Logger log = LoggerFactory.getLogger(TenantService.class);
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
@@ -95,6 +96,23 @@ public class TenantService implements OnboardingPort {
 
     @Transactional(readOnly = true)
     public TenantEntity getTenant(UUID id) {
+        return loadTenantOrThrow(id);
+    }
+
+    @Transactional(readOnly = true)
+    public TenantEntity getTenantBySlug(String slug) {
+        return tenantRepository.findBySlug(slug)
+                .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Tenant not found."));
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public TenantProfile getTenantProfile(String tenantSlug) {
+        TenantEntity tenant = getTenantBySlug(tenantSlug);
+        return new TenantProfile(tenant.getName(), tenant.getSlug(), tenant.getStatus().name());
+    }
+
+    private TenantEntity loadTenantOrThrow(UUID id) {
         return tenantRepository.findById(id)
                 .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Tenant not found."));
     }
@@ -210,7 +228,7 @@ public class TenantService implements OnboardingPort {
     // ── Update ─────────────────────────────────────────────────────────────────
 
     public TenantEntity updateTenant(UUID id, String name, TenantStatus status) {
-        TenantEntity tenant = getTenant(id);
+        TenantEntity tenant = loadTenantOrThrow(id);
         if (name != null && !name.isBlank()) {
             tenant.setName(name);
         }
@@ -221,7 +239,7 @@ public class TenantService implements OnboardingPort {
     }
 
     public void deleteTenant(UUID id) {
-        TenantEntity tenant = getTenant(id);
+        TenantEntity tenant = loadTenantOrThrow(id);
         tenantRepository.delete(tenant);
         log.info("Tenant deleted: id={} slug={}", id, tenant.getSlug());
     }
@@ -230,12 +248,12 @@ public class TenantService implements OnboardingPort {
 
     @Transactional(readOnly = true)
     public List<TenantAllowedDomainEntity> listDomains(UUID tenantId) {
-        TenantEntity tenant = getTenant(tenantId);
+        TenantEntity tenant = loadTenantOrThrow(tenantId);
         return allowedDomainRepository.findByTenantSlug(tenant.getSlug());
     }
 
     public TenantAllowedDomainEntity addDomain(UUID tenantId, String domain) {
-        TenantEntity tenant = getTenant(tenantId);
+        TenantEntity tenant = loadTenantOrThrow(tenantId);
         String normalisedDomain = domain.toLowerCase().trim();
         TenantAllowedDomainEntity entity = new TenantAllowedDomainEntity(tenant, normalisedDomain);
         return allowedDomainRepository.save(entity);
@@ -252,14 +270,14 @@ public class TenantService implements OnboardingPort {
 
     @Transactional(readOnly = true)
     public List<TenantSsoConfigEntity> listSsoConfigs(UUID tenantId) {
-        TenantEntity tenant = getTenant(tenantId);
+        TenantEntity tenant = loadTenantOrThrow(tenantId);
         return ssoConfigRepository.findByTenantId(tenant.getId());
     }
 
     public TenantSsoConfigEntity upsertSsoConfig(UUID tenantId, OAuthProvider provider,
                                                   String clientId, String rawClientSecret,
                                                   String msTenantId) {
-        TenantEntity tenant = getTenant(tenantId);
+        TenantEntity tenant = loadTenantOrThrow(tenantId);
         String encryptedSecret = aesEncryptionService.encrypt(rawClientSecret);
 
         // Upsert: update existing or create new
