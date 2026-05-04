@@ -25,7 +25,7 @@ public class PlatformHealthController {
             String detail = "Database reachable; firstTenantSlug="
                     + (firstTenantSlug == null ? "none" : firstTenantSlug);
             return new PlatformHealthResponse("UP", 100, detail);
-        } catch (Exception ex) {
+        } catch (Exception _) {
             return new PlatformHealthResponse("DOWN", 0, "Database check failed");
         }
     }
