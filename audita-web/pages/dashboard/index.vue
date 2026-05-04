@@ -43,7 +43,7 @@
         <p class="text-3xl font-bold text-on-surface mt-2">
           {{ stats.pending }}
         </p>
-        <p class="text-xs text-muted mt-1">+2 since yesterday</p>
+        <p class="text-xs text-muted mt-1">Live pending approvals</p>
       </div>
       <div class="card p-5 shadow-card-hover">
         <div class="flex items-start justify-between">
@@ -131,7 +131,7 @@
           </div>
         </div>
         <p class="text-3xl font-bold mt-2">{{ stats.successRate }}%</p>
-        <p class="text-xs text-white/50 mt-1">Global KPI</p>
+        <p class="text-xs text-white/50 mt-1">Closed requests approved</p>
       </div>
     </div>
 
@@ -191,10 +191,10 @@
               </p>
             </div>
             <div v-if="auth.canApprove" class="flex gap-2 shrink-0">
-              <button @click="rejectCr(cr.id)" class="btn-secondary btn-sm">
+              <button class="btn-secondary btn-sm" @click="rejectCr(cr.id)">
                 Decline
               </button>
-              <button @click="approveCr(cr.id)" class="btn-primary btn-sm">
+              <button class="btn-primary btn-sm" @click="approveCr(cr.id)">
                 Approve
               </button>
             </div>
@@ -233,29 +233,52 @@
 </template>
 
 <script setup lang="ts">
-import type { ChangeRequest, ActivityEntry } from "~/types";
+import type { ChangeRequest, Notification } from "~/types";
 import { formatDistanceToNow, parseISO } from "date-fns";
 
 definePageMeta({ middleware: "auth" });
 
+const api = useApi();
 const auth = useAuthStore();
-const { list, approve, listActivity } = useChangeRequests();
+const { list, approve } = useChangeRequests();
 const { error: toastError } = useToast();
+
+interface DashboardSummaryResponse {
+  pendingApprovals: number;
+  activeChanges: number;
+  slaRisks: number;
+  successRate: number;
+}
 
 const stats = reactive({
   pending: 0,
   active: 0,
   slaRisks: 0,
-  successRate: 99.2,
+  successRate: 0,
 });
 const pendingCRs = ref<ChangeRequest[]>([]);
-const recentActivity = ref<ActivityEntry[]>([]);
+const recentActivity = ref<Notification[]>([]);
 
 async function load() {
   try {
-    const pendingPage = await list({ status: "PENDING_APPROVAL", size: 3 });
+    const [summary, pendingPage, notifications] = await Promise.all([
+      api<DashboardSummaryResponse>("/api/v1/dashboard/summary", {
+        method: "GET",
+      }),
+      list({ status: "PENDING_APPROVAL", size: 3 }),
+      api<Notification[]>("/api/v1/notifications", {
+        method: "GET",
+        query: { page: 0, size: 5 },
+      }),
+    ]);
+
+    stats.pending = summary.pendingApprovals;
+    stats.active = summary.activeChanges;
+    stats.slaRisks = summary.slaRisks;
+    stats.successRate = Number(summary.successRate.toFixed(1));
+
     pendingCRs.value = pendingPage.content;
-    stats.pending = pendingPage.totalElements;
+    recentActivity.value = notifications;
   } catch {
     toastError("Failed to load dashboard data.");
   }
@@ -284,8 +307,11 @@ function riskClass(level: string) {
   return map[level] ?? "text-muted";
 }
 
-function formatActivity(entry: ActivityEntry) {
-  return `${entry.actor?.fullName ?? "System"} — ${entry.actionType.replaceAll("_", " ").toLowerCase()}`;
+function formatActivity(entry: Notification) {
+  if (entry.title && entry.title.trim().length > 0) {
+    return entry.title;
+  }
+  return entry.body ?? "Notification";
 }
 
 function formatDate(iso: string) {

@@ -22,6 +22,10 @@
       <section class="card p-5 shadow-card-hover lg:col-span-2 space-y-5">
         <h2 class="text-lg font-semibold">Organization Profile</h2>
 
+        <div v-if="pending" class="field-hint">
+          Loading organization profile...
+        </div>
+
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label class="field-label" for="org-name">Organization Name</label>
@@ -67,7 +71,9 @@
           </div>
         </div>
 
-        <p class="field-hint">No data returned.</p>
+        <p v-if="errorMessage" class="field-hint text-danger">
+          {{ errorMessage }}
+        </p>
       </section>
 
       <section class="card p-5 shadow-card-hover space-y-4">
@@ -78,23 +84,59 @@
             class="flex items-center justify-between rounded-md border border-border p-3 dark:border-border-dark"
           >
             <span>Policy breach digests</span>
-            <AppBadge variant="neutral">Unavailable</AppBadge>
+            <AppBadge
+              :variant="
+                settings.featureFlags.policyBreachDigests
+                  ? 'success'
+                  : 'neutral'
+              "
+            >
+              {{
+                settings.featureFlags.policyBreachDigests
+                  ? "Enabled"
+                  : "Disabled"
+              }}
+            </AppBadge>
           </div>
           <div
             class="flex items-center justify-between rounded-md border border-border p-3 dark:border-border-dark"
           >
             <span>Automated reminders</span>
-            <AppBadge variant="neutral">Unavailable</AppBadge>
+            <AppBadge
+              :variant="
+                settings.featureFlags.automatedReminders ? 'success' : 'neutral'
+              "
+            >
+              {{
+                settings.featureFlags.automatedReminders
+                  ? "Enabled"
+                  : "Disabled"
+              }}
+            </AppBadge>
           </div>
           <div
             class="flex items-center justify-between rounded-md border border-border p-3 dark:border-border-dark"
           >
             <span>Conditional escalation</span>
-            <AppBadge variant="neutral">Unavailable</AppBadge>
+            <AppBadge
+              :variant="
+                settings.featureFlags.conditionalEscalation
+                  ? 'success'
+                  : 'neutral'
+              "
+            >
+              {{
+                settings.featureFlags.conditionalEscalation
+                  ? "Enabled"
+                  : "Disabled"
+              }}
+            </AppBadge>
           </div>
         </div>
 
-        <p class="field-hint">No data returned.</p>
+        <p v-if="errorMessage" class="field-hint text-danger">
+          {{ errorMessage }}
+        </p>
       </section>
     </div>
 
@@ -107,13 +149,17 @@
           <p class="text-xs uppercase tracking-wide text-muted">
             Session Timeout
           </p>
-          <p class="mt-1 text-sm font-semibold">No data returned.</p>
+          <p class="mt-1 text-sm font-semibold">
+            {{ settings.securityDefaults.sessionTimeoutLabel }}
+          </p>
         </div>
         <div
           class="rounded-md border border-border p-4 dark:border-border-dark"
         >
           <p class="text-xs uppercase tracking-wide text-muted">MFA Policy</p>
-          <p class="mt-1 text-sm font-semibold">No data returned.</p>
+          <p class="mt-1 text-sm font-semibold">
+            {{ settings.securityDefaults.mfaPolicy }}
+          </p>
         </div>
         <div
           class="rounded-md border border-border p-4 dark:border-border-dark"
@@ -121,7 +167,9 @@
           <p class="text-xs uppercase tracking-wide text-muted">
             Password Policy
           </p>
-          <p class="mt-1 text-sm font-semibold">No data returned.</p>
+          <p class="mt-1 text-sm font-semibold">
+            {{ settings.securityDefaults.passwordPolicy }}
+          </p>
         </div>
       </div>
     </section>
@@ -131,10 +179,78 @@
 <script setup lang="ts">
 definePageMeta({ layout: "default" });
 
+const api = useApi();
+const { error: toastError } = useToast();
+
+interface TenantAdminSettingsResponse {
+  profile: {
+    name: string;
+    slug: string;
+    primaryContactEmail: string | null;
+    timezone: string;
+    status: string;
+  };
+  featureFlags: {
+    policyBreachDigests: boolean;
+    automatedReminders: boolean;
+    conditionalEscalation: boolean;
+  };
+  securityDefaults: {
+    sessionTimeoutMinutes: number | null;
+    mfaPolicy: string;
+    passwordPolicy: string;
+  };
+}
+
+const pending = ref(false);
+const errorMessage = ref("");
+
 const settings = reactive({
-  name: "No data returned.",
-  slug: "No data returned.",
-  email: "No data returned.",
-  timezone: "No data returned.",
+  name: "",
+  slug: "",
+  email: "Not configured",
+  timezone: "UTC",
+  featureFlags: {
+    policyBreachDigests: false,
+    automatedReminders: false,
+    conditionalEscalation: false,
+  },
+  securityDefaults: {
+    sessionTimeoutLabel: "Not configured",
+    mfaPolicy: "Not configured",
+    passwordPolicy: "Not configured",
+  },
 });
+
+async function loadSettings() {
+  pending.value = true;
+  errorMessage.value = "";
+  try {
+    const response = await api<TenantAdminSettingsResponse>(
+      "/api/v1/settings",
+      {
+        method: "GET",
+      },
+    );
+    settings.name = response.profile.name;
+    settings.slug = response.profile.slug;
+    settings.email = response.profile.primaryContactEmail ?? "Not configured";
+    settings.timezone = response.profile.timezone || "UTC";
+    settings.featureFlags = response.featureFlags;
+    settings.securityDefaults.sessionTimeoutLabel = response.securityDefaults
+      .sessionTimeoutMinutes
+      ? `${response.securityDefaults.sessionTimeoutMinutes} minutes`
+      : "Not configured";
+    settings.securityDefaults.mfaPolicy = response.securityDefaults.mfaPolicy;
+    settings.securityDefaults.passwordPolicy =
+      response.securityDefaults.passwordPolicy;
+  } catch {
+    errorMessage.value = "Unable to load settings right now.";
+    toastError("Failed to load organization settings.");
+  } finally {
+    pending.value = false;
+  }
+}
+
+onMounted(loadSettings);
 </script>
