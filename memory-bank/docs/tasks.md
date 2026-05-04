@@ -149,6 +149,29 @@
 
 ## Recent Implementations
 
+### Mock Data Removal — Backend + Frontend Wiring (Completed 2026-05-04)
+
+**Overview**: Replaced remaining settings/dashboard/platform mock placeholders with live endpoint-driven data and fixed controller dependency boundaries that caused API compile leakage.
+
+**Files Created/Modified**:
+
+- `audita-api/api/src/main/java/io/audita/api/controller/TenantSettingsController.java` — serves tenant admin settings payload at `/api/v1/settings`
+- `audita-api/api/src/main/java/io/audita/api/controller/DashboardController.java` — now depends on `DashboardPort` for summary data
+- `audita-api/api/src/main/java/io/audita/api/controller/PlatformHealthController.java` — now depends on `OnboardingPort` and returns live health summary
+- `audita-api/application/src/main/java/io/audita/application/port/DashboardPort.java` — new application contract for dashboard aggregation
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/DashboardService.java` — repository-backed dashboard summary implementation
+- `audita-web/pages/admin/settings/index.vue` — consumes `/api/v1/settings`, renders profile/flags/security defaults
+- `audita-web/pages/dashboard/index.vue` — consumes `/api/v1/dashboard/summary` and `/api/v1/notifications`
+- `audita-web/pages/platform/index.vue` — consumes `/api/platform/v1/health` for live system health card
+
+**Key Changes**:
+
+- Removed direct Spring Data repository usage from API controller boundary for dashboard summary.
+- Eliminated hardcoded KPI and settings placeholders in the identified frontend pages.
+- Added resilient loading/error fallbacks that only activate on fetch failure.
+
+**Test Coverage**: `cd audita-api && ./gradlew :api:compileJava :infrastructure:compileJava --no-daemon` passes; `cd audita-web && pnpm -s eslint pages/admin/settings/index.vue pages/dashboard/index.vue pages/platform/index.vue` passes.
+
 ### Post-Sprint Runtime + UI Hardening (Completed 2026-04-29)
 
 **Overview**: Resolved CR detail runtime failure after create, removed recurring authorization/rendering regressions, and completed a focused style consistency audit for CR pages.
