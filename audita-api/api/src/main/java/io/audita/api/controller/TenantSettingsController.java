@@ -1,12 +1,12 @@
 package io.audita.api.controller;
 
 import io.audita.api.dto.response.TenantAdminSettingsResponse;
+import io.audita.api.security.UserPrincipal;
+import io.audita.application.port.TenantSettingsPort;
 import io.audita.domain.exception.DomainNotPermittedException;
-import io.audita.infrastructure.persistence.entity.TenantEntity;
-import io.audita.infrastructure.service.TenantService;
-import io.audita.infrastructure.tenant.TenantContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,32 +15,32 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/settings")
 public class TenantSettingsController {
 
-    private final TenantService tenantService;
+        private final TenantSettingsPort tenantSettingsPort;
 
     @Value("${audita.jwt.expiry-seconds:900}")
     private int jwtExpirySeconds;
 
-    public TenantSettingsController(TenantService tenantService) {
-        this.tenantService = tenantService;
+        public TenantSettingsController(TenantSettingsPort tenantSettingsPort) {
+                this.tenantSettingsPort = tenantSettingsPort;
     }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
-    public TenantAdminSettingsResponse getSettings() {
-        String tenantSlug = TenantContext.getCurrentTenant();
+        public TenantAdminSettingsResponse getSettings(@AuthenticationPrincipal UserPrincipal principal) {
+                String tenantSlug = principal == null ? null : principal.tenantSlug();
         if (tenantSlug == null || tenantSlug.isBlank()) {
             throw new DomainNotPermittedException("TENANT_CONTEXT_REQUIRED", "Tenant context is required.");
         }
 
-        TenantEntity tenant = tenantService.getTenantBySlug(tenantSlug);
+                TenantSettingsPort.TenantProfile tenant = tenantSettingsPort.getTenantProfile(tenantSlug);
 
         TenantAdminSettingsResponse.OrganizationProfile profile =
                 new TenantAdminSettingsResponse.OrganizationProfile(
-                        tenant.getName(),
-                        tenant.getSlug(),
+                        tenant.name(),
+                        tenant.slug(),
                         null,
                         "UTC",
-                        tenant.getStatus().name()
+                        tenant.status()
                 );
 
         TenantAdminSettingsResponse.FeatureFlags featureFlags =

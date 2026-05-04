@@ -1,6 +1,7 @@
 package io.audita.infrastructure.service;
 
 import io.audita.application.port.OnboardingPort;
+import io.audita.application.port.TenantSettingsPort;
 import io.audita.domain.exception.DomainNotPermittedException;
 import io.audita.domain.model.OAuthProvider;
 import io.audita.domain.model.TenantStatus;
@@ -35,7 +36,7 @@ import java.util.UUID;
  */
 @Service
 @Transactional
-public class TenantService implements OnboardingPort {
+public class TenantService implements OnboardingPort, TenantSettingsPort {
 
     private static final Logger log = LoggerFactory.getLogger(TenantService.class);
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
@@ -102,6 +103,13 @@ public class TenantService implements OnboardingPort {
     public TenantEntity getTenantBySlug(String slug) {
         return tenantRepository.findBySlug(slug)
                 .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Tenant not found."));
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public TenantProfile getTenantProfile(String tenantSlug) {
+        TenantEntity tenant = getTenantBySlug(tenantSlug);
+        return new TenantProfile(tenant.getName(), tenant.getSlug(), tenant.getStatus().name());
     }
 
     private TenantEntity loadTenantOrThrow(UUID id) {
