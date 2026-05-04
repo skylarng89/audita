@@ -98,6 +98,12 @@ public class TenantService implements OnboardingPort {
         return loadTenantOrThrow(id);
     }
 
+    @Transactional(readOnly = true)
+    public TenantEntity getTenantBySlug(String slug) {
+        return tenantRepository.findBySlug(slug)
+                .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Tenant not found."));
+    }
+
     private TenantEntity loadTenantOrThrow(UUID id) {
         return tenantRepository.findById(id)
                 .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Tenant not found."));
