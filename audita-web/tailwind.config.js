@@ -1,5 +1,3 @@
-import type { Config } from "tailwindcss";
-
 export default {
   darkMode: "class",
   content: [
@@ -16,7 +14,6 @@ export default {
         mono: ["JetBrains Mono", "ui-monospace", "monospace"],
       },
       colors: {
-        // Primary — deep navy matching design
         primary: {
           DEFAULT: "#00236f",
           dark: "#001a52",
@@ -24,7 +21,6 @@ export default {
           container: "#1e3a8a",
           fixed: "#dce1ff",
         },
-        // Surfaces
         surface: {
           DEFAULT: "#f7f9fb",
           bright: "#f7f9fb",
@@ -37,15 +33,12 @@ export default {
           dim: "#d8dadc",
           variant: "#e0e3e5",
         },
-        // Text
         "on-surface": "#191c1e",
         "on-surface-variant": "#444651",
-        // Secondary
         secondary: {
           DEFAULT: "#505f76",
           container: "#d0e1fb",
         },
-        // Semantic
         muted: "#757682",
         border: {
           DEFAULT: "#c5c5d3",
@@ -88,4 +81,4 @@ export default {
     },
   },
   plugins: [],
-} satisfies Config;
+};

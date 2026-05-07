@@ -1,6 +1,6 @@
 # AGENTS.md — Engineering & AI Code Generation Guide
 
-**Version:** 2026.1 | **Ref:** NIST CSF 2.0, OWASP Top 10, PCI-DSS v4.0  
+**Version:** 2026.2 | **Ref:** NIST CSF 2.0, OWASP Top 10, PCI-DSS v4.0, WCAG 2.2  
 **Updated:** 2026-03-26
 
 ---
@@ -41,8 +41,7 @@ Document tradeoff decisions in `memory-bank/docs/decisions.md`.
 - Functions must have consistent return types — never return `string | null | undefined` arbitrarily
 - Call transactional methods via an injected dependency instead of directly via 'this'.
 - Replace generic exceptions with specific library exceptions or a custom exception.
-- MD036/no-emphasis-as-heading: Emphasis used instead of a heading
-- MD040/fenced-code-language: Fenced code blocks should have a language specified
+- Frontend code must always align with WCAG 2.2 specifications
 
 ---
 

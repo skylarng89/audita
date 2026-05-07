@@ -52,6 +52,7 @@ public class ChangeRequestService {
     private final ActivityStreamRepository activityStreamRepository;
     private final AttachmentRepository attachmentRepository;
     private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
 
     @Value("${audita.storage.local.base-path:/data/uploads}")
     private String storageBasePath;
@@ -67,13 +68,15 @@ public class ChangeRequestService {
                                 ChangeRequestCustomFieldRepository customFieldRepository,
                                 ActivityStreamRepository activityStreamRepository,
                                 AttachmentRepository attachmentRepository,
-                                UserRepository userRepository) {
+                                UserRepository userRepository,
+                                AuditLogService auditLogService) {
         this.changeRequestRepository = changeRequestRepository;
         this.crApproverRepository = crApproverRepository;
         this.customFieldRepository = customFieldRepository;
         this.activityStreamRepository = activityStreamRepository;
         this.attachmentRepository = attachmentRepository;
         this.userRepository = userRepository;
+        this.auditLogService = auditLogService;
     }
 
     public ChangeRequestEntity create(String title,
@@ -102,6 +105,9 @@ public class ChangeRequestService {
         changeRequest.setAffectedSystems(normalizeAffectedSystems(affectedSystems));
         ChangeRequestEntity created = changeRequestRepository.save(changeRequest);
         logActivity(created, createdBy, "CR_CREATED", Map.of("status", created.getStatus().name()));
+        auditLogService.log("CR_CREATED", "change_request", created.getId(),
+                createdBy.getId(), createdBy.getEmail(),
+                Map.of("title", created.getTitle(), "priority", created.getPriority().name()), null);
         initializeCreator(created);
         return created;
     }
@@ -168,6 +174,9 @@ public class ChangeRequestService {
         changeRequest.setSlaDeadline(OffsetDateTime.now().plusHours(resolveSlaHours(changeRequest.getPriority())));
         ChangeRequestEntity submitted = changeRequestRepository.save(changeRequest);
         logActivity(submitted, submitted.getCreatedBy(), "CR_SUBMITTED", Map.of("status", submitted.getStatus().name()));
+        auditLogService.log("CR_SUBMITTED", "change_request", submitted.getId(),
+                actorUserId, submitted.getCreatedBy() != null ? submitted.getCreatedBy().getEmail() : null,
+                Map.of("status", "PENDING_APPROVAL"), null);
         initializeCreator(submitted);
         return submitted;
     }
@@ -178,6 +187,9 @@ public class ChangeRequestService {
         changeRequest.cancel();
         ChangeRequestEntity cancelled = changeRequestRepository.save(changeRequest);
         logActivity(cancelled, cancelled.getCreatedBy(), "CR_CANCELLED", Map.of("status", cancelled.getStatus().name()));
+        auditLogService.log("CR_CANCELLED", "change_request", cancelled.getId(),
+                actorUserId, cancelled.getCreatedBy() != null ? cancelled.getCreatedBy().getEmail() : null,
+                Map.of("status", "CANCELLED"), null);
     }
 
     @Transactional(readOnly = true)
@@ -295,6 +307,9 @@ public class ChangeRequestService {
         crApproverRepository.save(approver);
         ChangeRequestEntity updated = changeRequestRepository.save(changeRequest);
         logActivity(updated, actor, "CR_APPROVED", Map.of("approverId", approver.getId().toString(), "status", updated.getStatus().name()));
+        auditLogService.log("CR_APPROVED", "change_request", updated.getId(),
+                actorUserId, actor.getEmail(),
+                Map.of("approverId", approver.getId().toString(), "status", updated.getStatus().name()), null);
         initializeCreator(updated);
         return updated;
     }
@@ -320,6 +335,9 @@ public class ChangeRequestService {
         crApproverRepository.save(approver);
         ChangeRequestEntity updated = changeRequestRepository.save(changeRequest);
         logActivity(updated, actor, "CR_REJECTED", Map.of("approverId", approver.getId().toString(), "reason", reason, "status", updated.getStatus().name()));
+        auditLogService.log("CR_REJECTED", "change_request", updated.getId(),
+                actorUserId, actor.getEmail(),
+                Map.of("approverId", approver.getId().toString(), "status", updated.getStatus().name()), null);
         initializeCreator(updated);
         return updated;
     }

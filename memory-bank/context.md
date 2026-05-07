@@ -1,7 +1,7 @@
 # Audita — Active Context
 
-**Last Updated:** 2026-05-03
-**Current Phase:** Active development — comprehensive E2E test coverage complete
+**Last Updated:** 2026-05-04
+**Current Phase:** Active development — release hardening with frontend build-stack modernization complete
 **Active Sprint:** All sprints complete; hardening + test coverage ongoing
 
 ---
@@ -25,6 +25,8 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 - **Comprehensive E2E test coverage complete.** `AllSprintsE2ETest.java` — 44 ordered integration tests covering every implemented endpoint across all 5 sprints. 62/62 tests passing.
 - **Security follow-up complete (SEC-001..SEC-004).** Tenant slug boundary hardening, SSO callback URL transport hardening, CR object-level mutation regression coverage, and strict CORS allowlist enforcement are now implemented and verified.
 - **Security follow-up refinement complete (2026-05-03).** Bootstrap/setup now reject tenant headers, callback code parsing is fragment-only on frontend, and tenant-header hardening has dedicated filter tests.
+- **Tailwind v4 migration complete (2026-05-04).** Frontend now uses `@tailwindcss/vite` (not `@nuxtjs/tailwindcss`), CSS entry is v4-compatible (`@import "tailwindcss"` + `@config`), and custom utility composition was refactored to satisfy v4 `@apply` constraints.
+- **Frontend verification green after migration (2026-05-04).** `pnpm test`, `pnpm -s nuxi typecheck`, and `pnpm build` all pass.
 - **Production entity bugs fixed (cumulative):** `GroupEntity` (phantom `updated_at` column), `PasswordResetTokenEntity` (`tokenHash`/`expiresAt` column name mapping), `RoleEntity`, `UserEntity`, `InviteTokenEntity`, `RefreshTokenEntity` — all now have explicit `@Column(name=...)` to survive the `JpaConfig` naming-strategy bypass.
 - Documentation complete: PRD v1.0, SRS v1.0, USER_FLOW v1.0 (`docs/`). UI designs: 40 screens (`ui-designs/`).
 - `audita-api`: hexagonal structure, JPA/Hibernate multi-tenancy, Flyway migrations, Spring Security scaffold, RFC 7807 exception handler, structured JSON logging (Logstash encoder).
@@ -89,6 +91,7 @@ Advanced features (SLA, custom fields, audit export, full admin config) follow i
 - Root cause confirmed as CORS rejection (`Invalid CORS request`) on proxied browser requests.
 - Fix landed in Nuxt proxy route by stripping forwarded `Origin`/`Referer`/`Host` before upstream hop.
 - No active blocker currently after fix validation (browser bootstrap now succeeds and redirects to sign-in).
+- No active blocker introduced by Tailwind v4 migration; build/test/typecheck are stable.
 
 ---
 
