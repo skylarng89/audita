@@ -127,6 +127,7 @@ audita:
 
   mail:
     from: ${DEFAULT_SMTP_FROM}
+    from-name: ${DEFAULT_SMTP_FROM_NAME}
 
   storage:
     backend: ${STORAGE_BACKEND}

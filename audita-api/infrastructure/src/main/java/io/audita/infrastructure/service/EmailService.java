@@ -28,6 +28,9 @@ public class EmailService {
     @Value("${audita.mail.from:noreply@audita.io}")
     private String fromAddress;
 
+    @Value("${audita.mail.from-name:Audita}")
+    private String fromName;
+
     @Value("${audita.app.base-url:http://localhost:3000}")
     private String appBaseUrl;
 
@@ -104,7 +107,7 @@ public class EmailService {
             String html = templateEngine.process(template, ctx);
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(fromAddress);
+            helper.setFrom(fromAddress, fromName);
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(html, true);
