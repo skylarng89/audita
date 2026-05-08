@@ -191,6 +191,7 @@
 definePageMeta({ layout: "default" });
 
 const api = useApi();
+const auth = useAuthStore();
 const { success: toastSuccess, error: toastError } = useToast();
 
 interface UserRow {
