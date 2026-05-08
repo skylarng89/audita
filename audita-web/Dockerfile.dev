@@ -1,25 +1,17 @@
-# ── Build stage ─────────────────────────────────────────────────────────────────
-FROM node:24.15.0-alpine3.22 AS builder
+FROM node:24.15.0-alpine3.22
 WORKDIR /app
 
-# Install pnpm
 RUN corepack enable && corepack prepare pnpm@10.11.0 --activate
 
 COPY package.json pnpm-lock.yaml* ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .
-RUN pnpm build
 
-# ── Runtime stage ───────────────────────────────────────────────────────────────
-FROM node:24.15.0-alpine3.22
-WORKDIR /app
-
-RUN addgroup -S audita && adduser -S audita -G audita
-
-COPY --from=builder --chown=audita:audita /app/.output ./
+RUN addgroup -S audita && adduser -S audita -G audita \
+  && chown -R audita:audita /app
 
 USER audita
 EXPOSE 3000
 ENV NODE_ENV=development
-CMD ["nuxt", "dev"]
+CMD ["pnpm", "dev"]

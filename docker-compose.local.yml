@@ -109,6 +109,9 @@ services:
         reservations:
           cpus: "0.25"
           memory: 256M
+    volumes:
+      - ./audita-web:/app
+      - /app/node_modules
 
 volumes:
   dbdata:

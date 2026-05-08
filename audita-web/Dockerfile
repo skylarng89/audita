@@ -22,4 +22,4 @@ COPY --from=builder --chown=audita:audita /app/.output ./
 USER audita
 EXPOSE 3000
 ENV NODE_ENV=production
-CMD ["nuxt", "start"]
+CMD ["node", "server/index.mjs"]
