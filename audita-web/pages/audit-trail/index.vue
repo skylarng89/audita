@@ -222,7 +222,9 @@ const { data, pending, refresh } = await useAsyncData<Page<AuditLogEntry>>(
   },
 );
 
-const rows = computed<AuditLogEntry[]>(() => data.value?.content ?? []);
+const rows = computed<Record<string, unknown>[]>(
+  () => (data.value?.content ?? []) as unknown as Record<string, unknown>[],
+);
 
 watch(data, (val) => {
   if (val) totalElements.value = val.totalElements;

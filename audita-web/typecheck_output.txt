@@ -1,0 +1,4 @@
+
+> audita-web@0.0.0 typecheck /mnt/samsung/repositories/audita/audita-web
+> nuxt typecheck
+

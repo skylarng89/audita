@@ -1,8 +1,8 @@
 # Audita — Active Context
 
 **Last Updated:** 2026-05-04
-**Current Phase:** Active development — release hardening with frontend build-stack modernization complete
-**Active Sprint:** All sprints complete; hardening + test coverage ongoing
+**Current Phase:** Active development — Sprint 6 complete
+**Active Sprint:** Sprint 7 (next)
 
 ---
 
@@ -16,6 +16,7 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 
 ## Current State
 
+- **Sprint 6 complete (Audit Trail & Admin Configuration).** Global audit trail (paginated query + CSV export), admin custom fields CRUD, `AuditLogService` wired into `ChangeRequestService` for all CR state transitions. 90/90 tests passing. TypeScript typecheck clean.
 - **Sprint 0 complete (19/19 tasks).** Both repositories are scaffolded and runnable via Docker Compose.
 - **Sprint 1 complete (22/22 tasks).** Full authentication stack: JWT + refresh tokens, SSO (Google/Microsoft), domain whitelist, rate limiting, 18 unit tests passing.
 - **Sprint 2 complete (19/19 tasks).** Remaining tasks (USR-007, USR-008, TENANT-005) were completed with controller policy tests and tenant-schema isolation integration coverage.
