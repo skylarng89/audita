@@ -61,7 +61,7 @@
                 Deactivate
               </button>
               <button
-                v-else
+                v-if="row.status === 'SUSPENDED'"
                 @click="reactivate(row.id)"
                 class="text-xs text-success hover:underline"
               >
