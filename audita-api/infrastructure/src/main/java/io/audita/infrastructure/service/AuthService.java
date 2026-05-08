@@ -10,6 +10,7 @@ import io.audita.infrastructure.tenant.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -247,6 +248,7 @@ public class AuthService implements AuthPort {
     }
 
     @Override
+    @Cacheable(value = "onboardingStatus", key = "'completed'")
     public boolean isOnboardingCompleted() {
         // True if either the legacy SUPER_ADMIN bootstrap or the single-tenant setup has run.
         return superAdminRepository.count() > 0 || tenantRepository.count() > 0;

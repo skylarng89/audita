@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.TransactionDefinition;
@@ -80,11 +82,11 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
 
     // ── List / Get ─────────────────────────────────────────────────────────────
 
+    @Cacheable(value = "onboardingStatus", key = "'slug'")
     @Transactional(readOnly = true)
     @Override
     public String findFirstTenantSlug() {
-        return tenantRepository.findAll().stream()
-                .findFirst()
+        return tenantRepository.findFirstByOrderByCreatedAtAsc()
                 .map(TenantEntity::getSlug)
                 .orElse(null);
     }
@@ -187,6 +189,7 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
      * Guard: fails if any tenant already exists.
      */
     @Override
+    @CacheEvict(value = "onboardingStatus", allEntries = true)
     public void setupSingleTenant(String orgName, String slug, String adminFullName,
                                   String adminEmail, String rawPassword) {
         if (tenantRepository.count() > 0) {
