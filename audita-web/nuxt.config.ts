@@ -1,27 +1,22 @@
 import tailwindcss from "@tailwindcss/vite";
 
-export default defineNuxtConfig({
-  devtools: { enabled: true },
-  ssr: false,
+const debug = process.env.DEBUG === "true";
 
-  devServer: {
-    host: "0.0.0.0",
-    port: 3000,
-  },
+export default defineNuxtConfig({
+  devtools: { enabled: debug },
+  ssr: false,
 
   modules: ["@pinia/nuxt", "@nuxt/eslint"],
 
   css: ["~/assets/css/main.css"],
 
+  sourcemap: {
+    client: debug,
+    server: debug,
+  },
+
   vite: {
     plugins: [tailwindcss()],
-    server: {
-      hmr: {
-        host: "0.0.0.0",
-        port: 24678,
-        protocol: "ws",
-      },
-    },
   },
 
   runtimeConfig: {

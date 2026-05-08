@@ -79,6 +79,8 @@ services:
     build:
       context: ./audita-web
       dockerfile: Dockerfile.dev
+      args:
+        DEBUG: ${DEBUG:-false}
     container_name: audita-web
     restart: unless-stopped
     depends_on:
@@ -88,7 +90,6 @@ services:
       NUXT_API_INTERNAL_BASE: ${API_INTERNAL_BASE_URL}
     ports:
       - "7100:3000"
-      - "24678:24678"
     networks:
       ulcnetwork:
         aliases:
