@@ -9,7 +9,7 @@ COPY package.json pnpm-lock.yaml* ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .
-RUN pnpm build
+RUN pnpm build && test -f .output/server/index.mjs || (echo "ERROR: pnpm build did not produce .output/server/index.mjs" && exit 1)
 
 # ── Runtime stage ───────────────────────────────────────────────────────────────
 FROM node:24.15.0-alpine3.22
