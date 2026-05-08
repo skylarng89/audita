@@ -121,17 +121,12 @@
 definePageMeta({ layout: "auth" });
 
 const api = useApi();
-const { fetchStatus } = useOnboarding();
+const { fetchStatus, invalidateStatus } = useOnboarding();
 
 const form = reactive({ fullName: "", email: "", password: "" });
 const error = ref("");
 const done = ref(false);
 const isLoading = ref(false);
-
-const onboarding = await fetchStatus();
-if (onboarding !== null && onboarding.onboardingCompleted) {
-  await navigateTo("/auth/sign-in");
-}
 
 const strengthScore = computed(() => {
   const p = form.password;
@@ -157,30 +152,53 @@ function strengthColor(bar: number) {
   return "bg-success";
 }
 
-async function handleSubmit() {
-  if (isLoading.value) {
-    return;
-  }
+function validateForm(): string | null {
+  if (!form.fullName.trim()) return "Full name is required.";
+  if (!form.email.trim()) return "Email is required.";
+  if (form.password.length < 8)
+    return "Password must be at least 8 characters.";
+  return null;
+}
 
+function isAlreadyBootstrappedError(err: {
+  status?: number;
+  statusCode?: number;
+  response?: { status?: number };
+  data?: { detail?: string; title?: string; errorCode?: string };
+}): boolean {
+  const statusCode = err?.status ?? err?.statusCode ?? err?.response?.status;
+  const detail = err?.data?.detail ?? "";
+  const title = err?.data?.title ?? "";
+  return (
+    statusCode === 403 &&
+    (err?.data?.errorCode === "ALREADY_BOOTSTRAPPED" ||
+      /already\s+been\s+bootstrapped/i.test(detail) ||
+      /already\s+bootstrapped/i.test(detail) ||
+      /already\s+bootstrapped/i.test(title))
+  );
+}
+
+async function redirectIfOnboardingComplete(): Promise<boolean> {
+  const status = await fetchStatus(true);
+  if (status?.onboardingCompleted) {
+    done.value = true;
+    invalidateStatus();
+    await navigateTo("/auth/sign-in?setup=done");
+    return true;
+  }
+  return false;
+}
+
+async function handleSubmit() {
+  if (isLoading.value) return;
   error.value = "";
 
   // Guard stale tabs: onboarding might have completed in another tab/session.
-  const latestStatus = await fetchStatus();
-  if (latestStatus !== null && latestStatus.onboardingCompleted) {
-    await navigateTo("/auth/sign-in?setup=done");
-    return;
-  }
+  if (await redirectIfOnboardingComplete()) return;
 
-  if (!form.fullName.trim()) {
-    error.value = "Full name is required.";
-    return;
-  }
-  if (!form.email.trim()) {
-    error.value = "Email is required.";
-    return;
-  }
-  if (form.password.length < 8) {
-    error.value = "Password must be at least 8 characters.";
+  const validationError = validateForm();
+  if (validationError) {
+    error.value = validationError;
     return;
   }
 
@@ -196,6 +214,7 @@ async function handleSubmit() {
       },
     });
     done.value = true;
+    invalidateStatus();
     await navigateTo("/auth/sign-in?setup=done");
   } catch (e: unknown) {
     const err = e as {
@@ -204,34 +223,16 @@ async function handleSubmit() {
       response?: { status?: number };
       data?: { detail?: string; title?: string; errorCode?: string };
     };
-    const statusCode = err?.status ?? err?.statusCode ?? err?.response?.status;
-    const detail = err?.data?.detail ?? "";
-    const title = err?.data?.title ?? "";
-    const alreadyBootstrapped =
-      err?.data?.errorCode === "ALREADY_BOOTSTRAPPED" ||
-      /already\s+been\s+bootstrapped/i.test(detail) ||
-      /already\s+bootstrapped/i.test(detail) ||
-      /already\s+bootstrapped/i.test(title);
 
-    // If the page double-submits and backend has already bootstrapped,
-    // treat that as a successful setup completion.
-    if (statusCode === 403 && alreadyBootstrapped) {
-      const status = await fetchStatus();
-      if (status !== null && status.onboardingCompleted) {
-        done.value = true;
-        await navigateTo("/auth/sign-in?setup=done");
-        return;
-      }
-    }
-
-    // Final fallback: if a race completed setup before this request resolved,
-    // redirect instead of showing an error.
-    const status = await fetchStatus();
-    if (status !== null && status.onboardingCompleted) {
-      done.value = true;
-      await navigateTo("/auth/sign-in?setup=done");
+    // Double-submit or race: another session bootstrapped first.
+    if (
+      isAlreadyBootstrappedError(err) &&
+      (await redirectIfOnboardingComplete())
+    )
       return;
-    }
+
+    // Final fallback: redirect if onboarding completed via race.
+    if (await redirectIfOnboardingComplete()) return;
 
     error.value =
       err?.data?.detail ??

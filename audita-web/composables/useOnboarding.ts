@@ -6,20 +6,35 @@ export interface OnboardingStatusResponse {
 export function useOnboarding() {
   const api = useApi();
 
-  async function fetchStatus(): Promise<OnboardingStatusResponse | null> {
+  // useState persists the result across navigations within the same session.
+  // undefined = not yet fetched; null = last fetch failed; object = cached result.
+  const cachedStatus = useState<OnboardingStatusResponse | null | undefined>(
+    "onboarding-status",
+    () => undefined,
+  );
+
+  async function fetchStatus(
+    force = false,
+  ): Promise<OnboardingStatusResponse | null> {
+    if (!force && cachedStatus.value !== undefined) {
+      return cachedStatus.value;
+    }
     try {
-      return await api<OnboardingStatusResponse>(
+      const result = await api<OnboardingStatusResponse>(
         "/api/platform/v1/bootstrap/status",
-        {
-          method: "GET",
-          credentials: "omit",
-        },
+        { method: "GET", credentials: "omit" },
       );
+      cachedStatus.value = result;
+      return result;
     } catch {
-      // Return null so callers can decide the appropriate fallback for their context.
+      // Do not cache failures — allow a retry on the next call.
       return null;
     }
   }
 
-  return { fetchStatus };
+  function invalidateStatus() {
+    cachedStatus.value = undefined;
+  }
+
+  return { fetchStatus, invalidateStatus };
 }
