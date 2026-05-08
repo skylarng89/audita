@@ -2,6 +2,12 @@
 
 ## [0.1.0] — Unreleased (In Development)
 
+### Fixed (Docker Environment & CI — 2026-05-08)
+
+- **Hibernate dialect deprecation (`HHH90000025`)**: Removed explicit `dialect: org.hibernate.dialect.PostgreSQLDialect` from `application.yml` — Hibernate 7 auto-detects the dialect.
+- **Mail health check failing container**: Added `management.health.mail.enabled: false` to `application.yml` so SMTP connectivity no longer affects `/actuator/health` or Docker healthcheck status.
+- **CI pnpm version mismatch**: Upgraded `pnpm/action-setup` version from `9` to `10` in both `web-tests` and `release` jobs in `.github/workflows/ci-release.yml`. pnpm v9 cannot parse the v10 lockfile format, causing `packages field missing or empty` on `pnpm install --frozen-lockfile`.
+
 ### Changed (Tailwind v4 Migration — 2026-05-04)
 
 - Migrated frontend Tailwind integration from `@nuxtjs/tailwindcss` to Tailwind v4 Vite plugin (`@tailwindcss/vite`) in `audita-web/nuxt.config.ts`.
