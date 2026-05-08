@@ -129,7 +129,7 @@ const done = ref(false);
 const isLoading = ref(false);
 
 const onboarding = await fetchStatus();
-if (onboarding.onboardingCompleted) {
+if (onboarding !== null && onboarding.onboardingCompleted) {
   await navigateTo("/auth/sign-in");
 }
 
@@ -166,7 +166,7 @@ async function handleSubmit() {
 
   // Guard stale tabs: onboarding might have completed in another tab/session.
   const latestStatus = await fetchStatus();
-  if (latestStatus.onboardingCompleted) {
+  if (latestStatus !== null && latestStatus.onboardingCompleted) {
     await navigateTo("/auth/sign-in?setup=done");
     return;
   }
@@ -217,7 +217,7 @@ async function handleSubmit() {
     // treat that as a successful setup completion.
     if (statusCode === 403 && alreadyBootstrapped) {
       const status = await fetchStatus();
-      if (status.onboardingCompleted) {
+      if (status !== null && status.onboardingCompleted) {
         done.value = true;
         await navigateTo("/auth/sign-in?setup=done");
         return;
@@ -227,7 +227,7 @@ async function handleSubmit() {
     // Final fallback: if a race completed setup before this request resolved,
     // redirect instead of showing an error.
     const status = await fetchStatus();
-    if (status.onboardingCompleted) {
+    if (status !== null && status.onboardingCompleted) {
       done.value = true;
       await navigateTo("/auth/sign-in?setup=done");
       return;

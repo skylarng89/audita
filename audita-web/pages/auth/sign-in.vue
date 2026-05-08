@@ -202,13 +202,13 @@ const isLoading = ref(false);
 const showSetupSuccess = computed(() => route.query.setup === "done");
 
 const onboarding = await fetchStatus();
-if (!onboarding.onboardingCompleted) {
+if (onboarding !== null && !onboarding.onboardingCompleted) {
   await navigateTo("/setup");
 }
 
 // Hydrate tenant slug so the login call sends X-Tenant-Slug automatically.
 // In single-tenant mode the status response includes the only tenant's slug.
-if (onboarding.tenantSlug && !auth.tenantSlug) {
+if (onboarding?.tenantSlug && !auth.tenantSlug) {
   auth.tenantSlug = onboarding.tenantSlug;
 }
 
