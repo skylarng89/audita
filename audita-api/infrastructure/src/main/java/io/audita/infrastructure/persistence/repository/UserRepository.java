@@ -28,4 +28,6 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     Page<UserEntity> findByStatus(UserStatus status, Pageable pageable);
 
     List<UserEntity> findByFullNameContainingIgnoreCaseAndStatus(String name, UserStatus status, Pageable pageable);
+
+    long countByRole_NameAndStatus(String roleName, UserStatus status);
 }

@@ -61,6 +61,40 @@
             value || "UNKNOWN"
           }}</SharedAppBadge>
         </template>
+        <template v-if="canManageUsers" #cell-actions="{ row }">
+          <div class="flex gap-2">
+            <template v-if="row.status === 'PENDING'">
+              <button
+                @click="resendInvite(row.id as string)"
+                class="text-xs text-primary hover:underline"
+              >
+                Resend
+              </button>
+              <button
+                @click="cancelInvite(row.id as string)"
+                class="text-xs text-danger hover:underline"
+              >
+                Cancel
+              </button>
+            </template>
+            <template v-else>
+              <button
+                v-if="row.status !== 'SUSPENDED' && row.id !== auth.userId"
+                @click="deactivate(row.id as string)"
+                class="text-xs text-danger hover:underline"
+              >
+                Deactivate
+              </button>
+              <button
+                v-else
+                @click="reactivate(row.id as string)"
+                class="text-xs text-success hover:underline"
+              >
+                Reactivate
+              </button>
+            </template>
+          </div>
+        </template>
       </SharedAppTable>
 
       <div
@@ -163,7 +197,7 @@ definePageMeta({ layout: "default" });
 
 const api = useApi();
 const auth = useAuthStore();
-const { success: toastSuccess } = useToast();
+const { success: toastSuccess, error: toastError } = useToast();
 
 interface UserRow {
   id: string;
@@ -306,10 +340,56 @@ async function inviteUser() {
   }
 }
 
-const columns = [
-  { key: "fullName", label: "Name" },
-  { key: "email", label: "Email" },
-  { key: "roleName", label: "Role" },
-  { key: "status", label: "Status" },
-];
+const columns = computed(() => {
+  const base = [
+    { key: "fullName", label: "Name" },
+    { key: "email", label: "Email" },
+    { key: "roleName", label: "Role" },
+    { key: "status", label: "Status" },
+  ];
+  if (canManageUsers.value) {
+    base.push({ key: "actions", label: "" });
+  }
+  return base;
+});
+
+async function deactivate(id: string) {
+  try {
+    await api(`/api/v1/users/${id}/deactivate`, { method: "POST" });
+    toastSuccess("User deactivated.");
+    refresh();
+  } catch {
+    toastError("Failed to deactivate user.");
+  }
+}
+
+async function reactivate(id: string) {
+  try {
+    await api(`/api/v1/users/${id}/reactivate`, { method: "POST" });
+    toastSuccess("User reactivated.");
+    refresh();
+  } catch {
+    toastError("Failed to reactivate user.");
+  }
+}
+
+async function resendInvite(id: string) {
+  try {
+    await api(`/api/v1/users/${id}/invite`, { method: "POST" });
+    toastSuccess("Invite resent.");
+    refresh();
+  } catch {
+    toastError("Failed to resend invite.");
+  }
+}
+
+async function cancelInvite(id: string) {
+  try {
+    await api(`/api/v1/users/${id}/invite`, { method: "DELETE" });
+    toastSuccess("Invite cancelled.");
+    refresh();
+  } catch {
+    toastError("Failed to cancel invite.");
+  }
+}
 </script>

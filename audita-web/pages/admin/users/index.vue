@@ -54,7 +54,7 @@
                 Edit
               </button>
               <button
-                v-if="row.status !== 'SUSPENDED'"
+                v-if="row.status !== 'SUSPENDED' && row.id !== auth.userId"
                 @click="deactivate(row.id)"
                 class="text-xs text-danger hover:underline"
               >
