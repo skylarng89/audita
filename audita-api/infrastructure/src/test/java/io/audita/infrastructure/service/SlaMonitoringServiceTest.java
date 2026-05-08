@@ -19,6 +19,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -38,6 +40,8 @@ class SlaMonitoringServiceTest {
     @Mock NotificationService notificationService;
     @Mock EmailService emailService;
     @Mock TenantRepository tenantRepository;
+    @Mock PlatformTransactionManager transactionManager;
+    @Mock TransactionStatus transactionStatus;
 
     @InjectMocks
     SlaMonitoringService slaMonitoringService;
