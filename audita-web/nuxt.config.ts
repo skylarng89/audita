@@ -4,12 +4,24 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   ssr: false,
 
+  devServer: {
+    host: "0.0.0.0",
+    port: 3000,
+  },
+
   modules: ["@pinia/nuxt", "@nuxt/eslint"],
 
   css: ["~/assets/css/main.css"],
 
   vite: {
     plugins: [tailwindcss()],
+    server: {
+      hmr: {
+        host: "0.0.0.0",
+        port: 24678,
+        protocol: "ws",
+      },
+    },
   },
 
   runtimeConfig: {

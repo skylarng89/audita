@@ -49,6 +49,20 @@
       "esbuild",
       "unrs-resolver",
       "vue-demi"
-    ]
+    ],
+    "supportedArchitectures": {
+      "os": [
+        "linux",
+        "darwin"
+      ],
+      "cpu": [
+        "x64",
+        "arm64"
+      ],
+      "libc": [
+        "musl",
+        "glibc"
+      ]
+    }
   }
 }
