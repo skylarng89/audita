@@ -67,4 +67,17 @@ public class UserController {
     public void reactivateUser(@PathVariable UUID id) {
         userService.reactivateUser(id);
     }
+
+    @PostMapping("/{id}/invite")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public UserResponse resendInvite(@PathVariable UUID id) {
+        return UserResponse.from(userService.resendInvite(id));
+    }
+
+    @DeleteMapping("/{id}/invite")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cancelInvite(@PathVariable UUID id) {
+        userService.cancelInvite(id);
+    }
 }

@@ -135,6 +135,50 @@ public class UserService {
         log.info("User reactivated: id={}", id);
     }
 
+    // ── Invite management ──────────────────────────────────────────────────────
+
+    /**
+     * Voids all existing invite tokens for a PENDING user and sends a fresh 48-hour invite.
+     */
+    public UserEntity resendInvite(UUID userId) {
+        UserEntity user = findUserOrThrow(userId);
+        if (user.getStatus() != UserStatus.PENDING) {
+            throw new DomainNotPermittedException("INVALID_STATE",
+                    "Invite can only be resent for users with PENDING status.");
+        }
+
+        inviteTokenRepository.deleteAll(inviteTokenRepository.findAllByUser_Id(userId));
+
+        String rawToken = generateSecureToken();
+        inviteTokenRepository.save(new InviteTokenEntity(user, AuthService.sha256(rawToken),
+                OffsetDateTime.now().plusHours(48)));
+
+        String tenantSlug = TenantContext.getCurrentTenant();
+        String orgName = tenantRepository.findBySlug(tenantSlug)
+                .map(TenantEntity::getName)
+                .orElse(tenantSlug);
+
+        emailService.sendInviteEmail(user.getEmail(), user.getFullName(), rawToken, orgName);
+        log.info("Invite resent: userId={} tenant={}", userId, tenantSlug);
+        return user;
+    }
+
+    /**
+     * Cancels a pending invite by removing all invite tokens and deleting the user record.
+     * The same email address can be re-invited afterwards.
+     */
+    public void cancelInvite(UUID userId) {
+        UserEntity user = findUserOrThrow(userId);
+        if (user.getStatus() != UserStatus.PENDING) {
+            throw new DomainNotPermittedException("INVALID_STATE",
+                    "Invite can only be cancelled for users with PENDING status.");
+        }
+
+        inviteTokenRepository.deleteAll(inviteTokenRepository.findAllByUser_Id(userId));
+        userRepository.delete(user);
+        log.info("Invite cancelled and user removed: userId={}", userId);
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     private String generateSecureToken() {

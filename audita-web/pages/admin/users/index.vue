@@ -32,26 +32,42 @@
         </template>
         <template #cell-actions="{ row }">
           <div class="flex gap-2">
-            <button
-              @click="openEdit(row)"
-              class="text-xs text-primary hover:underline"
-            >
-              Edit
-            </button>
-            <button
-              v-if="row.status !== 'SUSPENDED'"
-              @click="deactivate(row.id)"
-              class="text-xs text-danger hover:underline"
-            >
-              Deactivate
-            </button>
-            <button
-              v-else
-              @click="reactivate(row.id)"
-              class="text-xs text-success hover:underline"
-            >
-              Reactivate
-            </button>
+            <template v-if="row.status === 'PENDING'">
+              <button
+                @click="resendInvite(row.id)"
+                class="text-xs text-primary hover:underline"
+              >
+                Resend
+              </button>
+              <button
+                @click="cancelInvite(row.id)"
+                class="text-xs text-danger hover:underline"
+              >
+                Cancel
+              </button>
+            </template>
+            <template v-else>
+              <button
+                @click="openEdit(row)"
+                class="text-xs text-primary hover:underline"
+              >
+                Edit
+              </button>
+              <button
+                v-if="row.status !== 'SUSPENDED'"
+                @click="deactivate(row.id)"
+                class="text-xs text-danger hover:underline"
+              >
+                Deactivate
+              </button>
+              <button
+                v-else
+                @click="reactivate(row.id)"
+                class="text-xs text-success hover:underline"
+              >
+                Reactivate
+              </button>
+            </template>
           </div>
         </template>
       </AppTable>
@@ -269,6 +285,26 @@ async function reactivate(id: string) {
   await api(`/api/v1/users/${id}/reactivate`, { method: "POST" });
   toastSuccess("User reactivated.");
   refresh();
+}
+
+async function resendInvite(id: string) {
+  try {
+    await api(`/api/v1/users/${id}/invite`, { method: "POST" });
+    toastSuccess("Invite resent.");
+    refresh();
+  } catch {
+    toastError("Failed to resend invite.");
+  }
+}
+
+async function cancelInvite(id: string) {
+  try {
+    await api(`/api/v1/users/${id}/invite`, { method: "DELETE" });
+    toastSuccess("Invite cancelled.");
+    refresh();
+  } catch {
+    toastError("Failed to cancel invite.");
+  }
 }
 
 const columns = [
