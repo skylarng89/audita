@@ -6,7 +6,7 @@ export interface OnboardingStatusResponse {
 export function useOnboarding() {
   const api = useApi();
 
-  async function fetchStatus() {
+  async function fetchStatus(): Promise<OnboardingStatusResponse | null> {
     try {
       return await api<OnboardingStatusResponse>(
         "/api/platform/v1/bootstrap/status",
@@ -16,8 +16,8 @@ export function useOnboarding() {
         },
       );
     } catch {
-      // Keep auth/bootstrap routes renderable even if API is temporarily unavailable.
-      return { onboardingCompleted: true, tenantSlug: null };
+      // Return null so callers can decide the appropriate fallback for their context.
+      return null;
     }
   }
 

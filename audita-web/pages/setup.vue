@@ -193,9 +193,10 @@ const auth = useAuthStore();
 const { fetchStatus } = useOnboarding();
 const { login } = useAuth();
 
-// Guard: redirect to sign-in if already set up
+// Guard: redirect to sign-in only when the API confirms setup is done.
+// If the API is unreachable (null), stay on the setup page.
 const status = await fetchStatus();
-if (status.onboardingCompleted) {
+if (status !== null && status.onboardingCompleted) {
   await navigateTo("/auth/sign-in");
 }
 
