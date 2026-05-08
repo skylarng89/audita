@@ -77,7 +77,7 @@ services:
   web:
     build:
       context: ./audita-web
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: audita-web
     restart: unless-stopped
     depends_on:
