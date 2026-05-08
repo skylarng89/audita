@@ -40,6 +40,7 @@ services:
       STORAGE_S3_SECRET_KEY: ${STORAGE_S3_SECRET_KEY}
       UPLOAD_MAX_SIZE_BYTES: ${UPLOAD_MAX_SIZE_BYTES}
       UPLOAD_ALLOWED_MIME_TYPES: ${UPLOAD_ALLOWED_MIME_TYPES}
+      MANAGEMENT_HEALTH_MAIL_ENABLED: ${MANAGEMENT_HEALTH_MAIL_ENABLED}
     volumes:
       - audita_uploads:/data/uploads
     ports:
@@ -111,7 +112,7 @@ services:
           memory: 256M
     volumes:
       - ./audita-web:/app
-      - /app/node_modules
+      - ./audita-web/node_modules:/app/node_modules
 
 volumes:
   dbdata:

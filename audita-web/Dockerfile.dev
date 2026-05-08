@@ -8,10 +8,6 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 
-RUN addgroup -S audita && adduser -S audita -G audita \
-  && chown -R audita:audita /app
-
-USER audita
 EXPOSE 3000
 ENV NODE_ENV=development
 CMD ["pnpm", "dev"]
