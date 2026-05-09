@@ -98,7 +98,7 @@ public class UserService {
                 .map(TenantEntity::getName)
                 .orElse(tenantSlug);
 
-        emailService.sendInviteEmail(email, fullName, rawToken, orgName);
+        emailService.sendInviteEmail(email, fullName, rawToken, orgName, tenantSlug);
         log.info("User invited: email={} role={} tenant={}", email, role.getName(), tenantSlug);
         return user;
     }
@@ -175,7 +175,7 @@ public class UserService {
                 .map(TenantEntity::getName)
                 .orElse(tenantSlug);
 
-        emailService.sendInviteEmail(user.getEmail(), user.getFullName(), rawToken, orgName);
+        emailService.sendInviteEmail(user.getEmail(), user.getFullName(), rawToken, orgName, tenantSlug);
         log.info("Invite resent: userId={} tenant={}", userId, tenantSlug);
         return user;
     }

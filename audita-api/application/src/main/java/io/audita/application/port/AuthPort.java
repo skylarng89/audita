@@ -20,7 +20,7 @@ public interface AuthPort {
 
     void resetPassword(String rawToken, String newPassword);
 
-    void acceptInvite(String rawToken, String fullName, String password);
+    void acceptInvite(String rawToken, String password);
 
     void bootstrap(String fullName, String email, String rawPassword);
 

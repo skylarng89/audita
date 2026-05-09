@@ -52,11 +52,11 @@ public class EmailService {
     }
 
     @Async
-    public void sendInviteEmail(String toEmail, String fullName, String rawToken, String orgName) {
+    public void sendInviteEmail(String toEmail, String fullName, String rawToken, String orgName, String tenantSlug) {
         Context ctx = new Context();
         ctx.setVariable("fullName", fullName);
         ctx.setVariable("orgName", orgName);
-        ctx.setVariable("acceptLink", appBaseUrl + "/auth/accept-invite?token=" + rawToken);
+        ctx.setVariable("acceptLink", appBaseUrl + "/auth/accept-invite?token=" + rawToken + "&tenant=" + tenantSlug);
         ctx.setVariable("expiryHours", inviteExpiryHours);
         send(toEmail, "You're invited to " + orgName + " on Audita", "email/invite", ctx);
     }
