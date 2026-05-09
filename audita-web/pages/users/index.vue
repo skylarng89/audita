@@ -193,7 +193,11 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: "default" });
+definePageMeta({
+  layout: "default",
+  middleware: ["role"],
+  requiredRole: "Admin",
+});
 
 const api = useApi();
 const auth = useAuthStore();

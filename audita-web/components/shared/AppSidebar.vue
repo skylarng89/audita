@@ -66,7 +66,7 @@
       </NuxtLink>
 
       <NuxtLink
-        v-if="!auth.isAuditor"
+        v-if="auth.isAdmin"
         to="/users"
         class="sidebar-link"
         active-class="sidebar-link-active"
