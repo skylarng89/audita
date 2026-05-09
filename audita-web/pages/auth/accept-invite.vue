@@ -22,7 +22,7 @@
     </div>
     <h1 class="text-3xl font-bold tracking-tight mb-1">Complete Setup</h1>
     <p class="text-sm text-muted mb-8 leading-relaxed">
-      Please provide your details to finalise your account creation.
+      Set a password to activate your account.
     </p>
 
     <div
@@ -43,20 +43,6 @@
     </div>
 
     <form v-else @submit.prevent="handleSubmit" novalidate>
-      <div class="mb-4">
-        <label
-          class="block text-xs font-semibold uppercase tracking-wide text-muted mb-1.5"
-          >Full Name</label
-        >
-        <input
-          v-model="form.fullName"
-          type="text"
-          placeholder="Alex Thompson"
-          class="input"
-          required
-        />
-      </div>
-
       <div class="mb-4">
         <label
           class="block text-xs font-semibold uppercase tracking-wide text-muted mb-1.5"
@@ -146,7 +132,7 @@ definePageMeta({ layout: "auth" });
 const route = useRoute();
 const { acceptInvite } = useAuth();
 
-const form = reactive({ fullName: "", password: "", confirm: "" });
+const form = reactive({ password: "", confirm: "" });
 const error = ref("");
 const isLoading = ref(false);
 const done = ref(false);
@@ -183,14 +169,15 @@ async function handleSubmit() {
   }
 
   const token = route.query.token as string;
-  if (!token) {
+  const tenantSlug = route.query.tenant as string;
+  if (!token || !tenantSlug) {
     error.value = "Invalid invite link.";
     return;
   }
 
   isLoading.value = true;
   try {
-    await acceptInvite(token, form.fullName, form.password);
+    await acceptInvite(token, form.password, tenantSlug);
     done.value = true;
   } catch {
     error.value = "This invite link is invalid or has expired.";
