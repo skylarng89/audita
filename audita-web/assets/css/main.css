@@ -15,6 +15,18 @@
     @apply box-border;
   }
 
+  button,
+  a,
+  [role="button"],
+  label[for] {
+    @apply cursor-pointer;
+  }
+
+  button:disabled,
+  [disabled] {
+    @apply cursor-not-allowed;
+  }
+
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-primary;
   }
@@ -26,7 +38,7 @@
     @apply inline-flex items-center justify-center gap-2 rounded-lg font-semibold
            transition-all duration-150 focus-visible:outline-none focus-visible:ring-2
            focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50
-           disabled:cursor-not-allowed;
+           disabled:cursor-not-allowed cursor-pointer;
   }
 
   /* Variant buttons get a consistent default size even if btn-sm|md|lg is omitted. */
@@ -40,7 +52,7 @@
     @apply inline-flex items-center justify-center gap-2 rounded-lg font-semibold
            transition-all duration-150 focus-visible:outline-none focus-visible:ring-2
            focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50
-           disabled:cursor-not-allowed;
+           disabled:cursor-not-allowed cursor-pointer;
   }
 
   .btn-primary,
