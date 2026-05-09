@@ -17,6 +17,10 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
     @Override
     @EntityGraph(attributePaths = {"role"})
+    Optional<UserEntity> findById(UUID id);
+
+    @Override
+    @EntityGraph(attributePaths = {"role"})
     Page<UserEntity> findAll(Pageable pageable);
 
     Optional<UserEntity> findByEmail(String email);
@@ -28,4 +32,6 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     Page<UserEntity> findByStatus(UserStatus status, Pageable pageable);
 
     List<UserEntity> findByFullNameContainingIgnoreCaseAndStatus(String name, UserStatus status, Pageable pageable);
+
+    long countByRole_NameAndStatus(String roleName, UserStatus status);
 }

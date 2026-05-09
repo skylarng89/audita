@@ -21,6 +21,8 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+    implementation("com.github.ben-manes.caffeine:caffeine")
 
     // Structured JSON logging — encodes Logback events as JSON with MDC support
     implementation("net.logstash.logback:logstash-logback-encoder:8.1")

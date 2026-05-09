@@ -25,7 +25,7 @@ Document tradeoff decisions in `memory-bank/docs/decisions.md`.
 - Use **Context7 MCP** for library/language docs; **Brave Search MCP** for current web info
 - On session start: scan for all `memory-bank/` folders; ingest and synthesise
 - If no memory-bank exists, ask the user whether to create one
-- On "Update session": locate and update **all** memory-bank folders in the workspace
+- On "Update session": locate and update **all** memory-bank folders in the workspace with all done in the session and also update the workspace memories.
 
 ---
 

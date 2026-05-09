@@ -117,11 +117,24 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public void deactivateUser(UUID id) {
+    public void deactivateUser(UUID id, UUID requesterId) {
+        if (id.equals(requesterId)) {
+            throw new DomainNotPermittedException("SELF_DEACTIVATION",
+                    "You cannot deactivate your own account.");
+        }
+
         UserEntity user = findUserOrThrow(id);
+
+        // Prevent removing the last active Admin — organisation would be locked out.
+        if (user.getRole() != null && "Admin".equals(user.getRole().getName())
+                && userRepository.countByRole_NameAndStatus("Admin", UserStatus.ACTIVE) <= 1) {
+            throw new DomainNotPermittedException("LAST_ADMIN",
+                    "Cannot deactivate the last Admin. Assign another Admin first.");
+        }
+
         user.setStatus(UserStatus.SUSPENDED);
         userRepository.save(user);
-        log.info("User deactivated: id={}", id);
+        log.info("User deactivated: id={} by={}", id, requesterId);
     }
 
     public void reactivateUser(UUID id) {
@@ -133,6 +146,50 @@ public class UserService {
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
         log.info("User reactivated: id={}", id);
+    }
+
+    // ── Invite management ──────────────────────────────────────────────────────
+
+    /**
+     * Voids all existing invite tokens for a PENDING user and sends a fresh 48-hour invite.
+     */
+    public UserEntity resendInvite(UUID userId) {
+        UserEntity user = findUserOrThrow(userId);
+        if (user.getStatus() != UserStatus.PENDING) {
+            throw new DomainNotPermittedException("INVALID_STATE",
+                    "Invite can only be resent for users with PENDING status.");
+        }
+
+        inviteTokenRepository.deleteAll(inviteTokenRepository.findAllByUser_Id(userId));
+
+        String rawToken = generateSecureToken();
+        inviteTokenRepository.save(new InviteTokenEntity(user, AuthService.sha256(rawToken),
+                OffsetDateTime.now().plusHours(48)));
+
+        String tenantSlug = TenantContext.getCurrentTenant();
+        String orgName = tenantRepository.findBySlug(tenantSlug)
+                .map(TenantEntity::getName)
+                .orElse(tenantSlug);
+
+        emailService.sendInviteEmail(user.getEmail(), user.getFullName(), rawToken, orgName);
+        log.info("Invite resent: userId={} tenant={}", userId, tenantSlug);
+        return user;
+    }
+
+    /**
+     * Cancels a pending invite by removing all invite tokens and deleting the user record.
+     * The same email address can be re-invited afterwards.
+     */
+    public void cancelInvite(UUID userId) {
+        UserEntity user = findUserOrThrow(userId);
+        if (user.getStatus() != UserStatus.PENDING) {
+            throw new DomainNotPermittedException("INVALID_STATE",
+                    "Invite can only be cancelled for users with PENDING status.");
+        }
+
+        inviteTokenRepository.deleteAll(inviteTokenRepository.findAllByUser_Id(userId));
+        userRepository.delete(user);
+        log.info("Invite cancelled and user removed: userId={}", userId);
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────

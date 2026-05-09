@@ -2,7 +2,10 @@
 FROM node:24.15.0-alpine3.22 AS builder
 WORKDIR /app
 
-# Install pnpm
+# Pass DEBUG=true at build time to enable source maps
+ARG DEBUG=false
+ENV DEBUG=$DEBUG
+
 RUN corepack enable && corepack prepare pnpm@10.11.0 --activate
 
 COPY package.json pnpm-lock.yaml* ./

@@ -67,6 +67,16 @@ spring:
 server:
   port: ${PORT:8080}
 
+# ── Cache (Caffeine) ─────────────────────────────────────────────────────────────
+# onboardingStatus: changes exactly once (false → true after first-run setup).
+# maximumSize=1 keeps memory footprint negligible; expireAfterWrite is a safety-net
+# backstop in case a cache evict is somehow missed (e.g., direct DB repair).
+spring.cache:
+  type: caffeine
+  cache-names: onboardingStatus
+  caffeine:
+    spec: maximumSize=10,expireAfterWrite=1h
+
 # ── Actuator ────────────────────────────────────────────────────────────────────
 management:
   endpoints:
@@ -117,6 +127,7 @@ audita:
 
   mail:
     from: ${DEFAULT_SMTP_FROM}
+    from-name: ${DEFAULT_SMTP_FROM_NAME}
 
   storage:
     backend: ${STORAGE_BACKEND}

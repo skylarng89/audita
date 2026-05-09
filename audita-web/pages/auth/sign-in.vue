@@ -192,7 +192,6 @@
 definePageMeta({ layout: "auth" });
 
 const { login } = useAuth();
-const { fetchStatus } = useOnboarding();
 const auth = useAuthStore();
 const route = useRoute();
 
@@ -200,17 +199,6 @@ const form = reactive({ email: "", password: "" });
 const errors = reactive({ email: "", password: "", general: "" });
 const isLoading = ref(false);
 const showSetupSuccess = computed(() => route.query.setup === "done");
-
-const onboarding = await fetchStatus();
-if (!onboarding.onboardingCompleted) {
-  await navigateTo("/setup");
-}
-
-// Hydrate tenant slug so the login call sends X-Tenant-Slug automatically.
-// In single-tenant mode the status response includes the only tenant's slug.
-if (onboarding.tenantSlug && !auth.tenantSlug) {
-  auth.tenantSlug = onboarding.tenantSlug;
-}
 
 async function handleSubmit() {
   errors.email = "";

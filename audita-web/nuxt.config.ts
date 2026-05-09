@@ -1,12 +1,19 @@
 import tailwindcss from "@tailwindcss/vite";
 
+const debug = process.env.DEBUG === "true";
+
 export default defineNuxtConfig({
-  devtools: { enabled: true },
+  devtools: { enabled: debug },
   ssr: false,
 
   modules: ["@pinia/nuxt", "@nuxt/eslint"],
 
   css: ["~/assets/css/main.css"],
+
+  sourcemap: {
+    client: debug,
+    server: debug,
+  },
 
   vite: {
     plugins: [tailwindcss()],
@@ -15,7 +22,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     apiInternalBase: process.env.NUXT_API_INTERNAL_BASE ?? "http://api:8080",
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE ?? "/api",
+      apiBase: process.env.NUXT_PUBLIC_API_BASE ?? "",
     },
   },
 

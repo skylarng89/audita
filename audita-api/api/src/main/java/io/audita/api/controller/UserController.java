@@ -57,8 +57,10 @@ public class UserController {
     @PostMapping("/{id}/deactivate")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deactivateUser(@PathVariable UUID id) {
-        userService.deactivateUser(id);
+    public void deactivateUser(@PathVariable UUID id,
+                               @AuthenticationPrincipal UserDetails principal) {
+        UUID requesterId = UUID.fromString(principal.getUsername());
+        userService.deactivateUser(id, requesterId);
     }
 
     @PostMapping("/{id}/reactivate")
@@ -66,5 +68,18 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void reactivateUser(@PathVariable UUID id) {
         userService.reactivateUser(id);
+    }
+
+    @PostMapping("/{id}/invite")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public UserResponse resendInvite(@PathVariable UUID id) {
+        return UserResponse.from(userService.resendInvite(id));
+    }
+
+    @DeleteMapping("/{id}/invite")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cancelInvite(@PathVariable UUID id) {
+        userService.cancelInvite(id);
     }
 }

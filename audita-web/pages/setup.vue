@@ -190,14 +190,8 @@ definePageMeta({ layout: "auth" });
 
 const api = useApi();
 const auth = useAuthStore();
-const { fetchStatus } = useOnboarding();
 const { login } = useAuth();
-
-// Guard: redirect to sign-in if already set up
-const status = await fetchStatus();
-if (status.onboardingCompleted) {
-  await navigateTo("/auth/sign-in");
-}
+const { invalidateStatus } = useOnboarding();
 
 const step = ref(1);
 const form = reactive({
@@ -288,6 +282,10 @@ async function handleSubmit() {
     // Store tenant slug so the login API call sends X-Tenant-Slug
     auth.tenantSlug = form.slug;
     auth.persistToCookie();
+
+    // Bust the cached onboarding status so the next navigation check
+    // fetches fresh data and sees onboardingCompleted: true.
+    invalidateStatus();
 
     // Auto-login the new admin
     await login(form.email, form.password);

@@ -26,6 +26,7 @@ services:
       TRUST_FORWARDED_HEADERS: ${TRUST_FORWARDED_HEADERS}
       BOOTSTRAP_SETUP_TOKEN: ${BOOTSTRAP_SETUP_TOKEN}
       DEFAULT_SMTP_FROM: ${SMTP_FROM}
+      DEFAULT_SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Audita}
       DEFAULT_SMTP_HOST: ${SMTP_HOST}
       DEFAULT_SMTP_PORT: ${SMTP_PORT}
       DEFAULT_SMTP_USERNAME: ${SMTP_USERNAME}
@@ -40,6 +41,7 @@ services:
       STORAGE_S3_SECRET_KEY: ${STORAGE_S3_SECRET_KEY}
       UPLOAD_MAX_SIZE_BYTES: ${UPLOAD_MAX_SIZE_BYTES}
       UPLOAD_ALLOWED_MIME_TYPES: ${UPLOAD_ALLOWED_MIME_TYPES}
+      MANAGEMENT_HEALTH_MAIL_ENABLED: ${MANAGEMENT_HEALTH_MAIL_ENABLED}
     volumes:
       - audita_uploads:/data/uploads
     ports:
@@ -77,7 +79,9 @@ services:
   web:
     build:
       context: ./audita-web
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
+      args:
+        DEBUG: ${DEBUG:-false}
     container_name: audita-web
     restart: unless-stopped
     depends_on:
