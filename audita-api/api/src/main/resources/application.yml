@@ -128,7 +128,8 @@ audita:
   mail:
     from: ${DEFAULT_SMTP_FROM}
     from-name: ${DEFAULT_SMTP_FROM_NAME}
-
+  invite:
+    expiry-hours: ${INVITE_EXPIRY_HOURS}
   storage:
     backend: ${STORAGE_BACKEND}
     local:

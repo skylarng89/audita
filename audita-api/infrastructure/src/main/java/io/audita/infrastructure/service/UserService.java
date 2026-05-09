@@ -7,6 +7,7 @@ import io.audita.infrastructure.persistence.repository.*;
 import io.audita.infrastructure.tenant.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,9 @@ public class UserService {
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final String NOT_FOUND = "NOT_FOUND";
+
+    @Value("${audita.invite.expiry-hours:48}")
+    private int inviteExpiryHours;
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -86,7 +90,7 @@ public class UserService {
         String rawToken = generateSecureToken();
         String tokenHash = AuthService.sha256(rawToken);
         inviteTokenRepository.save(new InviteTokenEntity(user, tokenHash,
-                OffsetDateTime.now().plusHours(48)));
+                OffsetDateTime.now().plusHours(inviteExpiryHours)));
 
         // Resolve tenant name for the email (falls back gracefully if not found)
         String tenantSlug = TenantContext.getCurrentTenant();
@@ -164,7 +168,7 @@ public class UserService {
 
         String rawToken = generateSecureToken();
         inviteTokenRepository.save(new InviteTokenEntity(user, AuthService.sha256(rawToken),
-                OffsetDateTime.now().plusHours(48)));
+                OffsetDateTime.now().plusHours(inviteExpiryHours)));
 
         String tenantSlug = TenantContext.getCurrentTenant();
         String orgName = tenantRepository.findBySlug(tenantSlug)

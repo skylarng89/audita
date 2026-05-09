@@ -31,6 +31,9 @@ public class EmailService {
     @Value("${audita.mail.from-name:Audita}")
     private String fromName;
 
+    @Value("${audita.invite.expiry-hours:48}")
+    private int inviteExpiryHours;
+
     @Value("${audita.app.base-url:http://localhost:3000}")
     private String appBaseUrl;
 
@@ -54,7 +57,7 @@ public class EmailService {
         ctx.setVariable("fullName", fullName);
         ctx.setVariable("orgName", orgName);
         ctx.setVariable("acceptLink", appBaseUrl + "/auth/accept-invite?token=" + rawToken);
-        ctx.setVariable("expiryHours", 48);
+        ctx.setVariable("expiryHours", inviteExpiryHours);
         send(toEmail, "You're invited to " + orgName + " on Audita", "email/invite", ctx);
     }
 

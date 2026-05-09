@@ -11,17 +11,17 @@ export default defineNuxtPlugin(() => {
   const auth = useAuthStore();
   const notifStore = useNotificationStore();
   const api = useApi();
-  const config = useRuntimeConfig();
 
   let eventSource: EventSource | null = null;
 
   function buildStreamUrl(streamToken: string) {
-    const normalizedBase = (config.public.apiBase || "").replace(/\/+$/, "");
-    const streamPath = normalizedBase.endsWith("/api")
-      ? "/v1/notifications/stream"
-      : "/api/v1/notifications/stream";
+    // EventSource is a native browser API — it cannot go through the Nuxt $fetch
+    // proxy, so we use a root-relative path (/api/...) which the browser sends
+    // to the same origin (the Nuxt server at :7100), and the server-side proxy
+    // forwards it to the API container. An absolute http://api-host URL would
+    // be CORS-blocked because the browser makes the request directly.
     const token = encodeURIComponent(streamToken);
-    return `${normalizedBase}${streamPath}?streamToken=${token}`;
+    return `/api/v1/notifications/stream?streamToken=${token}`;
   }
 
   function connect() {
