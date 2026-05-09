@@ -103,7 +103,7 @@ public class AuthController {
     @PostMapping("/accept-invite")
     public ResponseEntity<Map<String, String>> acceptInvite(
             @Valid @RequestBody AcceptInviteRequest request) {
-        authService.acceptInvite(request.token(), request.fullName(), request.password());
+        authService.acceptInvite(request.token(), request.password());
         return ResponseEntity.ok(Map.of(MESSAGE_KEY, "Account activated. You can now sign in."));
     }
 

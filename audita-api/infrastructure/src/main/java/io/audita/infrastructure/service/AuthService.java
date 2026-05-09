@@ -211,7 +211,7 @@ public class AuthService implements AuthPort {
     // ── Accept invite ───────────────────────────────────────────────────────────
 
     @Override
-    public void acceptInvite(String rawToken, String fullName, String password) {
+    public void acceptInvite(String rawToken, String password) {
         validatePasswordStrength(password);
         String hash = sha256(rawToken);
         InviteTokenEntity token = inviteTokenRepository.findByTokenHash(hash)
@@ -224,7 +224,7 @@ public class AuthService implements AuthPort {
         }
 
         UserEntity user = token.getUser();
-        user.setFullName(fullName);
+        // fullName already set at invite time — no need to update it here
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);

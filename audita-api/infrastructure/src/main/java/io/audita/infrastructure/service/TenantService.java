@@ -170,7 +170,7 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
             inviteTokenRepository.save(invite);
 
             // 5. Send invite email asynchronously — failure logged but never rethrows
-            emailService.sendInviteEmail(adminEmail, adminFullName, rawToken, name);
+            emailService.sendInviteEmail(adminEmail, adminFullName, rawToken, name, normalisedSlug);
 
             log.info("Admin invited for tenant={} email={}", normalisedSlug, adminEmail);
             });
