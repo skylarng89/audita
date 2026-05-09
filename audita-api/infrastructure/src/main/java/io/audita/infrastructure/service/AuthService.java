@@ -10,6 +10,7 @@ import io.audita.infrastructure.tenant.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -236,6 +237,7 @@ public class AuthService implements AuthPort {
     // ── Bootstrap (first run) ───────────────────────────────────────────────────
 
     @Override
+    @CacheEvict(value = "onboardingStatus", allEntries = true)
     public void bootstrap(String fullName, String email, String rawPassword) {
         if (superAdminRepository.count() > 0) {
             throw new DomainNotPermittedException("ALREADY_BOOTSTRAPPED",
