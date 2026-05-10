@@ -424,8 +424,8 @@ public class ChangeRequestService {
 
         String tenant = TenantContext.getCurrentTenant();
         String safeOriginalName = file.getOriginalFilename() == null ? "attachment.bin" : file.getOriginalFilename();
-        // UUID prefix prevents collisions; regex strips path separators and shell-special chars.
-        String storedName = UUID.randomUUID() + "-" + safeOriginalName.replaceAll("[^a-zA-Z0-9._-]", "_");
+        // UUID prefix prevents collisions; normalizeFileName produces a lowercase, hyphenated, filesystem-safe name.
+        String storedName = UUID.randomUUID() + "-" + normalizeFileName(safeOriginalName);
 
         Path storageDir = Path.of(storageBasePath, tenant == null ? "public" : tenant, changeRequestId.toString())
                 .toAbsolutePath().normalize();
@@ -598,6 +598,29 @@ public class ChangeRequestService {
             }
         }
         return true;
+    }
+
+    /**
+     * Produces a filesystem-safe, lowercase filename for on-disk storage.
+     * The original name is preserved separately for display and download.
+     * Rules: stem lowercased; any run of non-alphanumeric chars → single hyphen;
+     * leading/trailing hyphens stripped; extension lowercased and preserved.
+     * Example: "Network Diagram - Acme Inc.DOCX" → "network-diagram-acme-inc.docx"
+     */
+    private String normalizeFileName(String originalName) {
+        if (originalName == null || originalName.isBlank()) {
+            return "attachment";
+        }
+        int dotIndex = originalName.lastIndexOf('.');
+        String stem = dotIndex > 0 ? originalName.substring(0, dotIndex) : originalName;
+        String ext  = dotIndex > 0 ? originalName.substring(dotIndex).toLowerCase() : "";
+        String normalizedStem = stem.toLowerCase()
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("^-+|-+$", "");
+        if (normalizedStem.isEmpty()) {
+            normalizedStem = "attachment";
+        }
+        return normalizedStem + ext;
     }
 
     private String[] normalizeAffectedSystems(String[] affectedSystems) {

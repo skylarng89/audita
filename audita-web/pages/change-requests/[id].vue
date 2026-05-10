@@ -98,28 +98,59 @@
 
       <div class="card p-5 md:col-span-2">
         <h3 class="font-semibold mb-3">Custom Fields</h3>
-        <div class="space-y-3">
-          <div
-            v-for="field in customFields"
-            :key="field.fieldId"
-            class="grid grid-cols-[180px_1fr] gap-2 items-center"
-          >
-            <span class="text-xs text-muted font-mono">{{
-              field.fieldId
-            }}</span>
-            <input v-model="field.value" class="input" />
-          </div>
-          <div v-if="!customFields.length" class="text-sm text-muted">
-            No custom field values saved yet.
-          </div>
-          <button class="btn-ghost btn-md" @click="addCustomField">
-            Add Custom Field Row
-          </button>
+        <div v-if="!fieldDefinitions.length" class="text-sm text-muted">
+          No custom fields have been configured for this organization.
         </div>
-        <div class="mt-4">
-          <button class="btn-primary btn-md" @click="saveCustomFieldsAction">
-            Save Custom Fields
-          </button>
+        <div v-else class="space-y-3">
+          <div
+            v-for="def in fieldDefinitions"
+            :key="def.id"
+            class="grid grid-cols-[200px_1fr] gap-3 items-center"
+          >
+            <label class="text-sm font-medium">
+              {{ def.label }}
+              <span v-if="def.isRequired" class="text-danger ml-0.5">*</span>
+            </label>
+            <select
+              v-if="def.fieldType === 'DROPDOWN'"
+              v-model="localFieldValues[def.id]"
+              class="input"
+            >
+              <option value="">&mdash; select &mdash;</option>
+              <option v-for="opt in def.options" :key="opt" :value="opt">
+                {{ opt }}
+              </option>
+            </select>
+            <input
+              v-else-if="def.fieldType === 'CHECKBOX'"
+              type="checkbox"
+              class="h-4 w-4 accent-primary"
+              :checked="localFieldValues[def.id] === 'true'"
+              @change="
+                localFieldValues[def.id] = ($event.target as HTMLInputElement)
+                  .checked
+                  ? 'true'
+                  : 'false'
+              "
+            />
+            <input
+              v-else
+              :type="
+                def.fieldType === 'NUMBER'
+                  ? 'number'
+                  : def.fieldType === 'DATE'
+                    ? 'date'
+                    : 'text'
+              "
+              v-model="localFieldValues[def.id]"
+              class="input"
+            />
+          </div>
+          <div class="mt-4">
+            <button class="btn-primary btn-md" @click="saveCustomFieldsAction">
+              Save Custom Fields
+            </button>
+          </div>
         </div>
       </div>
 
@@ -373,12 +404,14 @@ import type {
   ChangeRequestCustomFieldValue,
   Comment,
   CrApprover,
+  CustomFieldDefinition,
 } from "~/types";
 import { format, parseISO } from "date-fns";
 
 definePageMeta({ middleware: "auth" });
 
 const { error: toastError } = useToast();
+const api = useApi();
 
 const route = useRoute();
 const id = computed(() => String(route.params.id));
@@ -405,6 +438,8 @@ const {
 const changeRequest = ref<ChangeRequest | null>(null);
 const approvers = ref<CrApprover[]>([]);
 const customFields = ref<ChangeRequestCustomFieldValue[]>([]);
+const fieldDefinitions = ref<CustomFieldDefinition[]>([]);
+const localFieldValues = ref<Record<string, string>>({});
 const attachments = ref<Attachment[]>([]);
 const activity = ref<ActivityEntry[]>([]);
 const comments = ref<Comment[]>([]);
@@ -420,24 +455,53 @@ const showReject = ref(false);
 const rejectReason = ref("");
 
 async function loadAll() {
-  changeRequest.value = await get(id.value);
-  approvers.value = await listApprovers(id.value);
-  customFields.value = await listCustomFields(id.value);
-  attachments.value = await listAttachments(id.value);
-  activity.value = await listActivity(id.value);
-  comments.value = await listComments(id.value);
+  const [
+    cr,
+    approverList,
+    savedFields,
+    definitions,
+    attachmentList,
+    activityList,
+    commentList,
+  ] = await Promise.all([
+    get(id.value),
+    listApprovers(id.value),
+    listCustomFields(id.value),
+    api<CustomFieldDefinition[]>("/api/v1/admin/custom-fields"),
+    listAttachments(id.value),
+    listActivity(id.value),
+    listComments(id.value),
+  ]);
+  changeRequest.value = cr;
+  approvers.value = approverList;
+  customFields.value = savedFields;
+  fieldDefinitions.value = definitions;
+  attachments.value = attachmentList;
+  activity.value = activityList;
+  comments.value = commentList;
+  // Build the editable map from saved values; fall back to empty string per definition.
+  const valueMap: Record<string, string> = {};
+  for (const def of definitions) {
+    const saved = savedFields.find((f) => f.fieldId === def.id);
+    valueMap[def.id] = saved?.value ?? "";
+  }
+  localFieldValues.value = valueMap;
 }
 
 function fmt(value: string | null) {
   return value ? format(parseISO(value), "MMM d, yyyy HH:mm") : "—";
 }
 
-function addCustomField() {
-  customFields.value.push({ fieldId: "", value: "" });
-}
-
 async function saveCustomFieldsAction() {
-  customFields.value = await saveCustomFields(id.value, customFields.value);
+  if (!fieldDefinitions.value.length) {
+    return;
+  }
+  const fields = fieldDefinitions.value.map((def) => ({
+    fieldId: def.id,
+    // Convert empty string to null so the backend stores absence of value cleanly.
+    value: localFieldValues.value[def.id] || null,
+  }));
+  customFields.value = await saveCustomFields(id.value, fields);
   activity.value = await listActivity(id.value);
 }
 
