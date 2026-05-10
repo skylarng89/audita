@@ -138,6 +138,10 @@
     @apply mt-1 text-xs text-muted;
   }
 
+  .field-error {
+    @apply mt-1 text-xs text-danger font-medium;
+  }
+
   /* ── Badge ──────────────────────────────────────────────────────────────── */
   .badge {
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide;
@@ -220,5 +224,55 @@
 
   .page-subtitle {
     @apply text-sm text-muted mt-1;
+  }
+
+  /* ── VueDatePicker overrides ────────────────────────────────────────────── */
+  .dp__theme_light {
+    --dp-background-color: #fff;
+    --dp-text-color: #191c1e;
+    --dp-hover-color: #f0f4ff;
+    --dp-hover-text-color: #001a72;
+    --dp-hover-icon-color: #001a72;
+    --dp-primary-color: #001a72;
+    --dp-primary-disabled-color: #6992d4;
+    --dp-primary-text-color: #fff;
+    --dp-secondary-color: #757682;
+    --dp-border-color: #c4c6d0;
+    --dp-menu-border-color: #e2e4ed;
+    --dp-border-color-hover: #001a72;
+    --dp-border-color-focus: #001a72;
+    --dp-disabled-color: #f5f5f5;
+    --dp-scroll-bar-background: #f2f2f2;
+    --dp-scroll-bar-color: #959595;
+    --dp-success-color: #16a34a;
+    --dp-success-color-disabled: #a3d9b1;
+    --dp-icon-color: #757682;
+    --dp-danger-color: #b00020;
+    --dp-highlight-color: rgba(0, 26, 114, 0.08);
+    --dp-range-between-dates-background-color: rgba(0, 26, 114, 0.06);
+    --dp-range-between-dates-text-color: #191c1e;
+    --dp-range-between-border-color: rgba(0, 26, 114, 0.06);
+  }
+
+  .dp__input {
+    @apply block w-full rounded-lg border border-outline-variant bg-surface-container-low
+           px-3.5 py-2.5 text-sm text-on-surface placeholder:text-muted/60
+           transition-all duration-150
+           hover:border-outline hover:bg-white
+           focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20;
+    font-family: inherit;
+  }
+
+  .dp__input_wrap {
+    @apply w-full;
+  }
+
+  .dp__input_icon {
+    color: var(--dp-icon-color);
+  }
+
+  .dp__menu {
+    @apply shadow-lg rounded-xl border border-outline-variant/60;
+    font-family: inherit;
   }
 }

@@ -135,6 +135,39 @@ export function useChangeRequests() {
     });
   }
 
+  async function downloadAttachment(
+    crId: string,
+    attachmentId: string,
+    fileName: string,
+  ): Promise<void> {
+    const auth = useAuthStore();
+    const config = useRuntimeConfig();
+    // Always use the public base URL — this runs in the browser.
+    const base = config.public.apiBase as string;
+    const url = `${base}/api/v1/change-requests/${crId}/attachments/${attachmentId}/download`;
+
+    const res = await fetch(url, {
+      headers: {
+        ...(auth.accessToken
+          ? { Authorization: `Bearer ${auth.accessToken}` }
+          : {}),
+        ...(auth.tenantSlug ? { "X-Tenant-Slug": auth.tenantSlug } : {}),
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(`Download failed: ${res.status}`);
+    }
+
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = fileName;
+    anchor.click();
+    URL.revokeObjectURL(objectUrl);
+  }
+
   async function listComments(id: string): Promise<Comment[]> {
     return api<Comment[]>(`/api/v1/change-requests/${id}/comments`);
   }
@@ -167,6 +200,7 @@ export function useChangeRequests() {
     saveCustomFields,
     listAttachments,
     uploadAttachment,
+    downloadAttachment,
     listComments,
     postComment,
     listActivity,

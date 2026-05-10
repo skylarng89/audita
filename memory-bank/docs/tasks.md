@@ -2,7 +2,7 @@
 
 **Project:** Audita — Multi-Tenant ITIL/ITSM Change Management Platform
 **Version:** 0.1.0
-**Last Updated:** 2026-05-04
+**Last Updated:** 2026-05-11
 **Team Size:** 2–3 Developers
 
 ---
@@ -131,6 +131,33 @@
 
 ---
 
+## Sprint 7: File Security, Custom Fields UX & CR Edit Mode (2026-05-11)
+
+> **Goal:** Harden file uploads with multi-layer type enforcement, fix custom fields 400 bug, give admins a dedicated custom fields configuration page, and redesign the CR detail page to be read-only by default with a gated Edit mode.
+
+### Backend — File Security & Validation (`audita-api`)
+
+| Task ID | Task                                            | Priority | Status       | Assigned To | Notes                                                                                                                                                             |
+| ------- | ----------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SEC-010 | Implement 3-layer file upload type enforcement  | High     | ✅ Completed | Developer 1 | `isAllowedMimeType()` + `isExtensionAllowed()` + `isSignatureValid()` (magic bytes) in `ChangeRequestService`; DOCX/XLSX ZIP ambiguity handled by extension check |
+| SEC-011 | Add path traversal guard on attachment download | High     | ✅ Completed | Developer 1 | `outputPath.normalize()` + `outputPath.startsWith(storageDir)` in `ChangeRequestService`                                                                          |
+| UX-001  | Implement filename normalization on upload      | Medium   | ✅ Completed | Developer 1 | `normalizeFileName()` → lowercase, hyphenated, filesystem-safe; original name preserved in DB                                                                     |
+
+### Frontend — Custom Fields Admin Page (`audita-web`)
+
+| Task ID | Task                                                                    | Priority | Status       | Assigned To | Notes                                                                                                         |
+| ------- | ----------------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------- |
+| ADM-010 | Create `/admin/custom-fields` page with full CRUD for field definitions | High     | ✅ Completed | Developer 2 | `pages/admin/custom-fields/index.vue`; TEXT/NUMBER/DATE/DROPDOWN/CHECKBOX; uses `/api/v1/admin/custom-fields` |
+| ADM-011 | Add "Custom Fields" admin-only sidebar link                             | Low      | ✅ Completed | Developer 2 | `AppSidebar.vue`; `v-if="auth.isAdmin"`; placed before Settings link                                          |
+
+### Frontend — CR Detail Edit Mode (`audita-web`)
+
+| Task ID | Task                                                              | Priority | Status       | Assigned To | Notes                                                                                                                                                                           |
+| ------- | ----------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CR-030  | Redesign CR detail page to read-only default with gated Edit mode | High     | ✅ Completed | Developer 2 | Edit button visible only for DRAFT; form covers all CR fields + TipTap + custom fields; Save calls update() + saveCustomFields() atomically; `onBeforeUnmount` cleans up editor |
+
+---
+
 ## Progress Tracking
 
 ### Overall Progress by Sprint
@@ -143,11 +170,34 @@
 | Sprint 3  | 21          | 0           | 0           | 21        | 100%       |
 | Sprint 4  | 10          | 0           | 0           | 10        | 100%       |
 | Sprint 5  | 5           | 0           | 0           | 5         | 100%       |
-| **TOTAL** | **96**      | **0**       | **0**       | **96**    | **100%**   |
+| Sprint 7  | 6           | 0           | 0           | 6         | 100%       |
+| **TOTAL** | **102**     | **0**       | **0**       | **102**   | **100%**   |
 
 ---
 
 ## Recent Implementations
+
+### Sprint 7 — File Security, Custom Fields UX & CR Edit Mode (Completed 2026-05-11)
+
+**Overview**: Three-layer file upload enforcement, filename normalization, path traversal guard, admin custom fields dedicated page, and CR detail read-only/edit mode redesign.
+
+**Files Created/Modified**:
+
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — `isAllowedMimeType()`, `isExtensionAllowed()`, `isSignatureValid()` (magic bytes), `normalizeFileName()`, path traversal guard on download
+- `audita-api/.env` — `UPLOAD_ALLOWED_MIME_TYPES`, `UPLOAD_MAX_SIZE_BYTES`, `UPLOAD_MAX_SIZE`
+- `audita-web/pages/admin/custom-fields/index.vue` — new: full CRUD for global custom field definitions
+- `audita-web/components/shared/AppSidebar.vue` — admin-only "Custom Fields" NuxtLink added
+- `audita-web/pages/change-requests/[id].vue` — read-only default, Edit mode toggle, TipTap editor integration, `onBeforeUnmount`, file pre-flight validation
+
+**Key Changes**:
+
+- Magic byte validation covers PDF (`%PDF-`), PNG (`89 50 4E 47`), JPEG (`FF D8 FF`), DOCX/XLSX (`50 4B 03 04`). DOCX/XLSX share ZIP magic bytes — disambiguated by file extension check.
+- Filename normalization produces lowercase, hyphenated, filesystem-safe names; display name in DB is unchanged.
+- Custom field definitions drive both the admin page and the CR edit form — no more add-row / empty-fieldId pattern.
+- CR detail Edit button only appears for `DRAFT` status; workflow actions (Submit/Cancel/Approve/Reject) remain in read-only view.
+- TipTap editor destroyed on component unmount to prevent memory leaks.
+
+**Test Coverage**: `pnpm exec vue-tsc --noEmit` exits 0. Docker containers rebuilt and redeployed successfully.
 
 ### Frontend Tailwind v4 Migration (Completed 2026-05-04)
 

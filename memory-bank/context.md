@@ -1,8 +1,8 @@
 # Audita — Active Context
 
-**Last Updated:** 2026-05-08
-**Current Phase:** Active development — Sprint 6 complete
-**Active Sprint:** Sprint 7 (next)
+**Last Updated:** 2026-05-11
+**Current Phase:** Active development — Sprint 7 in progress
+**Active Sprint:** Sprint 7
 
 ---
 
@@ -17,6 +17,7 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 ## Current State
 
 - **Sprint 6 complete (Audit Trail & Admin Configuration).** Global audit trail (paginated query + CSV export), admin custom fields CRUD, `AuditLogService` wired into `ChangeRequestService` for all CR state transitions. 90/90 tests passing. TypeScript typecheck clean.
+- **Sprint 7 in progress (File Security, Custom Fields UX, CR Edit Mode — 2026-05-11).** Three-layer file upload validation (magic bytes + extension + MIME in backend; pre-flight in frontend; allowlist in `.env`). Filename normalization (`normalizeFileName()`). Custom fields 400 fix (definition-driven, no empty fieldId). New dedicated `/admin/custom-fields` page for global field definition CRUD. Sidebar admin link. CR detail page redesigned: read-only default with Edit mode toggle (DRAFT only), TipTap editor for description, custom fields in edit form, `onBeforeUnmount` editor cleanup. TypeScript typecheck: exit 0.
 - **Docker environment fully operational (2026-05-08).** Resolved three issues: (1) Hibernate dialect deprecation warning removed; (2) mail health indicator disabled so SMTP auth failure doesn't block container health; (3) CI workflow upgraded to pnpm v10 to match local lockfile format.
 - **Sprint 0 complete (19/19 tasks).** Both repositories are scaffolded and runnable via Docker Compose.
 - **Sprint 1 complete (22/22 tasks).** Full authentication stack: JWT + refresh tokens, SSO (Google/Microsoft), domain whitelist, rate limiting, 18 unit tests passing.

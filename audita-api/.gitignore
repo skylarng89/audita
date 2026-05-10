@@ -9,3 +9,4 @@ out/
 *.iml
 *.iws
 .DS_Store
+.scannerwork/

@@ -48,10 +48,11 @@ export default defineNuxtPlugin(() => {
     },
 
     async onResponseError({ response }) {
-      if (
-        (response.status === 401 || response.status === 403) &&
-        auth.isAuthenticated
-      ) {
+      // Only treat 401 as an expired-token signal worth refreshing.
+      // 403 responses are domain-level permission/business errors (e.g. UPLOAD_FAILED,
+      // NOT_PERMITTED) — retrying with a fresh token would still return 403, and
+      // the catch below would force an erroneous logout.
+      if (response.status === 401 && auth.isAuthenticated) {
         // Attempt silent refresh via the HttpOnly cookie
         try {
           const refreshed = await $fetch<{ accessToken: string }>(

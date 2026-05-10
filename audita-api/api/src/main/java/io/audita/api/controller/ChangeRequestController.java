@@ -16,10 +16,15 @@ import io.audita.api.security.UserPrincipal;
 import io.audita.domain.model.ChangeRequestStatus;
 import io.audita.domain.model.Priority;
 import io.audita.infrastructure.service.ChangeRequestService;
+import io.audita.infrastructure.service.AttachmentDownload;
 import jakarta.validation.Valid;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -104,18 +109,20 @@ public class ChangeRequestController {
             @RequestParam(required = false) Priority priority,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) UUID createdBy,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20) Pageable pageable,
+            @AuthenticationPrincipal UserPrincipal principal) {
 
         return PageResponse.from(
-                changeRequestService.list(status, priority, category, createdBy, pageable),
+                changeRequestService.list(status, priority, category, createdBy, principal.userId(), pageable),
                 ChangeRequestResponse::from
         );
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ChangeRequestResponse get(@PathVariable UUID id) {
-        return ChangeRequestResponse.from(changeRequestService.getById(id));
+    public ChangeRequestResponse get(@PathVariable UUID id,
+                                     @AuthenticationPrincipal UserPrincipal principal) {
+        return ChangeRequestResponse.from(changeRequestService.getById(id, principal.userId()));
     }
 
     @GetMapping("/{id}/approvers")
@@ -214,5 +221,24 @@ public class ChangeRequestController {
 
         var saved = changeRequestService.uploadAttachment(id, principal.userId(), principal.role(), file);
         return ResponseEntity.status(HttpStatus.CREATED).body(AttachmentResponse.from(saved));
+    }
+
+    @GetMapping("/{id}/attachments/{attachmentId}/download")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<InputStreamResource> downloadAttachment(
+            @PathVariable UUID id,
+            @PathVariable UUID attachmentId) {
+
+        var dl = changeRequestService.downloadAttachment(id, attachmentId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(dl.mimeType()));
+        headers.setContentDisposition(
+                ContentDisposition.attachment().filename(dl.fileName()).build());
+        headers.setContentLength(dl.sizeBytes());
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(new InputStreamResource(dl.stream()));
     }
 }

@@ -64,6 +64,13 @@ spring:
       include-message: never
       include-stacktrace: never
 
+  # ── Multipart / File Upload ───────────────────────────────────────────────────
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: ${UPLOAD_MAX_SIZE:10MB}
+      max-request-size: ${UPLOAD_MAX_SIZE:10MB}
+
 # ── Server ──────────────────────────────────────────────────────────────────────
 server:
   port: ${PORT:8080}

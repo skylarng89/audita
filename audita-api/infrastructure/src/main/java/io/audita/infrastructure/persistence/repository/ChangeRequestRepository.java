@@ -21,12 +21,16 @@ public interface ChangeRequestRepository extends JpaRepository<ChangeRequestEnti
                  "WHERE (:status IS NULL OR cr.status = :status) " +
                  "AND (:priority IS NULL OR cr.priority = :priority) " +
                  "AND (:category IS NULL OR LOWER(cr.category) = LOWER(CAST(:category AS String))) " +
-                 "AND (:createdById IS NULL OR cr.createdBy.id = :createdById)")
+                 "AND (:createdById IS NULL OR cr.createdBy.id = :createdById) " +
+                 // Draft CRs are private — only the creator can see their own drafts.
+                 "AND (cr.status <> :draftStatus OR cr.createdBy.id = :viewerId)")
        Page<ChangeRequestEntity> findAllFiltered(
                      @Param("status") ChangeRequestStatus status,
                      @Param("priority") Priority priority,
                      @Param("category") String category,
                      @Param("createdById") UUID createdById,
+                     @Param("viewerId") UUID viewerId,
+                     @Param("draftStatus") ChangeRequestStatus draftStatus,
                      Pageable pageable);
 
     Page<ChangeRequestEntity> findByStatus(ChangeRequestStatus status, Pageable pageable);
