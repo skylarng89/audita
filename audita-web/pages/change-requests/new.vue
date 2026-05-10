@@ -37,28 +37,28 @@
         <div>
           <label class="field-label">Priority Level</label>
           <select v-model="form.priority" class="input mt-1" required>
-            <option value="LOW">LOW</option>
-            <option value="MEDIUM">MEDIUM</option>
-            <option value="HIGH">HIGH</option>
-            <option value="CRITICAL">CRITICAL</option>
+            <option value="LOW">Low</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HIGH">High</option>
+            <option value="CRITICAL">Critical</option>
           </select>
         </div>
 
         <div>
           <label class="field-label">Risk Assessment</label>
           <select v-model="form.riskLevel" class="input mt-1" required>
-            <option value="LOW">LOW</option>
-            <option value="MEDIUM">MEDIUM</option>
-            <option value="HIGH">HIGH</option>
-            <option value="CRITICAL">CRITICAL</option>
+            <option value="LOW">Low</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HIGH">High</option>
+            <option value="CRITICAL">Critical</option>
           </select>
         </div>
 
         <div>
           <label class="field-label">Approval Type</label>
           <select v-model="form.approvalType" class="input mt-1" required>
-            <option value="LINEAR">LINEAR</option>
-            <option value="NON_LINEAR">NON_LINEAR</option>
+            <option value="LINEAR">Linear</option>
+            <option value="NON_LINEAR">Non Linear</option>
           </select>
         </div>
 
@@ -74,20 +74,36 @@
 
         <div>
           <label class="field-label">Scheduled Start</label>
-          <input
-            v-model="form.scheduledStart"
-            class="input mt-1"
-            type="datetime-local"
-          />
+          <ClientOnly>
+            <VueDatePicker
+              v-model="form.scheduledStart"
+              class="mt-1"
+              :enable-time-picker="true"
+              :is24="false"
+              time-picker-inline
+              placeholder="Select date and time"
+              :min-date="new Date()"
+              format="MMM d, yyyy h:mm aa"
+              auto-apply
+            />
+          </ClientOnly>
         </div>
 
         <div>
           <label class="field-label">Scheduled End</label>
-          <input
-            v-model="form.scheduledEnd"
-            class="input mt-1"
-            type="datetime-local"
-          />
+          <ClientOnly>
+            <VueDatePicker
+              v-model="form.scheduledEnd"
+              class="mt-1"
+              :enable-time-picker="true"
+              :is24="false"
+              time-picker-inline
+              placeholder="Select date and time"
+              :min-date="form.scheduledStart ?? new Date()"
+              format="MMM d, yyyy h:mm aa"
+              auto-apply
+            />
+          </ClientOnly>
         </div>
 
         <div class="md:col-span-2">
@@ -153,8 +169,8 @@ const form = reactive({
   riskLevel: "MEDIUM",
   approvalType: "LINEAR",
   category: "",
-  scheduledStart: "",
-  scheduledEnd: "",
+  scheduledStart: null as Date | null,
+  scheduledEnd: null as Date | null,
   affectedSystemsInput: "",
 });
 
@@ -170,11 +186,9 @@ async function createChangeRequest() {
       approvalType: form.approvalType,
       category: form.category || null,
       scheduledStart: form.scheduledStart
-        ? new Date(form.scheduledStart).toISOString()
+        ? form.scheduledStart.toISOString()
         : null,
-      scheduledEnd: form.scheduledEnd
-        ? new Date(form.scheduledEnd).toISOString()
-        : null,
+      scheduledEnd: form.scheduledEnd ? form.scheduledEnd.toISOString() : null,
       affectedSystems: form.affectedSystemsInput
         .split(",")
         .map((v) => v.trim())

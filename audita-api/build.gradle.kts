@@ -3,6 +3,7 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 plugins {
     java
     id("org.springframework.boot") version "4.0.6" apply false
+    id("org.sonarqube") version "7.2.3.7755"
 }
 
 // Java 25 GA — Spring Boot 4.0.6 fully supports it.
@@ -42,8 +43,4 @@ configure(subprojects.filter { it.name != "api" }) {
     apply(plugin = "org.springframework.boot")
     tasks.named<BootJar>("bootJar") { enabled = false }
     tasks.named<Jar>("jar") { enabled = true }
-}
-
-dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-actuator")
 }
