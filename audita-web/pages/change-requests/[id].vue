@@ -17,6 +17,25 @@
       <div class="flex items-center gap-2">
         <CrStatusBadge :status="changeRequest.status" />
         <CrPriorityBadge :priority="changeRequest.priority" />
+        <template v-if="!isEditing">
+          <button
+            v-if="changeRequest.status === 'DRAFT'"
+            class="btn-ghost btn-md"
+            @click="enterEditMode"
+          >
+            Edit
+          </button>
+        </template>
+        <template v-else>
+          <button
+            class="btn-primary btn-md"
+            :disabled="isSaving"
+            @click="saveEditAction"
+          >
+            {{ isSaving ? "Saving…" : "Save" }}
+          </button>
+          <button class="btn-ghost btn-md" @click="cancelEdit">Cancel</button>
+        </template>
       </div>
     </div>
 
@@ -63,96 +82,286 @@
       v-if="tab === 'details'"
       class="grid grid-cols-1 md:grid-cols-2 gap-4"
     >
-      <div class="card p-5 md:col-span-2 shadow-card-hover">
-        <h2 class="font-semibold mb-2">Description</h2>
-        <div
-          v-if="changeRequest.description"
-          class="text-sm text-gray-700 dark:text-gray-300 prose dark:prose-invert max-w-none"
-          v-html="changeRequest.description"
-        />
-        <p v-else class="text-sm text-gray-700 dark:text-gray-300">
-          No description.
-        </p>
-      </div>
+      <!-- ── Edit mode ──────────────────────────────────────────────── -->
+      <template v-if="isEditing">
+        <div class="card p-6 md:col-span-2 space-y-5">
+          <h3 class="font-semibold">Edit Change Request</h3>
 
-      <div class="card p-5">
-        <h3 class="font-semibold mb-2">Scheduling</h3>
-        <p class="text-sm">Start: {{ fmt(changeRequest.scheduledStart) }}</p>
-        <p class="text-sm">End: {{ fmt(changeRequest.scheduledEnd) }}</p>
-        <p class="text-sm">
-          SLA Deadline: {{ fmt(changeRequest.slaDeadline) }}
-        </p>
-      </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Title -->
+            <div class="md:col-span-2">
+              <label class="field-label"
+                >Title <span class="text-danger">*</span></label
+              >
+              <input
+                v-model="editForm.title"
+                class="input mt-1"
+                maxlength="500"
+              />
+            </div>
 
-      <div class="card p-5">
-        <h3 class="font-semibold mb-2">Impact</h3>
-        <ul class="list-disc ml-5 text-sm text-gray-700 dark:text-gray-300">
-          <li v-for="system in changeRequest.affectedSystems" :key="system">
-            {{ system }}
-          </li>
-          <li v-if="!changeRequest.affectedSystems.length">
-            No affected systems listed.
-          </li>
-        </ul>
-      </div>
+            <!-- Priority -->
+            <div>
+              <label class="field-label">Priority</label>
+              <select v-model="editForm.priority" class="input mt-1">
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
+              </select>
+            </div>
 
-      <div class="card p-5 md:col-span-2">
-        <h3 class="font-semibold mb-3">Custom Fields</h3>
-        <div v-if="!fieldDefinitions.length" class="text-sm text-muted">
-          No custom fields have been configured for this organization.
+            <!-- Risk -->
+            <div>
+              <label class="field-label">Risk Level</label>
+              <select v-model="editForm.riskLevel" class="input mt-1">
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
+              </select>
+            </div>
+
+            <!-- Approval Type -->
+            <div>
+              <label class="field-label">Approval Type</label>
+              <select v-model="editForm.approvalType" class="input mt-1">
+                <option value="LINEAR">Linear</option>
+                <option value="NON_LINEAR">Non Linear</option>
+              </select>
+            </div>
+
+            <!-- Category -->
+            <div>
+              <label class="field-label">Category</label>
+              <input
+                v-model="editForm.category"
+                class="input mt-1"
+                maxlength="255"
+              />
+            </div>
+
+            <!-- Scheduled Start -->
+            <div>
+              <label class="field-label">Scheduled Start</label>
+              <input
+                v-model="editForm.scheduledStart"
+                type="datetime-local"
+                class="input mt-1"
+              />
+            </div>
+
+            <!-- Scheduled End -->
+            <div>
+              <label class="field-label">Scheduled End</label>
+              <input
+                v-model="editForm.scheduledEnd"
+                type="datetime-local"
+                class="input mt-1"
+              />
+            </div>
+
+            <!-- Affected Systems -->
+            <div class="md:col-span-2">
+              <label class="field-label"
+                >Affected Systems (comma separated)</label
+              >
+              <input
+                v-model="editForm.affectedSystemsInput"
+                class="input mt-1"
+              />
+            </div>
+
+            <!-- Description -->
+            <div class="md:col-span-2">
+              <label class="field-label">Description</label>
+              <EditorContent
+                :editor="editEditor"
+                class="input mt-1 min-h-36 p-3"
+              />
+            </div>
+          </div>
+
+          <!-- Custom fields in edit mode -->
+          <template v-if="fieldDefinitions.length">
+            <hr class="border-outline-variant/40 dark:border-border-dark" />
+            <h4 class="font-medium text-sm">Custom Fields</h4>
+            <div class="space-y-3">
+              <div
+                v-for="def in fieldDefinitions"
+                :key="def.id"
+                class="grid grid-cols-[200px_1fr] gap-3 items-center"
+              >
+                <label class="text-sm font-medium">
+                  {{ def.label }}
+                  <span v-if="def.isRequired" class="text-danger ml-0.5"
+                    >*</span
+                  >
+                </label>
+                <select
+                  v-if="def.fieldType === 'DROPDOWN'"
+                  v-model="localFieldValues[def.id]"
+                  class="input"
+                >
+                  <option value="">&mdash; select &mdash;</option>
+                  <option v-for="opt in def.options" :key="opt" :value="opt">
+                    {{ opt }}
+                  </option>
+                </select>
+                <input
+                  v-else-if="def.fieldType === 'CHECKBOX'"
+                  type="checkbox"
+                  class="h-4 w-4 accent-primary"
+                  :checked="localFieldValues[def.id] === 'true'"
+                  @change="
+                    localFieldValues[def.id] = (
+                      $event.target as HTMLInputElement
+                    ).checked
+                      ? 'true'
+                      : 'false'
+                  "
+                />
+                <input
+                  v-else
+                  :type="
+                    def.fieldType === 'NUMBER'
+                      ? 'number'
+                      : def.fieldType === 'DATE'
+                        ? 'date'
+                        : 'text'
+                  "
+                  v-model="localFieldValues[def.id]"
+                  class="input"
+                />
+              </div>
+            </div>
+          </template>
         </div>
-        <div v-else class="space-y-3">
+      </template>
+
+      <!-- ── Read-only view ─────────────────────────────────────────── -->
+      <template v-else>
+        <div class="card p-5 md:col-span-2 shadow-card-hover">
+          <h2 class="font-semibold mb-2">Description</h2>
           <div
-            v-for="def in fieldDefinitions"
-            :key="def.id"
-            class="grid grid-cols-[200px_1fr] gap-3 items-center"
-          >
-            <label class="text-sm font-medium">
-              {{ def.label }}
-              <span v-if="def.isRequired" class="text-danger ml-0.5">*</span>
-            </label>
-            <select
-              v-if="def.fieldType === 'DROPDOWN'"
-              v-model="localFieldValues[def.id]"
-              class="input"
-            >
-              <option value="">&mdash; select &mdash;</option>
-              <option v-for="opt in def.options" :key="opt" :value="opt">
-                {{ opt }}
-              </option>
-            </select>
-            <input
-              v-else-if="def.fieldType === 'CHECKBOX'"
-              type="checkbox"
-              class="h-4 w-4 accent-primary"
-              :checked="localFieldValues[def.id] === 'true'"
-              @change="
-                localFieldValues[def.id] = ($event.target as HTMLInputElement)
-                  .checked
-                  ? 'true'
-                  : 'false'
-              "
-            />
-            <input
-              v-else
-              :type="
-                def.fieldType === 'NUMBER'
-                  ? 'number'
-                  : def.fieldType === 'DATE'
-                    ? 'date'
-                    : 'text'
-              "
-              v-model="localFieldValues[def.id]"
-              class="input"
-            />
-          </div>
-          <div class="mt-4">
-            <button class="btn-primary btn-md" @click="saveCustomFieldsAction">
-              Save Custom Fields
-            </button>
-          </div>
+            v-if="changeRequest.description"
+            class="text-sm text-gray-700 dark:text-gray-300 prose dark:prose-invert max-w-none"
+            v-html="changeRequest.description"
+          />
+          <p v-else class="text-sm text-gray-700 dark:text-gray-300">
+            No description.
+          </p>
         </div>
-      </div>
+
+        <div class="card p-5">
+          <h3 class="font-semibold mb-3">Details</h3>
+          <dl class="space-y-1.5 text-sm">
+            <div class="flex gap-2">
+              <dt class="text-muted w-32 shrink-0">Priority</dt>
+              <dd class="font-medium">{{ changeRequest.priority }}</dd>
+            </div>
+            <div class="flex gap-2">
+              <dt class="text-muted w-32 shrink-0">Risk Level</dt>
+              <dd class="font-medium">{{ changeRequest.riskLevel }}</dd>
+            </div>
+            <div class="flex gap-2">
+              <dt class="text-muted w-32 shrink-0">Approval Type</dt>
+              <dd class="font-medium">{{ changeRequest.approvalType }}</dd>
+            </div>
+            <div class="flex gap-2">
+              <dt class="text-muted w-32 shrink-0">Category</dt>
+              <dd class="font-medium">{{ changeRequest.category ?? "—" }}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="card p-5">
+          <h3 class="font-semibold mb-3">Scheduling</h3>
+          <dl class="space-y-1.5 text-sm">
+            <div class="flex gap-2">
+              <dt class="text-muted w-32 shrink-0">Start</dt>
+              <dd>{{ fmt(changeRequest.scheduledStart) }}</dd>
+            </div>
+            <div class="flex gap-2">
+              <dt class="text-muted w-32 shrink-0">End</dt>
+              <dd>{{ fmt(changeRequest.scheduledEnd) }}</dd>
+            </div>
+            <div class="flex gap-2">
+              <dt class="text-muted w-32 shrink-0">SLA Deadline</dt>
+              <dd>{{ fmt(changeRequest.slaDeadline) }}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="card p-5">
+          <h3 class="font-semibold mb-2">Impact</h3>
+          <ul class="list-disc ml-5 text-sm text-gray-700 dark:text-gray-300">
+            <li v-for="system in changeRequest.affectedSystems" :key="system">
+              {{ system }}
+            </li>
+            <li v-if="!changeRequest.affectedSystems.length">
+              No affected systems listed.
+            </li>
+          </ul>
+        </div>
+
+        <!-- Custom fields read-only -->
+        <div v-if="fieldDefinitions.length" class="card p-5 md:col-span-2">
+          <h3 class="font-semibold mb-3">Custom Fields</h3>
+          <dl class="space-y-2">
+            <div
+              v-for="def in fieldDefinitions"
+              :key="def.id"
+              class="grid grid-cols-[200px_1fr] gap-2 text-sm"
+            >
+              <dt class="text-muted font-medium">{{ def.label }}</dt>
+              <dd>
+                <template v-if="localFieldValues[def.id] === 'true'"
+                  >Yes</template
+                >
+                <template v-else-if="localFieldValues[def.id] === 'false'"
+                  >No</template
+                >
+                <template v-else>{{
+                  localFieldValues[def.id] || "—"
+                }}</template>
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <!-- Workflow actions -->
+        <div class="card p-5 md:col-span-2 flex flex-wrap gap-2">
+          <button
+            class="btn-primary btn-md"
+            :disabled="changeRequest.status !== 'DRAFT'"
+            @click="submitCr"
+          >
+            Submit
+          </button>
+          <button
+            class="btn-ghost btn-md"
+            :disabled="changeRequest.status === 'CANCELLED'"
+            @click="cancelCr"
+          >
+            Cancel
+          </button>
+          <button
+            class="btn-ghost btn-md"
+            :disabled="changeRequest.status !== 'PENDING_APPROVAL'"
+            @click="approveCr"
+          >
+            Approve
+          </button>
+          <button
+            class="btn-ghost btn-md"
+            :disabled="changeRequest.status !== 'PENDING_APPROVAL'"
+            @click="showReject = true"
+          >
+            Reject
+          </button>
+        </div>
+      </template>
 
       <div class="card p-5 md:col-span-2">
         <h3 class="font-semibold mb-3">Attachments</h3>
@@ -211,37 +420,6 @@
             No attachments uploaded yet.
           </div>
         </div>
-      </div>
-
-      <div class="card p-5 md:col-span-2 flex flex-wrap gap-2">
-        <button
-          class="btn-primary btn-md"
-          :disabled="changeRequest.status !== 'DRAFT'"
-          @click="submitCr"
-        >
-          Submit
-        </button>
-        <button
-          class="btn-ghost btn-md"
-          :disabled="changeRequest.status === 'CANCELLED'"
-          @click="cancelCr"
-        >
-          Cancel
-        </button>
-        <button
-          class="btn-ghost btn-md"
-          :disabled="changeRequest.status !== 'PENDING_APPROVAL'"
-          @click="approveCr"
-        >
-          Approve
-        </button>
-        <button
-          class="btn-ghost btn-md"
-          :disabled="changeRequest.status !== 'PENDING_APPROVAL'"
-          @click="showReject = true"
-        >
-          Reject
-        </button>
       </div>
     </section>
 
@@ -407,6 +585,8 @@ import type {
   CustomFieldDefinition,
 } from "~/types";
 import { format, parseISO } from "date-fns";
+import { EditorContent, useEditor } from "@tiptap/vue-3";
+import StarterKit from "@tiptap/starter-kit";
 
 definePageMeta({ middleware: "auth" });
 
@@ -417,6 +597,7 @@ const route = useRoute();
 const id = computed(() => String(route.params.id));
 const {
   get,
+  update,
   submit,
   cancel,
   approve,
@@ -453,6 +634,94 @@ const fileInput = ref<HTMLInputElement | null>(null);
 
 const showReject = ref(false);
 const rejectReason = ref("");
+
+// ── Edit mode ───────────────────────────────────────────────────────────────
+const isEditing = ref(false);
+const isSaving = ref(false);
+
+const editForm = reactive({
+  title: "",
+  priority: "",
+  riskLevel: "",
+  approvalType: "",
+  category: "",
+  scheduledStart: "",
+  scheduledEnd: "",
+  affectedSystemsInput: "",
+});
+
+const editEditor = useEditor({
+  extensions: [StarterKit],
+  editorProps: {
+    attributes: {
+      class:
+        "prose dark:prose-invert max-w-none focus:outline-none min-h-[8rem]",
+    },
+  },
+});
+
+function toDatetimeLocal(iso: string | null): string {
+  if (!iso) return "";
+  // datetime-local input expects 'YYYY-MM-DDTHH:mm'
+  return iso.substring(0, 16);
+}
+
+function enterEditMode() {
+  if (!changeRequest.value) return;
+  const cr = changeRequest.value;
+  editForm.title = cr.title;
+  editForm.priority = cr.priority;
+  editForm.riskLevel = cr.riskLevel;
+  editForm.approvalType = cr.approvalType;
+  editForm.category = cr.category ?? "";
+  editForm.scheduledStart = toDatetimeLocal(cr.scheduledStart);
+  editForm.scheduledEnd = toDatetimeLocal(cr.scheduledEnd);
+  editForm.affectedSystemsInput = cr.affectedSystems.join(", ");
+  editEditor.value?.commands.setContent(cr.description ?? "");
+  isEditing.value = true;
+}
+
+function cancelEdit() {
+  isEditing.value = false;
+}
+
+async function saveEditAction() {
+  if (!changeRequest.value || !editForm.title.trim()) {
+    toastError("Title is required.");
+    return;
+  }
+  isSaving.value = true;
+  try {
+    const payload: Record<string, unknown> = {
+      title: editForm.title.trim(),
+      description: editEditor.value?.getHTML() ?? null,
+      priority: editForm.priority,
+      riskLevel: editForm.riskLevel,
+      approvalType: editForm.approvalType,
+      category: editForm.category.trim() || null,
+      scheduledStart: editForm.scheduledStart
+        ? new Date(editForm.scheduledStart).toISOString()
+        : null,
+      scheduledEnd: editForm.scheduledEnd
+        ? new Date(editForm.scheduledEnd).toISOString()
+        : null,
+      affectedSystems: editForm.affectedSystemsInput
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean),
+    };
+    changeRequest.value = await update(id.value, payload);
+    await saveCustomFieldsAction();
+    isEditing.value = false;
+  } catch (err: unknown) {
+    toastError(
+      (err as { data?: { detail?: string } })?.data?.detail ??
+        "Failed to save changes.",
+    );
+  } finally {
+    isSaving.value = false;
+  }
+}
 
 async function loadAll() {
   const [
