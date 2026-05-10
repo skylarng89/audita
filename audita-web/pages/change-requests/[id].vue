@@ -928,4 +928,8 @@ async function postCommentAction() {
 }
 
 onMounted(loadAll);
+
+onBeforeUnmount(() => {
+  editEditor.value?.destroy();
+});
 </script>
