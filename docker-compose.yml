@@ -116,6 +116,9 @@ services:
 
   # ── Nuxt 3 Frontend ──
   web:
+    build:
+      context: ./audita-web
+      dockerfile: Dockerfile
     image: skylarng89/audita-web:latest
     restart: unless-stopped
     depends_on:
@@ -124,7 +127,7 @@ services:
       NUXT_PUBLIC_API_BASE: ${APP_BASE_PATH}
       NUXT_API_INTERNAL_BASE: ${APP_INTERNAL_BASE_PATH}
     ports:
-      - "7000:3000"
+      - "7001:3000"
     deploy:
       resources:
         limits:
