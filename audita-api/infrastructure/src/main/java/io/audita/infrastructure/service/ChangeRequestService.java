@@ -60,7 +60,7 @@ public class ChangeRequestService {
     @Value("${audita.upload.max-size-bytes:10485760}")
     private long maxUploadSizeBytes;
 
-    @Value("${audita.upload.allowed-mime-types:application/pdf,image/png,image/jpeg,text/plain,text/csv,application/json,application/zip}")
+    @Value("${audita.upload.allowed-mime-types:application/pdf,image/png,image/jpeg,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet}")
     private String allowedMimeTypes;
 
     public ChangeRequestService(ChangeRequestRepository changeRequestRepository,
@@ -411,6 +411,10 @@ public class ChangeRequestService {
         if (!isAllowedMimeType(mimeType)) {
             throw new DomainNotPermittedException("INVALID_FILE_TYPE", "Attachment file type is not allowed.");
         }
+        String originalName = file.getOriginalFilename();
+        if (!isExtensionAllowed(originalName, mimeType)) {
+            throw new DomainNotPermittedException("INVALID_FILE_TYPE", "File extension does not match the declared content type.");
+        }
         if (!isSignatureValid(file, mimeType)) {
             throw new DomainNotPermittedException("INVALID_FILE_CONTENT", "Attachment content does not match file type.");
         }
@@ -420,10 +424,16 @@ public class ChangeRequestService {
 
         String tenant = TenantContext.getCurrentTenant();
         String safeOriginalName = file.getOriginalFilename() == null ? "attachment.bin" : file.getOriginalFilename();
+        // UUID prefix prevents collisions; regex strips path separators and shell-special chars.
         String storedName = UUID.randomUUID() + "-" + safeOriginalName.replaceAll("[^a-zA-Z0-9._-]", "_");
 
-        Path storageDir = Path.of(storageBasePath, tenant == null ? "public" : tenant, changeRequestId.toString());
-        Path outputPath = storageDir.resolve(storedName);
+        Path storageDir = Path.of(storageBasePath, tenant == null ? "public" : tenant, changeRequestId.toString())
+                .toAbsolutePath().normalize();
+        Path outputPath = storageDir.resolve(storedName).normalize();
+        // Defense-in-depth: confirm the resolved path is still inside the storage directory.
+        if (!outputPath.startsWith(storageDir)) {
+            throw new DomainNotPermittedException("INVALID_FILE_PATH", "Invalid file path.");
+        }
 
         try {
             Files.createDirectories(storageDir);
@@ -529,6 +539,25 @@ public class ChangeRequestService {
                 .anyMatch(allowed -> allowed.equalsIgnoreCase(mimeType));
     }
 
+    /**
+     * Cross-checks the file's extension against its declared MIME type.
+     * Prevents spoofing a DOCX as a PDF, or embedding a script with a .png extension.
+     */
+    private boolean isExtensionAllowed(String fileName, String mimeType) {
+        if (fileName == null || mimeType == null) {
+            return false;
+        }
+        String lower = fileName.toLowerCase();
+        return switch (mimeType.toLowerCase()) {
+            case "image/png" -> lower.endsWith(".png");
+            case "image/jpeg" -> lower.endsWith(".jpg") || lower.endsWith(".jpeg");
+            case "application/pdf" -> lower.endsWith(".pdf");
+            case "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> lower.endsWith(".docx");
+            case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> lower.endsWith(".xlsx");
+            default -> false;
+        };
+    }
+
     private boolean isSignatureValid(MultipartFile file, String mimeType) {
         if (mimeType == null) {
             return false;
@@ -536,19 +565,24 @@ public class ChangeRequestService {
         try (InputStream inputStream = file.getInputStream()) {
             byte[] header = inputStream.readNBytes(8);
             if (mimeType.equalsIgnoreCase("application/pdf")) {
-                return startsWith(header, new byte[] {0x25, 0x50, 0x44, 0x46}); // %PDF
+                // %PDF
+                return startsWith(header, new byte[] {0x25, 0x50, 0x44, 0x46});
             }
             if (mimeType.equalsIgnoreCase("image/png")) {
+                // \x89PNG
                 return startsWith(header, new byte[] {(byte) 0x89, 0x50, 0x4E, 0x47});
             }
             if (mimeType.equalsIgnoreCase("image/jpeg")) {
+                // FF D8 FF
                 return startsWith(header, new byte[] {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF});
             }
-            if (mimeType.equalsIgnoreCase("application/zip")) {
+            // DOCX and XLSX are Office Open XML — both are ZIP archives (PK\x03\x04).
+            // Extension + MIME type validation (above) distinguishes them from plain ZIPs.
+            if (mimeType.equalsIgnoreCase("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+                    || mimeType.equalsIgnoreCase("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
                 return startsWith(header, new byte[] {0x50, 0x4B, 0x03, 0x04});
             }
-            // For text-like types, allow as long as content type is allowlisted.
-            return mimeType.startsWith("text/") || mimeType.equalsIgnoreCase("application/json");
+            return false;
         } catch (IOException ex) {
             return false;
         }

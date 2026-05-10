@@ -137,6 +137,7 @@
             ref="fileInput"
             class="hidden"
             type="file"
+            accept=".png,.jpg,.jpeg,.docx,.xlsx,.pdf"
             @change="onSelectUpload"
           />
           <button
@@ -440,11 +441,38 @@ async function saveCustomFieldsAction() {
   activity.value = await listActivity(id.value);
 }
 
+const ALLOWED_EXTENSIONS = new Set([
+  "png",
+  "jpg",
+  "jpeg",
+  "docx",
+  "xlsx",
+  "pdf",
+]);
+const ALLOWED_MIME_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+]);
+
 const uploadError = ref<string | null>(null);
 const isUploading = ref(false);
 
+function isFileTypeAllowed(file: File): boolean {
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  return ALLOWED_EXTENSIONS.has(ext) && ALLOWED_MIME_TYPES.has(file.type);
+}
+
 async function uploadSelected(file: File | null) {
   if (!file) {
+    return;
+  }
+  if (!isFileTypeAllowed(file)) {
+    const msg = "Only PNG, JPG, DOCX, XLSX, and PDF files are permitted.";
+    uploadError.value = msg;
+    toastError(msg);
     return;
   }
   uploadError.value = null;
