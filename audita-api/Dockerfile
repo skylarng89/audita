@@ -26,9 +26,14 @@ RUN apt-get update \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN addgroup --system audita && adduser --system --ingroup audita audita
+
+# Pre-create the uploads directory with correct ownership so the Docker volume
+# inherits audita:audita ownership on first initialisation.
+RUN mkdir -p /data/uploads && chown -R audita:audita /data/uploads
+
 USER audita
 
-COPY --from=builder /app/api/build/libs/audita-api.jar app.jar
+COPY --from=builder --chown=audita:audita /app/api/build/libs/audita-api.jar app.jar
 
 EXPOSE 8080
 # Virtual threads available natively in Java 25 — no flag needed

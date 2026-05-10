@@ -139,9 +139,16 @@
             type="file"
             @change="onSelectUpload"
           />
-          <button class="btn-ghost btn-md mt-3" @click="fileInput?.click()">
-            Select File
+          <button
+            class="btn-ghost btn-md mt-3"
+            :disabled="isUploading"
+            @click="fileInput?.click()"
+          >
+            {{ isUploading ? "Uploading…" : "Select File" }}
           </button>
+          <p v-if="uploadError" class="mt-2 text-xs text-danger">
+            {{ uploadError }}
+          </p>
         </div>
 
         <div class="mt-4 space-y-2">
@@ -361,6 +368,8 @@ import { format, parseISO } from "date-fns";
 
 definePageMeta({ middleware: "auth" });
 
+const { error: toastError } = useToast();
+
 const route = useRoute();
 const id = computed(() => String(route.params.id));
 const {
@@ -421,13 +430,28 @@ async function saveCustomFieldsAction() {
   activity.value = await listActivity(id.value);
 }
 
+const uploadError = ref<string | null>(null);
+const isUploading = ref(false);
+
 async function uploadSelected(file: File | null) {
   if (!file) {
     return;
   }
-  await uploadAttachment(id.value, file);
-  attachments.value = await listAttachments(id.value);
-  activity.value = await listActivity(id.value);
+  uploadError.value = null;
+  isUploading.value = true;
+  try {
+    await uploadAttachment(id.value, file);
+    attachments.value = await listAttachments(id.value);
+    activity.value = await listActivity(id.value);
+  } catch (err: unknown) {
+    const message =
+      (err as { data?: { detail?: string } })?.data?.detail ??
+      "Upload failed. Please try again.";
+    uploadError.value = message;
+    toastError(message);
+  } finally {
+    isUploading.value = false;
+  }
 }
 
 function onSelectUpload(event: Event) {
