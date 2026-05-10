@@ -2,6 +2,18 @@
 
 ## [0.1.0] — Unreleased (In Development)
 
+### Added (Sprint 7 — File Security, Custom Fields UX & CR Edit Mode — 2026-05-11)
+
+- **3-layer file upload type enforcement**: `UPLOAD_ALLOWED_MIME_TYPES` / `UPLOAD_MAX_SIZE_BYTES` in `.env`; backend `isAllowedMimeType()`, `isExtensionAllowed()`, `isSignatureValid()` (magic bytes for PDF/PNG/JPEG/DOCX/XLSX) in `ChangeRequestService`; frontend `isFileTypeAllowed()` pre-flight in `[id].vue`. DOCX/XLSX ZIP-format ambiguity disambiguated by extension.
+- **Path traversal guard** in `ChangeRequestService`: `outputPath.normalize()` then `outputPath.startsWith(storageDir)` assertion on every download.
+- **Filename normalization**: `normalizeFileName()` helper — lowercase stem and extension, non-alphanumeric runs → single hyphen, strip leading/trailing hyphens. Original display name preserved in DB; normalized name used on disk.
+- **Admin Custom Fields dedicated page** (`audita-web/pages/admin/custom-fields/index.vue`): full CRUD for global field definitions (TEXT / NUMBER / DATE / DROPDOWN / CHECKBOX). Admin-only sidebar link added to `AppSidebar.vue`.
+- **CR detail read-only mode**: page is read-only by default; Edit button visible only when status is `DRAFT`. Edit mode renders full form (all CR fields + TipTap description editor + custom fields inputs). Save calls `update()` + `saveCustomFields()` atomically; Cancel discards. Workflow actions (Submit/Cancel/Approve/Reject) live in read-only view only. Attachments always visible. `onBeforeUnmount` cleans up TipTap editor.
+
+### Fixed (Sprint 7 — 2026-05-11)
+
+- **Custom fields 400**: empty `fieldId` string sent to `@NotNull UUID` backend field. Fixed by removing add-row pattern; fields are now driven by definitions (always valid UUID keys).
+
 ### Fixed (Docker Environment & CI — 2026-05-08)
 
 - **Hibernate dialect deprecation (`HHH90000025`)**: Removed explicit `dialect: org.hibernate.dialect.PostgreSQLDialect` from `application.yml` — Hibernate 7 auto-detects the dialect.
