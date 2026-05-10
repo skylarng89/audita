@@ -104,18 +104,20 @@ public class ChangeRequestController {
             @RequestParam(required = false) Priority priority,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) UUID createdBy,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20) Pageable pageable,
+            @AuthenticationPrincipal UserPrincipal principal) {
 
         return PageResponse.from(
-                changeRequestService.list(status, priority, category, createdBy, pageable),
+                changeRequestService.list(status, priority, category, createdBy, principal.userId(), pageable),
                 ChangeRequestResponse::from
         );
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ChangeRequestResponse get(@PathVariable UUID id) {
-        return ChangeRequestResponse.from(changeRequestService.getById(id));
+    public ChangeRequestResponse get(@PathVariable UUID id,
+                                     @AuthenticationPrincipal UserPrincipal principal) {
+        return ChangeRequestResponse.from(changeRequestService.getById(id, principal.userId()));
     }
 
     @GetMapping("/{id}/approvers")

@@ -197,8 +197,10 @@ public class ChangeRequestService {
                                           Priority priority,
                                           String category,
                                           UUID createdBy,
+                                          UUID viewerId,
                                           Pageable pageable) {
-        return changeRequestRepository.findAllFiltered(status, priority, category, createdBy, pageable)
+        return changeRequestRepository.findAllFiltered(
+                        status, priority, category, createdBy, viewerId, ChangeRequestStatus.DRAFT, pageable)
                 .map(changeRequest -> {
                     initializeCreator(changeRequest);
                     return changeRequest;
@@ -206,7 +208,20 @@ public class ChangeRequestService {
     }
 
     @Transactional(readOnly = true)
-    public ChangeRequestEntity getById(UUID id) {
+    public ChangeRequestEntity getById(UUID id, UUID viewerId) {
+        ChangeRequestEntity changeRequest = getById(id);
+        // Draft CRs are private to their creator. Return NOT_FOUND (not 403) to
+        // avoid leaking that the resource exists to users who cannot see it.
+        if (changeRequest.getStatus() == ChangeRequestStatus.DRAFT &&
+                !changeRequest.getCreatedBy().getId().equals(viewerId)) {
+            throw new DomainNotPermittedException("NOT_FOUND", "Change request not found.");
+        }
+        return changeRequest;
+    }
+
+    // Internal lookup — skips draft-visibility check. Only call from within service
+    // methods that already enforce mutation authorization (assertCanMutate).
+    private ChangeRequestEntity getById(UUID id) {
         ChangeRequestEntity changeRequest = changeRequestRepository.findById(id)
                 .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Change request not found."));
         initializeCreator(changeRequest);
