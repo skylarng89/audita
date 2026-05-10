@@ -369,6 +369,30 @@ public class ChangeRequestService {
         return attachmentRepository.findByChangeRequestIdOrderByCreatedAtDesc(changeRequestId);
     }
 
+    @Transactional(readOnly = true)
+    public AttachmentDownload downloadAttachment(UUID changeRequestId, UUID attachmentId) {
+        // Confirm the CR exists (applies draft-visibility check via getById).
+        getById(changeRequestId);
+        AttachmentEntity attachment = attachmentRepository
+                .findByIdAndChangeRequestId(attachmentId, changeRequestId)
+                .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Attachment not found."));
+
+        Path filePath = Path.of(attachment.getStoragePath());
+        if (!Files.exists(filePath)) {
+            throw new DomainNotPermittedException("FILE_MISSING", "Attachment file is no longer available.");
+        }
+
+        try {
+            return new AttachmentDownload(
+                    Files.newInputStream(filePath),
+                    attachment.getFileName(),
+                    attachment.getMimeType() != null ? attachment.getMimeType() : "application/octet-stream",
+                    attachment.getSizeBytes());
+        } catch (IOException ex) {
+            throw new DomainNotPermittedException("DOWNLOAD_FAILED", "Could not read attachment file.");
+        }
+    }
+
     public AttachmentEntity uploadAttachment(UUID changeRequestId,
                                              UUID uploaderId,
                                              String uploaderRole,

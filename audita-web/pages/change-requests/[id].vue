@@ -164,7 +164,16 @@
                 {{ file.uploaderName ?? "Unknown" }}
               </p>
             </div>
-            <span class="text-xs text-muted">{{ fmt(file.createdAt) }}</span>
+            <div class="flex items-center gap-3">
+              <span class="text-xs text-muted">{{ fmt(file.createdAt) }}</span>
+              <button
+                class="btn-ghost btn-sm"
+                :title="`Download ${file.fileName}`"
+                @click="handleDownload(file.id, file.fileName)"
+              >
+                ↓ Download
+              </button>
+            </div>
           </div>
           <div v-if="!attachments.length" class="text-sm text-muted">
             No attachments uploaded yet.
@@ -386,6 +395,7 @@ const {
   saveCustomFields,
   listAttachments,
   uploadAttachment,
+  downloadAttachment,
   listActivity,
   listComments,
   postComment,
@@ -451,6 +461,14 @@ async function uploadSelected(file: File | null) {
     toastError(message);
   } finally {
     isUploading.value = false;
+  }
+}
+
+async function handleDownload(attachmentId: string, fileName: string) {
+  try {
+    await downloadAttachment(id.value, attachmentId, fileName);
+  } catch {
+    toastError("Download failed. Please try again.");
   }
 }
 
