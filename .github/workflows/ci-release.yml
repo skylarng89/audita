@@ -140,8 +140,27 @@ jobs:
               major="${BASH_REMATCH[1]}"
               minor="${BASH_REMATCH[2]}"
               patch="${BASH_REMATCH[3]}"
-              next_patch=$((patch + 1))
-              version="v${major}.${minor}.${next_patch}"
+
+              # Inspect commit subjects and bodies since the last tag.
+              # feat!: / BREAKING CHANGE → major; feat: → minor; everything else → patch.
+              commit_log="$(git log "${latest_tag}..HEAD" --format="%s%n%b")"
+
+              has_breaking=false
+              has_feat=false
+              if echo "$commit_log" | grep -qE '^[a-z]+(\([^)]*\))?!:' \
+                 || echo "$commit_log" | grep -q 'BREAKING CHANGE'; then
+                has_breaking=true
+              elif echo "$commit_log" | grep -qE '^feat(\([^)]*\))?:'; then
+                has_feat=true
+              fi
+
+              if [[ "$has_breaking" == "true" ]]; then
+                version="v$((major + 1)).0.0"
+              elif [[ "$has_feat" == "true" ]]; then
+                version="v${major}.$((minor + 1)).0"
+              else
+                version="v${major}.${minor}.$((patch + 1))"
+              fi
             else
               version="v0.1.0"
             fi
