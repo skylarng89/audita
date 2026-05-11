@@ -165,13 +165,37 @@
 
             <!-- Affected Systems -->
             <div class="md:col-span-2">
-              <label class="field-label"
-                >Affected Systems (comma separated)</label
+              <label class="field-label">Affected Systems</label>
+              <div
+                class="input mt-1 flex flex-wrap gap-1 min-h-[2.5rem] cursor-text"
+                @click="editAffectedSystemsInputRef?.focus()"
               >
-              <input
-                v-model="editForm.affectedSystemsInput"
-                class="input mt-1"
-              />
+                <span
+                  v-for="sys in editForm.affectedSystems"
+                  :key="sys"
+                  class="inline-flex items-center gap-1 rounded bg-primary/10 text-primary text-xs px-2 py-0.5 shrink-0"
+                >
+                  {{ sys }}
+                  <button
+                    type="button"
+                    class="hover:text-danger leading-none"
+                    :aria-label="`Remove ${sys}`"
+                    @click.stop="removeEditAffectedSystem(sys)"
+                  >
+                    ×
+                  </button>
+                </span>
+                <input
+                  ref="editAffectedSystemsInputRef"
+                  v-model="editAffectedSystemsTagInput"
+                  class="flex-1 min-w-[10rem] bg-transparent outline-none text-sm"
+                  placeholder="Add system and press Enter…"
+                  @keydown.enter.prevent="addEditAffectedSystem"
+                  @keydown="onEditAffectedSystemsKeydown"
+                  @keydown.backspace="onEditAffectedSystemsBackspace"
+                />
+              </div>
+              <p class="field-hint">Press Enter or comma to add each system.</p>
             </div>
 
             <!-- Description -->
@@ -730,8 +754,37 @@ const editForm = reactive({
   scheduledStartTime: "",
   scheduledEndDate: "",
   scheduledEndTime: "",
-  affectedSystemsInput: "",
+  affectedSystems: [] as string[],
 });
+
+// ── Edit affected-systems tag input ────────────────────────────────────────
+const editAffectedSystemsInputRef = ref<HTMLInputElement | null>(null);
+const editAffectedSystemsTagInput = ref("");
+
+function addEditAffectedSystem() {
+  const val = editAffectedSystemsTagInput.value.replace(/,/g, "").trim();
+  if (val && !editForm.affectedSystems.includes(val)) {
+    editForm.affectedSystems.push(val);
+  }
+  editAffectedSystemsTagInput.value = "";
+}
+
+function removeEditAffectedSystem(sys: string) {
+  editForm.affectedSystems = editForm.affectedSystems.filter((s) => s !== sys);
+}
+
+function onEditAffectedSystemsKeydown(e: KeyboardEvent) {
+  if (e.key === ",") {
+    e.preventDefault();
+    addEditAffectedSystem();
+  }
+}
+
+function onEditAffectedSystemsBackspace() {
+  if (!editAffectedSystemsTagInput.value && editForm.affectedSystems.length) {
+    editForm.affectedSystems.pop();
+  }
+}
 
 const editEditor = useEditor({
   extensions: [StarterKit],
@@ -811,7 +864,7 @@ function enterEditMode() {
     editForm.scheduledEndDate = "";
     editForm.scheduledEndTime = "";
   }
-  editForm.affectedSystemsInput = cr.affectedSystems.join(", ");
+  editForm.affectedSystems = cr.affectedSystems.slice();
   editEditor.value?.commands.setContent(cr.description ?? "");
   isEditing.value = true;
 }
@@ -844,10 +897,7 @@ async function saveEditAction() {
           editForm.scheduledEndDate,
           editForm.scheduledEndTime,
         )?.toISOString() ?? null,
-      affectedSystems: editForm.affectedSystemsInput
-        .split(",")
-        .map((v) => v.trim())
-        .filter(Boolean),
+      affectedSystems: editForm.affectedSystems,
     };
     changeRequest.value = await update(id.value, payload);
     await saveCustomFieldsAction();

@@ -38,8 +38,12 @@
         <span class="font-bold text-sm text-primary">Audita</span>
       </div>
 
-      <!-- Desktop: spacer that matches sidebar width -->
-      <div class="hidden md:block w-52 shrink-0" aria-hidden="true" />
+      <!-- Desktop: spacer that matches sidebar width (width driven by --sidebar-w CSS var) -->
+      <div
+        class="hidden md:block shrink-0 transition-[width] duration-200"
+        style="width: var(--sidebar-w)"
+        aria-hidden="true"
+      />
 
       <!-- Flexible spacer -->
       <div class="flex-1" />
@@ -50,7 +54,9 @@
         <ClientOnly>
           <button
             class="btn-ghost btn-sm w-9 h-9 p-0 rounded-full"
-            :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+            :aria-label="
+              isDark ? 'Switch to light mode' : 'Switch to dark mode'
+            "
             :aria-pressed="isDark"
             @click="toggleDark"
           >
@@ -202,7 +208,9 @@
               to="/change-requests"
               class="sidebar-link"
               active-class="sidebar-link-active"
-              :aria-current="$route.path.startsWith('/change-requests') ? 'page' : undefined"
+              :aria-current="
+                $route.path.startsWith('/change-requests') ? 'page' : undefined
+              "
               @click="mobileNavOpen = false"
             >
               <svg
@@ -269,7 +277,9 @@
               to="/audit-trail"
               class="sidebar-link"
               active-class="sidebar-link-active"
-              :aria-current="$route.path === '/audit-trail' ? 'page' : undefined"
+              :aria-current="
+                $route.path === '/audit-trail' ? 'page' : undefined
+              "
               @click="mobileNavOpen = false"
             >
               <svg
@@ -292,7 +302,9 @@
               to="/admin/custom-fields"
               class="sidebar-link"
               active-class="sidebar-link-active"
-              :aria-current="$route.path === '/admin/custom-fields' ? 'page' : undefined"
+              :aria-current="
+                $route.path === '/admin/custom-fields' ? 'page' : undefined
+              "
               @click="mobileNavOpen = false"
             >
               <svg
@@ -315,7 +327,9 @@
               to="/admin/settings"
               class="sidebar-link"
               active-class="sidebar-link-active"
-              :aria-current="$route.path === '/admin/settings' ? 'page' : undefined"
+              :aria-current="
+                $route.path === '/admin/settings' ? 'page' : undefined
+              "
               @click="mobileNavOpen = false"
             >
               <svg
@@ -379,7 +393,7 @@
       <!-- Main content -->
       <main
         id="main-content"
-        class="flex-1 ml-0 md:ml-56 p-6 min-w-0"
+        class="flex-1 sidebar-main p-6 min-w-0 transition-[margin-left] duration-200"
         tabindex="-1"
       >
         <div class="mx-auto max-w-7xl">
@@ -395,19 +409,29 @@
 
 <script setup lang="ts">
 const auth = useAuthStore();
-const colorMode = useColorMode();
-const route = useRoute();
 
-const isDark = computed(() => colorMode.value === "dark");
+const isDark = ref(false);
 
 function toggleDark() {
-  colorMode.preference = isDark.value ? "light" : "dark";
+  isDark.value = !isDark.value;
+  if (isDark.value) {
+    document.documentElement.classList.add("dark");
+    localStorage.setItem("color-scheme", "dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+    localStorage.setItem("color-scheme", "light");
+  }
 }
 
 const mobileNavOpen = ref(false);
 
-// Close drawer on Escape
 onMounted(() => {
+  // Sync with persisted preference or system preference
+  const stored = localStorage.getItem("color-scheme");
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  isDark.value = stored ? stored === "dark" : prefersDark;
+  document.documentElement.classList.toggle("dark", isDark.value);
+
   function onEsc(e: KeyboardEvent) {
     if (e.key === "Escape" && mobileNavOpen.value) {
       mobileNavOpen.value = false;
@@ -417,91 +441,3 @@ onMounted(() => {
   onUnmounted(() => window.removeEventListener("keydown", onEsc));
 });
 </script>
-    <header
-      class="fixed top-0 left-0 right-0 z-30 h-14 border-b border-outline-variant/50 bg-white/95 backdrop-blur-sm dark:bg-slate-900/90 dark:border-border-dark flex items-center px-4 gap-4 shadow-[0_1px_3px_rgba(0,35,111,0.05)]"
-    >
-      <!-- Logo (visible on mobile) -->
-      <div class="flex items-center gap-2 md:hidden">
-        <div
-          class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-xs"
-        >
-          A
-        </div>
-        <span class="font-bold text-sm text-primary">Audita</span>
-      </div>
-
-      <!-- Global Search -->
-      <div class="flex-1 max-w-xl mx-auto">
-        <div class="relative">
-          <span
-            class="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
-          >
-            <svg
-              class="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-          </span>
-          <input
-            type="search"
-            placeholder="Search changes, users, or audits..."
-            class="input pl-9 pr-4 py-2 text-sm h-9"
-          />
-        </div>
-      </div>
-
-      <!-- Right controls -->
-      <div class="flex items-center gap-1">
-        <!-- Notification bell -->
-        <SharedAppNotificationBell />
-
-        <!-- Help -->
-        <button
-          class="btn-ghost btn-sm w-8 h-8 p-0 rounded-full"
-          aria-label="Help"
-        >
-          <svg
-            class="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        </button>
-
-        <!-- User menu -->
-        <SharedAppUserMenu />
-      </div>
-    </header>
-
-    <!-- ── Body: Sidebar + Main ────────────────────────────────────────────── -->
-    <div class="flex pt-14 min-h-screen">
-      <!-- Sidebar -->
-      <SharedAppSidebar />
-
-      <!-- Main content -->
-      <main class="flex-1 ml-0 md:ml-56 p-6 min-w-0">
-        <div class="mx-auto max-w-7xl">
-          <slot />
-        </div>
-      </main>
-    </div>
-
-    <!-- Toast container -->
-    <SharedAppToastContainer />
-  </div>
-</template>

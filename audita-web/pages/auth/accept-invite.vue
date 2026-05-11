@@ -184,13 +184,14 @@
         </div>
       </div>
 
-      <button
+      <SharedAppButton
         type="submit"
-        class="btn-primary btn-lg w-full shadow-lg shadow-primary/20"
-        :disabled="isLoading"
+        size="lg"
+        class="w-full shadow-lg shadow-primary/20"
+        :loading="isLoading"
       >
-        {{ isLoading ? "Setting up…" : "Complete Setup →" }}
-      </button>
+        Complete Setup &rarr;
+      </SharedAppButton>
     </form>
 
     <div class="flex justify-between mt-8 text-xs text-muted">

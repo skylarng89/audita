@@ -19,7 +19,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -28,8 +28,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceTest {
 
-    @Mock NotificationRepository notificationRepository;
-    @Mock UserRepository userRepository;
+    @Mock
+    NotificationRepository notificationRepository;
+    @Mock
+    UserRepository userRepository;
 
     @InjectMocks
     NotificationService notificationService;
@@ -62,8 +64,8 @@ class NotificationServiceTest {
 
         when(notificationRepository.findById(notifId)).thenReturn(Optional.of(notification));
 
-        assertThatThrownBy(() -> notificationService.markRead(otherId, notifId))
-                .isInstanceOf(DomainNotPermittedException.class);
+        assertThrows(DomainNotPermittedException.class,
+                () -> notificationService.markRead(otherId, notifId));
     }
 
     @Test
@@ -87,8 +89,7 @@ class NotificationServiceTest {
                 "SLA_WARNING",
                 "SLA warning",
                 "A CR is close to breach",
-                "/change-requests/123"
-        );
+                "/change-requests/123");
 
         assertThat(created.getType()).isEqualTo("SLA_WARNING");
         verify(notificationRepository).save(any(NotificationEntity.class));

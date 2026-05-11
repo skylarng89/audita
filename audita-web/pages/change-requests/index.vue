@@ -1,7 +1,9 @@
 <template>
   <div class="space-y-6">
     <!-- Page header -->
-    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+    <div
+      class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4"
+    >
       <div>
         <p
           class="text-xs text-primary/70 uppercase tracking-[0.16em] font-semibold mb-1"
@@ -34,75 +36,138 @@
       </div>
     </div>
 
-    <!-- Filter bar -->
-    <div class="card p-4 flex flex-wrap gap-3 items-center shadow-card-hover">
+    <!-- Filter pill + dropdown -->
+    <div class="relative" ref="filterBarRef">
       <div class="flex items-center gap-2">
-        <label
-          for="filter-status"
-          class="text-xs font-semibold text-muted uppercase"
-          >Status:</label
+        <button
+          class="btn-secondary btn-sm flex items-center gap-2 rounded-full px-4"
+          :aria-expanded="filtersOpen"
+          aria-controls="filter-panel"
+          @click="filtersOpen = !filtersOpen"
         >
-        <select
-          id="filter-status"
-          v-model="filters.status"
-          @change="load"
-          class="input py-1.5 pr-8 text-sm w-40"
+          <svg
+            class="w-3.5 h-3.5 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+            />
+          </svg>
+          Filters
+          <span
+            v-if="activeFilterCount > 0"
+            class="ml-0.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-white text-[10px] font-bold leading-none"
+          >
+            {{ activeFilterCount }}
+          </span>
+          <svg
+            class="w-3 h-3 transition-transform duration-150"
+            :class="filtersOpen ? 'rotate-180' : ''"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </button>
+        <button
+          v-if="activeFilterCount > 0"
+          class="btn-ghost btn-sm text-xs text-muted"
+          @click="clearFilters"
         >
-          <option value="">All States</option>
-          <option value="DRAFT">Draft</option>
-          <option value="PENDING_APPROVAL">Pending Approval</option>
-          <option value="APPROVED">Approved</option>
-          <option value="REJECTED">Rejected</option>
-          <option value="CANCELLED">Cancelled</option>
-        </select>
+          ✕ Clear
+        </button>
       </div>
-      <div class="flex items-center gap-2">
-        <label
-          for="filter-priority"
-          class="text-xs font-semibold text-muted uppercase"
-          >Priority:</label
-        >
-        <select
-          id="filter-priority"
-          v-model="filters.priority"
-          @change="load"
-          class="input py-1.5 pr-8 text-sm w-36"
-        >
-          <option value="">Any Priority</option>
-          <option value="LOW">Low</option>
-          <option value="MEDIUM">Medium</option>
-          <option value="HIGH">High</option>
-          <option value="CRITICAL">Critical</option>
-        </select>
-      </div>
-      <button
-        v-if="filters.status || filters.priority"
-        class="btn-ghost btn-sm text-xs text-muted"
-        @click="clearFilters"
+
+      <!-- Dropdown filter panel -->
+      <Transition
+        enter-active-class="transition duration-100 ease-out"
+        enter-from-class="opacity-0 -translate-y-1"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition duration-75 ease-in"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 -translate-y-1"
       >
-        ✕ Clear filters
-      </button>
+        <div
+          v-if="filtersOpen"
+          id="filter-panel"
+          class="absolute top-full left-0 mt-2 z-20 bg-white dark:bg-slate-800 rounded-xl border border-outline-variant/50 dark:border-border-dark shadow-card-hover p-4 flex flex-col sm:flex-row gap-4 min-w-max"
+        >
+          <div class="flex items-center gap-2">
+            <label
+              for="filter-status"
+              class="text-xs font-semibold text-muted uppercase whitespace-nowrap"
+              >Status:</label
+            >
+            <select
+              id="filter-status"
+              v-model="filters.status"
+              @change="load"
+              class="input py-1.5 pr-8 text-sm w-40"
+            >
+              <option value="">All States</option>
+              <option value="DRAFT">Draft</option>
+              <option value="PENDING_APPROVAL">Pending Approval</option>
+              <option value="APPROVED">Approved</option>
+              <option value="REJECTED">Rejected</option>
+              <option value="CANCELLED">Cancelled</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <label
+              for="filter-priority"
+              class="text-xs font-semibold text-muted uppercase whitespace-nowrap"
+              >Priority:</label
+            >
+            <select
+              id="filter-priority"
+              v-model="filters.priority"
+              @change="load"
+              class="input py-1.5 pr-8 text-sm w-36"
+            >
+              <option value="">Any Priority</option>
+              <option value="LOW">Low</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="HIGH">High</option>
+              <option value="CRITICAL">Critical</option>
+            </select>
+          </div>
+        </div>
+      </Transition>
 
       <!-- Screen-reader announcement of loading/filtering state -->
-      <span
-        class="sr-only"
-        aria-live="polite"
-        aria-atomic="true"
-      >{{ liveAnnouncement }}</span>
+      <span class="sr-only" aria-live="polite" aria-atomic="true">{{
+        liveAnnouncement
+      }}</span>
     </div>
 
     <!-- Table -->
     <div class="card overflow-hidden shadow-card-hover">
-      <table
-        class="w-full"
-        aria-label="Change requests"
-      >
+      <table class="w-full" aria-label="Change requests">
         <thead>
           <tr class="border-b border-border dark:border-border-dark">
-            <th class="table-header px-4 py-3 text-left w-28" scope="col">ID</th>
-            <th class="table-header px-4 py-3 text-left" scope="col">Change Title</th>
-            <th class="table-header px-4 py-3 text-left w-36" scope="col">Status</th>
-            <th class="table-header px-4 py-3 text-left w-24" scope="col">Priority</th>
+            <th class="table-header px-4 py-3 text-left w-28" scope="col">
+              ID
+            </th>
+            <th class="table-header px-4 py-3 text-left" scope="col">
+              Change Title
+            </th>
+            <th class="table-header px-4 py-3 text-left w-36" scope="col">
+              Status
+            </th>
+            <th class="table-header px-4 py-3 text-left w-24" scope="col">
+              Priority
+            </th>
             <th
               class="table-header px-4 py-3 text-left w-28 hidden lg:table-cell"
               scope="col"
@@ -131,14 +196,20 @@
                 <div class="h-3.5 w-20 bg-border dark:bg-border-dark rounded" />
               </td>
               <td class="px-4 py-4">
-                <div class="h-3.5 w-48 bg-border dark:bg-border-dark rounded mb-1.5" />
+                <div
+                  class="h-3.5 w-48 bg-border dark:bg-border-dark rounded mb-1.5"
+                />
                 <div class="h-2.5 w-24 bg-border dark:bg-border-dark rounded" />
               </td>
               <td class="px-4 py-4">
-                <div class="h-5 w-24 bg-border dark:bg-border-dark rounded-full" />
+                <div
+                  class="h-5 w-24 bg-border dark:bg-border-dark rounded-full"
+                />
               </td>
               <td class="px-4 py-4">
-                <div class="h-5 w-16 bg-border dark:bg-border-dark rounded-full" />
+                <div
+                  class="h-5 w-16 bg-border dark:bg-border-dark rounded-full"
+                />
               </td>
               <td class="px-4 py-4 hidden lg:table-cell">
                 <div class="h-3 w-20 bg-border dark:bg-border-dark rounded" />
@@ -231,7 +302,11 @@
             <td class="px-4 py-4 text-xs hidden xl:table-cell">
               <span
                 v-if="cr.slaDeadline"
-                :class="isSlaOverdue(cr.slaDeadline) ? 'text-danger font-semibold' : 'text-muted'"
+                :class="
+                  isSlaOverdue(cr.slaDeadline)
+                    ? 'text-danger font-semibold'
+                    : 'text-muted'
+                "
               >
                 {{ formatDate(cr.slaDeadline) }}
               </span>
@@ -309,6 +384,18 @@ const page = ref<Page<ChangeRequest> | null>(null);
 const crs = computed(() => page.value?.content ?? []);
 const liveAnnouncement = ref("");
 
+const filtersOpen = ref(false);
+const filterBarRef = ref<HTMLElement | null>(null);
+const activeFilterCount = computed(
+  () => (filters.status ? 1 : 0) + (filters.priority ? 1 : 0),
+);
+
+function onDocumentClick(e: MouseEvent) {
+  if (filterBarRef.value && !filterBarRef.value.contains(e.target as Node)) {
+    filtersOpen.value = false;
+  }
+}
+
 async function fetchPage(pageIndex: number) {
   isLoading.value = true;
   liveAnnouncement.value = "Loading change requests…";
@@ -365,181 +452,12 @@ function initials(name: string | null) {
     .join("");
 }
 
-onMounted(load);
+onMounted(() => {
+  load();
+  document.addEventListener("click", onDocumentClick);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("click", onDocumentClick);
+});
 </script>
-      <div>
-        <p
-          class="text-xs text-primary/70 uppercase tracking-[0.16em] font-semibold mb-1"
-        >
-          Operations / Infrastructure
-        </p>
-        <h1
-          class="text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
-        >
-          Change Requests
-        </h1>
-        <p class="text-sm text-muted mt-1 max-w-md">
-          Managing and orchestrating infrastructure transitions with
-          architectural precision.
-        </p>
-      </div>
-      <div class="flex items-center gap-6 text-right">
-        <div>
-          <p class="text-xs text-muted uppercase tracking-wide">Open Changes</p>
-          <p class="text-2xl font-bold text-primary">
-            {{ page?.totalElements ?? 0 }}
-          </p>
-        </div>
-        <button
-          class="btn-primary btn-md shadow-lg shadow-primary/20"
-          @click="navigateTo('/change-requests/new')"
-        >
-          Create Change
-        </button>
-      </div>
-    </div>
-
-    <div class="card p-4 flex flex-wrap gap-3 items-center shadow-card-hover">
-      <div class="flex items-center gap-2">
-        <label class="text-xs font-semibold text-muted uppercase"
-          >Status:</label
-        >
-        <select
-          v-model="filters.status"
-          @change="load"
-          class="input py-1.5 pr-8 text-sm w-36"
-        >
-          <option value="">All States</option>
-          <option value="DRAFT">Draft</option>
-          <option value="PENDING_APPROVAL">Pending Approval</option>
-          <option value="APPROVED">Approved</option>
-          <option value="REJECTED">Rejected</option>
-          <option value="CANCELLED">Cancelled</option>
-        </select>
-      </div>
-      <div class="flex items-center gap-2">
-        <label class="text-xs font-semibold text-muted uppercase"
-          >Priority:</label
-        >
-        <select
-          v-model="filters.priority"
-          @change="load"
-          class="input py-1.5 pr-8 text-sm w-36"
-        >
-          <option value="">Any Priority</option>
-          <option value="LOW">Low</option>
-          <option value="MEDIUM">Medium</option>
-          <option value="HIGH">High</option>
-          <option value="CRITICAL">Critical</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="card overflow-hidden shadow-card-hover">
-      <table class="w-full">
-        <thead>
-          <tr class="border-b border-border dark:border-border-dark">
-            <th class="table-header px-4 py-3 text-left w-28">ID</th>
-            <th class="table-header px-4 py-3 text-left">Change Title</th>
-            <th class="table-header px-4 py-3 text-left w-36">Status</th>
-            <th class="table-header px-4 py-3 text-left w-24">Priority</th>
-            <th
-              class="table-header px-4 py-3 text-left w-28 hidden lg:table-cell"
-            >
-              Scheduled
-            </th>
-            <th
-              class="table-header px-4 py-3 text-left w-36 hidden lg:table-cell"
-            >
-              Requester
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="isLoading && !crs.length">
-            <td colspan="6" class="px-4 py-12 text-center text-sm text-muted">
-              Loading…
-            </td>
-          </tr>
-          <tr v-else-if="!isLoading && !crs.length">
-            <td colspan="6" class="px-4 py-12 text-center text-sm text-muted">
-              No change requests found.
-            </td>
-          </tr>
-          <tr
-            v-else
-            v-for="cr in crs"
-            :key="cr.id"
-            class="table-row"
-            @click="navigateTo(`/change-requests/${cr.id}`)"
-          >
-            <td class="px-4 py-4">
-              <span class="font-mono text-xs text-primary font-semibold"
-                >CHG-{{ cr.id.slice(0, 8).toUpperCase() }}</span
-              >
-            </td>
-            <td class="px-4 py-4">
-              <p class="font-semibold text-sm text-gray-900 dark:text-gray-100">
-                {{ cr.title }}
-              </p>
-              <p class="text-xs text-muted mt-0.5">{{ cr.category }}</p>
-            </td>
-            <td class="px-4 py-4">
-              <CrStatusBadge :status="cr.status" />
-            </td>
-            <td class="px-4 py-4">
-              <CrPriorityBadge :priority="cr.priority" />
-            </td>
-            <td class="px-4 py-4 text-xs text-muted hidden lg:table-cell">
-              {{ cr.scheduledStart ? formatDate(cr.scheduledStart) : "—" }}
-            </td>
-            <td class="px-4 py-4 hidden lg:table-cell">
-              <div class="flex items-center gap-2">
-                <div
-                  class="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold uppercase"
-                >
-                  {{ initials(cr.createdByFullName) }}
-                </div>
-                <span class="text-xs text-gray-700 dark:text-gray-300">{{
-                  cr.createdByFullName ?? "Unknown"
-                }}</span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <!-- Pagination -->
-      <div
-        v-if="page && page.totalPages > 1"
-        class="px-4 py-3 border-t border-border dark:border-border-dark flex items-center justify-between gap-3"
-      >
-        <p class="text-xs text-muted">
-          Showing {{ page.number * page.size + 1 }}–{{
-            Math.min((page.number + 1) * page.size, page.totalElements)
-          }}
-          of {{ page.totalElements }} entries
-        </p>
-        <div class="flex items-center gap-2">
-          <button
-            @click="setPage(currentPage - 1)"
-            :disabled="currentPage === 0 || isLoading"
-            class="btn-ghost btn-sm px-2"
-          >
-            &lsaquo;
-          </button>
-          <span class="text-xs text-muted"
-            >Page {{ currentPage + 1 }} of {{ page.totalPages }}</span
-          >
-          <button
-            @click="setPage(currentPage + 1)"
-            :disabled="currentPage >= page.totalPages - 1 || isLoading"
-            class="btn-ghost btn-sm px-2"
-          >
-            &rsaquo;
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>

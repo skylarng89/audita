@@ -1,8 +1,8 @@
 # Audita — Active Context
 
-**Last Updated:** 2026-05-11
-**Current Phase:** Active development — Sprint 9 in progress
-**Active Sprint:** Sprint 9
+**Last Updated:** 2026-05-18
+**Current Phase:** Active development — Sprint 10 complete (32/36 tasks)
+**Active Sprint:** Sprint 10
 
 ---
 
@@ -19,7 +19,8 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 - **Sprint 6 complete (Audit Trail & Admin Configuration).** Global audit trail (paginated query + CSV export), admin custom fields CRUD, `AuditLogService` wired into `ChangeRequestService` for all CR state transitions. 90/90 tests passing. TypeScript typecheck clean.
 - **Sprint 7 complete (2026-05-11).** Three-layer file upload validation (magic bytes + extension + MIME; `.env` allowlist), filename normalization, path traversal guard. Custom fields 400 fix (definition-driven pattern). New `/admin/custom-fields` CRUD page + admin sidebar link. CR detail redesigned: read-only default, DRAFT-gated Edit mode with TipTap, custom fields in edit form, `onBeforeUnmount` cleanup. VueDatePicker fully removed from Create CR and CR Edit pages — replaced with native `<input type="date">` + `<input type="time">` fields with `colorScheme` dark mode styling; `vue-datepicker.client.ts` plugin deleted; `.dp__*` CSS override block removed from `main.css`. TypeScript typecheck: exit 0.
 - **Sprint 8 started (2026-05-11).** Workflow/SLA admin settings activation slice implemented: new `PATCH /api/v1/settings`, `org_settings` persistence entity/repository, expanded settings response, workflow/sla editing enabled in Admin Settings UI, SLA runtime lookups switched from hard-coded values to tenant settings where configured, and controller regression tests added.
-- **Sprint 9 started (2026-05-11).** Change request list scalability update completed: `/change-requests` now uses bounded server-side pagination with `size=50` and explicit previous/next pagination buttons for predictable navigation at scale.
+- **Sprint 10 complete (32/36 tasks, 2026-05-18).** Comprehensive UX + WCAG 2.2 overhaul across the entire frontend: mobile navigation drawer, dark mode toggle in header, dead search removed, skip-to-main-content link, page titles on all pages, password show/hide toggles, ARIA tablist on CR detail, focus trap in AppModal, skeleton loaders + empty states on CR list, SLA column, sticky save bar, reject confirm modal, toast progress bar, scroll-margin-top, aria-live regions, label/id wiring on all forms, autocomplete tokens. 4 tasks deferred: sidebar icon-rail (UX10-003), filter pill collapse (UX10-004), AppButton migration on auth pages (UX10-007), affected systems tag UI (UX10-016).
+- **Sprint 9 complete (2026-05-11).** Change request list scalability update completed: `/change-requests` now uses bounded server-side pagination with `size=50` and explicit previous/next pagination buttons for predictable navigation at scale.
 - **Docker environment fully operational (2026-05-08).** Resolved three issues: (1) Hibernate dialect deprecation warning removed; (2) mail health indicator disabled so SMTP auth failure doesn't block container health; (3) CI workflow upgraded to pnpm v10 to match local lockfile format.
 - **Sprint 0 complete (19/19 tasks).** Both repositories are scaffolded and runnable via Docker Compose.
 - **Sprint 1 complete (22/22 tasks).** Full authentication stack: JWT + refresh tokens, SSO (Google/Microsoft), domain whitelist, rate limiting, 18 unit tests passing.

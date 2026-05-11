@@ -84,7 +84,7 @@
 - SET-003: Read SLA defaults at runtime in CR creation and SLA monitor. 🟡 (In progress)
 - SET-004: Add regression tests for tenant settings GET/PATCH + runtime effects. 🟡 (In progress)
 
-### Completed in this session
+### Sprint 9 Completed in this Session
 
 - Added `PATCH /api/v1/settings` with nested workflow/sla validation contract.
 - Added `OrgSettingEntity` + `OrgSettingRepository` backed by existing `org_settings` table.
@@ -94,13 +94,13 @@
 - Enabled admin workflow/SLA editing + save flow in `audita-web/pages/admin/settings/index.vue`.
 - Added `TenantSettingsControllerWebMvcTest` for GET/PATCH success and validation failure paths.
 
-### Verification (completed)
+### Sprint 9 Verification (Completed)
 
 - `cd audita-api && ./gradlew :api:test --tests "io.audita.api.controller.TenantSettingsControllerWebMvcTest" --no-daemon`
 - `cd audita-api && ./gradlew :api:compileJava :infrastructure:compileJava --no-daemon`
 - `cd audita-web && pnpm -s nuxi typecheck`
 
-### Next Steps
+### Sprint 9 Next Steps
 
 1. Sprint 8 settings activation scope is complete. Start Sprint 9 prioritization (roles CRUD, SLA policy admin page, and group default approvers).
 

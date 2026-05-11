@@ -207,12 +207,37 @@
 
         <!-- Affected Systems -->
         <div class="md:col-span-2">
-          <label class="field-label">Affected Systems (comma separated)</label>
-          <input
-            v-model="form.affectedSystemsInput"
-            class="input mt-1"
-            placeholder="payment-api, nginx-prod, postgres-replica"
-          />
+          <label class="field-label">Affected Systems</label>
+          <div
+            class="input mt-1 flex flex-wrap gap-1 min-h-[2.5rem] cursor-text"
+            @click="affectedSystemsInputRef?.focus()"
+          >
+            <span
+              v-for="sys in form.affectedSystems"
+              :key="sys"
+              class="inline-flex items-center gap-1 rounded bg-primary/10 text-primary text-xs px-2 py-0.5 shrink-0"
+            >
+              {{ sys }}
+              <button
+                type="button"
+                class="hover:text-danger leading-none"
+                :aria-label="`Remove ${sys}`"
+                @click.stop="removeAffectedSystem(sys)"
+              >
+                ×
+              </button>
+            </span>
+            <input
+              ref="affectedSystemsInputRef"
+              v-model="affectedSystemsTagInput"
+              class="flex-1 min-w-[10rem] bg-transparent outline-none text-sm"
+              placeholder="Add system and press Enter…"
+              @keydown.enter.prevent="addAffectedSystem"
+              @keydown="onAffectedSystemsKeydown"
+              @keydown.backspace="onAffectedSystemsBackspace"
+            />
+          </div>
+          <p class="field-hint">Press Enter or comma to add each system.</p>
         </div>
 
         <!-- Description -->
@@ -278,8 +303,37 @@ const form = reactive({
   scheduledStartTime: "",
   scheduledEndDate: "",
   scheduledEndTime: "",
-  affectedSystemsInput: "",
+  affectedSystems: [] as string[],
 });
+
+// ── Affected systems tag input ────────────────────────────────────────────
+const affectedSystemsInputRef = ref<HTMLInputElement | null>(null);
+const affectedSystemsTagInput = ref("");
+
+function addAffectedSystem() {
+  const val = affectedSystemsTagInput.value.replace(/,/g, "").trim();
+  if (val && !form.affectedSystems.includes(val)) {
+    form.affectedSystems.push(val);
+  }
+  affectedSystemsTagInput.value = "";
+}
+
+function removeAffectedSystem(sys: string) {
+  form.affectedSystems = form.affectedSystems.filter((s) => s !== sys);
+}
+
+function onAffectedSystemsKeydown(e: KeyboardEvent) {
+  if (e.key === ",") {
+    e.preventDefault();
+    addAffectedSystem();
+  }
+}
+
+function onAffectedSystemsBackspace() {
+  if (!affectedSystemsTagInput.value && form.affectedSystems.length) {
+    form.affectedSystems.pop();
+  }
+}
 
 // ── Category combobox ─────────────────────────────────────────────────────
 const allCategories = ref<string[]>([]);
@@ -467,10 +521,7 @@ async function createChangeRequest() {
           form.scheduledEndDate,
           form.scheduledEndTime,
         )?.toISOString() ?? null,
-      affectedSystems: form.affectedSystemsInput
-        .split(",")
-        .map((v) => v.trim())
-        .filter(Boolean),
+      affectedSystems: form.affectedSystems,
     };
     const created = await create(payload);
     await navigateTo(`/change-requests/${created.id}`);

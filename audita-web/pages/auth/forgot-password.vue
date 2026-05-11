@@ -33,13 +33,14 @@
         />
       </div>
 
-      <button
+      <SharedAppButton
         type="submit"
-        class="btn-primary btn-lg w-full"
-        :disabled="isLoading"
+        size="lg"
+        class="w-full"
+        :loading="isLoading"
       >
-        {{ isLoading ? "Sending…" : "Send Reset Link" }}
-      </button>
+        Send Reset Link
+      </SharedAppButton>
     </form>
 
     <div class="mt-6 text-center">

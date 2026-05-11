@@ -22,7 +22,7 @@ withDefaults(
     :type="type"
     :disabled="disabled || loading"
     :class="[
-      'inline-flex items-center justify-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded',
+      'inline-flex items-center justify-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
       {
         // Variants
         'bg-primary text-white hover:bg-primary-dark active:bg-primary-dark':
@@ -33,10 +33,10 @@ withDefaults(
           variant === 'ghost',
         'bg-danger text-white hover:bg-red-600 active:bg-red-700':
           variant === 'danger',
-        // Sizes
-        'h-7 px-3 text-xs gap-1.5': size === 'sm',
-        'h-9 px-4 text-sm gap-2': size === 'md',
-        'h-11 px-6 text-base gap-2.5': size === 'lg',
+        // Sizes (include rounding per tier)
+        'h-7 px-3 text-xs gap-1.5 rounded-md': size === 'sm',
+        'h-9 px-4 text-sm gap-2 rounded-lg': size === 'md',
+        'h-11 px-6 text-base gap-2.5 rounded-xl': size === 'lg',
       },
     ]"
   >

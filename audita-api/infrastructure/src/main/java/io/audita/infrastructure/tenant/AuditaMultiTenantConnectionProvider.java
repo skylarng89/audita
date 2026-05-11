@@ -10,15 +10,17 @@ import java.sql.Statement;
 import java.util.regex.Pattern;
 
 /**
- * Switches the PostgreSQL schema for each Hibernate connection based on the resolved tenant.
- * Uses SET search_path so every query targets the correct tenant schema automatically.
+ * Switches the PostgreSQL schema for each Hibernate connection based on the
+ * resolved tenant.
+ * Uses SET search_path so every query targets the correct tenant schema
+ * automatically.
  */
 @Component
 public class AuditaMultiTenantConnectionProvider implements MultiTenantConnectionProvider<String> {
 
     private static final Pattern TENANT_SCHEMA_PATTERN = Pattern.compile("^[a-z0-9-]{1,100}$");
 
-    private final DataSource dataSource;
+    private final transient DataSource dataSource;
 
     public AuditaMultiTenantConnectionProvider(DataSource dataSource) {
         this.dataSource = dataSource;

@@ -2,6 +2,14 @@
 @import "tailwindcss";
 
 @layer base {
+  /* Sidebar width token — toggled by AppSidebar.vue via data attribute */
+  :root {
+    --sidebar-w: 14rem;
+  }
+  :root[data-sidebar-collapsed] {
+    --sidebar-w: 3.5rem;
+  }
+
   html {
     @apply text-[#191c1e] bg-[#f7f9fb] antialiased;
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -212,6 +220,27 @@
         hover:bg-surface-container hover:text-on-surface dark:hover:bg-slate-800 dark:hover:text-gray-100
         bg-primary/10 text-primary border-l-[3px] border-primary pl-[9px]
            dark:bg-primary/20 dark:text-primary-fixed;
+  }
+
+  /* Collapsed icon-only rail variants */
+  .sidebar-link-rail {
+    @apply flex items-center justify-center rounded-lg w-10 h-10 mx-auto
+           text-on-surface-variant hover:bg-surface-container hover:text-on-surface
+           transition-colors dark:hover:bg-slate-800 dark:hover:text-gray-100;
+  }
+
+  .sidebar-link-rail-active {
+    @apply flex items-center justify-center rounded-lg w-10 h-10 mx-auto
+           bg-primary/10 text-primary transition-colors
+           hover:bg-surface-container hover:text-on-surface
+           dark:bg-primary/20 dark:text-primary-fixed dark:hover:bg-slate-800;
+  }
+
+  /* Sidebar-aware main content — margin follows --sidebar-w at md+ */
+  @media (min-width: 768px) {
+    .sidebar-main {
+      margin-left: var(--sidebar-w, 14rem);
+    }
   }
 
   /* ── Table ──────────────────────────────────────────────────────────────── */

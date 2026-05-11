@@ -176,13 +176,14 @@
           </p>
         </div>
 
-        <button
+        <SharedAppButton
           type="submit"
-          class="btn-primary btn-lg w-full"
-          :disabled="isLoading"
+          size="lg"
+          class="w-full"
+          :loading="isLoading"
         >
-          {{ isLoading ? "Resetting…" : "Reset Password →" }}
-        </button>
+          Reset Password &rarr;
+        </SharedAppButton>
       </form>
     </div>
 

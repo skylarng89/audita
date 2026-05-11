@@ -6,6 +6,8 @@ import io.audita.api.security.UserPrincipal;
 import io.audita.infrastructure.security.JwtService;
 import io.audita.infrastructure.service.NotificationService;
 import io.jsonwebtoken.Claims;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,7 +31,7 @@ public class NotificationController {
     private final JwtService jwtService;
 
     public NotificationController(NotificationService notificationService,
-                                  JwtService jwtService) {
+            JwtService jwtService) {
         this.notificationService = notificationService;
         this.jwtService = jwtService;
     }
@@ -46,15 +48,15 @@ public class NotificationController {
                 .toList();
         long unread = notificationService.unreadCount(principal.userId());
 
-        return ResponseEntity.ok()
-                .header("X-Unread-Count", String.valueOf(unread))
-                .body(items);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Unread-Count", String.valueOf(unread));
+        return new ResponseEntity<>(items, headers, HttpStatus.OK);
     }
 
     @PatchMapping("/{id}/read")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> markRead(@PathVariable UUID id,
-                                         @AuthenticationPrincipal UserPrincipal principal) {
+            @AuthenticationPrincipal UserPrincipal principal) {
         notificationService.markRead(principal.userId(), id);
         return ResponseEntity.noContent().build();
     }
@@ -68,7 +70,7 @@ public class NotificationController {
 
     @GetMapping("/stream")
     public SseEmitter stream(@AuthenticationPrincipal UserPrincipal principal,
-                             @RequestParam(required = false) String streamToken) {
+            @RequestParam(required = false) String streamToken) {
         UUID userId = resolveUserId(principal, streamToken);
         return notificationService.subscribe(userId);
     }

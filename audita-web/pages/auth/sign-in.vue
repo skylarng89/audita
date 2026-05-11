@@ -129,14 +129,14 @@
       </div>
 
       <!-- Submit -->
-      <button
+      <SharedAppButton
         type="submit"
-        class="btn-primary btn-lg w-full rounded-xl"
-        :disabled="isLoading"
+        size="lg"
+        class="w-full"
+        :loading="isLoading"
       >
-        <span v-if="isLoading">Signing in…</span>
-        <span v-else>Sign In &rarr;</span>
-      </button>
+        Sign In &rarr;
+      </SharedAppButton>
     </form>
 
     <!-- SSO divider -->
