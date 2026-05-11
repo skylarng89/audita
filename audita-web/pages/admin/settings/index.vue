@@ -474,6 +474,12 @@
 
 <script setup lang="ts">
 import type { CustomFieldDefinition } from "~/types";
+import {
+  buildSettingsPatchPayload,
+  createSettingsSnapshot,
+  isSettingsDirty,
+  validateSlaDefaults,
+} from "~/composables/adminSettingsForm";
 
 definePageMeta({ layout: "default" });
 
@@ -545,11 +551,11 @@ const settings = reactive({
 });
 
 const isDirty = computed(() => {
-  const current = JSON.stringify({
-    workflowDefaults: settings.workflowDefaults,
-    slaDefaults: settings.slaDefaults,
-  });
-  return current !== settingsSnapshot.value;
+  return isSettingsDirty(
+    settingsSnapshot.value,
+    settings.workflowDefaults,
+    settings.slaDefaults,
+  );
 });
 
 async function loadSettings() {
@@ -584,10 +590,10 @@ async function loadSettings() {
     settings.slaDefaults.criticalHours = response.slaDefaults.criticalHours;
     settings.slaDefaults.warningBeforeHours =
       response.slaDefaults.warningBeforeHours;
-    settingsSnapshot.value = JSON.stringify({
-      workflowDefaults: settings.workflowDefaults,
-      slaDefaults: settings.slaDefaults,
-    });
+    settingsSnapshot.value = createSettingsSnapshot(
+      settings.workflowDefaults,
+      settings.slaDefaults,
+    );
   } catch {
     errorMessage.value = "Unable to load settings right now.";
     toastError("Failed to load organization settings.");
@@ -601,14 +607,9 @@ async function saveSettings() {
     return;
   }
 
-  const minDeadline = Math.min(
-    settings.slaDefaults.lowHours,
-    settings.slaDefaults.mediumHours,
-    settings.slaDefaults.highHours,
-    settings.slaDefaults.criticalHours,
-  );
-  if (settings.slaDefaults.warningBeforeHours >= minDeadline) {
-    toastError("Warning hours must be less than all SLA deadline values.");
+  const slaValidationError = validateSlaDefaults(settings.slaDefaults);
+  if (slaValidationError) {
+    toastError(slaValidationError);
     return;
   }
 
@@ -617,15 +618,15 @@ async function saveSettings() {
   try {
     await api<TenantAdminSettingsResponse>("/api/v1/settings", {
       method: "PATCH",
-      body: {
-        workflowDefaults: settings.workflowDefaults,
-        slaDefaults: settings.slaDefaults,
-      },
+      body: buildSettingsPatchPayload(
+        settings.workflowDefaults,
+        settings.slaDefaults,
+      ),
     });
-    settingsSnapshot.value = JSON.stringify({
-      workflowDefaults: settings.workflowDefaults,
-      slaDefaults: settings.slaDefaults,
-    });
+    settingsSnapshot.value = createSettingsSnapshot(
+      settings.workflowDefaults,
+      settings.slaDefaults,
+    );
   } catch {
     errorMessage.value = "Unable to save settings right now.";
     toastError("Failed to save organization settings.");
