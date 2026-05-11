@@ -25,7 +25,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -54,10 +54,11 @@ class ChangeRequestServiceSecurityTest {
         ChangeRequestEntity changeRequest = buildDraftChangeRequest(ownerId);
         when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
 
-        assertThatThrownBy(() -> tryUnauthorizedUpdate(changeRequestId, otherRequesterId))
-                .isInstanceOf(DomainNotPermittedException.class)
-                .extracting(ex -> ((DomainNotPermittedException) ex).getErrorCode())
-                .isEqualTo("FORBIDDEN");
+        DomainNotPermittedException ex = assertThrows(
+            DomainNotPermittedException.class,
+            () -> tryUnauthorizedUpdate(changeRequestId, otherRequesterId)
+        );
+        assertThat(ex.getErrorCode()).isEqualTo("FORBIDDEN");
 
         verifyNoInteractions(activityStreamRepository);
         verify(changeRequestRepository).findById(changeRequestId);
@@ -89,10 +90,11 @@ class ChangeRequestServiceSecurityTest {
         ChangeRequestEntity changeRequest = buildDraftChangeRequest(ownerId);
         when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
 
-        assertThatThrownBy(() -> changeRequestService.submit(changeRequestId, otherRequesterId, "REQUESTER"))
-                .isInstanceOf(DomainNotPermittedException.class)
-                .extracting(ex -> ((DomainNotPermittedException) ex).getErrorCode())
-                .isEqualTo("FORBIDDEN");
+        DomainNotPermittedException ex = assertThrows(
+            DomainNotPermittedException.class,
+            () -> changeRequestService.submit(changeRequestId, otherRequesterId, "REQUESTER")
+        );
+        assertThat(ex.getErrorCode()).isEqualTo("FORBIDDEN");
 
         verifyNoInteractions(activityStreamRepository);
         verify(changeRequestRepository).findById(changeRequestId);
