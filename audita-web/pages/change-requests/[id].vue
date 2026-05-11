@@ -144,38 +144,41 @@
             <!-- Scheduled Start -->
             <div>
               <label class="field-label">Scheduled Start</label>
-              <div class="mt-1 grid grid-cols-2 gap-2">
-                <input
-                  v-model="editForm.scheduledStartDate"
-                  type="date"
-                  class="input"
-                  @change="onEditStartChange"
+              <ClientOnly>
+                <VueDatePicker
+                  v-model="editForm.scheduledStart"
+                  class="mt-1"
+                  :enable-time-picker="true"
+                  :flow="['calendar', 'time']"
+                  :is24="true"
+                  placeholder="Select date and time"
+                  format="MMM d, yyyy HH:mm"
+                  auto-apply
+                  teleport="body"
+                  :dark="isDark"
+                  @update:model-value="onEditStartChange"
                 />
-                <input
-                  v-model="editForm.scheduledStartTime"
-                  type="time"
-                  class="input"
-                  @change="onEditStartChange"
-                />
-              </div>
+              </ClientOnly>
             </div>
 
             <!-- Scheduled End -->
             <div>
               <label class="field-label">Scheduled End</label>
-              <div class="mt-1 grid grid-cols-2 gap-2">
-                <input
-                  v-model="editForm.scheduledEndDate"
-                  type="date"
-                  :min="editForm.scheduledStartDate || undefined"
-                  class="input"
+              <ClientOnly>
+                <VueDatePicker
+                  v-model="editForm.scheduledEnd"
+                  class="mt-1"
+                  :enable-time-picker="true"
+                  :flow="['calendar', 'time']"
+                  :is24="true"
+                  placeholder="Select date and time"
+                  :min-date="editForm.scheduledStart ?? undefined"
+                  format="MMM d, yyyy HH:mm"
+                  auto-apply
+                  teleport="body"
+                  :dark="isDark"
                 />
-                <input
-                  v-model="editForm.scheduledEndTime"
-                  type="time"
-                  class="input"
-                />
-              </div>
+              </ClientOnly>
             </div>
 
             <!-- Affected Systems -->
@@ -664,10 +667,8 @@ const editForm = reactive({
   riskLevel: "",
   approvalType: "",
   category: "",
-  scheduledStartDate: "",
-  scheduledStartTime: "",
-  scheduledEndDate: "",
-  scheduledEndTime: "",
+  scheduledStart: null as Date | null,
+  scheduledEnd: null as Date | null,
   affectedSystemsInput: "",
 });
 
@@ -681,34 +682,16 @@ const editEditor = useEditor({
   },
 });
 
-function splitDatetime(iso: string | null): { date: string; time: string } {
-  if (!iso) return { date: "", time: "" };
-  const d = new Date(iso);
-  const date = d.toLocaleDateString("en-CA"); // YYYY-MM-DD in local time
-  const time = d.toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }); // HH:mm
-  return { date, time };
-}
-
-function combineEditDatetime(date: string, time: string): string | null {
-  if (!date) return null;
-  return new Date(`${date}T${time || "00:00"}`).toISOString();
-}
+// ── Dark mode detection for VueDatePicker ──────────────────────────────────
+const isDark = ref(false);
 
 function onEditStartChange() {
-  const start = combineEditDatetime(
-    editForm.scheduledStartDate,
-    editForm.scheduledStartTime,
-  );
-  const end = combineEditDatetime(
-    editForm.scheduledEndDate,
-    editForm.scheduledEndTime,
-  );
-  if (start && end && new Date(end) <= new Date(start)) {
-    editForm.scheduledEndDate = "";
-    editForm.scheduledEndTime = "";
+  if (
+    editForm.scheduledStart &&
+    editForm.scheduledEnd &&
+    editForm.scheduledEnd <= editForm.scheduledStart
+  ) {
+    editForm.scheduledEnd = null;
   }
 }
 
@@ -720,12 +703,10 @@ function enterEditMode() {
   editForm.riskLevel = cr.riskLevel;
   editForm.approvalType = cr.approvalType;
   editForm.category = cr.category ?? "";
-  const start = splitDatetime(cr.scheduledStart);
-  const end = splitDatetime(cr.scheduledEnd);
-  editForm.scheduledStartDate = start.date;
-  editForm.scheduledStartTime = start.time;
-  editForm.scheduledEndDate = end.date;
-  editForm.scheduledEndTime = end.time;
+  editForm.scheduledStart = cr.scheduledStart
+    ? new Date(cr.scheduledStart)
+    : null;
+  editForm.scheduledEnd = cr.scheduledEnd ? new Date(cr.scheduledEnd) : null;
   editForm.affectedSystemsInput = cr.affectedSystems.join(", ");
   editEditor.value?.commands.setContent(cr.description ?? "");
   isEditing.value = true;
@@ -749,14 +730,8 @@ async function saveEditAction() {
       riskLevel: editForm.riskLevel,
       approvalType: editForm.approvalType,
       category: editForm.category.trim() || null,
-      scheduledStart: combineEditDatetime(
-        editForm.scheduledStartDate,
-        editForm.scheduledStartTime,
-      ),
-      scheduledEnd: combineEditDatetime(
-        editForm.scheduledEndDate,
-        editForm.scheduledEndTime,
-      ),
+      scheduledStart: editForm.scheduledStart?.toISOString() ?? null,
+      scheduledEnd: editForm.scheduledEnd?.toISOString() ?? null,
       affectedSystems: editForm.affectedSystemsInput
         .split(",")
         .map((v) => v.trim())
@@ -979,7 +954,18 @@ async function postCommentAction() {
   activity.value = await listActivity(id.value);
 }
 
-onMounted(loadAll);
+onMounted(() => {
+  isDark.value = document.documentElement.classList.contains("dark");
+  const darkObserver = new MutationObserver(() => {
+    isDark.value = document.documentElement.classList.contains("dark");
+  });
+  darkObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
+  onUnmounted(() => darkObserver.disconnect());
+  loadAll();
+});
 
 onBeforeUnmount(() => {
   editEditor.value?.destroy();
