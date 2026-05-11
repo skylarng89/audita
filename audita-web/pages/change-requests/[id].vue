@@ -144,41 +144,56 @@
             <!-- Scheduled Start -->
             <div>
               <label class="field-label">Scheduled Start</label>
-              <ClientOnly>
-                <VueDatePicker
-                  v-model="editForm.scheduledStart"
-                  class="mt-1"
-                  :enable-time-picker="true"
-                  :flow="['calendar', 'time']"
-                  :is24="true"
-                  placeholder="Select date and time"
-                  format="MMM d, yyyy HH:mm"
-                  auto-apply
-                  teleport="body"
-                  :dark="isDark"
-                  @update:model-value="onEditStartChange"
-                />
-              </ClientOnly>
+              <div class="mt-1 grid grid-cols-2 gap-2">
+                <ClientOnly>
+                  <VueDatePicker
+                    v-model="editForm.scheduledStartDate"
+                    :enable-time-picker="false"
+                    placeholder="Date"
+                    format="MMM d, yyyy"
+                    auto-apply
+                    teleport="body"
+                    :dark="isDark"
+                    @update:model-value="onEditStartChange"
+                  />
+                </ClientOnly>
+                <ClientOnly>
+                  <VueDatePicker
+                    v-model="editForm.scheduledStartTime"
+                    time-picker
+                    placeholder="Time"
+                    :dark="isDark"
+                    @update:model-value="onEditStartChange"
+                  />
+                </ClientOnly>
+              </div>
             </div>
 
             <!-- Scheduled End -->
             <div>
               <label class="field-label">Scheduled End</label>
-              <ClientOnly>
-                <VueDatePicker
-                  v-model="editForm.scheduledEnd"
-                  class="mt-1"
-                  :enable-time-picker="true"
-                  :flow="['calendar', 'time']"
-                  :is24="true"
-                  placeholder="Select date and time"
-                  :min-date="editForm.scheduledStart ?? undefined"
-                  format="MMM d, yyyy HH:mm"
-                  auto-apply
-                  teleport="body"
-                  :dark="isDark"
-                />
-              </ClientOnly>
+              <div class="mt-1 grid grid-cols-2 gap-2">
+                <ClientOnly>
+                  <VueDatePicker
+                    v-model="editForm.scheduledEndDate"
+                    :enable-time-picker="false"
+                    placeholder="Date"
+                    :min-date="editForm.scheduledStartDate ?? undefined"
+                    format="MMM d, yyyy"
+                    auto-apply
+                    teleport="body"
+                    :dark="isDark"
+                  />
+                </ClientOnly>
+                <ClientOnly>
+                  <VueDatePicker
+                    v-model="editForm.scheduledEndTime"
+                    time-picker
+                    placeholder="Time"
+                    :dark="isDark"
+                  />
+                </ClientOnly>
+              </div>
             </div>
 
             <!-- Affected Systems -->
@@ -667,8 +682,10 @@ const editForm = reactive({
   riskLevel: "",
   approvalType: "",
   category: "",
-  scheduledStart: null as Date | null,
-  scheduledEnd: null as Date | null,
+  scheduledStartDate: null as Date | null,
+  scheduledStartTime: null as { hours: number; minutes: number } | null,
+  scheduledEndDate: null as Date | null,
+  scheduledEndTime: null as { hours: number; minutes: number } | null,
   affectedSystemsInput: "",
 });
 
@@ -685,13 +702,28 @@ const editEditor = useEditor({
 // ── Dark mode detection for VueDatePicker ──────────────────────────────────
 const isDark = ref(false);
 
+function combineParts(
+  date: Date | null,
+  time: { hours: number; minutes: number } | null,
+): Date | null {
+  if (!date) return null;
+  const result = new Date(date);
+  result.setHours(time?.hours ?? 0, time?.minutes ?? 0, 0, 0);
+  return result;
+}
+
 function onEditStartChange() {
-  if (
-    editForm.scheduledStart &&
-    editForm.scheduledEnd &&
-    editForm.scheduledEnd <= editForm.scheduledStart
-  ) {
-    editForm.scheduledEnd = null;
+  const start = combineParts(
+    editForm.scheduledStartDate,
+    editForm.scheduledStartTime,
+  );
+  const end = combineParts(
+    editForm.scheduledEndDate,
+    editForm.scheduledEndTime,
+  );
+  if (start && end && end <= start) {
+    editForm.scheduledEndDate = null;
+    editForm.scheduledEndTime = null;
   }
 }
 
@@ -703,10 +735,36 @@ function enterEditMode() {
   editForm.riskLevel = cr.riskLevel;
   editForm.approvalType = cr.approvalType;
   editForm.category = cr.category ?? "";
-  editForm.scheduledStart = cr.scheduledStart
-    ? new Date(cr.scheduledStart)
-    : null;
-  editForm.scheduledEnd = cr.scheduledEnd ? new Date(cr.scheduledEnd) : null;
+  if (cr.scheduledStart) {
+    const s = new Date(cr.scheduledStart);
+    editForm.scheduledStartDate = new Date(
+      s.getFullYear(),
+      s.getMonth(),
+      s.getDate(),
+    );
+    editForm.scheduledStartTime = {
+      hours: s.getHours(),
+      minutes: s.getMinutes(),
+    };
+  } else {
+    editForm.scheduledStartDate = null;
+    editForm.scheduledStartTime = null;
+  }
+  if (cr.scheduledEnd) {
+    const e = new Date(cr.scheduledEnd);
+    editForm.scheduledEndDate = new Date(
+      e.getFullYear(),
+      e.getMonth(),
+      e.getDate(),
+    );
+    editForm.scheduledEndTime = {
+      hours: e.getHours(),
+      minutes: e.getMinutes(),
+    };
+  } else {
+    editForm.scheduledEndDate = null;
+    editForm.scheduledEndTime = null;
+  }
   editForm.affectedSystemsInput = cr.affectedSystems.join(", ");
   editEditor.value?.commands.setContent(cr.description ?? "");
   isEditing.value = true;
@@ -730,8 +788,16 @@ async function saveEditAction() {
       riskLevel: editForm.riskLevel,
       approvalType: editForm.approvalType,
       category: editForm.category.trim() || null,
-      scheduledStart: editForm.scheduledStart?.toISOString() ?? null,
-      scheduledEnd: editForm.scheduledEnd?.toISOString() ?? null,
+      scheduledStart:
+        combineParts(
+          editForm.scheduledStartDate,
+          editForm.scheduledStartTime,
+        )?.toISOString() ?? null,
+      scheduledEnd:
+        combineParts(
+          editForm.scheduledEndDate,
+          editForm.scheduledEndTime,
+        )?.toISOString() ?? null,
       affectedSystems: editForm.affectedSystemsInput
         .split(",")
         .map((v) => v.trim())
