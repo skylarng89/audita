@@ -1,0 +1,4 @@
+{
+    "sonarQubeUri": "http://localhost:7040",
+    "projectKey": "audita-api"
+}
