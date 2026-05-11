@@ -103,5 +103,4 @@
 ### Next Steps
 
 1. Add service/integration tests for settings persistence edge cases and tenant-scope guarantees.
-2. Add runtime SLA integration tests to confirm configured values drive CR deadlines/warnings.
-3. Add UI interaction tests for dirty-state/save/reset behavior on admin settings page.
+2. Add UI interaction tests for dirty-state/save/reset behavior on admin settings page.
