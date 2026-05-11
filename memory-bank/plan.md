@@ -103,3 +103,29 @@
 ### Next Steps
 
 1. Sprint 8 settings activation scope is complete. Start Sprint 9 prioritization (roles CRUD, SLA policy admin page, and group default approvers).
+
+## Sprint 9 — CR List Scalability Follow-Up (2026-05-11)
+
+### Sprint 9 Objectives
+
+1. Ensure change-request list performance remains stable as dataset volume grows.
+2. Bound per-request payload size while keeping explicit page navigation controls.
+
+### Sprint 9 Work Items
+
+- CR-LIST-001: Paginate `/change-requests` with max 50 per page and pagination buttons. ✅ (Completed 2026-05-11)
+
+### Completed in this session
+
+- Updated `audita-web/pages/change-requests/index.vue` to request `size=50`.
+- Implemented explicit previous/next pagination buttons with page-index navigation.
+- Preserved filter-driven reload behavior and total-count visibility.
+
+### Verification (completed)
+
+- `cd audita-web && pnpm -s nuxi typecheck`
+- `cd audita-web && pnpm test -- --runInBand`
+
+### Next Steps
+
+1. Optionally add direct page-number buttons if users need quicker jumps across large result sets.

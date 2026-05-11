@@ -169,6 +169,16 @@
 - SET-003 | Read SLA defaults at runtime in CR creation and SLA monitor | Priority: High | Status: ✅ Completed | Assigned To: Developer 1 | Notes: Added runtime tests in `ChangeRequestServiceSecurityTest` and `SlaMonitoringServiceTest` to verify configured SLA hours and warning window behavior.
 - SET-004 | Add regression tests for tenant settings GET/PATCH | Priority: High | Status: ✅ Completed | Assigned To: Developer 1 | Notes: Added `TenantSettingsControllerWebMvcTest` and `TenantServiceSettingsTest` covering defaults, malformed persisted values, and settings write assertions.
 
+## Sprint 9: Change Request List Scalability (2026-05-11)
+
+> **Goal:** Improve CR list performance and usability for larger datasets with bounded page size and explicit page navigation.
+
+### Frontend — CR List Pagination (`audita-web`)
+
+| Task ID     | Task                                                                          | Priority | Status       | Assigned To | Notes                                                                                                                                             |
+| ----------- | ----------------------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CR-LIST-001 | Paginate `/change-requests` with max 50 items per page and pagination buttons | High     | ✅ Completed | Developer 2 | Updated `pages/change-requests/index.vue` to fetch `size=50`, use previous/next page buttons, preserve filter behavior, and keep totals accurate. |
+
 ---
 
 ## Progress Tracking
@@ -185,7 +195,8 @@
 | Sprint 5  | 5           | 0           | 0           | 5         | 100%       |
 | Sprint 7  | 8           | 0           | 0           | 8         | 100%       |
 | Sprint 8  | 4           | 0           | 0           | 4         | 100%       |
-| **TOTAL** | **108**     | **0**       | **0**       | **108**   | **100%**   |
+| Sprint 9  | 1           | 0           | 0           | 1         | 100%       |
+| **TOTAL** | **109**     | **0**       | **0**       | **109**   | **100%**   |
 
 ---
 
@@ -222,6 +233,22 @@
 **Additional Verification (2026-05-11 continuation 2)**: `TenantServiceSettingsTest` passes with tenant settings default/malformed-value/write-path assertions.
 
 **Additional Verification (2026-05-11 continuation 3)**: `tests/admin/settings-form.spec.ts` passes; frontend test suite and Nuxt typecheck pass after extracting admin settings interaction logic to a reusable module.
+
+### Sprint 9 — Change Requests Pagination (Completed 2026-05-11)
+
+**Overview**: Scaled the change request list to fetch 50 records per page and use explicit previous/next pagination controls for predictable navigation across large datasets.
+
+**Files Created/Modified**:
+
+- `audita-web/pages/change-requests/index.vue` — switched to `size=50` with page-by-page previous/next controls and loading-state-safe navigation
+
+**Key Changes**:
+
+- Restored explicit page navigation buttons while preserving server-side filtering and sort.
+- Added explicit `PAGE_SIZE = 50` boundary in the page query contract.
+- Preserved accurate total/count display for each server-returned page.
+
+**Test Coverage**: `cd audita-web && pnpm -s nuxi typecheck && pnpm test -- --runInBand` passes.
 
 ### Sprint 7 — VueDatePicker Replaced with Native Inputs (Completed 2026-05-11)
 

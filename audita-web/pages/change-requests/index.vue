@@ -90,12 +90,12 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-if="isLoading">
+          <tr v-if="isLoading && !crs.length">
             <td colspan="6" class="px-4 py-12 text-center text-sm text-muted">
               Loading…
             </td>
           </tr>
-          <tr v-else-if="!crs.length">
+          <tr v-else-if="!isLoading && !crs.length">
             <td colspan="6" class="px-4 py-12 text-center text-sm text-muted">
               No change requests found.
             </td>
@@ -146,7 +146,7 @@
       <!-- Pagination -->
       <div
         v-if="page && page.totalPages > 1"
-        class="px-4 py-3 border-t border-border dark:border-border-dark flex items-center justify-between"
+        class="px-4 py-3 border-t border-border dark:border-border-dark flex items-center justify-between gap-3"
       >
         <p class="text-xs text-muted">
           Showing {{ page.number * page.size + 1 }}–{{
@@ -154,20 +154,20 @@
           }}
           of {{ page.totalElements }} entries
         </p>
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-2">
           <button
             @click="setPage(currentPage - 1)"
-            :disabled="currentPage === 0"
+            :disabled="currentPage === 0 || isLoading"
             class="btn-ghost btn-sm px-2"
           >
             &lsaquo;
           </button>
-          <span class="text-xs text-muted px-2"
+          <span class="text-xs text-muted"
             >Page {{ currentPage + 1 }} of {{ page.totalPages }}</span
           >
           <button
             @click="setPage(currentPage + 1)"
-            :disabled="currentPage >= page.totalPages - 1"
+            :disabled="currentPage >= page.totalPages - 1 || isLoading"
             class="btn-ghost btn-sm px-2"
           >
             &rsaquo;
@@ -185,6 +185,7 @@ import { format, parseISO } from "date-fns";
 definePageMeta({ middleware: "auth" });
 
 const { list } = useChangeRequests();
+const PAGE_SIZE = 50;
 
 const filters = reactive({ status: "", priority: "" });
 const currentPage = ref(0);
@@ -192,24 +193,33 @@ const isLoading = ref(false);
 const page = ref<Page<ChangeRequest> | null>(null);
 const crs = computed(() => page.value?.content ?? []);
 
-async function load() {
+async function fetchPage(pageIndex: number) {
   isLoading.value = true;
   try {
-    page.value = await list({
+    const nextPage = await list({
       status: filters.status || undefined,
       priority: filters.priority || undefined,
-      page: currentPage.value,
-      size: 15,
+      page: pageIndex,
+      size: PAGE_SIZE,
       sort: "createdAt,desc",
     });
+
+    page.value = nextPage;
+    currentPage.value = pageIndex;
   } finally {
     isLoading.value = false;
   }
 }
 
+function load() {
+  return fetchPage(0);
+}
+
 function setPage(p: number) {
-  currentPage.value = p;
-  load();
+  if (!page.value || p < 0 || p >= page.value.totalPages || isLoading.value) {
+    return;
+  }
+  return fetchPage(p);
 }
 
 function formatDate(iso: string) {
