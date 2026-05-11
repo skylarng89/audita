@@ -365,32 +365,34 @@
 
       <div class="card p-5 md:col-span-2">
         <h3 class="font-semibold mb-3">Attachments</h3>
-        <div
-          class="border-2 border-dashed border-border dark:border-border-dark rounded-lg p-6 text-center"
-          @dragover.prevent
-          @drop.prevent="onDropUpload"
-        >
-          <p class="text-sm text-muted">
-            Drag and drop files here, or choose a file.
-          </p>
-          <input
-            ref="fileInput"
-            class="hidden"
-            type="file"
-            accept=".png,.jpg,.jpeg,.docx,.xlsx,.pdf"
-            @change="onSelectUpload"
-          />
-          <button
-            class="btn-ghost btn-md mt-3"
-            :disabled="isUploading"
-            @click="fileInput?.click()"
+        <template v-if="changeRequest.status === 'DRAFT'">
+          <div
+            class="border-2 border-dashed border-border dark:border-border-dark rounded-lg p-6 text-center"
+            @dragover.prevent
+            @drop.prevent="onDropUpload"
           >
-            {{ isUploading ? "Uploading…" : "Select File" }}
-          </button>
-          <p v-if="uploadError" class="mt-2 text-xs text-danger">
-            {{ uploadError }}
-          </p>
-        </div>
+            <p class="text-sm text-muted">
+              Drag and drop files here, or choose a file.
+            </p>
+            <input
+              ref="fileInput"
+              class="hidden"
+              type="file"
+              accept=".png,.jpg,.jpeg,.docx,.xlsx,.pdf"
+              @change="onSelectUpload"
+            />
+            <button
+              class="btn-ghost btn-md mt-3"
+              :disabled="isUploading"
+              @click="fileInput?.click()"
+            >
+              {{ isUploading ? "Uploading…" : "Select File" }}
+            </button>
+            <p v-if="uploadError" class="mt-2 text-xs text-danger">
+              {{ uploadError }}
+            </p>
+          </div>
+        </template>
 
         <div class="mt-4 space-y-2">
           <div
