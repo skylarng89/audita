@@ -276,22 +276,3 @@
     font-family: inherit;
   }
 }
-
-/* ── VueDatePicker: time picker beside the calendar ───────────────────────── */
-/* Grid layout: calendar content in col-1, time picker in col-2               */
-.dp__instance_calendar {
-  display: grid !important;
-  grid-template-columns: 1fr auto;
-}
-
-/* Time picker spans all rows so it sits to the right of both the header and  */
-/* the day grid instead of stacking below.                                     */
-.dp__time_picker_inline_container {
-  grid-column: 2;
-  grid-row: 1 / -1;
-  border-left: 1px solid var(--dp-border-color);
-  padding: 0.5rem 0.25rem;
-  display: flex !important;
-  align-items: center;
-  width: auto !important;
-}

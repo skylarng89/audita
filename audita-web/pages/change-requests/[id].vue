@@ -144,39 +144,38 @@
             <!-- Scheduled Start -->
             <div>
               <label class="field-label">Scheduled Start</label>
-              <ClientOnly>
-                <VueDatePicker
-                  v-model="editForm.scheduledStart"
-                  class="mt-1"
-                  :enable-time-picker="true"
-                  :is24="false"
-                  time-picker-inline
-                  placeholder="Select date and time"
-                  format="MMM d, yyyy h:mm aa"
-                  auto-apply
-                  teleport="body"
-                  @update:model-value="onEditStartChange"
+              <div class="mt-1 grid grid-cols-2 gap-2">
+                <input
+                  v-model="editForm.scheduledStartDate"
+                  type="date"
+                  class="input"
+                  @change="onEditStartChange"
                 />
-              </ClientOnly>
+                <input
+                  v-model="editForm.scheduledStartTime"
+                  type="time"
+                  class="input"
+                  @change="onEditStartChange"
+                />
+              </div>
             </div>
 
             <!-- Scheduled End -->
             <div>
               <label class="field-label">Scheduled End</label>
-              <ClientOnly>
-                <VueDatePicker
-                  v-model="editForm.scheduledEnd"
-                  class="mt-1"
-                  :enable-time-picker="true"
-                  :is24="false"
-                  time-picker-inline
-                  placeholder="Select date and time"
-                  :min-date="editForm.scheduledStart ?? new Date()"
-                  format="MMM d, yyyy h:mm aa"
-                  auto-apply
-                  teleport="body"
+              <div class="mt-1 grid grid-cols-2 gap-2">
+                <input
+                  v-model="editForm.scheduledEndDate"
+                  type="date"
+                  :min="editForm.scheduledStartDate || undefined"
+                  class="input"
                 />
-              </ClientOnly>
+                <input
+                  v-model="editForm.scheduledEndTime"
+                  type="time"
+                  class="input"
+                />
+              </div>
             </div>
 
             <!-- Affected Systems -->
@@ -665,8 +664,10 @@ const editForm = reactive({
   riskLevel: "",
   approvalType: "",
   category: "",
-  scheduledStart: null as Date | null,
-  scheduledEnd: null as Date | null,
+  scheduledStartDate: "",
+  scheduledStartTime: "",
+  scheduledEndDate: "",
+  scheduledEndTime: "",
   affectedSystemsInput: "",
 });
 
@@ -680,9 +681,34 @@ const editEditor = useEditor({
   },
 });
 
-function onEditStartChange(val: Date | null) {
-  if (val && editForm.scheduledEnd && editForm.scheduledEnd <= val) {
-    editForm.scheduledEnd = null;
+function splitDatetime(iso: string | null): { date: string; time: string } {
+  if (!iso) return { date: "", time: "" };
+  const d = new Date(iso);
+  const date = d.toLocaleDateString("en-CA"); // YYYY-MM-DD in local time
+  const time = d.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }); // HH:mm
+  return { date, time };
+}
+
+function combineEditDatetime(date: string, time: string): string | null {
+  if (!date) return null;
+  return new Date(`${date}T${time || "00:00"}`).toISOString();
+}
+
+function onEditStartChange() {
+  const start = combineEditDatetime(
+    editForm.scheduledStartDate,
+    editForm.scheduledStartTime,
+  );
+  const end = combineEditDatetime(
+    editForm.scheduledEndDate,
+    editForm.scheduledEndTime,
+  );
+  if (start && end && new Date(end) <= new Date(start)) {
+    editForm.scheduledEndDate = "";
+    editForm.scheduledEndTime = "";
   }
 }
 
@@ -694,10 +720,12 @@ function enterEditMode() {
   editForm.riskLevel = cr.riskLevel;
   editForm.approvalType = cr.approvalType;
   editForm.category = cr.category ?? "";
-  editForm.scheduledStart = cr.scheduledStart
-    ? new Date(cr.scheduledStart)
-    : null;
-  editForm.scheduledEnd = cr.scheduledEnd ? new Date(cr.scheduledEnd) : null;
+  const start = splitDatetime(cr.scheduledStart);
+  const end = splitDatetime(cr.scheduledEnd);
+  editForm.scheduledStartDate = start.date;
+  editForm.scheduledStartTime = start.time;
+  editForm.scheduledEndDate = end.date;
+  editForm.scheduledEndTime = end.time;
   editForm.affectedSystemsInput = cr.affectedSystems.join(", ");
   editEditor.value?.commands.setContent(cr.description ?? "");
   isEditing.value = true;
@@ -721,12 +749,14 @@ async function saveEditAction() {
       riskLevel: editForm.riskLevel,
       approvalType: editForm.approvalType,
       category: editForm.category.trim() || null,
-      scheduledStart: editForm.scheduledStart
-        ? editForm.scheduledStart.toISOString()
-        : null,
-      scheduledEnd: editForm.scheduledEnd
-        ? editForm.scheduledEnd.toISOString()
-        : null,
+      scheduledStart: combineEditDatetime(
+        editForm.scheduledStartDate,
+        editForm.scheduledStartTime,
+      ),
+      scheduledEnd: combineEditDatetime(
+        editForm.scheduledEndDate,
+        editForm.scheduledEndTime,
+      ),
       affectedSystems: editForm.affectedSystemsInput
         .split(",")
         .map((v) => v.trim())

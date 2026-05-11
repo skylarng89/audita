@@ -168,21 +168,20 @@
         <!-- Scheduled Start -->
         <div>
           <label class="field-label">Scheduled Start</label>
-          <ClientOnly>
-            <VueDatePicker
-              v-model="form.scheduledStart"
-              class="mt-1"
-              :enable-time-picker="true"
-              :is24="false"
-              time-picker-inline
-              placeholder="Select date and time"
-              :min-date="new Date()"
-              format="MMM d, yyyy h:mm aa"
-              auto-apply
-              teleport="body"
-              @update:model-value="onStartDateChange"
+          <div class="mt-1 grid grid-cols-2 gap-2">
+            <input
+              v-model="form.scheduledStartDate"
+              type="date"
+              class="input"
+              @change="onStartChange"
             />
-          </ClientOnly>
+            <input
+              v-model="form.scheduledStartTime"
+              type="time"
+              class="input"
+              @change="onStartChange"
+            />
+          </div>
           <p v-if="errors.scheduledStart" class="field-error">
             {{ errors.scheduledStart }}
           </p>
@@ -191,21 +190,21 @@
         <!-- Scheduled End -->
         <div>
           <label class="field-label">Scheduled End</label>
-          <ClientOnly>
-            <VueDatePicker
-              v-model="form.scheduledEnd"
-              class="mt-1"
-              :enable-time-picker="true"
-              :is24="false"
-              time-picker-inline
-              placeholder="Select date and time"
-              :min-date="form.scheduledStart ?? new Date()"
-              format="MMM d, yyyy h:mm aa"
-              auto-apply
-              teleport="body"
-              @update:model-value="touch('scheduledEnd')"
+          <div class="mt-1 grid grid-cols-2 gap-2">
+            <input
+              v-model="form.scheduledEndDate"
+              type="date"
+              :min="form.scheduledStartDate || undefined"
+              class="input"
+              @change="touch('scheduledEnd')"
             />
-          </ClientOnly>
+            <input
+              v-model="form.scheduledEndTime"
+              type="time"
+              class="input"
+              @change="touch('scheduledEnd')"
+            />
+          </div>
           <p v-if="errors.scheduledEnd" class="field-error">
             {{ errors.scheduledEnd }}
           </p>
@@ -277,8 +276,10 @@ const form = reactive({
   riskLevel: "" as string,
   approvalType: "" as string,
   categories: [] as string[],
-  scheduledStart: null as Date | null,
-  scheduledEnd: null as Date | null,
+  scheduledStartDate: "",
+  scheduledStartTime: "",
+  scheduledEndDate: "",
+  scheduledEndTime: "",
   affectedSystemsInput: "",
 });
 
@@ -371,35 +372,38 @@ function validateField(field: string) {
         : "Approval type is required.";
       break;
     case "scheduledStart":
-      if (
-        form.scheduledEnd &&
-        form.scheduledStart &&
-        form.scheduledStart >= form.scheduledEnd
-      ) {
+    case "scheduledEnd": {
+      const start = combineDatetime(
+        form.scheduledStartDate,
+        form.scheduledStartTime,
+      );
+      const end = combineDatetime(form.scheduledEndDate, form.scheduledEndTime);
+      if (start && end && end <= start) {
         errors.scheduledEnd = "End must be after the start date.";
       } else {
         errors.scheduledEnd = "";
       }
       errors.scheduledStart = "";
       break;
-    case "scheduledEnd":
-      if (
-        form.scheduledEnd &&
-        form.scheduledStart &&
-        form.scheduledEnd <= form.scheduledStart
-      ) {
-        errors.scheduledEnd = "End must be after the start date.";
-      } else {
-        errors.scheduledEnd = "";
-      }
-      break;
+    }
   }
 }
 
-function onStartDateChange(val: Date | null) {
-  // If end is now before new start, clear end to force re-selection
-  if (val && form.scheduledEnd && form.scheduledEnd <= val) {
-    form.scheduledEnd = null;
+function combineDatetime(date: string, time: string): Date | null {
+  if (!date) return null;
+  return new Date(`${date}T${time || "00:00"}`);
+}
+
+function onStartChange() {
+  // If end date is before new start, clear the end date
+  const start = combineDatetime(
+    form.scheduledStartDate,
+    form.scheduledStartTime,
+  );
+  const end = combineDatetime(form.scheduledEndDate, form.scheduledEndTime);
+  if (start && end && end <= start) {
+    form.scheduledEndDate = "";
+    form.scheduledEndTime = "";
     errors.scheduledEnd = "End must be after the start date.";
   }
   touch("scheduledStart");
@@ -428,10 +432,16 @@ async function createChangeRequest() {
       riskLevel: form.riskLevel,
       approvalType: form.approvalType,
       category: form.categories.length ? form.categories.join(", ") : null,
-      scheduledStart: form.scheduledStart
-        ? form.scheduledStart.toISOString()
-        : null,
-      scheduledEnd: form.scheduledEnd ? form.scheduledEnd.toISOString() : null,
+      scheduledStart:
+        combineDatetime(
+          form.scheduledStartDate,
+          form.scheduledStartTime,
+        )?.toISOString() ?? null,
+      scheduledEnd:
+        combineDatetime(
+          form.scheduledEndDate,
+          form.scheduledEndTime,
+        )?.toISOString() ?? null,
       affectedSystems: form.affectedSystemsInput
         .split(",")
         .map((v) => v.trim())
