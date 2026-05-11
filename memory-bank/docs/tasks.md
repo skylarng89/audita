@@ -158,6 +158,17 @@
 | CR-031  | Replace VueDatePicker with native date/time inputs in Create CR   | High     | ✅ Completed | Developer 2 | `new.vue`: 4 native inputs, `colorScheme` dark mode, `combineParts(string, string)`, state types `""` not null                                                                  |
 | CR-032  | Replace VueDatePicker with native date/time inputs in CR Edit     | High     | ✅ Completed | Developer 2 | `[id].vue`: same as CR-031 + `enterEditMode` serialises `"HH:mm"` strings; plugin + CSS removed                                                                                 |
 
+## Sprint 8: Admin Settings Activation & SLA Defaults (2026-05-11)
+
+> **Goal:** Activate editable tenant admin settings for workflow/SLA defaults and wire runtime SLA behavior to persisted tenant-level settings.
+
+### Backend + Frontend Settings Slice (`audita-api` + `audita-web`)
+
+- SET-001 | Add persisted workflow/SLA defaults to tenant settings API | Priority: High | Status: ✅ Completed | Assigned To: Developer 1 | Notes: Added `PATCH /api/v1/settings`, `org_settings` persistence entity/repository, expanded response contract, and validation guard for warning/deadline ratio.
+- SET-002 | Activate admin settings UI save flow for workflow/SLA defaults | Priority: High | Status: 🟡 In Progress | Assigned To: Developer 2 | Notes: `pages/admin/settings/index.vue` now editable and PATCH-wired; pending page interaction tests and UX polish feedback messages.
+- SET-003 | Read SLA defaults at runtime in CR creation and SLA monitor | Priority: High | Status: 🟡 In Progress | Assigned To: Developer 1 | Notes: `ChangeRequestService` and `SlaMonitoringService` now resolve settings from `org_settings`; pending integration coverage for custom-value behavior.
+- SET-004 | Add regression tests for tenant settings GET/PATCH | Priority: High | Status: 🟡 In Progress | Assigned To: Developer 1 | Notes: Added `TenantSettingsControllerWebMvcTest`; pending service/integration tests for persistence edge cases and tenant scope assertions.
+
 ---
 
 ## Progress Tracking
@@ -173,11 +184,38 @@
 | Sprint 4  | 10          | 0           | 0           | 10        | 100%       |
 | Sprint 5  | 5           | 0           | 0           | 5         | 100%       |
 | Sprint 7  | 8           | 0           | 0           | 8         | 100%       |
-| **TOTAL** | **104**     | **0**       | **0**       | **104**   | **100%**   |
+| Sprint 8  | 4           | 0           | 3           | 1         | 25%        |
+| **TOTAL** | **108**     | **0**       | **3**       | **105**   | **97%**    |
 
 ---
 
 ## Recent Implementations
+
+### Sprint 8 — Workflow/SLA Settings Activation (In Progress 2026-05-11)
+
+**Overview**: Started Sprint 8 with a vertical settings slice: workflow and SLA defaults are now editable in Admin Settings, persisted in tenant scope, and consumed by SLA runtime calculations.
+
+**Files Created/Modified**:
+
+- `audita-api/application/src/main/java/io/audita/application/port/TenantSettingsPort.java` — added settings aggregate + workflow/sla records + update contracts
+- `audita-api/api/src/main/java/io/audita/api/controller/TenantSettingsController.java` — added `PATCH /api/v1/settings` and workflow/sla mapping in GET
+- `audita-api/api/src/main/java/io/audita/api/dto/request/PatchTenantAdminSettingsRequest.java` — request validation contract
+- `audita-api/api/src/main/java/io/audita/api/dto/response/TenantAdminSettingsResponse.java` — workflow/sla defaults in response model
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/entity/OrgSettingEntity.java` — `org_settings` entity mapping
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/repository/OrgSettingRepository.java` — key-value settings repository
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/TenantService.java` — settings persistence/read implementation with safe defaults
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — SLA deadline hours resolved from `org_settings`
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/SlaMonitoringService.java` — warning window resolved from `org_settings`
+- `audita-api/api/src/test/java/io/audita/api/controller/TenantSettingsControllerWebMvcTest.java` — GET/PATCH + validation regression tests
+- `audita-web/pages/admin/settings/index.vue` — editable workflow/sla controls + dirty-state + save flow
+
+**Key Changes**:
+
+- Admin settings are no longer read-only for workflow and SLA defaults.
+- SLA warning threshold is validated against configured deadline windows.
+- Runtime SLA calculations now honor tenant-configured values when present.
+
+**Test Coverage**: `TenantSettingsControllerWebMvcTest` passes; backend compile passes; frontend `nuxi typecheck` passes.
 
 ### Sprint 7 — VueDatePicker Replaced with Native Inputs (Completed 2026-05-11)
 

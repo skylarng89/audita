@@ -68,3 +68,40 @@
 - FE-TAIL-002: Convert Tailwind config entrypoint to v4-compatible setup (`tailwind.config.js` + CSS `@config`/`@import`). ✅
 - FE-TAIL-003: Refactor custom CSS component layer to remove unsupported Tailwind v4 custom-class `@apply` chaining. ✅
 - FE-TAIL-004: Re-verify frontend quality gates after migration (`pnpm test`, `pnpm -s nuxi typecheck`, `pnpm build`). ✅
+
+## Sprint 8 — Admin Settings Activation & SLA Defaults (2026-05-11)
+
+### Sprint 8 Objectives
+
+1. Replace read-only admin workflow/SLA placeholders with persistent tenant-scoped settings.
+2. Use configured SLA defaults at runtime for CR deadlines and warning windows.
+3. Add regression coverage for settings contract and validation rules.
+
+### Sprint 8 Work Items
+
+- SET-001: Add persisted workflow/SLA defaults to tenant settings API. ✅ (Completed 2026-05-11)
+- SET-002: Activate admin settings UI save flow for workflow/SLA defaults. 🟡 (In progress)
+- SET-003: Read SLA defaults at runtime in CR creation and SLA monitor. 🟡 (In progress)
+- SET-004: Add regression tests for tenant settings GET/PATCH + runtime effects. 🟡 (In progress)
+
+### Completed in this session
+
+- Added `PATCH /api/v1/settings` with nested workflow/sla validation contract.
+- Added `OrgSettingEntity` + `OrgSettingRepository` backed by existing `org_settings` table.
+- Extended `TenantSettingsPort` and implemented tenant-scoped read/write defaults in `TenantService`.
+- Expanded `TenantAdminSettingsResponse` with `workflowDefaults` and `slaDefaults`.
+- Replaced hard-coded SLA values in `ChangeRequestService` and warning window in `SlaMonitoringService` with tenant settings lookups (with safe defaults).
+- Enabled admin workflow/SLA editing + save flow in `audita-web/pages/admin/settings/index.vue`.
+- Added `TenantSettingsControllerWebMvcTest` for GET/PATCH success and validation failure paths.
+
+### Verification (completed)
+
+- `cd audita-api && ./gradlew :api:test --tests "io.audita.api.controller.TenantSettingsControllerWebMvcTest" --no-daemon`
+- `cd audita-api && ./gradlew :api:compileJava :infrastructure:compileJava --no-daemon`
+- `cd audita-web && pnpm -s nuxi typecheck`
+
+### Next Steps
+
+1. Add service/integration tests for settings persistence edge cases and tenant-scope guarantees.
+2. Add runtime SLA integration tests to confirm configured values drive CR deadlines/warnings.
+3. Add UI interaction tests for dirty-state/save/reset behavior on admin settings page.

@@ -1,8 +1,8 @@
 # Audita — Active Context
 
 **Last Updated:** 2026-05-11
-**Current Phase:** Active development — Sprint 7 in progress
-**Active Sprint:** Sprint 7
+**Current Phase:** Active development — Sprint 8 in progress
+**Active Sprint:** Sprint 8
 
 ---
 
@@ -18,6 +18,7 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 
 - **Sprint 6 complete (Audit Trail & Admin Configuration).** Global audit trail (paginated query + CSV export), admin custom fields CRUD, `AuditLogService` wired into `ChangeRequestService` for all CR state transitions. 90/90 tests passing. TypeScript typecheck clean.
 - **Sprint 7 complete (2026-05-11).** Three-layer file upload validation (magic bytes + extension + MIME; `.env` allowlist), filename normalization, path traversal guard. Custom fields 400 fix (definition-driven pattern). New `/admin/custom-fields` CRUD page + admin sidebar link. CR detail redesigned: read-only default, DRAFT-gated Edit mode with TipTap, custom fields in edit form, `onBeforeUnmount` cleanup. VueDatePicker fully removed from Create CR and CR Edit pages — replaced with native `<input type="date">` + `<input type="time">` fields with `colorScheme` dark mode styling; `vue-datepicker.client.ts` plugin deleted; `.dp__*` CSS override block removed from `main.css`. TypeScript typecheck: exit 0.
+- **Sprint 8 started (2026-05-11).** Workflow/SLA admin settings activation slice implemented: new `PATCH /api/v1/settings`, `org_settings` persistence entity/repository, expanded settings response, workflow/sla editing enabled in Admin Settings UI, SLA runtime lookups switched from hard-coded values to tenant settings where configured, and controller regression tests added.
 - **Docker environment fully operational (2026-05-08).** Resolved three issues: (1) Hibernate dialect deprecation warning removed; (2) mail health indicator disabled so SMTP auth failure doesn't block container health; (3) CI workflow upgraded to pnpm v10 to match local lockfile format.
 - **Sprint 0 complete (19/19 tasks).** Both repositories are scaffolded and runnable via Docker Compose.
 - **Sprint 1 complete (22/22 tasks).** Full authentication stack: JWT + refresh tokens, SSO (Google/Microsoft), domain whitelist, rate limiting, 18 unit tests passing.
