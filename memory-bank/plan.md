@@ -102,4 +102,4 @@
 
 ### Next Steps
 
-1. Add UI interaction tests for dirty-state/save/reset behavior on admin settings page.
+1. Sprint 8 settings activation scope is complete. Start Sprint 9 prioritization (roles CRUD, SLA policy admin page, and group default approvers).
