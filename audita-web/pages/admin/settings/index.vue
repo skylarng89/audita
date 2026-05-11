@@ -13,8 +13,13 @@
           policy.
         </p>
       </div>
-      <button type="button" class="btn-primary btn-sm" disabled>
-        Save Changes
+      <button
+        type="button"
+        class="btn-primary btn-sm"
+        :disabled="!isDirty || savingSettings"
+        @click="saveSettings"
+      >
+        {{ savingSettings ? "Saving..." : "Save Changes" }}
       </button>
     </div>
 
@@ -170,6 +175,102 @@
           <p class="mt-1 text-sm font-semibold">
             {{ settings.securityDefaults.passwordPolicy }}
           </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card p-5 shadow-card-hover">
+      <h2 class="text-lg font-semibold">Workflow Defaults</h2>
+      <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div>
+          <label class="field-label" for="approval-type-default"
+            >Default Approval Type</label
+          >
+          <select
+            id="approval-type-default"
+            v-model="settings.workflowDefaults.approvalTypeDefault"
+            class="input"
+          >
+            <option value="LINEAR">Linear</option>
+            <option value="NON_LINEAR">Non-linear</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2 pt-7">
+          <input
+            id="require-default-approvers"
+            v-model="settings.workflowDefaults.requireDefaultApprovers"
+            type="checkbox"
+            class="rounded border-border"
+          />
+          <label for="require-default-approvers" class="text-sm"
+            >Require default approvers on new change requests</label
+          >
+        </div>
+      </div>
+    </section>
+
+    <section class="card p-5 shadow-card-hover">
+      <h2 class="text-lg font-semibold">SLA Defaults</h2>
+      <p class="text-sm text-muted mt-1">
+        Configure default SLA deadlines per priority and warning threshold.
+      </p>
+      <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div>
+          <label class="field-label" for="sla-low">Low (hours)</label>
+          <input
+            id="sla-low"
+            v-model.number="settings.slaDefaults.lowHours"
+            type="number"
+            min="1"
+            max="720"
+            class="input"
+          />
+        </div>
+        <div>
+          <label class="field-label" for="sla-medium">Medium (hours)</label>
+          <input
+            id="sla-medium"
+            v-model.number="settings.slaDefaults.mediumHours"
+            type="number"
+            min="1"
+            max="720"
+            class="input"
+          />
+        </div>
+        <div>
+          <label class="field-label" for="sla-high">High (hours)</label>
+          <input
+            id="sla-high"
+            v-model.number="settings.slaDefaults.highHours"
+            type="number"
+            min="1"
+            max="720"
+            class="input"
+          />
+        </div>
+        <div>
+          <label class="field-label" for="sla-critical">Critical (hours)</label>
+          <input
+            id="sla-critical"
+            v-model.number="settings.slaDefaults.criticalHours"
+            type="number"
+            min="1"
+            max="720"
+            class="input"
+          />
+        </div>
+        <div>
+          <label class="field-label" for="sla-warning"
+            >Warning Before (hours)</label
+          >
+          <input
+            id="sla-warning"
+            v-model.number="settings.slaDefaults.warningBeforeHours"
+            type="number"
+            min="1"
+            max="168"
+            class="input"
+          />
         </div>
       </div>
     </section>
@@ -397,10 +498,23 @@ interface TenantAdminSettingsResponse {
     mfaPolicy: string;
     passwordPolicy: string;
   };
+  workflowDefaults: {
+    approvalTypeDefault: "LINEAR" | "NON_LINEAR";
+    requireDefaultApprovers: boolean;
+  };
+  slaDefaults: {
+    lowHours: number;
+    mediumHours: number;
+    highHours: number;
+    criticalHours: number;
+    warningBeforeHours: number;
+  };
 }
 
 const pending = ref(false);
 const errorMessage = ref("");
+const savingSettings = ref(false);
+const settingsSnapshot = ref("");
 
 const settings = reactive({
   name: "",
@@ -417,6 +531,25 @@ const settings = reactive({
     mfaPolicy: "Not configured",
     passwordPolicy: "Not configured",
   },
+  workflowDefaults: {
+    approvalTypeDefault: "LINEAR" as "LINEAR" | "NON_LINEAR",
+    requireDefaultApprovers: true,
+  },
+  slaDefaults: {
+    lowHours: 72,
+    mediumHours: 48,
+    highHours: 24,
+    criticalHours: 8,
+    warningBeforeHours: 1,
+  },
+});
+
+const isDirty = computed(() => {
+  const current = JSON.stringify({
+    workflowDefaults: settings.workflowDefaults,
+    slaDefaults: settings.slaDefaults,
+  });
+  return current !== settingsSnapshot.value;
 });
 
 async function loadSettings() {
@@ -441,11 +574,63 @@ async function loadSettings() {
     settings.securityDefaults.mfaPolicy = response.securityDefaults.mfaPolicy;
     settings.securityDefaults.passwordPolicy =
       response.securityDefaults.passwordPolicy;
+    settings.workflowDefaults.approvalTypeDefault =
+      response.workflowDefaults.approvalTypeDefault;
+    settings.workflowDefaults.requireDefaultApprovers =
+      response.workflowDefaults.requireDefaultApprovers;
+    settings.slaDefaults.lowHours = response.slaDefaults.lowHours;
+    settings.slaDefaults.mediumHours = response.slaDefaults.mediumHours;
+    settings.slaDefaults.highHours = response.slaDefaults.highHours;
+    settings.slaDefaults.criticalHours = response.slaDefaults.criticalHours;
+    settings.slaDefaults.warningBeforeHours =
+      response.slaDefaults.warningBeforeHours;
+    settingsSnapshot.value = JSON.stringify({
+      workflowDefaults: settings.workflowDefaults,
+      slaDefaults: settings.slaDefaults,
+    });
   } catch {
     errorMessage.value = "Unable to load settings right now.";
     toastError("Failed to load organization settings.");
   } finally {
     pending.value = false;
+  }
+}
+
+async function saveSettings() {
+  if (!isDirty.value) {
+    return;
+  }
+
+  const minDeadline = Math.min(
+    settings.slaDefaults.lowHours,
+    settings.slaDefaults.mediumHours,
+    settings.slaDefaults.highHours,
+    settings.slaDefaults.criticalHours,
+  );
+  if (settings.slaDefaults.warningBeforeHours >= minDeadline) {
+    toastError("Warning hours must be less than all SLA deadline values.");
+    return;
+  }
+
+  savingSettings.value = true;
+  errorMessage.value = "";
+  try {
+    await api<TenantAdminSettingsResponse>("/api/v1/settings", {
+      method: "PATCH",
+      body: {
+        workflowDefaults: settings.workflowDefaults,
+        slaDefaults: settings.slaDefaults,
+      },
+    });
+    settingsSnapshot.value = JSON.stringify({
+      workflowDefaults: settings.workflowDefaults,
+      slaDefaults: settings.slaDefaults,
+    });
+  } catch {
+    errorMessage.value = "Unable to save settings right now.";
+    toastError("Failed to save organization settings.");
+  } finally {
+    savingSettings.value = false;
   }
 }
 
