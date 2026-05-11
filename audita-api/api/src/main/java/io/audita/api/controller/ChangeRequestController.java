@@ -118,6 +118,12 @@ public class ChangeRequestController {
         );
     }
 
+    @GetMapping("/categories")
+    @PreAuthorize("isAuthenticated()")
+    public List<String> listCategories() {
+        return changeRequestService.listCategories();
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ChangeRequestResponse get(@PathVariable UUID id,

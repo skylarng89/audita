@@ -155,6 +155,8 @@
 | Task ID | Task                                                              | Priority | Status       | Assigned To | Notes                                                                                                                                                                           |
 | ------- | ----------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | CR-030  | Redesign CR detail page to read-only default with gated Edit mode | High     | ✅ Completed | Developer 2 | Edit button visible only for DRAFT; form covers all CR fields + TipTap + custom fields; Save calls update() + saveCustomFields() atomically; `onBeforeUnmount` cleans up editor |
+| CR-031  | Replace VueDatePicker with native date/time inputs in Create CR   | High     | ✅ Completed | Developer 2 | `new.vue`: 4 native inputs, `colorScheme` dark mode, `combineParts(string, string)`, state types `""` not null                                                                  |
+| CR-032  | Replace VueDatePicker with native date/time inputs in CR Edit     | High     | ✅ Completed | Developer 2 | `[id].vue`: same as CR-031 + `enterEditMode` serialises `"HH:mm"` strings; plugin + CSS removed                                                                                 |
 
 ---
 
@@ -170,12 +172,31 @@
 | Sprint 3  | 21          | 0           | 0           | 21        | 100%       |
 | Sprint 4  | 10          | 0           | 0           | 10        | 100%       |
 | Sprint 5  | 5           | 0           | 0           | 5         | 100%       |
-| Sprint 7  | 6           | 0           | 0           | 6         | 100%       |
-| **TOTAL** | **102**     | **0**       | **0**       | **102**   | **100%**   |
+| Sprint 7  | 8           | 0           | 0           | 8         | 100%       |
+| **TOTAL** | **104**     | **0**       | **0**       | **104**   | **100%**   |
 
 ---
 
 ## Recent Implementations
+
+### Sprint 7 — VueDatePicker Replaced with Native Inputs (Completed 2026-05-11)
+
+**Overview**: Resolved persistent time-leaks-into-date-field bug by replacing VueDatePicker with native browser date/time inputs across both Create CR and CR Edit pages.
+
+**Files Created/Modified**:
+
+- `audita-web/pages/change-requests/new.vue` — 4 `<VueDatePicker>` → 4 `<input type="date/time">`; state `""` not null; `combineParts(string, string)`
+- `audita-web/pages/change-requests/[id].vue` — same + `enterEditMode` time as `"HH:mm"` strings
+- `audita-web/plugins/vue-datepicker.client.ts` — deleted
+- `audita-web/assets/css/main.css` — `.dp__*` override block removed
+
+**Key Changes**:
+
+- Native `<input type="date">` and `<input type="time">` are architecturally incapable of mixing date/time concerns — VueDatePicker's internal `Date` model was the root cause.
+- Dark mode handled via `:style="{ colorScheme: isDark ? 'dark' : 'light' }"`.
+- `isDark` ref + MutationObserver kept in both pages for the new style binding.
+
+**Test Coverage**: `pnpm exec vue-tsc --noEmit` exits 0. Docker rebuilt and deployed.
 
 ### Sprint 7 — File Security, Custom Fields UX & CR Edit Mode (Completed 2026-05-11)
 

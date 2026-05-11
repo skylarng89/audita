@@ -2,17 +2,19 @@
 
 ## [0.1.0] — Unreleased (In Development)
 
-### Added (Sprint 7 — File Security, Custom Fields UX & CR Edit Mode — 2026-05-11)
+### Added (Sprint 7 — File Security, Custom Fields UX, CR Edit Mode & Date Picker Replacement — 2026-05-11)
 
 - **3-layer file upload type enforcement**: `UPLOAD_ALLOWED_MIME_TYPES` / `UPLOAD_MAX_SIZE_BYTES` in `.env`; backend `isAllowedMimeType()`, `isExtensionAllowed()`, `isSignatureValid()` (magic bytes for PDF/PNG/JPEG/DOCX/XLSX) in `ChangeRequestService`; frontend `isFileTypeAllowed()` pre-flight in `[id].vue`. DOCX/XLSX ZIP-format ambiguity disambiguated by extension.
 - **Path traversal guard** in `ChangeRequestService`: `outputPath.normalize()` then `outputPath.startsWith(storageDir)` assertion on every download.
 - **Filename normalization**: `normalizeFileName()` helper — lowercase stem and extension, non-alphanumeric runs → single hyphen, strip leading/trailing hyphens. Original display name preserved in DB; normalized name used on disk.
 - **Admin Custom Fields dedicated page** (`audita-web/pages/admin/custom-fields/index.vue`): full CRUD for global field definitions (TEXT / NUMBER / DATE / DROPDOWN / CHECKBOX). Admin-only sidebar link added to `AppSidebar.vue`.
 - **CR detail read-only mode**: page is read-only by default; Edit button visible only when status is `DRAFT`. Edit mode renders full form (all CR fields + TipTap description editor + custom fields inputs). Save calls `update()` + `saveCustomFields()` atomically; Cancel discards. Workflow actions (Submit/Cancel/Approve/Reject) live in read-only view only. Attachments always visible. `onBeforeUnmount` cleans up TipTap editor.
+- **Native date/time inputs in Create CR and CR Edit pages**: VueDatePicker fully replaced with `<input type="date">` + `<input type="time">` in both `new.vue` and `[id].vue`. Dark mode via `:style="{ colorScheme: isDark ? 'dark' : 'light' }"`. `combineParts()` updated to accept `string` time values. Plugin `vue-datepicker.client.ts` deleted. `.dp__*` CSS override block removed from `main.css`.
 
 ### Fixed (Sprint 7 — 2026-05-11)
 
 - **Custom fields 400**: empty `fieldId` string sent to `@NotNull UUID` backend field. Fixed by removing add-row pattern; fields are now driven by definitions (always valid UUID keys).
+- **Time leaking into date-only picker display**: VueDatePicker stores a full `Date` object internally regardless of `model-type` — display logic always includes time. Resolved by replacing VueDatePicker with native browser inputs.
 
 ### Fixed (Docker Environment & CI — 2026-05-08)
 

@@ -144,21 +144,42 @@
             <!-- Scheduled Start -->
             <div>
               <label class="field-label">Scheduled Start</label>
-              <input
-                v-model="editForm.scheduledStart"
-                type="datetime-local"
-                class="input mt-1"
-              />
+              <div class="mt-1 grid grid-cols-2 gap-2">
+                <input
+                  v-model="editForm.scheduledStartDate"
+                  type="date"
+                  class="input"
+                  :style="{ colorScheme: isDark ? 'dark' : 'light' }"
+                  @change="onEditStartChange"
+                />
+                <input
+                  v-model="editForm.scheduledStartTime"
+                  type="time"
+                  class="input"
+                  :style="{ colorScheme: isDark ? 'dark' : 'light' }"
+                  @change="onEditStartChange"
+                />
+              </div>
             </div>
 
             <!-- Scheduled End -->
             <div>
               <label class="field-label">Scheduled End</label>
-              <input
-                v-model="editForm.scheduledEnd"
-                type="datetime-local"
-                class="input mt-1"
-              />
+              <div class="mt-1 grid grid-cols-2 gap-2">
+                <input
+                  v-model="editForm.scheduledEndDate"
+                  type="date"
+                  class="input"
+                  :min="editForm.scheduledStartDate || undefined"
+                  :style="{ colorScheme: isDark ? 'dark' : 'light' }"
+                />
+                <input
+                  v-model="editForm.scheduledEndTime"
+                  type="time"
+                  class="input"
+                  :style="{ colorScheme: isDark ? 'dark' : 'light' }"
+                />
+              </div>
             </div>
 
             <!-- Affected Systems -->
@@ -365,32 +386,34 @@
 
       <div class="card p-5 md:col-span-2">
         <h3 class="font-semibold mb-3">Attachments</h3>
-        <div
-          class="border-2 border-dashed border-border dark:border-border-dark rounded-lg p-6 text-center"
-          @dragover.prevent
-          @drop.prevent="onDropUpload"
-        >
-          <p class="text-sm text-muted">
-            Drag and drop files here, or choose a file.
-          </p>
-          <input
-            ref="fileInput"
-            class="hidden"
-            type="file"
-            accept=".png,.jpg,.jpeg,.docx,.xlsx,.pdf"
-            @change="onSelectUpload"
-          />
-          <button
-            class="btn-ghost btn-md mt-3"
-            :disabled="isUploading"
-            @click="fileInput?.click()"
+        <template v-if="changeRequest.status === 'DRAFT'">
+          <div
+            class="border-2 border-dashed border-border dark:border-border-dark rounded-lg p-6 text-center"
+            @dragover.prevent
+            @drop.prevent="onDropUpload"
           >
-            {{ isUploading ? "Uploading…" : "Select File" }}
-          </button>
-          <p v-if="uploadError" class="mt-2 text-xs text-danger">
-            {{ uploadError }}
-          </p>
-        </div>
+            <p class="text-sm text-muted">
+              Drag and drop files here, or choose a file.
+            </p>
+            <input
+              ref="fileInput"
+              class="hidden"
+              type="file"
+              accept=".png,.jpg,.jpeg,.docx,.xlsx,.pdf"
+              @change="onSelectUpload"
+            />
+            <button
+              class="btn-ghost btn-md mt-3"
+              :disabled="isUploading"
+              @click="fileInput?.click()"
+            >
+              {{ isUploading ? "Uploading…" : "Select File" }}
+            </button>
+            <p v-if="uploadError" class="mt-2 text-xs text-danger">
+              {{ uploadError }}
+            </p>
+          </div>
+        </template>
 
         <div class="mt-4 space-y-2">
           <div
@@ -645,8 +668,10 @@ const editForm = reactive({
   riskLevel: "",
   approvalType: "",
   category: "",
-  scheduledStart: "",
-  scheduledEnd: "",
+  scheduledStartDate: "",
+  scheduledStartTime: "",
+  scheduledEndDate: "",
+  scheduledEndTime: "",
   affectedSystemsInput: "",
 });
 
@@ -660,10 +685,29 @@ const editEditor = useEditor({
   },
 });
 
-function toDatetimeLocal(iso: string | null): string {
-  if (!iso) return "";
-  // datetime-local input expects 'YYYY-MM-DDTHH:mm'
-  return iso.substring(0, 16);
+// ── Dark mode detection for VueDatePicker ──────────────────────────────────
+const isDark = ref(false);
+
+function combineParts(dateStr: string, timeStr: string): Date | null {
+  if (!dateStr) return null;
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const [hours, minutes] = timeStr ? timeStr.split(":").map(Number) : [0, 0];
+  return new Date(year, month - 1, day, hours, minutes, 0, 0);
+}
+
+function onEditStartChange() {
+  const start = combineParts(
+    editForm.scheduledStartDate,
+    editForm.scheduledStartTime,
+  );
+  const end = combineParts(
+    editForm.scheduledEndDate,
+    editForm.scheduledEndTime,
+  );
+  if (start && end && end <= start) {
+    editForm.scheduledEndDate = "";
+    editForm.scheduledEndTime = "";
+  }
 }
 
 function enterEditMode() {
@@ -674,8 +718,22 @@ function enterEditMode() {
   editForm.riskLevel = cr.riskLevel;
   editForm.approvalType = cr.approvalType;
   editForm.category = cr.category ?? "";
-  editForm.scheduledStart = toDatetimeLocal(cr.scheduledStart);
-  editForm.scheduledEnd = toDatetimeLocal(cr.scheduledEnd);
+  if (cr.scheduledStart) {
+    const s = new Date(cr.scheduledStart);
+    editForm.scheduledStartDate = `${s.getFullYear()}-${String(s.getMonth() + 1).padStart(2, "0")}-${String(s.getDate()).padStart(2, "0")}`;
+    editForm.scheduledStartTime = `${String(s.getHours()).padStart(2, "0")}:${String(s.getMinutes()).padStart(2, "0")}`;
+  } else {
+    editForm.scheduledStartDate = "";
+    editForm.scheduledStartTime = "";
+  }
+  if (cr.scheduledEnd) {
+    const e = new Date(cr.scheduledEnd);
+    editForm.scheduledEndDate = `${e.getFullYear()}-${String(e.getMonth() + 1).padStart(2, "0")}-${String(e.getDate()).padStart(2, "0")}`;
+    editForm.scheduledEndTime = `${String(e.getHours()).padStart(2, "0")}:${String(e.getMinutes()).padStart(2, "0")}`;
+  } else {
+    editForm.scheduledEndDate = "";
+    editForm.scheduledEndTime = "";
+  }
   editForm.affectedSystemsInput = cr.affectedSystems.join(", ");
   editEditor.value?.commands.setContent(cr.description ?? "");
   isEditing.value = true;
@@ -699,12 +757,16 @@ async function saveEditAction() {
       riskLevel: editForm.riskLevel,
       approvalType: editForm.approvalType,
       category: editForm.category.trim() || null,
-      scheduledStart: editForm.scheduledStart
-        ? new Date(editForm.scheduledStart).toISOString()
-        : null,
-      scheduledEnd: editForm.scheduledEnd
-        ? new Date(editForm.scheduledEnd).toISOString()
-        : null,
+      scheduledStart:
+        combineParts(
+          editForm.scheduledStartDate,
+          editForm.scheduledStartTime,
+        )?.toISOString() ?? null,
+      scheduledEnd:
+        combineParts(
+          editForm.scheduledEndDate,
+          editForm.scheduledEndTime,
+        )?.toISOString() ?? null,
       affectedSystems: editForm.affectedSystemsInput
         .split(",")
         .map((v) => v.trim())
@@ -927,7 +989,18 @@ async function postCommentAction() {
   activity.value = await listActivity(id.value);
 }
 
-onMounted(loadAll);
+onMounted(() => {
+  isDark.value = document.documentElement.classList.contains("dark");
+  const darkObserver = new MutationObserver(() => {
+    isDark.value = document.documentElement.classList.contains("dark");
+  });
+  darkObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
+  onUnmounted(() => darkObserver.disconnect());
+  loadAll();
+});
 
 onBeforeUnmount(() => {
   editEditor.value?.destroy();
