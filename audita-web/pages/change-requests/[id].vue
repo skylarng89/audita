@@ -149,8 +149,9 @@
                   <VueDatePicker
                     v-model="editForm.scheduledStartDate"
                     :enable-time-picker="false"
+                    model-type="yyyy-MM-dd"
                     placeholder="Date"
-                    :format="formatDateOnly"
+                    format="dd MMM yyyy"
                     auto-apply
                     teleport="body"
                     :dark="isDark"
@@ -177,9 +178,10 @@
                   <VueDatePicker
                     v-model="editForm.scheduledEndDate"
                     :enable-time-picker="false"
+                    model-type="yyyy-MM-dd"
                     placeholder="Date"
                     :min-date="editForm.scheduledStartDate ?? undefined"
-                    :format="formatDateOnly"
+                    format="dd MMM yyyy"
                     auto-apply
                     teleport="body"
                     :dark="isDark"
@@ -682,9 +684,9 @@ const editForm = reactive({
   riskLevel: "",
   approvalType: "",
   category: "",
-  scheduledStartDate: null as Date | null,
+  scheduledStartDate: "" as string,
   scheduledStartTime: null as { hours: number; minutes: number } | null,
-  scheduledEndDate: null as Date | null,
+  scheduledEndDate: "" as string,
   scheduledEndTime: null as { hours: number; minutes: number } | null,
   affectedSystemsInput: "",
 });
@@ -702,22 +704,21 @@ const editEditor = useEditor({
 // ── Dark mode detection for VueDatePicker ──────────────────────────────────
 const isDark = ref(false);
 
-function formatDateOnly(date: Date): string {
-  return date.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 function combineParts(
-  date: Date | null,
+  dateStr: string,
   time: { hours: number; minutes: number } | null,
 ): Date | null {
-  if (!date) return null;
-  const result = new Date(date);
-  result.setHours(time?.hours ?? 0, time?.minutes ?? 0, 0, 0);
-  return result;
+  if (!dateStr) return null;
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(
+    year,
+    month - 1,
+    day,
+    time?.hours ?? 0,
+    time?.minutes ?? 0,
+    0,
+    0,
+  );
 }
 
 function onEditStartChange() {
@@ -730,7 +731,7 @@ function onEditStartChange() {
     editForm.scheduledEndTime,
   );
   if (start && end && end <= start) {
-    editForm.scheduledEndDate = null;
+    editForm.scheduledEndDate = "";
     editForm.scheduledEndTime = null;
   }
 }
@@ -745,32 +746,24 @@ function enterEditMode() {
   editForm.category = cr.category ?? "";
   if (cr.scheduledStart) {
     const s = new Date(cr.scheduledStart);
-    editForm.scheduledStartDate = new Date(
-      s.getFullYear(),
-      s.getMonth(),
-      s.getDate(),
-    );
+    editForm.scheduledStartDate = `${s.getFullYear()}-${String(s.getMonth() + 1).padStart(2, "0")}-${String(s.getDate()).padStart(2, "0")}`;
     editForm.scheduledStartTime = {
       hours: s.getHours(),
       minutes: s.getMinutes(),
     };
   } else {
-    editForm.scheduledStartDate = null;
+    editForm.scheduledStartDate = "";
     editForm.scheduledStartTime = null;
   }
   if (cr.scheduledEnd) {
     const e = new Date(cr.scheduledEnd);
-    editForm.scheduledEndDate = new Date(
-      e.getFullYear(),
-      e.getMonth(),
-      e.getDate(),
-    );
+    editForm.scheduledEndDate = `${e.getFullYear()}-${String(e.getMonth() + 1).padStart(2, "0")}-${String(e.getDate()).padStart(2, "0")}`;
     editForm.scheduledEndTime = {
       hours: e.getHours(),
       minutes: e.getMinutes(),
     };
   } else {
-    editForm.scheduledEndDate = null;
+    editForm.scheduledEndDate = "";
     editForm.scheduledEndTime = null;
   }
   editForm.affectedSystemsInput = cr.affectedSystems.join(", ");

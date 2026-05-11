@@ -173,8 +173,9 @@
               <VueDatePicker
                 v-model="form.scheduledStartDate"
                 :enable-time-picker="false"
+                model-type="yyyy-MM-dd"
                 placeholder="Date"
-                :format="formatDateOnly"
+                format="dd MMM yyyy"
                 auto-apply
                 teleport="body"
                 :dark="isDark"
@@ -204,9 +205,10 @@
               <VueDatePicker
                 v-model="form.scheduledEndDate"
                 :enable-time-picker="false"
+                model-type="yyyy-MM-dd"
                 placeholder="Date"
                 :min-date="form.scheduledStartDate ?? undefined"
-                :format="formatDateOnly"
+                format="dd MMM yyyy"
                 auto-apply
                 teleport="body"
                 :dark="isDark"
@@ -294,9 +296,9 @@ const form = reactive({
   riskLevel: "" as string,
   approvalType: "" as string,
   categories: [] as string[],
-  scheduledStartDate: null as Date | null,
+  scheduledStartDate: "" as string,
   scheduledStartTime: null as { hours: number; minutes: number } | null,
-  scheduledEndDate: null as Date | null,
+  scheduledEndDate: "" as string,
   scheduledEndTime: null as { hours: number; minutes: number } | null,
   affectedSystemsInput: "",
 });
@@ -417,29 +419,28 @@ function validateField(field: string) {
   }
 }
 
-function formatDateOnly(date: Date): string {
-  return date.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 function combineParts(
-  date: Date | null,
+  dateStr: string,
   time: { hours: number; minutes: number } | null,
 ): Date | null {
-  if (!date) return null;
-  const result = new Date(date);
-  result.setHours(time?.hours ?? 0, time?.minutes ?? 0, 0, 0);
-  return result;
+  if (!dateStr) return null;
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(
+    year,
+    month - 1,
+    day,
+    time?.hours ?? 0,
+    time?.minutes ?? 0,
+    0,
+    0,
+  );
 }
 
 function onStartChange() {
   const start = combineParts(form.scheduledStartDate, form.scheduledStartTime);
   const end = combineParts(form.scheduledEndDate, form.scheduledEndTime);
   if (start && end && end <= start) {
-    form.scheduledEndDate = null;
+    form.scheduledEndDate = "";
     form.scheduledEndTime = null;
     errors.scheduledEnd = "End must be after the start date.";
   }
