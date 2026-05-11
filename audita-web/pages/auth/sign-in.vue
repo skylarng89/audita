@@ -128,8 +128,6 @@
         </p>
       </div>
 
-      <!-- Error banner (rendered above is the v-if block before this form) -->
-
       <!-- Submit -->
       <button
         type="submit"

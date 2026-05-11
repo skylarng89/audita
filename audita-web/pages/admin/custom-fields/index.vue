@@ -217,6 +217,8 @@ import type { CustomFieldDefinition } from "~/types";
 
 definePageMeta({ middleware: ["auth", "role"] });
 
+useHead({ title: "Custom Fields — Audita" });
+
 const api = useApi();
 
 const fields = ref<CustomFieldDefinition[]>([]);

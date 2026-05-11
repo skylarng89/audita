@@ -483,6 +483,8 @@ import {
 
 definePageMeta({ layout: "default" });
 
+useHead({ title: "Settings — Audita" });
+
 const api = useApi();
 const { error: toastError } = useToast();
 

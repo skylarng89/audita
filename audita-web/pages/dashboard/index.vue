@@ -191,10 +191,18 @@
               </p>
             </div>
             <div v-if="auth.canApprove" class="flex gap-2 shrink-0">
-              <button class="btn-secondary btn-sm" @click="rejectCr(cr.id)">
+              <button
+                class="btn-secondary btn-sm"
+                :aria-label="`Decline change request: ${cr.title}`"
+                @click="rejectCr(cr.id)"
+              >
                 Decline
               </button>
-              <button class="btn-primary btn-sm" @click="approveCr(cr.id)">
+              <button
+                class="btn-primary btn-sm"
+                :aria-label="`Approve change request: ${cr.title}`"
+                @click="approveCr(cr.id)"
+              >
                 Approve
               </button>
             </div>
@@ -237,6 +245,8 @@ import type { ChangeRequest, Notification } from "~/types";
 import { formatDistanceToNow, parseISO } from "date-fns";
 
 definePageMeta({ middleware: "auth" });
+
+useHead({ title: "Dashboard — Audita" });
 
 const api = useApi();
 const auth = useAuthStore();

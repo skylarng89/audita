@@ -136,6 +136,8 @@ import type { AuditLogEntry, Page } from "~/types";
 
 definePageMeta({ layout: "default" });
 
+useHead({ title: "Audit Trail — Audita" });
+
 const api = useApi();
 
 // ── Constants ─────────────────────────────────────────────────────────────────

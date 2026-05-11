@@ -63,6 +63,8 @@
 <script setup lang="ts">
 definePageMeta({ layout: "auth" });
 
+useHead({ title: "Forgot Password — Audita" });
+
 const { forgotPassword } = useAuth();
 const email = ref("");
 const sent = ref(false);

@@ -189,13 +189,13 @@
 
 ### Group A — Navigation & Mobile Responsiveness
 
-| Task ID  | Task                                                          | Priority | Status         | Assigned To | Notes                                                                                                                                                                                                                                                       |
-| -------- | ------------------------------------------------------------- | -------- | -------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UX10-001 | Implement mobile navigation drawer (hamburger menu)           | High     | 🔴 Not Started | Developer 2 | Sidebar is `hidden md:flex` — mobile has zero navigation. Add a slide-in `<nav>` drawer triggered by a hamburger button in the header for `< md` breakpoints. Add backdrop overlay and swipe-to-dismiss.                                                    |
-| UX10-002 | Fix page header layout collapse on small screens              | High     | 🔴 Not Started | Developer 2 | Pages (`/change-requests`, `/change-requests/new`, `/[id]`) use `flex justify-between` for title + action button. On narrow viewports the title and CTA are cramped. Wrap to `flex-col gap-4` below `sm` breakpoint and move the CTA below the title block. |
-| UX10-003 | Collapse sidebar to icon-only rail on `md` breakpoint         | Medium   | 🔴 Not Started | Developer 2 | At `md` breakpoint (768–1024 px) the 224 px sidebar consumes too much horizontal space. Add a collapsed-rail mode (`w-14`, icons only, tooltip on hover) that expands on user toggle, persisted to `localStorage`.                                          |
-| UX10-004 | Make CR list filter bar collapse to "Filters" pill on mobile  | Medium   | 🔴 Not Started | Developer 2 | The filter bar on `/change-requests` wraps uncontrolled on small screens. Replace with a "Filters ▾" pill that opens a bottom-sheet or dropdown containing all filter selects. Show active filter count as a badge on the pill.                             |
-| UX10-005 | Make CR detail page action buttons stack vertically on mobile | Medium   | 🔴 Not Started | Developer 2 | On `/change-requests/[id]` the top-right cluster of badges + Edit/Save/Cancel buttons overflows at `<sm`. Convert to a `flex-wrap` row that stacks cleanly and moves to below the title on small screens.                                                   |
+| Task ID  | Task                                                          | Priority | Status         | Assigned To | Notes                                                                                                                                                                                                                           |
+| -------- | ------------------------------------------------------------- | -------- | -------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UX10-001 | Implement mobile navigation drawer (hamburger menu)           | High     | ✅ Completed   | Developer 2 | Full slide-in `<nav>` drawer added to `layouts/default.vue` with hamburger button, backdrop, `aria-expanded`, Escape close, `aria-current="page"` on active links, and create CTA.                                              |
+| UX10-002 | Fix page header layout collapse on small screens              | High     | ✅ Completed   | Developer 2 | CR list header wraps to `flex-col sm:flex-row` gap at small breakpoint. CR detail action buttons use `flex-wrap`.                                                                                                               |
+| UX10-003 | Collapse sidebar to icon-only rail on `md` breakpoint         | Medium   | 🔴 Not Started | Developer 2 | At `md` breakpoint (768–1024 px) the 224 px sidebar consumes too much horizontal space. Add a collapsed-rail mode (`w-14`, icons only, tooltip on hover) that expands on user toggle, persisted to `localStorage`.              |
+| UX10-004 | Make CR list filter bar collapse to "Filters" pill on mobile  | Medium   | 🔴 Not Started | Developer 2 | The filter bar on `/change-requests` wraps uncontrolled on small screens. Replace with a "Filters ▾" pill that opens a bottom-sheet or dropdown containing all filter selects. Show active filter count as a badge on the pill. |
+| UX10-005 | Make CR detail page action buttons stack vertically on mobile | Medium   | ✅ Completed   | Developer 2 | CR detail top action area uses `flex-wrap` and sticky save bar handles save/cancel at bottom.                                                                                                                                   |
 
 ---
 
@@ -255,6 +255,23 @@
 
 ---
 
+### Group G — WCAG 2.2 Compliance
+
+| Task ID  | Task                                                                                             | Priority | Status         | Assigned To | Notes                                                                                                                                                                                                                                                              |
+| -------- | ------------------------------------------------------------------------------------------------ | -------- | -------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| WCAG-001 | Add skip-to-main-content link at top of default layout (2.4.1)                                   | High     | 🔴 Not Started | Developer 2 | Keyboard users and screen readers cannot skip the 56-px fixed header + sidebar nav. Add a visually-hidden `<a href="#main-content">Skip to main content</a>` that becomes visible on focus.                                                                        |
+| WCAG-002 | Add `<title>` to every page via `useHead` (2.4.2)                                                | High     | 🔴 Not Started | Developer 2 | No page sets a `<title>` tag. All pages show the browser default. Add `useHead({ title: '…' })` to Dashboard, CR list, CR create, CR detail, Audit Trail, Users, Groups, Settings, Auth pages.                                                                     |
+| WCAG-003 | Fix `<label for>` / `<input id>` wiring in CR list filter bar (4.1.2)                            | High     | 🔴 Not Started | Developer 2 | Status and Priority `<label>` elements have no `for` attribute; the selects have no `id`. Clicking the label does not activate the field — fails 4.1.2 Name, Role, Value.                                                                                          |
+| WCAG-004 | Fix `<label for>` wiring in auth and settings forms (4.1.2)                                      | High     | 🔴 Not Started | Developer 2 | `reset-password.vue` and `accept-invite.vue` use `<label>` without `for`/`id`. All label text must be programmatically associated with their inputs.                                                                                                               |
+| WCAG-005 | Add proper `role="tablist"` / `role="tab"` / `aria-selected` to CR detail tabs (1.3.1, 4.1.2)    | High     | 🔴 Not Started | Developer 2 | The ad-hoc tab buttons have no semantic tab role. Screen readers cannot identify them as a tab group. Addressed together with UX10-014 (AppTabs component).                                                                                                        |
+| WCAG-006 | Implement focus trap in `AppModal` (2.4.3)                                                       | High     | 🔴 Not Started | Developer 2 | `AppModal` handles Escape but does not trap focus inside the dialog. Keyboard users can Tab behind the backdrop. Implement a focus-trap loop on `Tab`/`Shift+Tab`.                                                                                                 |
+| WCAG-007 | Add `scroll-margin-top` to main content so fixed header never obscures focused elements (2.4.12) | Medium   | 🔴 Not Started | Developer 2 | Fixed header is 56 px. Focused elements near the top of a scroll container can sit behind it. Add `scroll-margin-top: 4rem` globally to interactive elements via CSS. New requirement in WCAG 2.2.                                                                 |
+| WCAG-008 | Announce dynamic content changes via `aria-live` (4.1.3)                                         | Medium   | 🔴 Not Started | Developer 2 | Form submission errors, loading states, and async feedback (CR saved, filter applied) are not announced to screen readers. Add `role="status"` or `aria-live="polite"` regions to key pages.                                                                       |
+| WCAG-009 | Add `autocomplete` tokens to all auth form inputs (1.3.5)                                        | Medium   | 🔴 Not Started | Developer 2 | `accept-invite.vue` password inputs and full-name input are missing `autocomplete`. `sign-in.vue` has it; `reset-password.vue` has it. `accept-invite.vue` needs `autocomplete="name"`, `"new-password"`, and `"new-password"` on confirm.                         |
+| WCAG-010 | Ensure all interactive targets meet 24×24 px minimum (2.5.8)                                     | Medium   | 🔴 Not Started | Developer 2 | New in WCAG 2.2. Several icon buttons (`w-8 h-8` = 32px) pass, but `btn-sm` with `py-1.5` produces ~30px height — acceptable. Inline action buttons (`text-xs … hover:underline`) in tables (Users page) have no explicit size. Ensure minimum 24×24 with padding. |
+
+---
+
 ## Progress Tracking
 
 ### Overall Progress by Sprint
@@ -270,8 +287,8 @@
 | Sprint 7  | 8           | 0           | 0           | 8         | 100%       |
 | Sprint 8  | 4           | 0           | 0           | 4         | 100%       |
 | Sprint 9  | 1           | 0           | 0           | 1         | 100%       |
-| Sprint 10 | 26          | 26          | 0           | 0         | 0%         |
-| **TOTAL** | **135**     | **26**      | **0**       | **109**   | **81%**    |
+| Sprint 10 | 36          | 36          | 0           | 0         | 0%         |
+| **TOTAL** | **145**     | **36**      | **0**       | **109**   | **75%**    |
 
 ---
 
