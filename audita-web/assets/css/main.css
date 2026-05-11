@@ -228,7 +228,7 @@
 
   /* ── Flatpickr (date/time picker) ─────────────────────────────────────── */
   .flatpickr-calendar {
-    @apply rounded-xl border border-outline-variant/60 bg-white text-on-surface shadow-card-md;
+    @apply rounded-xl border border-outline-variant/60 bg-white text-on-surface shadow-card-hover;
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   }
 
@@ -355,7 +355,7 @@
 
   .flatpickr-prev-month,
   .flatpickr-next-month {
-    @apply rounded-md text-muted;
+    @apply rounded-md text-muted h-7 w-7 p-1 flex items-center justify-center;
   }
 
   .flatpickr-prev-month:hover,
@@ -419,8 +419,11 @@
   html.dark .flatpickr-day.endRange,
   html.dark .flatpickr-day.selected:hover,
   html.dark .flatpickr-day.startRange:hover,
-  html.dark .flatpickr-day.endRange:hover {
-    @apply bg-primary text-white border-primary;
+  html.dark .flatpickr-day.endRange:hover,
+  html.dark .flatpickr-day.selected:focus,
+  html.dark .flatpickr-day.startRange:focus,
+  html.dark .flatpickr-day.endRange:focus {
+    @apply bg-primary/85 text-white border-primary/80;
   }
 
   html.dark .flatpickr-day.flatpickr-disabled,
