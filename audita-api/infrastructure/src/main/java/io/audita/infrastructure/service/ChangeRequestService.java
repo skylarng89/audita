@@ -208,6 +208,19 @@ public class ChangeRequestService {
     }
 
     @Transactional(readOnly = true)
+    public List<String> listCategories() {
+        // Each stored value may itself be a comma-separated multi-selection;
+        // split and deduplicate so the frontend always sees individual tokens.
+        return changeRequestRepository.findDistinctCategories().stream()
+                .flatMap(raw -> java.util.Arrays.stream(raw.split(",")))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .distinct()
+                .sorted()
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public ChangeRequestEntity getById(UUID id, UUID viewerId) {
         ChangeRequestEntity changeRequest = getById(id);
         // Draft CRs are private to their creator. Return NOT_FOUND (not 403) to

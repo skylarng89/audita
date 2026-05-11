@@ -111,14 +111,58 @@
         </div>
 
         <!-- Category -->
-        <div>
+        <div class="relative" ref="categoryWrapperRef">
           <label class="field-label">Category</label>
-          <input
-            v-model="form.category"
-            class="input mt-1"
-            maxlength="255"
-            placeholder="Infrastructure / Application / Security"
-          />
+          <!-- Selected tags + search input -->
+          <div
+            class="input mt-1 flex flex-wrap gap-1 min-h-[2.5rem] cursor-text"
+            :class="{ 'ring-2 ring-primary': categoryOpen }"
+            @click="openCategory"
+          >
+            <span
+              v-for="tag in form.categories"
+              :key="tag"
+              class="inline-flex items-center gap-1 rounded bg-primary/10 text-primary text-xs px-2 py-0.5"
+            >
+              {{ tag }}
+              <button
+                type="button"
+                class="hover:text-danger leading-none"
+                @click.stop="removeCategory(tag)"
+                :aria-label="`Remove ${tag}`"
+              >
+                ×
+              </button>
+            </span>
+            <input
+              ref="categoryInputRef"
+              v-model="categorySearch"
+              class="flex-1 min-w-[8rem] bg-transparent outline-none text-sm"
+              placeholder="Search or add…"
+              @focus="categoryOpen = true"
+              @keydown.enter.prevent="addCategoryFromInput"
+              @keydown.backspace="onCategoryBackspace"
+            />
+          </div>
+          <!-- Dropdown -->
+          <ul
+            v-if="categoryOpen && filteredCategories.length"
+            class="absolute z-50 mt-1 w-full bg-surface border border-border dark:border-border-dark rounded-lg shadow-lg max-h-52 overflow-y-auto"
+          >
+            <li
+              v-for="cat in filteredCategories"
+              :key="cat"
+              class="px-3 py-2 text-sm cursor-pointer hover:bg-primary/10 flex items-center justify-between"
+              @mousedown.prevent="selectCategory(cat)"
+            >
+              {{ cat }}
+              <span
+                v-if="form.categories.includes(cat)"
+                class="text-primary text-xs"
+                >✓</span
+              >
+            </li>
+          </ul>
         </div>
 
         <!-- Scheduled Start -->
@@ -135,6 +179,7 @@
               :min-date="new Date()"
               format="MMM d, yyyy h:mm aa"
               auto-apply
+              teleport="body"
               @update:model-value="onStartDateChange"
             />
           </ClientOnly>
@@ -157,6 +202,7 @@
               :min-date="form.scheduledStart ?? new Date()"
               format="MMM d, yyyy h:mm aa"
               auto-apply
+              teleport="body"
               @update:model-value="touch('scheduledEnd')"
             />
           </ClientOnly>
@@ -210,7 +256,7 @@ import StarterKit from "@tiptap/starter-kit";
 
 definePageMeta({ middleware: "auth" });
 
-const { create } = useChangeRequests();
+const { create, listCategories } = useChangeRequests();
 
 const isSaving = ref(false);
 const errorMessage = ref("");
@@ -230,10 +276,73 @@ const form = reactive({
   priority: "" as string,
   riskLevel: "" as string,
   approvalType: "" as string,
-  category: "",
+  categories: [] as string[],
   scheduledStart: null as Date | null,
   scheduledEnd: null as Date | null,
   affectedSystemsInput: "",
+});
+
+// ── Category combobox ─────────────────────────────────────────────────────
+const allCategories = ref<string[]>([]);
+const categorySearch = ref("");
+const categoryOpen = ref(false);
+const categoryWrapperRef = ref<HTMLElement | null>(null);
+const categoryInputRef = ref<HTMLInputElement | null>(null);
+
+const filteredCategories = computed(() => {
+  const q = categorySearch.value.trim().toLowerCase();
+  const available = allCategories.value.filter(
+    (c) => !form.categories.includes(c),
+  );
+  return q ? available.filter((c) => c.toLowerCase().includes(q)) : available;
+});
+
+function openCategory() {
+  categoryOpen.value = true;
+  nextTick(() => categoryInputRef.value?.focus());
+}
+
+function selectCategory(cat: string) {
+  if (!form.categories.includes(cat)) {
+    form.categories.push(cat);
+  }
+  categorySearch.value = "";
+}
+
+function removeCategory(cat: string) {
+  form.categories = form.categories.filter((c) => c !== cat);
+}
+
+function addCategoryFromInput() {
+  const val = categorySearch.value.trim();
+  if (val && !form.categories.includes(val)) {
+    form.categories.push(val);
+    // Make it available as a future option within this session
+    if (!allCategories.value.includes(val)) {
+      allCategories.value.push(val);
+    }
+  }
+  categorySearch.value = "";
+}
+
+function onCategoryBackspace() {
+  if (!categorySearch.value && form.categories.length) {
+    form.categories.pop();
+  }
+}
+
+// Close dropdown when clicking outside
+onMounted(async () => {
+  allCategories.value = await listCategories().catch(() => []);
+
+  document.addEventListener("click", (e) => {
+    if (
+      categoryWrapperRef.value &&
+      !categoryWrapperRef.value.contains(e.target as Node)
+    ) {
+      categoryOpen.value = false;
+    }
+  });
 });
 
 // Per-field error messages — only shown after the field has been touched
@@ -318,7 +427,7 @@ async function createChangeRequest() {
       priority: form.priority,
       riskLevel: form.riskLevel,
       approvalType: form.approvalType,
-      category: form.category.trim() || null,
+      category: form.categories.length ? form.categories.join(", ") : null,
       scheduledStart: form.scheduledStart
         ? form.scheduledStart.toISOString()
         : null,

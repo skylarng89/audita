@@ -41,6 +41,9 @@ public interface ChangeRequestRepository extends JpaRepository<ChangeRequestEnti
 
     Page<ChangeRequestEntity> findByCreatedById(UUID userId, Pageable pageable);
 
+    @Query("SELECT DISTINCT cr.category FROM ChangeRequestEntity cr WHERE cr.category IS NOT NULL AND cr.category <> ''")
+    List<String> findDistinctCategories();
+
     // CRs pending SLA breach evaluation: deadline passed and not yet flagged
     @Query("SELECT cr FROM ChangeRequestEntity cr WHERE cr.slaDeadline IS NOT NULL " +
            "AND cr.slaDeadline < :now AND cr.slaBreached = FALSE " +

@@ -11,6 +11,10 @@ import type {
 export function useChangeRequests() {
   const api = useApi();
 
+  async function listCategories(): Promise<string[]> {
+    return api<string[]>("/api/v1/change-requests/categories");
+  }
+
   async function list(params?: {
     status?: string;
     priority?: string;
@@ -184,6 +188,7 @@ export function useChangeRequests() {
   }
 
   return {
+    listCategories,
     list,
     get,
     create,
