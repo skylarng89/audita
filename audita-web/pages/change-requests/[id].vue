@@ -379,7 +379,7 @@
 
       <div class="card p-5 md:col-span-2">
         <h3 class="font-semibold mb-3">Attachments</h3>
-        <template v-if="changeRequest.status === 'DRAFT'">
+        <template v-if="changeRequest.status === 'DRAFT' && isEditing">
           <div
             class="border-2 border-dashed border-border dark:border-border-dark rounded-lg p-6 text-center"
             @dragover.prevent
@@ -874,6 +874,13 @@ function isFileTypeAllowed(file: File): boolean {
 }
 
 async function uploadSelected(file: File | null) {
+  if (!isEditing.value || changeRequest.value?.status !== "DRAFT") {
+    const msg =
+      "Enter Edit mode to upload attachments for this change request.";
+    uploadError.value = msg;
+    toastError(msg);
+    return;
+  }
   if (!file) {
     return;
   }
