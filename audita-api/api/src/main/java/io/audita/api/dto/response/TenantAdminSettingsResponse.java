@@ -1,9 +1,13 @@
 package io.audita.api.dto.response;
 
+import io.audita.domain.model.ApprovalType;
+
 public record TenantAdminSettingsResponse(
         OrganizationProfile profile,
         FeatureFlags featureFlags,
-        SecurityDefaults securityDefaults
+        SecurityDefaults securityDefaults,
+        WorkflowDefaults workflowDefaults,
+        SlaDefaults slaDefaults
 ) {
     public record OrganizationProfile(
             String name,
@@ -23,5 +27,18 @@ public record TenantAdminSettingsResponse(
             Integer sessionTimeoutMinutes,
             String mfaPolicy,
             String passwordPolicy
+    ) {}
+
+    public record WorkflowDefaults(
+            ApprovalType approvalTypeDefault,
+            boolean requireDefaultApprovers
+    ) {}
+
+    public record SlaDefaults(
+            int lowHours,
+            int mediumHours,
+            int highHours,
+            int criticalHours,
+            int warningBeforeHours
     ) {}
 }
