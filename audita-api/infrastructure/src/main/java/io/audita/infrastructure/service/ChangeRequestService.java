@@ -18,6 +18,7 @@ import io.audita.infrastructure.persistence.repository.AttachmentRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestCustomFieldRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestRepository;
 import io.audita.infrastructure.persistence.repository.CrApproverRepository;
+import io.audita.infrastructure.persistence.repository.OrgSettingRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
 import io.audita.infrastructure.tenant.TenantContext;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,6 +53,7 @@ public class ChangeRequestService {
     private final ActivityStreamRepository activityStreamRepository;
     private final AttachmentRepository attachmentRepository;
     private final UserRepository userRepository;
+    private final OrgSettingRepository orgSettingRepository;
     private final AuditLogService auditLogService;
 
     @Value("${audita.storage.local.base-path:/data/uploads}")
@@ -69,6 +71,7 @@ public class ChangeRequestService {
                                 ActivityStreamRepository activityStreamRepository,
                                 AttachmentRepository attachmentRepository,
                                 UserRepository userRepository,
+                                OrgSettingRepository orgSettingRepository,
                                 AuditLogService auditLogService) {
         this.changeRequestRepository = changeRequestRepository;
         this.crApproverRepository = crApproverRepository;
@@ -76,6 +79,7 @@ public class ChangeRequestService {
         this.activityStreamRepository = activityStreamRepository;
         this.attachmentRepository = attachmentRepository;
         this.userRepository = userRepository;
+        this.orgSettingRepository = orgSettingRepository;
         this.auditLogService = auditLogService;
     }
 
@@ -650,11 +654,28 @@ public class ChangeRequestService {
         if (priority == null) {
             return 48;
         }
-        return switch (priority) {
+        String key = switch (priority) {
+            case CRITICAL -> "sla.deadline_hours.critical";
+            case HIGH -> "sla.deadline_hours.high";
+            case MEDIUM -> "sla.deadline_hours.medium";
+            case LOW -> "sla.deadline_hours.low";
+        };
+        long defaultHours = switch (priority) {
             case CRITICAL -> 8;
             case HIGH -> 24;
             case MEDIUM -> 48;
             case LOW -> 72;
         };
+        return orgSettingRepository.findById(key)
+                .map(setting -> setting.getValue().trim())
+                .map(value -> {
+                    try {
+                        long parsed = Long.parseLong(value);
+                        return parsed > 0 ? parsed : defaultHours;
+                    } catch (NumberFormatException ex) {
+                        return defaultHours;
+                    }
+                })
+                .orElse(defaultHours);
     }
 }
