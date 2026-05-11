@@ -181,6 +181,80 @@
 
 ---
 
+## Sprint 10: UX & UI Polish (2026-05-11)
+
+> **Goal:** Systematically address every UX and UI deficiency identified across the full application — navigation, responsiveness, consistency, forms, empty states, and interaction feedback — to bring the product to a professional, production-quality standard.
+
+---
+
+### Group A — Navigation & Mobile Responsiveness
+
+| Task ID  | Task                                                          | Priority | Status         | Assigned To | Notes                                                                                                                                                                                                                                                       |
+| -------- | ------------------------------------------------------------- | -------- | -------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UX10-001 | Implement mobile navigation drawer (hamburger menu)           | High     | 🔴 Not Started | Developer 2 | Sidebar is `hidden md:flex` — mobile has zero navigation. Add a slide-in `<nav>` drawer triggered by a hamburger button in the header for `< md` breakpoints. Add backdrop overlay and swipe-to-dismiss.                                                    |
+| UX10-002 | Fix page header layout collapse on small screens              | High     | 🔴 Not Started | Developer 2 | Pages (`/change-requests`, `/change-requests/new`, `/[id]`) use `flex justify-between` for title + action button. On narrow viewports the title and CTA are cramped. Wrap to `flex-col gap-4` below `sm` breakpoint and move the CTA below the title block. |
+| UX10-003 | Collapse sidebar to icon-only rail on `md` breakpoint         | Medium   | 🔴 Not Started | Developer 2 | At `md` breakpoint (768–1024 px) the 224 px sidebar consumes too much horizontal space. Add a collapsed-rail mode (`w-14`, icons only, tooltip on hover) that expands on user toggle, persisted to `localStorage`.                                          |
+| UX10-004 | Make CR list filter bar collapse to "Filters" pill on mobile  | Medium   | 🔴 Not Started | Developer 2 | The filter bar on `/change-requests` wraps uncontrolled on small screens. Replace with a "Filters ▾" pill that opens a bottom-sheet or dropdown containing all filter selects. Show active filter count as a badge on the pill.                             |
+| UX10-005 | Make CR detail page action buttons stack vertically on mobile | Medium   | 🔴 Not Started | Developer 2 | On `/change-requests/[id]` the top-right cluster of badges + Edit/Save/Cancel buttons overflows at `<sm`. Convert to a `flex-wrap` row that stacks cleanly and moves to below the title on small screens.                                                   |
+
+---
+
+### Group B — Button & Component System Consolidation
+
+| Task ID  | Task                                                           | Priority | Status         | Assigned To | Notes                                                                                                                                                                                                                                                                            |
+| -------- | -------------------------------------------------------------- | -------- | -------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UX10-006 | Align `AppButton.vue` and CSS class system                     | High     | 🔴 Not Started | Developer 2 | Two parallel button systems exist: the `AppButton` component (`rounded`, `font-medium`) and CSS classes (`rounded-lg`, `font-semibold`). Reconcile to a single design token set. Update `AppButton` to match the CSS variants exactly so either usage produces identical output. |
+| UX10-007 | Replace raw `btn-*` class usage in auth pages with `AppButton` | Low      | 🔴 Not Started | Developer 2 | Auth pages use the raw `.btn-primary.btn-lg.w-full` pattern; wrapping with `AppButton` gives loading state, disabled handling, and type safety for free.                                                                                                                         |
+| UX10-008 | Wire the CR list pagination to `AppPagination`                 | Medium   | 🔴 Not Started | Developer 2 | `/change-requests/index.vue` re-implements its own prev/next buttons inline. Replace with `<SharedAppPagination>` (already used on Users and Groups) for consistent styling and keyboard nav.                                                                                    |
+
+---
+
+### Group C — Change Request List UX
+
+| Task ID  | Task                                                                | Priority | Status         | Assigned To | Notes                                                                                                                                                                                                                                    |
+| -------- | ------------------------------------------------------------------- | -------- | -------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UX10-009 | Add SLA status indicator column to CR list table                    | High     | 🔴 Not Started | Developer 2 | The CR list shows no SLA deadline or breach status. Add a "SLA" column that renders: a green dot if safe, amber clock icon + relative time if within warning window, red flame/breach badge if `slaBreached === true`. Hidden on `< lg`. |
+| UX10-010 | Fix filter dropdown display values                                  | Low      | 🔴 Not Started | Developer 2 | Status filter options show raw enum strings (e.g., `PENDING_APPROVAL`). Replace with human-readable labels: `Pending Approval`, `Cancelled`, etc.                                                                                        |
+| UX10-011 | Add "Clear Filters" reset button to CR filter bar                   | Medium   | 🔴 Not Started | Developer 2 | No way to reset filters without touching each select individually. Add a `×  Clear` ghost button that only appears when any filter is active; clicking it resets all filters and reloads.                                                |
+| UX10-012 | Replace CR list plain-text empty state with illustrated empty state | Low      | 🔴 Not Started | Developer 2 | The empty state is a plain `"No change requests found."` table row. Replace with an icon + heading + contextual message (different copy when filters are active vs. none exist yet), plus a `Create Change` CTA when unfiltered.         |
+| UX10-013 | Add skeleton loader for initial CR list load                        | Low      | 🔴 Not Started | Developer 2 | The current initial load shows "Loading…" text in a table row. Replace with `animate-pulse` skeleton rows (same as `AppTable`) for perceived performance.                                                                                |
+
+---
+
+### Group D — CR Detail Page UX
+
+| Task ID  | Task                                                               | Priority | Status         | Assigned To | Notes                                                                                                                                                                                                                                                                               |
+| -------- | ------------------------------------------------------------------ | -------- | -------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UX10-014 | Replace ad-hoc tab buttons with a proper Tab component             | High     | 🔴 Not Started | Developer 2 | CR detail uses `btn-ghost` with a `ring-2 ring-primary bg-primary/10` active override as a tab switcher. This is semantically wrong and visually imprecise. Replace with a dedicated `AppTabs` component using an underline or filled-pill style consistent with the design system. |
+| UX10-015 | Show item count badges on CR detail tabs                           | Low      | 🔴 Not Started | Developer 2 | "Approvers", "Activity", and "Comments" tabs show no count. Add a small count badge (e.g., `Approvers (3)`) so users can scan at a glance.                                                                                                                                          |
+| UX10-016 | Replace "Affected Systems" comma-input with tag UI in edit mode    | Medium   | 🔴 Not Started | Developer 2 | The affected systems field in both Create and Edit views uses a free-text comma-separated input — hard to edit and error-prone. Replicate the multi-tag pattern already used for Categories.                                                                                        |
+| UX10-017 | Add sticky "Save / Cancel" action bar when in CR edit mode         | Medium   | 🔴 Not Started | Developer 2 | On long CR edit forms, Save/Cancel buttons are only visible at the top of the page. Add a sticky bottom action bar (appears when `isEditing`) so they're always reachable without scrolling up.                                                                                     |
+| UX10-018 | Add confirmation for destructive workflow actions (Decline/Reject) | High     | 🔴 Not Started | Developer 2 | Clicking "Decline" on the dashboard or "Reject" on CR detail is irreversible. Show an `AppModal` confirmation asking for the rejection reason before committing. Currently the reject on CR detail has no in-line confirmation step.                                                |
+
+---
+
+### Group E — Form & Input UX
+
+| Task ID  | Task                                            | Priority | Status         | Assigned To | Notes                                                                                                                                                                                                                       |
+| -------- | ----------------------------------------------- | -------- | -------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UX10-019 | Add show/hide toggle to all password inputs     | High     | 🔴 Not Started | Developer 2 | Sign-in, reset-password, and accept-invite pages have no toggle to reveal the password. Add an eye/eye-off icon button inside the input's right padding slot; toggles `type="text"/"password"`.                             |
+| UX10-020 | Normalize page `h1` font sizes across all pages | Medium   | 🔴 Not Started | Developer 2 | Page titles range from `text-3xl` (Dashboard, Settings, Users) to `text-4xl` (CR list, CR create, CR detail). Settle on a single size token — `text-3xl` — for all primary page headings for typographic rhythm.            |
+| UX10-021 | Move sign-in error banner above the form fields | Low      | 🔴 Not Started | Developer 2 | The general error banner on sign-in renders between the password field and the submit button — below the error-causing fields. Move it to the top of the `<form>` tag so it's visually prominent when authentication fails. |
+| UX10-022 | Fix `<select>` option text for approval type    | Low      | 🔴 Not Started | Developer 2 | `NON_LINEAR` renders as-is in select dropdowns across Create and Edit views. Replace with `"Non-Linear"` (human-readable).                                                                                                  |
+
+---
+
+### Group F — Global Chrome & Feedback
+
+| Task ID  | Task                                                              | Priority | Status         | Assigned To | Notes                                                                                                                                                                                                                                                                                                                  |
+| -------- | ----------------------------------------------------------------- | -------- | -------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UX10-023 | Add auto-dismiss progress bar to toast notifications              | Medium   | 🔴 Not Started | Developer 2 | Toasts auto-dismiss after a timeout but there's no visual indicator of how long remains. Add a thin bottom progress bar that depletes over the toast's lifetime so users know when it will disappear.                                                                                                                  |
+| UX10-024 | Make dark mode toggle accessible via keyboard shortcut or surface | Medium   | 🔴 Not Started | Developer 2 | Dark mode toggle is buried 2 clicks deep (user menu → toggle). Either add a keyboard shortcut (e.g., `Shift+D`), or surface a sun/moon icon button directly in the header's right control area.                                                                                                                        |
+| UX10-025 | Remove or connect the non-functional global search bar            | High     | 🔴 Not Started | Developer 2 | Both `default.vue` and `platform.vue` headers render a fully-styled search input that does nothing on submit/focus. Either wire it to a real search (CR title/ID text search via existing list endpoint) or remove the placeholder to avoid confusing users. For now, scope to CR title search with a results popover. |
+| UX10-026 | Add `aria-label` to all icon-only header control buttons          | Medium   | 🔴 Not Started | Developer 2 | The notification bell, help button, and theme toggle in the header use icon-only buttons. Ensure all have descriptive `aria-label` attributes. The bell already has one; the help and settings buttons in `platform.vue` do not.                                                                                       |
+
+---
+
 ## Progress Tracking
 
 ### Overall Progress by Sprint
@@ -196,7 +270,8 @@
 | Sprint 7  | 8           | 0           | 0           | 8         | 100%       |
 | Sprint 8  | 4           | 0           | 0           | 4         | 100%       |
 | Sprint 9  | 1           | 0           | 0           | 1         | 100%       |
-| **TOTAL** | **109**     | **0**       | **0**       | **109**   | **100%**   |
+| Sprint 10 | 26          | 26          | 0           | 0         | 0%         |
+| **TOTAL** | **135**     | **26**      | **0**       | **109**   | **81%**    |
 
 ---
 
