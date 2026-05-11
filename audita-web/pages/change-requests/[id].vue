@@ -144,21 +144,39 @@
             <!-- Scheduled Start -->
             <div>
               <label class="field-label">Scheduled Start</label>
-              <input
-                v-model="editForm.scheduledStart"
-                type="datetime-local"
-                class="input mt-1"
-              />
+              <ClientOnly>
+                <VueDatePicker
+                  v-model="editForm.scheduledStart"
+                  class="mt-1"
+                  :enable-time-picker="true"
+                  :is24="false"
+                  time-picker-inline
+                  placeholder="Select date and time"
+                  format="MMM d, yyyy h:mm aa"
+                  auto-apply
+                  teleport="body"
+                  @update:model-value="onEditStartChange"
+                />
+              </ClientOnly>
             </div>
 
             <!-- Scheduled End -->
             <div>
               <label class="field-label">Scheduled End</label>
-              <input
-                v-model="editForm.scheduledEnd"
-                type="datetime-local"
-                class="input mt-1"
-              />
+              <ClientOnly>
+                <VueDatePicker
+                  v-model="editForm.scheduledEnd"
+                  class="mt-1"
+                  :enable-time-picker="true"
+                  :is24="false"
+                  time-picker-inline
+                  placeholder="Select date and time"
+                  :min-date="editForm.scheduledStart ?? new Date()"
+                  format="MMM d, yyyy h:mm aa"
+                  auto-apply
+                  teleport="body"
+                />
+              </ClientOnly>
             </div>
 
             <!-- Affected Systems -->
@@ -647,8 +665,8 @@ const editForm = reactive({
   riskLevel: "",
   approvalType: "",
   category: "",
-  scheduledStart: "",
-  scheduledEnd: "",
+  scheduledStart: null as Date | null,
+  scheduledEnd: null as Date | null,
   affectedSystemsInput: "",
 });
 
@@ -662,10 +680,10 @@ const editEditor = useEditor({
   },
 });
 
-function toDatetimeLocal(iso: string | null): string {
-  if (!iso) return "";
-  // datetime-local input expects 'YYYY-MM-DDTHH:mm'
-  return iso.substring(0, 16);
+function onEditStartChange(val: Date | null) {
+  if (val && editForm.scheduledEnd && editForm.scheduledEnd <= val) {
+    editForm.scheduledEnd = null;
+  }
 }
 
 function enterEditMode() {
@@ -676,8 +694,10 @@ function enterEditMode() {
   editForm.riskLevel = cr.riskLevel;
   editForm.approvalType = cr.approvalType;
   editForm.category = cr.category ?? "";
-  editForm.scheduledStart = toDatetimeLocal(cr.scheduledStart);
-  editForm.scheduledEnd = toDatetimeLocal(cr.scheduledEnd);
+  editForm.scheduledStart = cr.scheduledStart
+    ? new Date(cr.scheduledStart)
+    : null;
+  editForm.scheduledEnd = cr.scheduledEnd ? new Date(cr.scheduledEnd) : null;
   editForm.affectedSystemsInput = cr.affectedSystems.join(", ");
   editEditor.value?.commands.setContent(cr.description ?? "");
   isEditing.value = true;
@@ -702,10 +722,10 @@ async function saveEditAction() {
       approvalType: editForm.approvalType,
       category: editForm.category.trim() || null,
       scheduledStart: editForm.scheduledStart
-        ? new Date(editForm.scheduledStart).toISOString()
+        ? editForm.scheduledStart.toISOString()
         : null,
       scheduledEnd: editForm.scheduledEnd
-        ? new Date(editForm.scheduledEnd).toISOString()
+        ? editForm.scheduledEnd.toISOString()
         : null,
       affectedSystems: editForm.affectedSystemsInput
         .split(",")
