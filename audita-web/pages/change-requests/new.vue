@@ -169,19 +169,15 @@
         <div>
           <label class="field-label">Scheduled Start</label>
           <div class="mt-1 grid grid-cols-2 gap-2">
-            <input
+            <FlatPickr
               v-model="form.scheduledStartDate"
-              type="date"
+              :config="datePickerConfig"
               class="input"
-              :style="{ colorScheme: isDark ? 'dark' : 'light' }"
-              @change="onStartChange"
             />
-            <input
+            <FlatPickr
               v-model="form.scheduledStartTime"
-              type="time"
+              :config="timePickerConfig"
               class="input"
-              :style="{ colorScheme: isDark ? 'dark' : 'light' }"
-              @change="onStartChange"
             />
           </div>
           <p v-if="errors.scheduledStart" class="field-error">
@@ -193,20 +189,15 @@
         <div>
           <label class="field-label">Scheduled End</label>
           <div class="mt-1 grid grid-cols-2 gap-2">
-            <input
+            <FlatPickr
               v-model="form.scheduledEndDate"
-              type="date"
+              :config="endDatePickerConfig"
               class="input"
-              :min="form.scheduledStartDate || undefined"
-              :style="{ colorScheme: isDark ? 'dark' : 'light' }"
-              @change="touch('scheduledEnd')"
             />
-            <input
+            <FlatPickr
               v-model="form.scheduledEndTime"
-              type="time"
+              :config="timePickerConfig"
               class="input"
-              :style="{ colorScheme: isDark ? 'dark' : 'light' }"
-              @change="touch('scheduledEnd')"
             />
           </div>
           <p v-if="errors.scheduledEnd" class="field-error">
@@ -256,6 +247,7 @@
 <script setup lang="ts">
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
+import FlatPickr from "vue-flatpickr-component";
 
 definePageMeta({ middleware: "auth" });
 
@@ -336,21 +328,30 @@ function onCategoryBackspace() {
   }
 }
 
-// ── Dark mode detection for VueDatePicker ──────────────────────────────────
-const isDark = ref(false);
+const datePickerConfig = {
+  dateFormat: "Y-m-d",
+  allowInput: false,
+  clickOpens: true,
+  disableMobile: true,
+};
+
+const timePickerConfig = {
+  enableTime: true,
+  noCalendar: true,
+  dateFormat: "H:i",
+  time_24hr: true,
+  allowInput: false,
+  clickOpens: true,
+  disableMobile: true,
+};
+
+const endDatePickerConfig = computed(() => ({
+  ...datePickerConfig,
+  minDate: form.scheduledStartDate || undefined,
+}));
 
 // Close dropdown when clicking outside
 onMounted(async () => {
-  isDark.value = document.documentElement.classList.contains("dark");
-  const darkObserver = new MutationObserver(() => {
-    isDark.value = document.documentElement.classList.contains("dark");
-  });
-  darkObserver.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["class"],
-  });
-  onUnmounted(() => darkObserver.disconnect());
-
   allCategories.value = await listCategories().catch(() => []);
 
   document.addEventListener("click", (e) => {
@@ -362,6 +363,16 @@ onMounted(async () => {
     }
   });
 });
+
+watch(
+  () => [form.scheduledStartDate, form.scheduledStartTime],
+  () => onStartChange(),
+);
+
+watch(
+  () => [form.scheduledEndDate, form.scheduledEndTime],
+  () => touch("scheduledEnd"),
+);
 
 // Per-field error messages — only shown after the field has been touched
 const errors = reactive<Record<string, string>>({});

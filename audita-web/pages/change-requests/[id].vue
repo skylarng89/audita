@@ -145,19 +145,15 @@
             <div>
               <label class="field-label">Scheduled Start</label>
               <div class="mt-1 grid grid-cols-2 gap-2">
-                <input
+                <FlatPickr
                   v-model="editForm.scheduledStartDate"
-                  type="date"
+                  :config="datePickerConfig"
                   class="input"
-                  :style="{ colorScheme: isDark ? 'dark' : 'light' }"
-                  @change="onEditStartChange"
                 />
-                <input
+                <FlatPickr
                   v-model="editForm.scheduledStartTime"
-                  type="time"
+                  :config="timePickerConfig"
                   class="input"
-                  :style="{ colorScheme: isDark ? 'dark' : 'light' }"
-                  @change="onEditStartChange"
                 />
               </div>
             </div>
@@ -166,18 +162,15 @@
             <div>
               <label class="field-label">Scheduled End</label>
               <div class="mt-1 grid grid-cols-2 gap-2">
-                <input
+                <FlatPickr
                   v-model="editForm.scheduledEndDate"
-                  type="date"
+                  :config="endDatePickerConfig"
                   class="input"
-                  :min="editForm.scheduledStartDate || undefined"
-                  :style="{ colorScheme: isDark ? 'dark' : 'light' }"
                 />
-                <input
+                <FlatPickr
                   v-model="editForm.scheduledEndTime"
-                  type="time"
+                  :config="timePickerConfig"
                   class="input"
-                  :style="{ colorScheme: isDark ? 'dark' : 'light' }"
                 />
               </div>
             </div>
@@ -610,6 +603,7 @@ import type {
 import { format, parseISO } from "date-fns";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
+import FlatPickr from "vue-flatpickr-component";
 
 definePageMeta({ middleware: "auth" });
 
@@ -685,8 +679,27 @@ const editEditor = useEditor({
   },
 });
 
-// ── Dark mode detection for VueDatePicker ──────────────────────────────────
-const isDark = ref(false);
+const datePickerConfig = {
+  dateFormat: "Y-m-d",
+  allowInput: false,
+  clickOpens: true,
+  disableMobile: true,
+};
+
+const timePickerConfig = {
+  enableTime: true,
+  noCalendar: true,
+  dateFormat: "H:i",
+  time_24hr: true,
+  allowInput: false,
+  clickOpens: true,
+  disableMobile: true,
+};
+
+const endDatePickerConfig = computed(() => ({
+  ...datePickerConfig,
+  minDate: editForm.scheduledStartDate || undefined,
+}));
 
 function combineParts(dateStr: string, timeStr: string): Date | null {
   if (!dateStr) return null;
@@ -990,17 +1003,13 @@ async function postCommentAction() {
 }
 
 onMounted(() => {
-  isDark.value = document.documentElement.classList.contains("dark");
-  const darkObserver = new MutationObserver(() => {
-    isDark.value = document.documentElement.classList.contains("dark");
-  });
-  darkObserver.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["class"],
-  });
-  onUnmounted(() => darkObserver.disconnect());
   loadAll();
 });
+
+watch(
+  () => [editForm.scheduledStartDate, editForm.scheduledStartTime],
+  () => onEditStartChange(),
+);
 
 onBeforeUnmount(() => {
   editEditor.value?.destroy();
