@@ -9,6 +9,7 @@ import io.audita.infrastructure.persistence.entity.UserEntity;
 import io.audita.infrastructure.persistence.repository.ActivityStreamRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestRepository;
 import io.audita.infrastructure.persistence.repository.CrApproverRepository;
+import io.audita.infrastructure.persistence.repository.OrgSettingRepository;
 import io.audita.infrastructure.persistence.repository.TenantRepository;
 import io.audita.infrastructure.tenant.TenantContext;
 import org.slf4j.Logger;
@@ -36,6 +37,7 @@ public class SlaMonitoringService {
     private final NotificationService notificationService;
     private final EmailService emailService;
     private final TenantRepository tenantRepository;
+    private final OrgSettingRepository orgSettingRepository;
     private final TransactionTemplate transactionTemplate;
 
     public SlaMonitoringService(ChangeRequestRepository changeRequestRepository,
@@ -44,6 +46,7 @@ public class SlaMonitoringService {
                                 NotificationService notificationService,
                                 EmailService emailService,
                                 TenantRepository tenantRepository,
+                                OrgSettingRepository orgSettingRepository,
                                 PlatformTransactionManager transactionManager) {
         this.changeRequestRepository = changeRequestRepository;
         this.crApproverRepository = crApproverRepository;
@@ -51,6 +54,7 @@ public class SlaMonitoringService {
         this.notificationService = notificationService;
         this.emailService = emailService;
         this.tenantRepository = tenantRepository;
+        this.orgSettingRepository = orgSettingRepository;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
@@ -77,7 +81,8 @@ public class SlaMonitoringService {
     }
 
     private void processWarnings(OffsetDateTime now) {
-        List<ChangeRequestEntity> warningCandidates = changeRequestRepository.findSlaWarning(now, now.plusHours(1));
+        int warningHours = resolveWarningBeforeHours();
+        List<ChangeRequestEntity> warningCandidates = changeRequestRepository.findSlaWarning(now, now.plusHours(warningHours));
         for (ChangeRequestEntity cr : warningCandidates) {
             activityStreamRepository.save(new ActivityStreamEntity(
                     cr,
@@ -133,5 +138,19 @@ public class SlaMonitoringService {
                 );
             }
         }
+    }
+
+    private int resolveWarningBeforeHours() {
+        return orgSettingRepository.findById("sla.warning_before_hours")
+                .map(setting -> setting.getValue().trim())
+                .map(value -> {
+                    try {
+                        int parsed = Integer.parseInt(value);
+                        return parsed > 0 ? parsed : 1;
+                    } catch (NumberFormatException ex) {
+                        return 1;
+                    }
+                })
+                .orElse(1);
     }
 }
