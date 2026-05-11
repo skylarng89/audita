@@ -102,5 +102,4 @@
 
 ### Next Steps
 
-1. Add service/integration tests for settings persistence edge cases and tenant-scope guarantees.
-2. Add UI interaction tests for dirty-state/save/reset behavior on admin settings page.
+1. Add UI interaction tests for dirty-state/save/reset behavior on admin settings page.

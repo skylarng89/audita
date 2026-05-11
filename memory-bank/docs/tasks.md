@@ -167,7 +167,7 @@
 - SET-001 | Add persisted workflow/SLA defaults to tenant settings API | Priority: High | Status: ✅ Completed | Assigned To: Developer 1 | Notes: Added `PATCH /api/v1/settings`, `org_settings` persistence entity/repository, expanded response contract, and validation guard for warning/deadline ratio.
 - SET-002 | Activate admin settings UI save flow for workflow/SLA defaults | Priority: High | Status: 🟡 In Progress | Assigned To: Developer 2 | Notes: `pages/admin/settings/index.vue` now editable and PATCH-wired; pending page interaction tests and UX polish feedback messages.
 - SET-003 | Read SLA defaults at runtime in CR creation and SLA monitor | Priority: High | Status: ✅ Completed | Assigned To: Developer 1 | Notes: Added runtime tests in `ChangeRequestServiceSecurityTest` and `SlaMonitoringServiceTest` to verify configured SLA hours and warning window behavior.
-- SET-004 | Add regression tests for tenant settings GET/PATCH | Priority: High | Status: 🟡 In Progress | Assigned To: Developer 1 | Notes: Added `TenantSettingsControllerWebMvcTest`; pending service/integration tests for persistence edge cases and tenant scope assertions.
+- SET-004 | Add regression tests for tenant settings GET/PATCH | Priority: High | Status: ✅ Completed | Assigned To: Developer 1 | Notes: Added `TenantSettingsControllerWebMvcTest` and `TenantServiceSettingsTest` covering defaults, malformed persisted values, and settings write assertions.
 
 ---
 
@@ -184,8 +184,8 @@
 | Sprint 4  | 10          | 0           | 0           | 10        | 100%       |
 | Sprint 5  | 5           | 0           | 0           | 5         | 100%       |
 | Sprint 7  | 8           | 0           | 0           | 8         | 100%       |
-| Sprint 8  | 4           | 0           | 2           | 2         | 50%        |
-| **TOTAL** | **108**     | **0**       | **2**       | **106**   | **98%**    |
+| Sprint 8  | 4           | 0           | 1           | 3         | 75%        |
+| **TOTAL** | **108**     | **0**       | **1**       | **107**   | **99%**    |
 
 ---
 
@@ -218,6 +218,8 @@
 **Test Coverage**: `TenantSettingsControllerWebMvcTest` passes; backend compile passes; frontend `nuxi typecheck` passes.
 
 **Additional Verification (2026-05-11 continuation)**: `ChangeRequestServiceSecurityTest` and `SlaMonitoringServiceTest` pass with new runtime SLA configuration assertions.
+
+**Additional Verification (2026-05-11 continuation 2)**: `TenantServiceSettingsTest` passes with tenant settings default/malformed-value/write-path assertions.
 
 ### Sprint 7 — VueDatePicker Replaced with Native Inputs (Completed 2026-05-11)
 
