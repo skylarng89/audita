@@ -150,7 +150,7 @@
                     v-model="editForm.scheduledStartDate"
                     :enable-time-picker="false"
                     placeholder="Date"
-                    format="MMM d, yyyy"
+                    :format="formatDateOnly"
                     auto-apply
                     teleport="body"
                     :dark="isDark"
@@ -179,7 +179,7 @@
                     :enable-time-picker="false"
                     placeholder="Date"
                     :min-date="editForm.scheduledStartDate ?? undefined"
-                    format="MMM d, yyyy"
+                    :format="formatDateOnly"
                     auto-apply
                     teleport="body"
                     :dark="isDark"
@@ -701,6 +701,14 @@ const editEditor = useEditor({
 
 // ── Dark mode detection for VueDatePicker ──────────────────────────────────
 const isDark = ref(false);
+
+function formatDateOnly(date: Date): string {
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 function combineParts(
   date: Date | null,

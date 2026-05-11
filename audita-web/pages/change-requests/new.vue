@@ -174,7 +174,7 @@
                 v-model="form.scheduledStartDate"
                 :enable-time-picker="false"
                 placeholder="Date"
-                format="MMM d, yyyy"
+                :format="formatDateOnly"
                 auto-apply
                 teleport="body"
                 :dark="isDark"
@@ -206,7 +206,7 @@
                 :enable-time-picker="false"
                 placeholder="Date"
                 :min-date="form.scheduledStartDate ?? undefined"
-                format="MMM d, yyyy"
+                :format="formatDateOnly"
                 auto-apply
                 teleport="body"
                 :dark="isDark"
@@ -415,6 +415,14 @@ function validateField(field: string) {
       break;
     }
   }
+}
+
+function formatDateOnly(date: Date): string {
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 function combineParts(
