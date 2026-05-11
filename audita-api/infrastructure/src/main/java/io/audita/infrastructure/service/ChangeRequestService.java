@@ -615,8 +615,9 @@ public class ChangeRequestService {
         String stem = dotIndex > 0 ? originalName.substring(0, dotIndex) : originalName;
         String ext  = dotIndex > 0 ? originalName.substring(dotIndex).toLowerCase() : "";
         String normalizedStem = stem.toLowerCase()
-                .replaceAll("[^a-z0-9]+", "-")
-                .replaceAll("^-+|-+$", "");
+                .replaceAll("[^a-z0-9]++", "-")
+                .replaceFirst("^(-++)", "")
+                .replaceFirst("(-++)$", "");
         if (normalizedStem.isEmpty()) {
             normalizedStem = "attachment";
         }
