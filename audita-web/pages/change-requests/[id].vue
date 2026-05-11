@@ -6,7 +6,7 @@
           Change Request
         </p>
         <h1
-          class="text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
+          class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
         >
           {{ changeRequest.title }}
         </h1>
@@ -14,68 +14,56 @@
           Created by {{ changeRequest.createdByFullName ?? "Unknown" }}
         </p>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
         <CrStatusBadge :status="changeRequest.status" />
         <CrPriorityBadge :priority="changeRequest.priority" />
-        <template v-if="!isEditing">
-          <button
-            v-if="changeRequest.status === 'DRAFT'"
-            class="btn-ghost btn-md"
-            @click="enterEditMode"
-          >
-            Edit
-          </button>
-        </template>
-        <template v-else>
-          <button
-            class="btn-primary btn-md"
-            :disabled="isSaving"
-            @click="saveEditAction"
-          >
-            {{ isSaving ? "Saving…" : "Save" }}
-          </button>
-          <button class="btn-ghost btn-md" @click="cancelEdit">Cancel</button>
-        </template>
+        <button
+          v-if="changeRequest.status === 'DRAFT' && !isEditing"
+          class="btn-ghost btn-md"
+          @click="enterEditMode"
+        >
+          Edit
+        </button>
       </div>
     </div>
 
-    <div class="card p-4 flex flex-wrap gap-2">
-      <button
-        class="btn-ghost btn-md"
-        :class="{
-          'ring-2 ring-primary bg-primary/10 text-primary': tab === 'details',
-        }"
-        @click="tab = 'details'"
+    <div class="card p-4">
+      <div
+        role="tablist"
+        aria-label="Change request sections"
+        class="flex items-center gap-1 p-1 bg-surface-container-low dark:bg-slate-800 rounded-xl"
       >
-        Details
-      </button>
-      <button
-        class="btn-ghost btn-md"
-        :class="{
-          'ring-2 ring-primary bg-primary/10 text-primary': tab === 'approvers',
-        }"
-        @click="tab = 'approvers'"
-      >
-        Approvers
-      </button>
-      <button
-        class="btn-ghost btn-md"
-        :class="{
-          'ring-2 ring-primary bg-primary/10 text-primary': tab === 'activity',
-        }"
-        @click="tab = 'activity'"
-      >
-        Activity
-      </button>
-      <button
-        class="btn-ghost btn-md"
-        :class="{
-          'ring-2 ring-primary bg-primary/10 text-primary': tab === 'comments',
-        }"
-        @click="tab = 'comments'"
-      >
-        Comments
-      </button>
+        <button
+          v-for="crTab in crTabs"
+          :key="crTab.key"
+          role="tab"
+          :aria-selected="tab === crTab.key"
+          :tabindex="tab === crTab.key ? 0 : -1"
+          type="button"
+          @click="tab = crTab.key"
+          @keydown="onTabKeyDown($event, crTab.key)"
+          class="relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+          :class="
+            tab === crTab.key
+              ? 'bg-white dark:bg-slate-700 text-on-surface dark:text-gray-100 shadow-sm'
+              : 'text-muted hover:text-on-surface hover:bg-white/50 dark:hover:text-gray-300 dark:hover:bg-slate-700/50'
+          "
+        >
+          {{ crTab.label }}
+          <span
+            v-if="crTab.count !== undefined"
+            class="flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold"
+            :class="
+              tab === crTab.key
+                ? 'bg-primary/15 text-primary'
+                : 'bg-outline-variant/40 text-muted'
+            "
+            aria-hidden="true"
+          >
+            {{ crTab.count }}
+          </span>
+        </button>
+      </div>
     </div>
 
     <section
@@ -127,7 +115,7 @@
               <label class="field-label">Approval Type</label>
               <select v-model="editForm.approvalType" class="input mt-1">
                 <option value="LINEAR">Linear</option>
-                <option value="NON_LINEAR">Non Linear</option>
+                <option value="NON_LINEAR">Non-Linear</option>
               </select>
             </div>
 
@@ -561,28 +549,67 @@
       </div>
     </section>
 
-    <div
-      v-if="showReject"
-      class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50"
+    <!-- Reject modal using AppModal for proper focus management -->
+    <SharedAppModal
+      :open="showReject"
+      title="Reject Change Request"
+      @close="showReject = false"
     >
-      <div class="card p-5 max-w-lg w-full space-y-3">
-        <h3 class="font-semibold">Reject Change Request</h3>
-        <textarea
-          v-model="rejectReason"
-          class="input"
-          rows="4"
-          placeholder="Reason"
-        ></textarea>
-        <div class="flex justify-end gap-2">
-          <button class="btn-ghost btn-md" @click="showReject = false">
-            Close
-          </button>
-          <button class="btn-primary btn-md" @click="rejectCr">
-            Confirm Reject
+      <div class="space-y-3">
+        <p class="text-sm text-muted">
+          Provide a reason for rejecting this change request.
+        </p>
+        <div>
+          <label for="reject-reason" class="field-label"
+            >Reason <span class="text-danger">*</span></label
+          >
+          <textarea
+            id="reject-reason"
+            v-model="rejectReason"
+            class="input mt-1"
+            rows="4"
+            placeholder="Describe why this change request is being rejected…"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <button class="btn-ghost btn-md" @click="showReject = false">
+          Cancel
+        </button>
+        <button class="btn-primary btn-md" @click="rejectCr">
+          Confirm Reject
+        </button>
+      </template>
+    </SharedAppModal>
+
+    <!-- Sticky save bar (visible when editing) -->
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="translate-y-full opacity-0"
+      enter-to-class="translate-y-0 opacity-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="translate-y-0 opacity-100"
+      leave-to-class="translate-y-full opacity-0"
+    >
+      <div
+        v-if="isEditing"
+        class="fixed bottom-0 left-0 md:left-56 right-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-outline-variant/50 dark:border-border-dark px-6 py-3 flex items-center justify-between gap-3 shadow-[0_-2px_8px_rgba(0,35,111,0.06)]"
+      >
+        <p class="text-sm text-muted hidden sm:block">
+          You have unsaved changes
+        </p>
+        <div class="flex items-center gap-2">
+          <button class="btn-ghost btn-md" @click="cancelEdit">Discard</button>
+          <button
+            class="btn-primary btn-md"
+            :disabled="isSaving"
+            @click="saveEditAction"
+          >
+            {{ isSaving ? "Saving…" : "Save Changes" }}
           </button>
         </div>
       </div>
-    </div>
+    </Transition>
   </div>
 
   <div v-else class="py-16 text-center text-sm text-muted">
@@ -606,6 +633,14 @@ import StarterKit from "@tiptap/starter-kit";
 import FlatPickr from "vue-flatpickr-component";
 
 definePageMeta({ middleware: "auth" });
+
+useHead(
+  computed(() => ({
+    title: changeRequest.value
+      ? `${changeRequest.value.title} — Audita`
+      : "Change Request — Audita",
+  })),
+);
 
 const { error: toastError } = useToast();
 const api = useApi();
@@ -641,8 +676,37 @@ const localFieldValues = ref<Record<string, string>>({});
 const attachments = ref<Attachment[]>([]);
 const activity = ref<ActivityEntry[]>([]);
 const comments = ref<Comment[]>([]);
-const tab = ref<"details" | "approvers" | "activity" | "comments">("details");
+const tab = ref<string>("details");
 const newComment = ref("");
+
+// ── Tab list with counts ────────────────────────────────────────────────────
+const crTabs = computed(() => [
+  { key: "details", label: "Details" },
+  { key: "approvers", label: "Approvers", count: approvers.value.length },
+  { key: "activity", label: "Activity", count: activity.value.length },
+  { key: "comments", label: "Comments", count: comments.value.length },
+]);
+
+const tabKeys = ["details", "approvers", "activity", "comments"];
+
+function onTabKeyDown(e: KeyboardEvent, key: string) {
+  const idx = tabKeys.indexOf(key);
+  if (e.key === "ArrowRight") {
+    e.preventDefault();
+    const next = (idx + 1) % tabKeys.length;
+    tab.value = tabKeys[next];
+  } else if (e.key === "ArrowLeft") {
+    e.preventDefault();
+    const prev = (idx - 1 + tabKeys.length) % tabKeys.length;
+    tab.value = tabKeys[prev];
+  } else if (e.key === "Home") {
+    e.preventDefault();
+    tab.value = tabKeys[0];
+  } else if (e.key === "End") {
+    e.preventDefault();
+    tab.value = tabKeys[tabKeys.length - 1];
+  }
+}
 
 const showAddApprover = ref(false);
 const newApproverUserId = ref("");

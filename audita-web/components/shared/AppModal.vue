@@ -10,17 +10,69 @@ const emit = defineEmits<{
   close: [];
 }>();
 
+// Unique id for aria-labelledby association
+const titleId = "modal-title-" + Math.random().toString(36).slice(2, 8);
+const panelRef = ref<HTMLElement | null>(null);
+
 function onBackdropClick() {
   if (props.closeOnBackdrop !== false) {
     emit("close");
   }
 }
 
-// Trap focus and close on Escape
-onMounted(() => {
-  function onKeyDown(e: KeyboardEvent) {
-    if (e.key === "Escape" && props.open) emit("close");
+const FOCUSABLE_SELECTOR = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
+
+function getFocusable(): HTMLElement[] {
+  if (!panelRef.value) return [];
+  return Array.from(
+    panelRef.value.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+  );
+}
+
+function onKeyDown(e: KeyboardEvent) {
+  if (!props.open) return;
+  if (e.key === "Escape") {
+    emit("close");
+    return;
   }
+  if (e.key !== "Tab") return;
+  const focusable = getFocusable();
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (e.shiftKey) {
+    if (document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    }
+  } else {
+    if (document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+}
+
+// Auto-focus the first interactive element when modal opens
+watch(
+  () => props.open,
+  (open) => {
+    if (open) {
+      nextTick(() => {
+        getFocusable()[0]?.focus();
+      });
+    }
+  },
+);
+
+onMounted(() => {
   window.addEventListener("keydown", onKeyDown);
   onUnmounted(() => window.removeEventListener("keydown", onKeyDown));
 });
@@ -41,7 +93,7 @@ onMounted(() => {
         class="fixed inset-0 z-50 flex items-center justify-center p-4"
         role="dialog"
         aria-modal="true"
-        :aria-label="title"
+        :aria-labelledby="titleId"
       >
         <!-- Backdrop -->
         <div class="absolute inset-0 bg-black/50" @click="onBackdropClick" />
@@ -57,6 +109,7 @@ onMounted(() => {
         >
           <div
             v-if="open"
+            ref="panelRef"
             class="relative z-10 w-full bg-white rounded-2xl shadow-[0_20px_40px_rgba(0,35,111,0.12)] dark:bg-slate-800 flex flex-col max-h-[90vh]"
             :class="{
               'max-w-sm': size === 'sm',
@@ -70,6 +123,7 @@ onMounted(() => {
               class="flex items-center justify-between px-6 py-4 border-b border-outline-variant/50 dark:border-border-dark shrink-0"
             >
               <h2
+                :id="titleId"
                 class="text-base font-semibold text-on-surface dark:text-gray-100"
               >
                 <slot name="title">{{ title }}</slot>

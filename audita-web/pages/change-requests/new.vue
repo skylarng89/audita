@@ -8,7 +8,7 @@
           Change Requests
         </p>
         <h1
-          class="text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
+          class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
         >
           Create Change Request
         </h1>
@@ -103,7 +103,7 @@
           >
             <option value="" disabled>Select approval type</option>
             <option value="LINEAR">Linear</option>
-            <option value="NON_LINEAR">Non Linear</option>
+            <option value="NON_LINEAR">Non-Linear</option>
           </select>
           <p v-if="errors.approvalType" class="field-error">
             {{ errors.approvalType }}
@@ -250,6 +250,8 @@ import StarterKit from "@tiptap/starter-kit";
 import FlatPickr from "vue-flatpickr-component";
 
 definePageMeta({ middleware: "auth" });
+
+useHead({ title: "Create Change Request — Audita" });
 
 const { create, listCategories } = useChangeRequests();
 

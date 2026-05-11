@@ -31,21 +31,67 @@
       <form @submit.prevent="handleSubmit" novalidate>
         <div class="mb-4">
           <label
+            for="reset-new-password"
             class="block text-xs font-semibold uppercase tracking-wide text-muted mb-1.5"
           >
             New Password
           </label>
-          <input
-            v-model="form.password"
-            type="password"
-            autocomplete="new-password"
-            placeholder="••••••••••••"
-            class="input"
-            required
-            minlength="8"
-          />
+          <div class="relative">
+            <input
+              id="reset-new-password"
+              v-model="form.password"
+              :type="showPassword ? 'text' : 'password'"
+              autocomplete="new-password"
+              placeholder="••••••••••••"
+              class="input pr-10"
+              required
+              minlength="8"
+            />
+            <button
+              type="button"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-on-surface transition-colors"
+              :aria-label="showPassword ? 'Hide password' : 'Show password'"
+              :aria-pressed="showPassword"
+              @click="showPassword = !showPassword"
+            >
+              <svg
+                v-if="showPassword"
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                />
+              </svg>
+              <svg
+                v-else
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
+              </svg>
+            </button>
+          </div>
           <!-- Strength bar -->
-          <div class="flex gap-1 mt-1.5">
+          <div class="flex gap-1 mt-1.5" aria-hidden="true">
             <div
               v-for="i in 4"
               :key="i"
@@ -53,26 +99,79 @@
               :class="strengthColor(i)"
             />
           </div>
-          <p class="text-xs text-muted mt-1">
+          <!-- Screen-reader strength announcement -->
+          <p
+            class="text-xs text-muted mt-1"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             Password strength: {{ strengthLabel }}
           </p>
         </div>
 
         <div class="mb-6">
           <label
+            for="reset-confirm-password"
             class="block text-xs font-semibold uppercase tracking-wide text-muted mb-1.5"
           >
             Confirm New Password
           </label>
-          <input
-            v-model="form.confirm"
-            type="password"
-            autocomplete="new-password"
-            placeholder="••••••••••••"
-            class="input"
-            required
-          />
-          <p v-if="confirmError" class="mt-1 text-xs text-danger">
+          <div class="relative">
+            <input
+              id="reset-confirm-password"
+              v-model="form.confirm"
+              :type="showConfirm ? 'text' : 'password'"
+              autocomplete="new-password"
+              placeholder="••••••••••••"
+              class="input pr-10"
+              required
+            />
+            <button
+              type="button"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-on-surface transition-colors"
+              :aria-label="
+                showConfirm ? 'Hide confirm password' : 'Show confirm password'
+              "
+              :aria-pressed="showConfirm"
+              @click="showConfirm = !showConfirm"
+            >
+              <svg
+                v-if="showConfirm"
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                />
+              </svg>
+              <svg
+                v-else
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
+              </svg>
+            </button>
+          </div>
+          <p v-if="confirmError" class="mt-1 text-xs text-danger" role="alert">
             {{ confirmError }}
           </p>
         </div>
@@ -108,6 +207,8 @@
 <script setup lang="ts">
 definePageMeta({ layout: "auth" });
 
+useHead({ title: "Reset Password — Audita" });
+
 const route = useRoute();
 const { resetPassword } = useAuth();
 
@@ -116,6 +217,8 @@ const error = ref("");
 const confirmError = ref("");
 const done = ref(false);
 const isLoading = ref(false);
+const showPassword = ref(false);
+const showConfirm = ref(false);
 
 const token = computed(() => route.query.token as string | undefined);
 

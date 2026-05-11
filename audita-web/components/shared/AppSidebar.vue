@@ -1,6 +1,7 @@
 <template>
   <nav
     class="fixed left-0 top-14 bottom-0 w-56 border-r border-outline-variant/50 bg-white dark:border-border-dark dark:bg-slate-950 flex flex-col overflow-y-auto z-20 hidden md:flex"
+    aria-label="Main navigation"
   >
     <div
       class="flex items-center gap-2.5 px-4 py-5 border-b border-outline-variant/50 dark:border-border-dark"
