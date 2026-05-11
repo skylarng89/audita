@@ -169,28 +169,20 @@
         <div>
           <label class="field-label">Scheduled Start</label>
           <div class="mt-1 grid grid-cols-2 gap-2">
-            <ClientOnly>
-              <VueDatePicker
-                v-model="form.scheduledStartDate"
-                :enable-time-picker="false"
-                model-type="yyyy-MM-dd"
-                placeholder="Date"
-                format="dd MMM yyyy"
-                auto-apply
-                teleport="body"
-                :dark="isDark"
-                @update:model-value="onStartChange"
-              />
-            </ClientOnly>
-            <ClientOnly>
-              <VueDatePicker
-                v-model="form.scheduledStartTime"
-                time-picker
-                placeholder="Time"
-                :dark="isDark"
-                @update:model-value="onStartChange"
-              />
-            </ClientOnly>
+            <input
+              v-model="form.scheduledStartDate"
+              type="date"
+              class="input"
+              :style="{ colorScheme: isDark ? 'dark' : 'light' }"
+              @change="onStartChange"
+            />
+            <input
+              v-model="form.scheduledStartTime"
+              type="time"
+              class="input"
+              :style="{ colorScheme: isDark ? 'dark' : 'light' }"
+              @change="onStartChange"
+            />
           </div>
           <p v-if="errors.scheduledStart" class="field-error">
             {{ errors.scheduledStart }}
@@ -201,29 +193,21 @@
         <div>
           <label class="field-label">Scheduled End</label>
           <div class="mt-1 grid grid-cols-2 gap-2">
-            <ClientOnly>
-              <VueDatePicker
-                v-model="form.scheduledEndDate"
-                :enable-time-picker="false"
-                model-type="yyyy-MM-dd"
-                placeholder="Date"
-                :min-date="form.scheduledStartDate ?? undefined"
-                format="dd MMM yyyy"
-                auto-apply
-                teleport="body"
-                :dark="isDark"
-                @update:model-value="touch('scheduledEnd')"
-              />
-            </ClientOnly>
-            <ClientOnly>
-              <VueDatePicker
-                v-model="form.scheduledEndTime"
-                time-picker
-                placeholder="Time"
-                :dark="isDark"
-                @update:model-value="touch('scheduledEnd')"
-              />
-            </ClientOnly>
+            <input
+              v-model="form.scheduledEndDate"
+              type="date"
+              class="input"
+              :min="form.scheduledStartDate || undefined"
+              :style="{ colorScheme: isDark ? 'dark' : 'light' }"
+              @change="touch('scheduledEnd')"
+            />
+            <input
+              v-model="form.scheduledEndTime"
+              type="time"
+              class="input"
+              :style="{ colorScheme: isDark ? 'dark' : 'light' }"
+              @change="touch('scheduledEnd')"
+            />
           </div>
           <p v-if="errors.scheduledEnd" class="field-error">
             {{ errors.scheduledEnd }}
@@ -296,10 +280,10 @@ const form = reactive({
   riskLevel: "" as string,
   approvalType: "" as string,
   categories: [] as string[],
-  scheduledStartDate: "" as string,
-  scheduledStartTime: null as { hours: number; minutes: number } | null,
-  scheduledEndDate: "" as string,
-  scheduledEndTime: null as { hours: number; minutes: number } | null,
+  scheduledStartDate: "",
+  scheduledStartTime: "",
+  scheduledEndDate: "",
+  scheduledEndTime: "",
   affectedSystemsInput: "",
 });
 
@@ -419,21 +403,11 @@ function validateField(field: string) {
   }
 }
 
-function combineParts(
-  dateStr: string,
-  time: { hours: number; minutes: number } | null,
-): Date | null {
+function combineParts(dateStr: string, timeStr: string): Date | null {
   if (!dateStr) return null;
   const [year, month, day] = dateStr.split("-").map(Number);
-  return new Date(
-    year,
-    month - 1,
-    day,
-    time?.hours ?? 0,
-    time?.minutes ?? 0,
-    0,
-    0,
-  );
+  const [hours, minutes] = timeStr ? timeStr.split(":").map(Number) : [0, 0];
+  return new Date(year, month - 1, day, hours, minutes, 0, 0);
 }
 
 function onStartChange() {
@@ -441,7 +415,7 @@ function onStartChange() {
   const end = combineParts(form.scheduledEndDate, form.scheduledEndTime);
   if (start && end && end <= start) {
     form.scheduledEndDate = "";
-    form.scheduledEndTime = null;
+    form.scheduledEndTime = "";
     errors.scheduledEnd = "End must be after the start date.";
   }
   touch("scheduledStart");

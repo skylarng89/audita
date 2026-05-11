@@ -145,28 +145,20 @@
             <div>
               <label class="field-label">Scheduled Start</label>
               <div class="mt-1 grid grid-cols-2 gap-2">
-                <ClientOnly>
-                  <VueDatePicker
-                    v-model="editForm.scheduledStartDate"
-                    :enable-time-picker="false"
-                    model-type="yyyy-MM-dd"
-                    placeholder="Date"
-                    format="dd MMM yyyy"
-                    auto-apply
-                    teleport="body"
-                    :dark="isDark"
-                    @update:model-value="onEditStartChange"
-                  />
-                </ClientOnly>
-                <ClientOnly>
-                  <VueDatePicker
-                    v-model="editForm.scheduledStartTime"
-                    time-picker
-                    placeholder="Time"
-                    :dark="isDark"
-                    @update:model-value="onEditStartChange"
-                  />
-                </ClientOnly>
+                <input
+                  v-model="editForm.scheduledStartDate"
+                  type="date"
+                  class="input"
+                  :style="{ colorScheme: isDark ? 'dark' : 'light' }"
+                  @change="onEditStartChange"
+                />
+                <input
+                  v-model="editForm.scheduledStartTime"
+                  type="time"
+                  class="input"
+                  :style="{ colorScheme: isDark ? 'dark' : 'light' }"
+                  @change="onEditStartChange"
+                />
               </div>
             </div>
 
@@ -174,27 +166,19 @@
             <div>
               <label class="field-label">Scheduled End</label>
               <div class="mt-1 grid grid-cols-2 gap-2">
-                <ClientOnly>
-                  <VueDatePicker
-                    v-model="editForm.scheduledEndDate"
-                    :enable-time-picker="false"
-                    model-type="yyyy-MM-dd"
-                    placeholder="Date"
-                    :min-date="editForm.scheduledStartDate ?? undefined"
-                    format="dd MMM yyyy"
-                    auto-apply
-                    teleport="body"
-                    :dark="isDark"
-                  />
-                </ClientOnly>
-                <ClientOnly>
-                  <VueDatePicker
-                    v-model="editForm.scheduledEndTime"
-                    time-picker
-                    placeholder="Time"
-                    :dark="isDark"
-                  />
-                </ClientOnly>
+                <input
+                  v-model="editForm.scheduledEndDate"
+                  type="date"
+                  class="input"
+                  :min="editForm.scheduledStartDate || undefined"
+                  :style="{ colorScheme: isDark ? 'dark' : 'light' }"
+                />
+                <input
+                  v-model="editForm.scheduledEndTime"
+                  type="time"
+                  class="input"
+                  :style="{ colorScheme: isDark ? 'dark' : 'light' }"
+                />
               </div>
             </div>
 
@@ -684,10 +668,10 @@ const editForm = reactive({
   riskLevel: "",
   approvalType: "",
   category: "",
-  scheduledStartDate: "" as string,
-  scheduledStartTime: null as { hours: number; minutes: number } | null,
-  scheduledEndDate: "" as string,
-  scheduledEndTime: null as { hours: number; minutes: number } | null,
+  scheduledStartDate: "",
+  scheduledStartTime: "",
+  scheduledEndDate: "",
+  scheduledEndTime: "",
   affectedSystemsInput: "",
 });
 
@@ -704,21 +688,11 @@ const editEditor = useEditor({
 // ── Dark mode detection for VueDatePicker ──────────────────────────────────
 const isDark = ref(false);
 
-function combineParts(
-  dateStr: string,
-  time: { hours: number; minutes: number } | null,
-): Date | null {
+function combineParts(dateStr: string, timeStr: string): Date | null {
   if (!dateStr) return null;
   const [year, month, day] = dateStr.split("-").map(Number);
-  return new Date(
-    year,
-    month - 1,
-    day,
-    time?.hours ?? 0,
-    time?.minutes ?? 0,
-    0,
-    0,
-  );
+  const [hours, minutes] = timeStr ? timeStr.split(":").map(Number) : [0, 0];
+  return new Date(year, month - 1, day, hours, minutes, 0, 0);
 }
 
 function onEditStartChange() {
@@ -732,7 +706,7 @@ function onEditStartChange() {
   );
   if (start && end && end <= start) {
     editForm.scheduledEndDate = "";
-    editForm.scheduledEndTime = null;
+    editForm.scheduledEndTime = "";
   }
 }
 
@@ -747,24 +721,18 @@ function enterEditMode() {
   if (cr.scheduledStart) {
     const s = new Date(cr.scheduledStart);
     editForm.scheduledStartDate = `${s.getFullYear()}-${String(s.getMonth() + 1).padStart(2, "0")}-${String(s.getDate()).padStart(2, "0")}`;
-    editForm.scheduledStartTime = {
-      hours: s.getHours(),
-      minutes: s.getMinutes(),
-    };
+    editForm.scheduledStartTime = `${String(s.getHours()).padStart(2, "0")}:${String(s.getMinutes()).padStart(2, "0")}`;
   } else {
     editForm.scheduledStartDate = "";
-    editForm.scheduledStartTime = null;
+    editForm.scheduledStartTime = "";
   }
   if (cr.scheduledEnd) {
     const e = new Date(cr.scheduledEnd);
     editForm.scheduledEndDate = `${e.getFullYear()}-${String(e.getMonth() + 1).padStart(2, "0")}-${String(e.getDate()).padStart(2, "0")}`;
-    editForm.scheduledEndTime = {
-      hours: e.getHours(),
-      minutes: e.getMinutes(),
-    };
+    editForm.scheduledEndTime = `${String(e.getHours()).padStart(2, "0")}:${String(e.getMinutes()).padStart(2, "0")}`;
   } else {
     editForm.scheduledEndDate = "";
-    editForm.scheduledEndTime = null;
+    editForm.scheduledEndTime = "";
   }
   editForm.affectedSystemsInput = cr.affectedSystems.join(", ");
   editEditor.value?.commands.setContent(cr.description ?? "");
