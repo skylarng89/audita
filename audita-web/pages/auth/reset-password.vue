@@ -41,7 +41,7 @@
               id="reset-new-password"
               v-model="form.password"
               :type="showPassword ? 'text' : 'password'"
-              autocomplete="new-password"
+              :autocomplete="showPassword ? 'off' : 'new-password'"
               placeholder="••••••••••••"
               class="input pr-10"
               required
@@ -121,7 +121,7 @@
               id="reset-confirm-password"
               v-model="form.confirm"
               :type="showConfirm ? 'text' : 'password'"
-              autocomplete="new-password"
+              :autocomplete="showConfirm ? 'off' : 'new-password'"
               placeholder="••••••••••••"
               class="input pr-10"
               required
