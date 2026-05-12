@@ -21,5 +21,6 @@
   "sonarlint.connectedMode.project": {
     "connectionId": "skylarng89",
     "projectKey": "skylarng89_audita"
-  }
+  },
+  "java.jdt.ls.vmargs": "-XX:+UseZGC -XX:+ZGenerational -Xms256m -Xmx8g -XX:+ExitOnOutOfMemoryError"
 }

@@ -12,7 +12,6 @@ coverage/
 build/
 tmp/
 .idea/
-.vscode/
 *.iml
 *.sublime-project
 *.sublime-workspace
