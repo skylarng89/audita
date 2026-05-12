@@ -31,26 +31,30 @@
           </svg>
         </button>
         <img
-          src="/brand/audita-icon-light.svg"
+          src="/brand/audita-lockup-light.svg"
           alt="Audita"
-          class="w-7 h-7 rounded-md dark:hidden"
+          class="h-5 w-auto dark:hidden"
         />
         <img
-          src="/brand/audita-icon-dark.svg"
+          src="/brand/audita-lockup-dark.svg"
           alt="Audita"
-          class="w-7 h-7 rounded-md hidden dark:block"
+          class="h-5 w-auto hidden dark:block"
         />
-        <span class="font-bold text-sm text-on-surface dark:text-gray-100"
-          >Audita</span
-        >
       </div>
 
-      <!-- Desktop: spacer that matches sidebar width (width driven by --sidebar-w CSS var) -->
-      <div
-        class="hidden md:block shrink-0 transition-[width] duration-200"
-        style="width: var(--sidebar-w)"
-        aria-hidden="true"
-      />
+      <!-- Desktop brand -->
+      <NuxtLink to="/dashboard" class="hidden md:flex items-center shrink-0">
+        <img
+          src="/brand/audita-lockup-light.svg"
+          alt="Audita"
+          class="h-6 w-auto dark:hidden"
+        />
+        <img
+          src="/brand/audita-lockup-dark.svg"
+          alt="Audita"
+          class="h-6 w-auto hidden dark:block"
+        />
+      </NuxtLink>
 
       <!-- Flexible spacer -->
       <div class="flex-1" />

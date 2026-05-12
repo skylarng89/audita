@@ -47,26 +47,45 @@ export default defineNuxtPlugin(() => {
       options.headers = headers;
     },
 
-    async onResponseError({ response }) {
-      // Only treat 401 as an expired-token signal worth refreshing.
-      // 403 responses are domain-level permission/business errors (e.g. UPLOAD_FAILED,
-      // NOT_PERMITTED) — retrying with a fresh token would still return 403, and
-      // the catch below would force an erroneous logout.
-      if (response.status === 401 && auth.isAuthenticated) {
-        // Attempt silent refresh via the HttpOnly cookie
-        try {
-          const refreshed = await $fetch<{ accessToken: string }>(
-            "/api/v1/auth/refresh",
-            {
-              method: "POST",
-              baseURL,
-            },
-          );
-          auth.setAccessToken(refreshed.accessToken);
-        } catch {
-          // Refresh failed — force logout
-          await auth.logout();
-        }
+    async onResponseError(ctx) {
+      const { request, options, response } = ctx;
+
+      let requestPath = "";
+      if (typeof request === "string") {
+        requestPath = request;
+      } else if (request instanceof Request) {
+        requestPath = request.url;
+      }
+
+      const isRefreshEndpoint = requestPath.includes("/api/v1/auth/refresh");
+      const alreadyRetried = Boolean(
+        (options as { _authRetry?: boolean })._authRetry,
+      );
+      const isEmptyForbidden =
+        response.status === 403 && response._data == null;
+      const shouldAttemptRefresh =
+        auth.isAuthenticated &&
+        !isRefreshEndpoint &&
+        !alreadyRetried &&
+        (response.status === 401 || isEmptyForbidden);
+
+      if (!shouldAttemptRefresh) {
+        return;
+      }
+
+      try {
+        const refreshed = await $fetch<{ accessToken: string }>(
+          "/api/v1/auth/refresh",
+          {
+            method: "POST",
+            baseURL,
+          },
+        );
+        auth.setAccessToken(refreshed.accessToken);
+        (options as { _authRetry?: boolean })._authRetry = true;
+        return $api(request, options);
+      } catch {
+        await auth.logout();
       }
     },
   });

@@ -39,7 +39,23 @@ export default defineNuxtConfig({
         },
       ],
       link: [
-        { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+        {
+          rel: "icon",
+          type: "image/svg+xml",
+          href: "/brand/audita-icon-light.svg",
+          media: "(prefers-color-scheme: light)",
+        },
+        {
+          rel: "icon",
+          type: "image/svg+xml",
+          href: "/brand/audita-icon-dark.svg",
+          media: "(prefers-color-scheme: dark)",
+        },
+        {
+          rel: "icon",
+          type: "image/svg+xml",
+          href: "/brand/audita-icon-light.svg",
+        },
         { rel: "preconnect", href: "https://fonts.googleapis.com" },
         {
           rel: "stylesheet",
