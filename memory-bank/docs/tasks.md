@@ -265,14 +265,15 @@
 
 ### Backend + Frontend Session Resilience (`audita-api` + `audita-web`)
 
-| Task ID  | Task                                                                       | Priority | Status       | Assigned To | Notes                                                                                                                                             |
-| -------- | -------------------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| SESS-001 | Fix refresh cookie scope so logout receives and revokes refresh token      | High     | ✅ Completed | Developer 1 | `AuthController` and `SsoController` now scope refresh cookie to `/api/v1/auth`; added `AuthControllerWebMvcTest`.                                |
-| SESS-002 | Restrict frontend silent refresh to `401` responses only                   | High     | ✅ Completed | Developer 2 | `plugins/api.ts` no longer treats empty `403` as token expiry; retry remains single-shot.                                                         |
-| SESS-003 | Persist and enforce access-token expiry in frontend auth state             | High     | ✅ Completed | Developer 2 | `stores/auth.ts` now stores `tokenExpiresAt`, invalidates stale persisted sessions, and refresh responses refresh the full auth state.            |
-| SESS-004 | Invalidate onboarding/session cache on auth transitions                    | Medium   | ✅ Completed | Developer 2 | `setAuth`, `setAccessToken`, and `clearAuth` now invalidate onboarding bootstrap cache to avoid stale route decisions after redeploy or logout.   |
-| SESS-005 | Force logout on tenant-context mismatch                                    | High     | ✅ Completed | Developer 2 | `middleware/tenant.ts` now fails closed by calling logout when the resolved tenant does not match the authenticated tenant context.               |
-| SESS-006 | Add regression coverage for session-hardening helpers and middleware flows | High     | ✅ Completed | Developer 2 | Added `tests/auth/session.spec.ts`, `tests/middleware/tenant.spec.ts`, and backend `AuthControllerWebMvcTest`; frontend typecheck passes cleanly. |
+| Task ID  | Task                                                                       | Priority | Status       | Assigned To | Notes                                                                                                                                                                                     |
+| -------- | -------------------------------------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SESS-001 | Fix refresh cookie scope so logout receives and revokes refresh token      | High     | ✅ Completed | Developer 1 | `AuthController` and `SsoController` now scope refresh cookie to `/api/v1/auth`; added `AuthControllerWebMvcTest`.                                                                        |
+| SESS-002 | Restrict frontend silent refresh to `401` responses only                   | High     | ✅ Completed | Developer 2 | `plugins/api.ts` no longer treats empty `403` as token expiry; retry remains single-shot.                                                                                                 |
+| SESS-003 | Persist and enforce access-token expiry in frontend auth state             | High     | ✅ Completed | Developer 2 | `stores/auth.ts` now stores `tokenExpiresAt`, invalidates stale persisted sessions, and refresh responses refresh the full auth state.                                                    |
+| SESS-004 | Invalidate onboarding/session cache on auth transitions                    | Medium   | ✅ Completed | Developer 2 | `setAuth`, `setAccessToken`, and `clearAuth` now invalidate onboarding bootstrap cache to avoid stale route decisions after redeploy or logout.                                           |
+| SESS-005 | Force logout on tenant-context mismatch                                    | High     | ✅ Completed | Developer 2 | `middleware/tenant.ts` now fails closed by calling logout when the resolved tenant does not match the authenticated tenant context.                                                       |
+| SESS-006 | Add regression coverage for session-hardening helpers and middleware flows | High     | ✅ Completed | Developer 2 | Added `tests/auth/session.spec.ts`, `tests/auth/tenant-resolution.spec.ts`, `tests/middleware/tenant.spec.ts`, and backend `AuthControllerWebMvcTest`; frontend typecheck passes cleanly. |
+| SESS-007 | Remove JS-readable auth-token persistence and restore session via refresh  | High     | ✅ Completed | Developer 2 | `stores/auth.ts` no longer persists access tokens in cookies; `plugins/auth.ts` restores in-memory auth via the HttpOnly refresh cookie at startup.                                       |
 
 ## Recent Implementations
 
@@ -286,19 +287,23 @@
 - `audita-api/api/src/main/java/io/audita/api/controller/SsoController.java` — aligned SSO-issued refresh-cookie path with auth controller scope.
 - `audita-api/api/src/test/java/io/audita/api/controller/AuthControllerWebMvcTest.java` — added focused cookie-scope regression coverage.
 - `audita-web/plugins/api.ts` — restricted silent refresh to `401`, serialized refresh calls, and refreshed full auth state on success.
-- `audita-web/stores/auth.ts` — added expiry-aware auth persistence and cache invalidation on auth transitions.
+- `audita-web/stores/auth.ts` — removed JS-readable auth-token persistence, kept access tokens in memory, and retained cache invalidation on auth transitions.
+- `audita-web/plugins/auth.ts` — restores the in-memory session from the HttpOnly refresh cookie before first render.
 - `audita-web/composables/authSession.ts` — added pure session helper functions for expiry and refresh decisions.
+- `audita-web/composables/tenantResolution.ts` — shared tenant slug resolution used by startup auth restore and tenant middleware.
 - `audita-web/middleware/tenant.ts` — fail-closed logout on tenant mismatch.
 - `audita-web/tests/auth/session.spec.ts` — session-helper regression tests.
+- `audita-web/tests/auth/tenant-resolution.spec.ts` — tenant-resolution regression tests.
 - `audita-web/tests/middleware/tenant.spec.ts` — tenant-mismatch logout regression test.
 
 **Key Changes**:
 
 - Logout can now receive the refresh cookie and revoke server-side refresh state instead of only clearing client state.
 - Frontend no longer hides real authorization failures behind refresh retries on `403`.
+- Frontend no longer stores access tokens in JS-readable cookies; a cold load now restores session state through the HttpOnly refresh cookie only.
 - Expired or legacy persisted access tokens no longer keep the UI in a broken half-authenticated state.
 
-**Test Coverage**: Backend focused auth controller test passing; frontend focused session tests passing; frontend typecheck passing.
+**Test Coverage**: Backend focused auth controller test passing; frontend focused session/tenant tests passing; frontend typecheck passing.
 | -------- | ------------------------------------------------------------------------------------------------ | -------- | -------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | WCAG-001 | Add skip-to-main-content link at top of default layout (2.4.1) | High | ✅ Completed | Developer 2 | `.skip-link` class in `main.css`; `<a href="#main-content" class="skip-link">` at top of `layouts/default.vue`; `<main id="main-content" tabindex="-1">` as target. |
 | WCAG-002 | Add `<title>` to every page via `useHead` (2.4.2) | High | ✅ Completed | Developer 2 | `useHead({ title: '… — Audita' })` added to all pages: Dashboard, CR list/create/detail, Audit Trail, Users, Groups, Custom Fields, Settings, Sign In, Reset Password, Forgot Password, Accept Invite. |

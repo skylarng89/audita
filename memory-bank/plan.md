@@ -155,6 +155,6 @@
 
 ### Next Steps
 
-1. Move access-token persistence out of the JS-readable cookie if we want to complete the stricter HttpOnly-only session model.
-2. Add a compatibility/version check for deploy-time contract mismatches and force re-auth on incompatible auth payloads.
-3. Consider serializing refresh attempts across tabs if multi-tab race conditions appear in production telemetry.
+1. Add a compatibility/version check for deploy-time contract mismatches and force re-auth on incompatible auth payloads.
+2. Consider serializing refresh attempts across tabs if multi-tab race conditions appear in production telemetry.
+3. If SSR auth flicker appears under load, add a dedicated backend session-introspection endpoint to avoid rotating refresh tokens on every cold load.
