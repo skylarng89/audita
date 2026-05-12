@@ -47,16 +47,14 @@ function onKeyDown(e: KeyboardEvent) {
   if (!focusable.length) return;
   const first = focusable[0];
   const last = focusable[focusable.length - 1];
-  if (e.shiftKey) {
-    if (document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    }
-  } else {
-    if (document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+    return;
+  }
+  if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
   }
 }
 
@@ -73,8 +71,8 @@ watch(
 );
 
 onMounted(() => {
-  window.addEventListener("keydown", onKeyDown);
-  onUnmounted(() => window.removeEventListener("keydown", onKeyDown));
+  globalThis.addEventListener("keydown", onKeyDown);
+  onUnmounted(() => globalThis.removeEventListener("keydown", onKeyDown));
 });
 </script>
 
@@ -88,10 +86,10 @@ onMounted(() => {
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div
+      <dialog
         v-if="open"
+        open
         class="fixed inset-0 z-50 flex items-center justify-center p-4"
-        role="dialog"
         aria-modal="true"
         :aria-labelledby="titleId"
       >
@@ -165,7 +163,7 @@ onMounted(() => {
             </div>
           </div>
         </Transition>
-      </div>
+      </dialog>
     </Transition>
   </Teleport>
 </template>
