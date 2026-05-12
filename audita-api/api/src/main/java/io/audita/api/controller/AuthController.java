@@ -76,6 +76,20 @@ public class AuthController {
         return ResponseEntity.ok(toAuthResponse(result));
     }
 
+    @PostMapping("/session")
+    public ResponseEntity<AuthResponse> session(HttpServletRequest request) {
+
+        String rawToken = extractRefreshCookie(request);
+        if (rawToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String clientIp = resolveClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
+        LoginResult result = authService.restoreSession(rawToken, clientIp, userAgent);
+        return ResponseEntity.ok(toAuthResponse(result));
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
             HttpServletRequest request,

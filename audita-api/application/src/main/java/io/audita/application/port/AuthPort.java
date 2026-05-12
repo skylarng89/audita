@@ -5,12 +5,14 @@ import java.util.UUID;
 public interface AuthPort {
 
     LoginResult loginTenantUser(String email,
-                                String rawPassword,
-                                String tenantSlug,
-                                String clientIp,
-                                String userAgent);
+            String rawPassword,
+            String tenantSlug,
+            String clientIp,
+            String userAgent);
 
     LoginResult loginSuperAdmin(String email, String rawPassword);
+
+    LoginResult restoreSession(String rawRefreshToken, String clientIp, String userAgent);
 
     LoginResult refreshToken(String rawRefreshToken, String clientIp, String userAgent);
 
@@ -33,6 +35,6 @@ public interface AuthPort {
             String email,
             String fullName,
             String role,
-            String tenantSlug
-    ) {}
+            String tenantSlug) {
+    }
 }

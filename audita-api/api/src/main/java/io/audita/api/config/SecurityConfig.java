@@ -50,6 +50,7 @@ public class SecurityConfig {
                                                 // Public auth endpoints
                                                 .requestMatchers(HttpMethod.POST,
                                                                 "/api/v1/auth/login",
+                                                                "/api/v1/auth/session",
                                                                 "/api/v1/auth/refresh",
                                                                 "/api/v1/auth/logout",
                                                                 "/api/v1/auth/forgot-password",
@@ -103,6 +104,7 @@ public class SecurityConfig {
                 config.setAllowedOrigins(allowedOrigins);
                 config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                 config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Tenant-Slug", "X-Setup-Token"));
+                config.setExposedHeaders(List.of("X-Audita-Api-Contract"));
                 config.setAllowCredentials(true);
                 config.setMaxAge(3600L);
 
