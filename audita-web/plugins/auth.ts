@@ -23,6 +23,8 @@ export default defineNuxtPlugin(async () => {
 
   if (tenantSlug) {
     auth.setTenantSlug(tenantSlug);
+  } else {
+    auth.hydrateTenantSlug();
   }
 
   try {

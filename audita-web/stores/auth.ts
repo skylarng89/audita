@@ -21,6 +21,30 @@ interface AuthMutationOptions {
   broadcast?: boolean;
 }
 
+const TENANT_SLUG_STORAGE_KEY = "audita-tenant-slug";
+
+function persistTenantSlug(tenantSlug: string | null) {
+  if (!import.meta.client) {
+    return;
+  }
+
+  if (tenantSlug) {
+    localStorage.setItem(TENANT_SLUG_STORAGE_KEY, tenantSlug);
+    return;
+  }
+
+  localStorage.removeItem(TENANT_SLUG_STORAGE_KEY);
+}
+
+function readPersistedTenantSlug() {
+  if (!import.meta.client) {
+    return null;
+  }
+
+  const persisted = localStorage.getItem(TENANT_SLUG_STORAGE_KEY);
+  return persisted && persisted.trim() ? persisted.trim() : null;
+}
+
 function broadcastAuthEvent(type: "session-restored" | "session-logged-out") {
   if (!import.meta.client) {
     return;
@@ -74,6 +98,18 @@ export const useAuthStore = defineStore("auth", {
 
     setTenantSlug(tenantSlug: string | null) {
       this.tenantSlug = tenantSlug;
+      persistTenantSlug(tenantSlug);
+    },
+
+    hydrateTenantSlug() {
+      if (this.tenantSlug) {
+        return;
+      }
+
+      const persisted = readPersistedTenantSlug();
+      if (persisted) {
+        this.tenantSlug = persisted;
+      }
     },
 
     setAuth(response: AuthResponse, options: AuthMutationOptions = {}) {
@@ -84,6 +120,7 @@ export const useAuthStore = defineStore("auth", {
       this.fullName = response.fullName;
       this.role = response.role;
       this.tenantSlug = response.tenantSlug;
+      persistTenantSlug(this.tenantSlug);
       this.sessionInitialized = true;
       this.invalidateCachedSessionState();
 
@@ -100,6 +137,7 @@ export const useAuthStore = defineStore("auth", {
       this.fullName = null;
       this.role = null;
       this.tenantSlug = null;
+      persistTenantSlug(null);
       this.sessionInitialized = true;
       this.invalidateCachedSessionState();
 
