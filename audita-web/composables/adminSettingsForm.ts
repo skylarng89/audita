@@ -11,24 +11,42 @@ export type SlaDefaults = {
   warningBeforeHours: number;
 };
 
+export type AutoApproverDefaults = {
+  userIds: string[];
+  groupIds: string[];
+};
+
 export type SettingsPatchPayload = {
   workflowDefaults: WorkflowDefaults;
   slaDefaults: SlaDefaults;
+  autoApproverDefaults: AutoApproverDefaults;
 };
 
 export function createSettingsSnapshot(
   workflowDefaults: WorkflowDefaults,
   slaDefaults: SlaDefaults,
+  autoApproverDefaults: AutoApproverDefaults,
 ): string {
-  return JSON.stringify({ workflowDefaults, slaDefaults });
+  return JSON.stringify({
+    workflowDefaults,
+    slaDefaults,
+    autoApproverDefaults: {
+      userIds: [...autoApproverDefaults.userIds].sort(),
+      groupIds: [...autoApproverDefaults.groupIds].sort(),
+    },
+  });
 }
 
 export function isSettingsDirty(
   snapshot: string,
   workflowDefaults: WorkflowDefaults,
   slaDefaults: SlaDefaults,
+  autoApproverDefaults: AutoApproverDefaults,
 ): boolean {
-  return snapshot !== createSettingsSnapshot(workflowDefaults, slaDefaults);
+  return (
+    snapshot !==
+    createSettingsSnapshot(workflowDefaults, slaDefaults, autoApproverDefaults)
+  );
 }
 
 export function validateSlaDefaults(slaDefaults: SlaDefaults): string | null {
@@ -48,6 +66,7 @@ export function validateSlaDefaults(slaDefaults: SlaDefaults): string | null {
 export function buildSettingsPatchPayload(
   workflowDefaults: WorkflowDefaults,
   slaDefaults: SlaDefaults,
+  autoApproverDefaults: AutoApproverDefaults,
 ): SettingsPatchPayload {
   return {
     workflowDefaults: {
@@ -60,6 +79,10 @@ export function buildSettingsPatchPayload(
       highHours: slaDefaults.highHours,
       criticalHours: slaDefaults.criticalHours,
       warningBeforeHours: slaDefaults.warningBeforeHours,
+    },
+    autoApproverDefaults: {
+      userIds: autoApproverDefaults.userIds,
+      groupIds: autoApproverDefaults.groupIds,
     },
   };
 }

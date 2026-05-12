@@ -3,6 +3,7 @@ import {
   createSettingsSnapshot,
   isSettingsDirty,
   validateSlaDefaults,
+  type AutoApproverDefaults,
   type SlaDefaults,
   type WorkflowDefaults,
 } from "~/composables/adminSettingsForm";
@@ -22,23 +23,60 @@ describe("admin settings form interaction logic", () => {
     warningBeforeHours: 1,
   };
 
-  it("marks form as clean when snapshot matches current values", () => {
-    const snapshot = createSettingsSnapshot(workflowDefaults, slaDefaults);
+  const autoApproverDefaults: AutoApproverDefaults = {
+    userIds: ["11111111-1111-1111-1111-111111111111"],
+    groupIds: ["22222222-2222-2222-2222-222222222222"],
+  };
 
-    expect(isSettingsDirty(snapshot, workflowDefaults, slaDefaults)).toBe(
-      false,
+  it("marks form as clean when snapshot matches current values", () => {
+    const snapshot = createSettingsSnapshot(
+      workflowDefaults,
+      slaDefaults,
+      autoApproverDefaults,
     );
+
+    expect(
+      isSettingsDirty(
+        snapshot,
+        workflowDefaults,
+        slaDefaults,
+        autoApproverDefaults,
+      ),
+    ).toBe(false);
   });
 
   it("marks form as dirty when workflow value changes", () => {
-    const snapshot = createSettingsSnapshot(workflowDefaults, slaDefaults);
+    const snapshot = createSettingsSnapshot(
+      workflowDefaults,
+      slaDefaults,
+      autoApproverDefaults,
+    );
 
     expect(
       isSettingsDirty(
         snapshot,
         { ...workflowDefaults, approvalTypeDefault: "NON_LINEAR" },
         slaDefaults,
+        autoApproverDefaults,
       ),
+    ).toBe(true);
+  });
+
+  it("marks form as dirty when auto-approver defaults change", () => {
+    const snapshot = createSettingsSnapshot(
+      workflowDefaults,
+      slaDefaults,
+      autoApproverDefaults,
+    );
+
+    expect(
+      isSettingsDirty(snapshot, workflowDefaults, slaDefaults, {
+        ...autoApproverDefaults,
+        userIds: [
+          ...autoApproverDefaults.userIds,
+          "33333333-3333-3333-3333-333333333333",
+        ],
+      }),
     ).toBe(true);
   });
 
@@ -58,9 +96,16 @@ describe("admin settings form interaction logic", () => {
   });
 
   it("builds stable patch payload from current settings", () => {
-    expect(buildSettingsPatchPayload(workflowDefaults, slaDefaults)).toEqual({
+    expect(
+      buildSettingsPatchPayload(
+        workflowDefaults,
+        slaDefaults,
+        autoApproverDefaults,
+      ),
+    ).toEqual({
       workflowDefaults,
       slaDefaults,
+      autoApproverDefaults,
     });
   });
 });
