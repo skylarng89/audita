@@ -17,9 +17,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isDev = Boolean(import.meta.dev);
 
   // Determine host: server-side from SSR context, client-side from globalThis.
+  const browserHostname =
+    globalThis.location?.hostname ??
+    globalThis.window?.location?.hostname ??
+    "";
   const host = import.meta.server
     ? (ssrContext?.event.node.req.headers.host ?? "")
-    : globalThis.location.hostname;
+    : browserHostname;
   const resolved = resolveTenantSlug({
     hostname: host,
     queryTenant: (to.query.tenant as string | undefined) ?? null,
