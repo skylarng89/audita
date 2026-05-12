@@ -76,6 +76,13 @@ export interface CrApprover {
   isAdHoc: boolean;
 }
 
+export interface ApproverCandidate {
+  id: string;
+  kind: "USER" | "GROUP";
+  label: string;
+  secondary: string | null;
+}
+
 export interface ChangeRequestCustomFieldValue {
   fieldId: string;
   value: string | null;

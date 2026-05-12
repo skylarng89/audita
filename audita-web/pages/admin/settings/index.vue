@@ -474,6 +474,7 @@
 
 <script setup lang="ts">
 import type { CustomFieldDefinition } from "~/types";
+import type { ApproverCandidate } from "~/types";
 import {
   buildSettingsPatchPayload,
   createSettingsSnapshot,
@@ -487,6 +488,7 @@ useHead({ title: "Settings — Audita" });
 
 const api = useApi();
 const { error: toastError } = useToast();
+const { searchApproverCandidates } = useChangeRequests();
 
 interface TenantAdminSettingsResponse {
   profile: {
@@ -517,6 +519,22 @@ interface TenantAdminSettingsResponse {
     criticalHours: number;
     warningBeforeHours: number;
   };
+  autoApproverDefaults: {
+    userIds: string[];
+    groupIds: string[];
+  };
+}
+
+interface UserLookupResponse {
+  id: string;
+  fullName: string;
+  email: string;
+}
+
+interface GroupLookupResponse {
+  id: string;
+  name: string;
+  description: string | null;
 }
 
 const pending = ref(false);
@@ -550,15 +568,56 @@ const settings = reactive({
     criticalHours: 8,
     warningBeforeHours: 1,
   },
+  autoApproverDefaults: {
+    userIds: [] as string[],
+    groupIds: [] as string[],
+  },
 });
+
+const selectedAutoApproverUsers = ref<Record<string, { label: string }>>({});
+const selectedAutoApproverGroups = ref<Record<string, { label: string }>>({});
+const userSearchQuery = ref("");
+const groupSearchQuery = ref("");
+const userSearchResults = ref<ApproverCandidate[]>([]);
+const groupSearchResults = ref<ApproverCandidate[]>([]);
 
 const isDirty = computed(() => {
   return isSettingsDirty(
     settingsSnapshot.value,
     settings.workflowDefaults,
     settings.slaDefaults,
+    settings.autoApproverDefaults,
   );
 });
+
+async function hydrateAutoApproverLabels() {
+  const userPairs = await Promise.all(
+    settings.autoApproverDefaults.userIds.map(async (userId) => {
+      try {
+        const user = await api<UserLookupResponse>(`/api/v1/users/${userId}`);
+        return [userId, { label: `${user.fullName} (${user.email})` }] as const;
+      } catch {
+        return [userId, { label: userId }] as const;
+      }
+    }),
+  );
+
+  const groupPairs = await Promise.all(
+    settings.autoApproverDefaults.groupIds.map(async (groupId) => {
+      try {
+        const group = await api<GroupLookupResponse>(
+          `/api/v1/groups/${groupId}`,
+        );
+        return [groupId, { label: group.name }] as const;
+      } catch {
+        return [groupId, { label: groupId }] as const;
+      }
+    }),
+  );
+
+  selectedAutoApproverUsers.value = Object.fromEntries(userPairs);
+  selectedAutoApproverGroups.value = Object.fromEntries(groupPairs);
+}
 
 async function loadSettings() {
   pending.value = true;
@@ -592,9 +651,15 @@ async function loadSettings() {
     settings.slaDefaults.criticalHours = response.slaDefaults.criticalHours;
     settings.slaDefaults.warningBeforeHours =
       response.slaDefaults.warningBeforeHours;
+    settings.autoApproverDefaults.userIds =
+      response.autoApproverDefaults?.userIds ?? [];
+    settings.autoApproverDefaults.groupIds =
+      response.autoApproverDefaults?.groupIds ?? [];
+    await hydrateAutoApproverLabels();
     settingsSnapshot.value = createSettingsSnapshot(
       settings.workflowDefaults,
       settings.slaDefaults,
+      settings.autoApproverDefaults,
     );
   } catch {
     errorMessage.value = "Unable to load settings right now.";
@@ -623,11 +688,13 @@ async function saveSettings() {
       body: buildSettingsPatchPayload(
         settings.workflowDefaults,
         settings.slaDefaults,
+        settings.autoApproverDefaults,
       ),
     });
     settingsSnapshot.value = createSettingsSnapshot(
       settings.workflowDefaults,
       settings.slaDefaults,
+      settings.autoApproverDefaults,
     );
   } catch {
     errorMessage.value = "Unable to save settings right now.";
@@ -635,6 +702,68 @@ async function saveSettings() {
   } finally {
     savingSettings.value = false;
   }
+}
+
+async function searchUsersForAutoApprovers() {
+  const query = userSearchQuery.value.trim();
+  if (!query) {
+    userSearchResults.value = [];
+    return;
+  }
+
+  const candidates = await searchApproverCandidates(query, 12);
+  userSearchResults.value = candidates.filter(
+    (candidate) => candidate.kind === "USER",
+  );
+}
+
+async function searchGroupsForAutoApprovers() {
+  const query = groupSearchQuery.value.trim();
+  if (!query) {
+    groupSearchResults.value = [];
+    return;
+  }
+
+  const candidates = await searchApproverCandidates(query, 12);
+  groupSearchResults.value = candidates.filter(
+    (candidate) => candidate.kind === "GROUP",
+  );
+}
+
+function addAutoApproverUser(candidate: ApproverCandidate) {
+  if (settings.autoApproverDefaults.userIds.includes(candidate.id)) {
+    return;
+  }
+  settings.autoApproverDefaults.userIds.push(candidate.id);
+  selectedAutoApproverUsers.value[candidate.id] = {
+    label: `${candidate.label} (${candidate.secondary ?? ""})`.trim(),
+  };
+  userSearchQuery.value = "";
+  userSearchResults.value = [];
+}
+
+function addAutoApproverGroup(candidate: ApproverCandidate) {
+  if (settings.autoApproverDefaults.groupIds.includes(candidate.id)) {
+    return;
+  }
+  settings.autoApproverDefaults.groupIds.push(candidate.id);
+  selectedAutoApproverGroups.value[candidate.id] = {
+    label: candidate.label,
+  };
+  groupSearchQuery.value = "";
+  groupSearchResults.value = [];
+}
+
+function removeAutoApproverUser(userId: string) {
+  settings.autoApproverDefaults.userIds =
+    settings.autoApproverDefaults.userIds.filter((id) => id !== userId);
+  delete selectedAutoApproverUsers.value[userId];
+}
+
+function removeAutoApproverGroup(groupId: string) {
+  settings.autoApproverDefaults.groupIds =
+    settings.autoApproverDefaults.groupIds.filter((id) => id !== groupId);
+  delete selectedAutoApproverGroups.value[groupId];
 }
 
 onMounted(loadSettings);

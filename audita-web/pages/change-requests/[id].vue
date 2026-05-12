@@ -497,17 +497,49 @@
         </button>
       </div>
 
-      <div v-if="showAddApprover" class="grid grid-cols-1 md:grid-cols-3 gap-2">
-        <input
-          v-model="newApproverUserId"
-          class="input"
-          placeholder="User ID"
-        />
-        <label class="flex items-center gap-2 text-sm"
-          ><input v-model="newApproverRequired" type="checkbox" />
-          Required</label
+      <div v-if="showAddApprover" class="space-y-3">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <input
+            v-model="approverSearchQuery"
+            class="input md:col-span-2"
+            placeholder="Search by user name, email, or group name"
+            @input="searchApproverCandidatesAction"
+          />
+          <label class="flex items-center gap-2 text-sm"
+            ><input v-model="newApproverRequired" type="checkbox" />
+            Required</label
+          >
+        </div>
+
+        <div
+          v-if="approverSearchResults.length"
+          class="max-h-44 overflow-auto rounded-lg border border-border dark:border-border-dark"
         >
-        <button class="btn-primary btn-md" @click="addApproverAction">
+          <button
+            v-for="candidate in approverSearchResults"
+            :key="`${candidate.kind}-${candidate.id}`"
+            type="button"
+            class="w-full px-3 py-2 text-left text-sm hover:bg-surface-container-low dark:hover:bg-slate-800 border-b border-border/60 last:border-b-0 dark:border-border-dark/60"
+            @click="selectApproverCandidate(candidate)"
+          >
+            <p class="font-medium">{{ candidate.label }}</p>
+            <p class="text-xs text-muted">
+              {{ candidate.kind }} • {{ candidate.secondary || "No details" }}
+            </p>
+          </button>
+        </div>
+
+        <p v-if="selectedApproverCandidate" class="text-sm text-muted">
+          Selected: {{ selectedApproverCandidate.label }} ({{
+            selectedApproverCandidate.kind
+          }})
+        </p>
+
+        <button
+          class="btn-primary btn-md"
+          :disabled="!selectedApproverCandidate"
+          @click="addApproverAction"
+        >
           Save
         </button>
       </div>
@@ -705,6 +737,7 @@
 <script setup lang="ts">
 import type {
   ActivityEntry,
+  ApproverCandidate,
   Attachment,
   ChangeRequest,
   ChangeRequestCustomFieldValue,
@@ -744,8 +777,10 @@ const {
   reject,
   listApprovers,
   addApprover,
+  addApproverGroup,
   removeApprover,
   reorderApprovers,
+  searchApproverCandidates,
   listCustomFields,
   saveCustomFields,
   listAttachments,
@@ -848,7 +883,9 @@ function onTabKeyDown(e: KeyboardEvent, key: string) {
 }
 
 const showAddApprover = ref(false);
-const newApproverUserId = ref("");
+const approverSearchQuery = ref("");
+const approverSearchResults = ref<ApproverCandidate[]>([]);
+const selectedApproverCandidate = ref<ApproverCandidate | null>(null);
 const newApproverRequired = ref(true);
 const fileInput = ref<HTMLInputElement | null>(null);
 
@@ -1296,17 +1333,43 @@ async function rejectCr() {
 }
 
 async function addApproverAction() {
-  if (!newApproverUserId.value.trim()) {
+  if (!selectedApproverCandidate.value) {
     return;
   }
-  await addApprover(id.value, {
-    userId: newApproverUserId.value.trim(),
-    isRequired: newApproverRequired.value,
-  });
+
+  if (selectedApproverCandidate.value.kind === "USER") {
+    await addApprover(id.value, {
+      userId: selectedApproverCandidate.value.id,
+      isRequired: newApproverRequired.value,
+    });
+  } else {
+    await addApproverGroup(id.value, {
+      groupId: selectedApproverCandidate.value.id,
+      isRequired: newApproverRequired.value,
+    });
+  }
+
   approvers.value = await listApprovers(id.value);
   activity.value = await listActivity(id.value);
   showAddApprover.value = false;
-  newApproverUserId.value = "";
+  approverSearchQuery.value = "";
+  approverSearchResults.value = [];
+  selectedApproverCandidate.value = null;
+}
+
+async function searchApproverCandidatesAction() {
+  const q = approverSearchQuery.value.trim();
+  if (!q) {
+    approverSearchResults.value = [];
+    return;
+  }
+  approverSearchResults.value = await searchApproverCandidates(q, 12);
+}
+
+function selectApproverCandidate(candidate: ApproverCandidate) {
+  selectedApproverCandidate.value = candidate;
+  approverSearchQuery.value = candidate.label;
+  approverSearchResults.value = [];
 }
 
 async function removeApproverAction(approverId: string) {
