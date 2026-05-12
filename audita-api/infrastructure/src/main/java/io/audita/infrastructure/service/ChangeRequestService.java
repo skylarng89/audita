@@ -46,6 +46,10 @@ import java.util.UUID;
 public class ChangeRequestService {
 
     private static final Set<String> ELEVATED_ROLES = Set.of("ADMIN", "SUPER_ADMIN");
+    private static final String ERROR_NOT_FOUND = "NOT_FOUND";
+    private static final String PAYLOAD_STATUS = "status";
+    private static final String ENTITY_CHANGE_REQUEST = "change_request";
+    private static final String PAYLOAD_APPROVER_ID = "approverId";
 
     private final ChangeRequestRepository changeRequestRepository;
     private final CrApproverRepository crApproverRepository;
@@ -66,13 +70,13 @@ public class ChangeRequestService {
     private String allowedMimeTypes;
 
     public ChangeRequestService(ChangeRequestRepository changeRequestRepository,
-                                CrApproverRepository crApproverRepository,
-                                ChangeRequestCustomFieldRepository customFieldRepository,
-                                ActivityStreamRepository activityStreamRepository,
-                                AttachmentRepository attachmentRepository,
-                                UserRepository userRepository,
-                                OrgSettingRepository orgSettingRepository,
-                                AuditLogService auditLogService) {
+            CrApproverRepository crApproverRepository,
+            ChangeRequestCustomFieldRepository customFieldRepository,
+            ActivityStreamRepository activityStreamRepository,
+            AttachmentRepository attachmentRepository,
+            UserRepository userRepository,
+            OrgSettingRepository orgSettingRepository,
+            AuditLogService auditLogService) {
         this.changeRequestRepository = changeRequestRepository;
         this.crApproverRepository = crApproverRepository;
         this.customFieldRepository = customFieldRepository;
@@ -83,90 +87,70 @@ public class ChangeRequestService {
         this.auditLogService = auditLogService;
     }
 
-    public ChangeRequestEntity create(String title,
-                                      String description,
-                                      Priority priority,
-                                      RiskLevel riskLevel,
-                                      String category,
-                                      ApprovalType approvalType,
-                                      OffsetDateTime scheduledStart,
-                                      OffsetDateTime scheduledEnd,
-                                      String[] affectedSystems,
-                                      UUID createdById) {
-        UserEntity createdBy = userRepository.findById(createdById)
-                .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "User not found."));
+    public ChangeRequestEntity create(CreateRequest request) {
+        UserEntity createdBy = userRepository.findById(request.createdById())
+                .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "User not found."));
 
         ChangeRequestEntity changeRequest = new ChangeRequestEntity();
-        changeRequest.setTitle(title);
-        changeRequest.setDescription(description);
-        changeRequest.setPriority(priority);
-        changeRequest.setRiskLevel(riskLevel);
-        changeRequest.setCategory(category);
-        changeRequest.setApprovalType(approvalType);
-        changeRequest.setScheduledStart(scheduledStart);
-        changeRequest.setScheduledEnd(scheduledEnd);
+        changeRequest.setTitle(request.title());
+        changeRequest.setDescription(request.description());
+        changeRequest.setPriority(request.priority());
+        changeRequest.setRiskLevel(request.riskLevel());
+        changeRequest.setCategory(request.category());
+        changeRequest.setApprovalType(request.approvalType());
+        changeRequest.setScheduledStart(request.scheduledStart());
+        changeRequest.setScheduledEnd(request.scheduledEnd());
         changeRequest.setCreatedBy(createdBy);
-        changeRequest.setAffectedSystems(normalizeAffectedSystems(affectedSystems));
+        changeRequest.setAffectedSystems(normalizeAffectedSystems(request.affectedSystems()));
         ChangeRequestEntity created = changeRequestRepository.save(changeRequest);
-        logActivity(created, createdBy, "CR_CREATED", Map.of("status", created.getStatus().name()));
-        auditLogService.log("CR_CREATED", "change_request", created.getId(),
+        logActivity(created, createdBy, "CR_CREATED", Map.of(PAYLOAD_STATUS, created.getStatus().name()));
+        auditLogService.log("CR_CREATED", ENTITY_CHANGE_REQUEST, created.getId(),
                 createdBy.getId(), createdBy.getEmail(),
                 Map.of("title", created.getTitle(), "priority", created.getPriority().name()), null);
         initializeCreator(created);
         return created;
     }
 
-    public ChangeRequestEntity update(UUID id,
-                                      String title,
-                                      String description,
-                                      Priority priority,
-                                      RiskLevel riskLevel,
-                                      String category,
-                                      ApprovalType approvalType,
-                                      OffsetDateTime scheduledStart,
-                                      OffsetDateTime scheduledEnd,
-                                      String[] affectedSystems,
-                                      UUID actorUserId,
-                                      String actorRole) {
-        ChangeRequestEntity current = getById(id);
-        assertCanMutate(current, actorUserId, actorRole);
+    public ChangeRequestEntity update(UpdateRequest request) {
+        ChangeRequestEntity current = getById(request.id());
+        assertCanMutate(current, request.actorUserId(), request.actorRole());
         if (current.getStatus().isClosed()) {
             throw new InvalidStateTransitionException("Closed change requests cannot be edited.");
         }
 
-        if (title != null) {
-            current.setTitle(title);
+        if (request.title() != null) {
+            current.setTitle(request.title());
         }
-        if (description != null) {
-            current.setDescription(description);
+        if (request.description() != null) {
+            current.setDescription(request.description());
         }
-        if (priority != null) {
-            current.setPriority(priority);
+        if (request.priority() != null) {
+            current.setPriority(request.priority());
         }
-        if (riskLevel != null) {
-            current.setRiskLevel(riskLevel);
+        if (request.riskLevel() != null) {
+            current.setRiskLevel(request.riskLevel());
         }
-        if (category != null) {
-            current.setCategory(category);
+        if (request.category() != null) {
+            current.setCategory(request.category());
         }
-        if (approvalType != null) {
+        if (request.approvalType() != null) {
             if (current.isApprovalLocked()) {
                 throw new InvalidStateTransitionException("Approval type is locked and cannot be changed.");
             }
-            current.setApprovalType(approvalType);
+            current.setApprovalType(request.approvalType());
         }
-        if (scheduledStart != null) {
-            current.setScheduledStart(scheduledStart);
+        if (request.scheduledStart() != null) {
+            current.setScheduledStart(request.scheduledStart());
         }
-        if (scheduledEnd != null) {
-            current.setScheduledEnd(scheduledEnd);
+        if (request.scheduledEnd() != null) {
+            current.setScheduledEnd(request.scheduledEnd());
         }
-        if (affectedSystems != null) {
-            current.setAffectedSystems(normalizeAffectedSystems(affectedSystems));
+        if (request.affectedSystems() != null) {
+            current.setAffectedSystems(normalizeAffectedSystems(request.affectedSystems()));
         }
 
         ChangeRequestEntity updated = changeRequestRepository.save(current);
-        logActivity(updated, updated.getCreatedBy(), "CR_UPDATED", Map.of("status", updated.getStatus().name()));
+        logActivity(updated, updated.getCreatedBy(), "CR_UPDATED", Map.of(PAYLOAD_STATUS, updated.getStatus().name()));
         initializeCreator(updated);
         return updated;
     }
@@ -177,10 +161,11 @@ public class ChangeRequestService {
         changeRequest.submit();
         changeRequest.setSlaDeadline(OffsetDateTime.now().plusHours(resolveSlaHours(changeRequest.getPriority())));
         ChangeRequestEntity submitted = changeRequestRepository.save(changeRequest);
-        logActivity(submitted, submitted.getCreatedBy(), "CR_SUBMITTED", Map.of("status", submitted.getStatus().name()));
-        auditLogService.log("CR_SUBMITTED", "change_request", submitted.getId(),
+        logActivity(submitted, submitted.getCreatedBy(), "CR_SUBMITTED",
+                Map.of(PAYLOAD_STATUS, submitted.getStatus().name()));
+        auditLogService.log("CR_SUBMITTED", ENTITY_CHANGE_REQUEST, submitted.getId(),
                 actorUserId, submitted.getCreatedBy() != null ? submitted.getCreatedBy().getEmail() : null,
-                Map.of("status", "PENDING_APPROVAL"), null);
+                Map.of(PAYLOAD_STATUS, "PENDING_APPROVAL"), null);
         initializeCreator(submitted);
         return submitted;
     }
@@ -190,21 +175,22 @@ public class ChangeRequestService {
         assertCanMutate(changeRequest, actorUserId, actorRole);
         changeRequest.cancel();
         ChangeRequestEntity cancelled = changeRequestRepository.save(changeRequest);
-        logActivity(cancelled, cancelled.getCreatedBy(), "CR_CANCELLED", Map.of("status", cancelled.getStatus().name()));
-        auditLogService.log("CR_CANCELLED", "change_request", cancelled.getId(),
+        logActivity(cancelled, cancelled.getCreatedBy(), "CR_CANCELLED",
+                Map.of(PAYLOAD_STATUS, cancelled.getStatus().name()));
+        auditLogService.log("CR_CANCELLED", ENTITY_CHANGE_REQUEST, cancelled.getId(),
                 actorUserId, cancelled.getCreatedBy() != null ? cancelled.getCreatedBy().getEmail() : null,
-                Map.of("status", "CANCELLED"), null);
+                Map.of(PAYLOAD_STATUS, "CANCELLED"), null);
     }
 
     @Transactional(readOnly = true)
     public Page<ChangeRequestEntity> list(ChangeRequestStatus status,
-                                          Priority priority,
-                                          String category,
-                                          UUID createdBy,
-                                          UUID viewerId,
-                                          Pageable pageable) {
+            Priority priority,
+            String category,
+            UUID createdBy,
+            UUID viewerId,
+            Pageable pageable) {
         return changeRequestRepository.findAllFiltered(
-                        status, priority, category, createdBy, viewerId, ChangeRequestStatus.DRAFT, pageable)
+                status, priority, category, createdBy, viewerId, ChangeRequestStatus.DRAFT, pageable)
                 .map(changeRequest -> {
                     initializeCreator(changeRequest);
                     return changeRequest;
@@ -213,8 +199,6 @@ public class ChangeRequestService {
 
     @Transactional(readOnly = true)
     public List<String> listCategories() {
-        // Each stored value may itself be a comma-separated multi-selection;
-        // split and deduplicate so the frontend always sees individual tokens.
         return changeRequestRepository.findDistinctCategories().stream()
                 .flatMap(raw -> java.util.Arrays.stream(raw.split(",")))
                 .map(String::trim)
@@ -231,7 +215,7 @@ public class ChangeRequestService {
         // avoid leaking that the resource exists to users who cannot see it.
         if (changeRequest.getStatus() == ChangeRequestStatus.DRAFT &&
                 !changeRequest.getCreatedBy().getId().equals(viewerId)) {
-            throw new DomainNotPermittedException("NOT_FOUND", "Change request not found.");
+            throw new DomainNotPermittedException(ERROR_NOT_FOUND, "Change request not found.");
         }
         return changeRequest;
     }
@@ -240,7 +224,7 @@ public class ChangeRequestService {
     // methods that already enforce mutation authorization (assertCanMutate).
     private ChangeRequestEntity getById(UUID id) {
         ChangeRequestEntity changeRequest = changeRequestRepository.findById(id)
-                .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Change request not found."));
+                .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "Change request not found."));
         initializeCreator(changeRequest);
         return changeRequest;
     }
@@ -258,7 +242,7 @@ public class ChangeRequestService {
         }
 
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "User not found."));
+                .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "User not found."));
 
         if (crApproverRepository.findByChangeRequestIdAndUserId(changeRequestId, userId).isPresent()) {
             throw new DomainNotPermittedException("DUPLICATE_APPROVER", "User is already an approver on this CR.");
@@ -268,7 +252,7 @@ public class ChangeRequestService {
         CrApproverEntity approver = new CrApproverEntity(changeRequest, user, isRequired, position, true);
         CrApproverEntity created = crApproverRepository.save(approver);
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVER_ADDED",
-            Map.of("approverId", created.getId().toString(), "userId", userId.toString()));
+                Map.of(PAYLOAD_APPROVER_ID, created.getId().toString(), "userId", userId.toString()));
         return created;
     }
 
@@ -279,14 +263,14 @@ public class ChangeRequestService {
         }
 
         CrApproverEntity approver = crApproverRepository.findById(approverId)
-                .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Approver not found."));
+                .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "Approver not found."));
         if (!approver.getChangeRequest().getId().equals(changeRequestId)) {
-            throw new DomainNotPermittedException("NOT_FOUND", "Approver not found on this change request.");
+            throw new DomainNotPermittedException(ERROR_NOT_FOUND, "Approver not found on this change request.");
         }
 
         crApproverRepository.delete(approver);
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVER_REMOVED",
-            Map.of("approverId", approverId.toString()));
+                Map.of(PAYLOAD_APPROVER_ID, approverId.toString()));
         resequenceApprovers(changeRequestId);
     }
 
@@ -298,7 +282,8 @@ public class ChangeRequestService {
 
         List<CrApproverEntity> existing = crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId);
         if (existing.size() != approverIds.size()) {
-            throw new DomainNotPermittedException("INVALID_ORDER", "Approver order payload does not match approver set.");
+            throw new DomainNotPermittedException("INVALID_ORDER",
+                    "Approver order payload does not match approver set.");
         }
 
         for (int i = 0; i < approverIds.size(); i++) {
@@ -306,7 +291,8 @@ public class ChangeRequestService {
             CrApproverEntity approver = existing.stream()
                     .filter(a -> a.getId().equals(approverId))
                     .findFirst()
-                    .orElseThrow(() -> new DomainNotPermittedException("INVALID_ORDER", "Approver order contains unknown IDs."));
+                    .orElseThrow(() -> new DomainNotPermittedException("INVALID_ORDER",
+                            "Approver order contains unknown IDs."));
             approver.setPosition(i + 1);
         }
 
@@ -314,7 +300,7 @@ public class ChangeRequestService {
                 .sorted(Comparator.comparingInt(CrApproverEntity::getPosition))
                 .toList();
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVERS_REORDERED",
-            Map.of("count", saved.size()));
+                Map.of("count", saved.size()));
         return saved;
     }
 
@@ -323,13 +309,15 @@ public class ChangeRequestService {
         ensurePendingApproval(changeRequest);
 
         CrApproverEntity approver = crApproverRepository.findByChangeRequestIdAndUserId(changeRequestId, actorUserId)
-                .orElseThrow(() -> new DomainNotPermittedException("NOT_APPROVER", "You are not an approver on this change request."));
+                .orElseThrow(() -> new DomainNotPermittedException("NOT_APPROVER",
+                        "You are not an approver on this change request."));
         UserEntity actor = approver.getUser();
 
         if (changeRequest.getApprovalType() == ApprovalType.LINEAR) {
             CrApproverEntity next = nextPendingApprover(changeRequestId);
             if (next != null && !next.getId().equals(approver.getId())) {
-                throw new DomainNotPermittedException("OUT_OF_SEQUENCE", "Only the next pending approver can act in LINEAR mode.");
+                throw new DomainNotPermittedException("OUT_OF_SEQUENCE",
+                        "Only the next pending approver can act in LINEAR mode.");
             }
         }
 
@@ -338,10 +326,12 @@ public class ChangeRequestService {
         changeRequest.evaluateApprovalClosure();
         crApproverRepository.save(approver);
         ChangeRequestEntity updated = changeRequestRepository.save(changeRequest);
-        logActivity(updated, actor, "CR_APPROVED", Map.of("approverId", approver.getId().toString(), "status", updated.getStatus().name()));
-        auditLogService.log("CR_APPROVED", "change_request", updated.getId(),
+        logActivity(updated, actor, "CR_APPROVED",
+                Map.of(PAYLOAD_APPROVER_ID, approver.getId().toString(), PAYLOAD_STATUS, updated.getStatus().name()));
+        auditLogService.log("CR_APPROVED", ENTITY_CHANGE_REQUEST, updated.getId(),
                 actorUserId, actor.getEmail(),
-                Map.of("approverId", approver.getId().toString(), "status", updated.getStatus().name()), null);
+                Map.of(PAYLOAD_APPROVER_ID, approver.getId().toString(), PAYLOAD_STATUS, updated.getStatus().name()),
+                null);
         initializeCreator(updated);
         return updated;
     }
@@ -351,13 +341,15 @@ public class ChangeRequestService {
         ensurePendingApproval(changeRequest);
 
         CrApproverEntity approver = crApproverRepository.findByChangeRequestIdAndUserId(changeRequestId, actorUserId)
-                .orElseThrow(() -> new DomainNotPermittedException("NOT_APPROVER", "You are not an approver on this change request."));
+                .orElseThrow(() -> new DomainNotPermittedException("NOT_APPROVER",
+                        "You are not an approver on this change request."));
         UserEntity actor = approver.getUser();
 
         if (changeRequest.getApprovalType() == ApprovalType.LINEAR) {
             CrApproverEntity next = nextPendingApprover(changeRequestId);
             if (next != null && !next.getId().equals(approver.getId())) {
-                throw new DomainNotPermittedException("OUT_OF_SEQUENCE", "Only the next pending approver can act in LINEAR mode.");
+                throw new DomainNotPermittedException("OUT_OF_SEQUENCE",
+                        "Only the next pending approver can act in LINEAR mode.");
             }
         }
 
@@ -366,10 +358,12 @@ public class ChangeRequestService {
         changeRequest.evaluateApprovalClosure();
         crApproverRepository.save(approver);
         ChangeRequestEntity updated = changeRequestRepository.save(changeRequest);
-        logActivity(updated, actor, "CR_REJECTED", Map.of("approverId", approver.getId().toString(), "reason", reason, "status", updated.getStatus().name()));
-        auditLogService.log("CR_REJECTED", "change_request", updated.getId(),
+        logActivity(updated, actor, "CR_REJECTED", Map.of(PAYLOAD_APPROVER_ID, approver.getId().toString(), "reason",
+                reason, PAYLOAD_STATUS, updated.getStatus().name()));
+        auditLogService.log("CR_REJECTED", ENTITY_CHANGE_REQUEST, updated.getId(),
                 actorUserId, actor.getEmail(),
-                Map.of("approverId", approver.getId().toString(), "status", updated.getStatus().name()), null);
+                Map.of(PAYLOAD_APPROVER_ID, approver.getId().toString(), PAYLOAD_STATUS, updated.getStatus().name()),
+                null);
         initializeCreator(updated);
         return updated;
     }
@@ -392,7 +386,7 @@ public class ChangeRequestService {
         getById(changeRequestId);
         AttachmentEntity attachment = attachmentRepository
                 .findByIdAndChangeRequestId(attachmentId, changeRequestId)
-                .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Attachment not found."));
+                .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "Attachment not found."));
 
         Path filePath = Path.of(attachment.getStoragePath());
         if (!Files.exists(filePath)) {
@@ -405,15 +399,15 @@ public class ChangeRequestService {
                     attachment.getFileName(),
                     attachment.getMimeType() != null ? attachment.getMimeType() : "application/octet-stream",
                     attachment.getSizeBytes());
-        } catch (IOException ex) {
+        } catch (IOException _) {
             throw new DomainNotPermittedException("DOWNLOAD_FAILED", "Could not read attachment file.");
         }
     }
 
     public AttachmentEntity uploadAttachment(UUID changeRequestId,
-                                             UUID uploaderId,
-                                             String uploaderRole,
-                                             MultipartFile file) {
+            UUID uploaderId,
+            String uploaderRole,
+            MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new DomainNotPermittedException("EMPTY_FILE", "Attachment file is required.");
         }
@@ -430,24 +424,28 @@ public class ChangeRequestService {
         }
         String originalName = file.getOriginalFilename();
         if (!isExtensionAllowed(originalName, mimeType)) {
-            throw new DomainNotPermittedException("INVALID_FILE_TYPE", "File extension does not match the declared content type.");
+            throw new DomainNotPermittedException("INVALID_FILE_TYPE",
+                    "File extension does not match the declared content type.");
         }
         if (!isSignatureValid(file, mimeType)) {
-            throw new DomainNotPermittedException("INVALID_FILE_CONTENT", "Attachment content does not match file type.");
+            throw new DomainNotPermittedException("INVALID_FILE_CONTENT",
+                    "Attachment content does not match file type.");
         }
 
         UserEntity uploader = userRepository.findById(uploaderId)
-                .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Uploader not found."));
+                .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "Uploader not found."));
 
         String tenant = TenantContext.getCurrentTenant();
         String safeOriginalName = file.getOriginalFilename() == null ? "attachment.bin" : file.getOriginalFilename();
-        // UUID prefix prevents collisions; normalizeFileName produces a lowercase, hyphenated, filesystem-safe name.
+        // UUID prefix prevents collisions; normalizeFileName produces a lowercase,
+        // hyphenated, filesystem-safe name.
         String storedName = UUID.randomUUID() + "-" + normalizeFileName(safeOriginalName);
 
         Path storageDir = Path.of(storageBasePath, tenant == null ? "public" : tenant, changeRequestId.toString())
                 .toAbsolutePath().normalize();
         Path outputPath = storageDir.resolve(storedName).normalize();
-        // Defense-in-depth: confirm the resolved path is still inside the storage directory.
+        // Defense-in-depth: confirm the resolved path is still inside the storage
+        // directory.
         if (!outputPath.startsWith(storageDir)) {
             throw new DomainNotPermittedException("INVALID_FILE_PATH", "Invalid file path.");
         }
@@ -455,7 +453,7 @@ public class ChangeRequestService {
         try {
             Files.createDirectories(storageDir);
             Files.copy(file.getInputStream(), outputPath, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException ex) {
+        } catch (IOException _) {
             throw new DomainNotPermittedException("UPLOAD_FAILED", "Could not persist uploaded file.");
         }
 
@@ -465,13 +463,11 @@ public class ChangeRequestService {
                 safeOriginalName,
                 mimeType,
                 file.getSize(),
-                outputPath.toString()
-        );
+                outputPath.toString());
         AttachmentEntity saved = attachmentRepository.save(attachment);
         logActivity(changeRequest, uploader, "CR_ATTACHMENT_UPLOADED", Map.of(
                 "attachmentId", saved.getId().toString(),
-                "fileName", safeOriginalName
-        ));
+                "fileName", safeOriginalName));
         return saved;
     }
 
@@ -482,9 +478,9 @@ public class ChangeRequestService {
     }
 
     public List<ChangeRequestCustomFieldEntity> upsertCustomFields(UUID changeRequestId,
-                                                                    List<FieldValue> fields,
-                                                                    UUID actorUserId,
-                                                                    String actorRole) {
+            List<FieldValue> fields,
+            UUID actorUserId,
+            String actorRole) {
         ChangeRequestEntity changeRequest = getById(changeRequestId);
         assertCanMutate(changeRequest, actorUserId, actorRole);
         customFieldRepository.deleteByIdChangeRequestId(changeRequestId);
@@ -492,14 +488,41 @@ public class ChangeRequestService {
         List<ChangeRequestCustomFieldEntity> newRows = fields.stream()
                 .map(f -> new ChangeRequestCustomFieldEntity(changeRequest, f.fieldId(), f.value()))
                 .toList();
-            List<ChangeRequestCustomFieldEntity> saved = customFieldRepository.saveAll(newRows);
-            Map<String, Object> payload = new LinkedHashMap<>();
-            payload.put("count", saved.size());
-            logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_CUSTOM_FIELDS_UPDATED", payload);
-            return saved;
+        List<ChangeRequestCustomFieldEntity> saved = customFieldRepository.saveAll(newRows);
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("count", saved.size());
+        logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_CUSTOM_FIELDS_UPDATED", payload);
+        return saved;
     }
 
-    public record FieldValue(UUID fieldId, String value) {}
+    public record FieldValue(UUID fieldId, String value) {
+    }
+
+    public record CreateRequest(String title,
+            String description,
+            Priority priority,
+            RiskLevel riskLevel,
+            String category,
+            ApprovalType approvalType,
+            OffsetDateTime scheduledStart,
+            OffsetDateTime scheduledEnd,
+            List<String> affectedSystems,
+            UUID createdById) {
+    }
+
+    public record UpdateRequest(UUID id,
+            String title,
+            String description,
+            Priority priority,
+            RiskLevel riskLevel,
+            String category,
+            ApprovalType approvalType,
+            OffsetDateTime scheduledStart,
+            OffsetDateTime scheduledEnd,
+            List<String> affectedSystems,
+            UUID actorUserId,
+            String actorRole) {
+    }
 
     private void ensurePendingApproval(ChangeRequestEntity changeRequest) {
         if (changeRequest.getStatus() != ChangeRequestStatus.PENDING_APPROVAL) {
@@ -516,7 +539,8 @@ public class ChangeRequestService {
     }
 
     private void resequenceApprovers(UUID changeRequestId) {
-        List<CrApproverEntity> approvers = crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId);
+        List<CrApproverEntity> approvers = crApproverRepository
+                .findByChangeRequestIdOrderByPositionAsc(changeRequestId);
         for (int i = 0; i < approvers.size(); i++) {
             approvers.get(i).setPosition(i + 1);
         }
@@ -524,9 +548,9 @@ public class ChangeRequestService {
     }
 
     private void logActivity(ChangeRequestEntity changeRequest,
-                             UserEntity actor,
-                             String actionType,
-                             Map<String, Object> payload) {
+            UserEntity actor,
+            String actionType,
+            Map<String, Object> payload) {
         activityStreamRepository.save(new ActivityStreamEntity(changeRequest, actor, actionType, payload));
     }
 
@@ -558,7 +582,8 @@ public class ChangeRequestService {
 
     /**
      * Cross-checks the file's extension against its declared MIME type.
-     * Prevents spoofing a DOCX as a PDF, or embedding a script with a .png extension.
+     * Prevents spoofing a DOCX as a PDF, or embedding a script with a .png
+     * extension.
      */
     private boolean isExtensionAllowed(String fileName, String mimeType) {
         if (fileName == null || mimeType == null) {
@@ -566,12 +591,12 @@ public class ChangeRequestService {
         }
         String lower = fileName.toLowerCase();
         return switch (mimeType.toLowerCase()) {
-            case "image/png" -> lower.endsWith(".png");
-            case "image/jpeg" -> lower.endsWith(".jpg") || lower.endsWith(".jpeg");
-            case "application/pdf" -> lower.endsWith(".pdf");
-            case "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> lower.endsWith(".docx");
-            case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> lower.endsWith(".xlsx");
-            default -> false;
+            case "image/png" -> lower .endsWith(".png");
+            case "image/jpeg" -> lower .endsWith(".jpg") || lower.endsWith(".jpeg");
+            case "application/pdf" -> lower .endsWith(".pdf");
+            case "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> lower .endsWith(".docx");
+            case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> lower .endsWith(".xlsx");
+            default -> false ;
         };
     }
 
@@ -583,24 +608,24 @@ public class ChangeRequestService {
             byte[] header = inputStream.readNBytes(8);
             if (mimeType.equalsIgnoreCase("application/pdf")) {
                 // %PDF
-                return startsWith(header, new byte[] {0x25, 0x50, 0x44, 0x46});
+                return startsWith(header, new byte[] { 0x25, 0x50, 0x44, 0x46 });
             }
             if (mimeType.equalsIgnoreCase("image/png")) {
                 // \x89PNG
-                return startsWith(header, new byte[] {(byte) 0x89, 0x50, 0x4E, 0x47});
+                return startsWith(header, new byte[] { (byte) 0x89, 0x50, 0x4E, 0x47 });
             }
             if (mimeType.equalsIgnoreCase("image/jpeg")) {
                 // FF D8 FF
-                return startsWith(header, new byte[] {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF});
+                return startsWith(header, new byte[] { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF });
             }
             // DOCX and XLSX are Office Open XML — both are ZIP archives (PK\x03\x04).
             // Extension + MIME type validation (above) distinguishes them from plain ZIPs.
             if (mimeType.equalsIgnoreCase("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
                     || mimeType.equalsIgnoreCase("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
-                return startsWith(header, new byte[] {0x50, 0x4B, 0x03, 0x04});
+                return startsWith(header, new byte[] { 0x50, 0x4B, 0x03, 0x04 });
             }
             return false;
-        } catch (IOException ex) {
+        } catch (IOException _) {
             return false;
         }
     }
@@ -630,22 +655,42 @@ public class ChangeRequestService {
         }
         int dotIndex = originalName.lastIndexOf('.');
         String stem = dotIndex > 0 ? originalName.substring(0, dotIndex) : originalName;
-        String ext  = dotIndex > 0 ? originalName.substring(dotIndex).toLowerCase() : "";
-        String normalizedStem = stem.toLowerCase()
-                .replaceAll("[^a-z0-9]++", "-")
-                .replaceFirst("^(-++)", "")
-                .replaceFirst("(-++)$", "");
+        String ext = dotIndex > 0 ? originalName.substring(dotIndex).toLowerCase() : "";
+        String normalizedStem = normalizeFileStem(stem);
         if (normalizedStem.isEmpty()) {
             normalizedStem = "attachment";
         }
         return normalizedStem + ext;
     }
 
-    private String[] normalizeAffectedSystems(String[] affectedSystems) {
-        if (affectedSystems == null || affectedSystems.length == 0) {
+    private String normalizeFileStem(String stem) {
+        StringBuilder normalized = new StringBuilder(stem.length());
+        boolean previousWasHyphen = false;
+
+        for (int index = 0; index < stem.length(); index++) {
+            char character = Character.toLowerCase(stem.charAt(index));
+            if (character >= 'a' && character <= 'z' || character >= '0' && character <= '9') {
+                normalized.append(character);
+                previousWasHyphen = false;
+            } else if (!previousWasHyphen && !normalized.isEmpty()) {
+                normalized.append('-');
+                previousWasHyphen = true;
+            }
+        }
+
+        int length = normalized.length();
+        if (length > 0 && normalized.charAt(length - 1) == '-') {
+            normalized.setLength(length - 1);
+        }
+
+        return normalized.toString();
+    }
+
+    private String[] normalizeAffectedSystems(List<String> affectedSystems) {
+        if (affectedSystems == null || affectedSystems.isEmpty()) {
             return new String[0];
         }
-        return java.util.Arrays.stream(affectedSystems)
+        return affectedSystems.stream()
                 .filter(s -> s != null && !s.isBlank())
                 .toArray(String[]::new);
     }
@@ -655,16 +700,16 @@ public class ChangeRequestService {
             return 48;
         }
         String key = switch (priority) {
-            case CRITICAL -> "sla.deadline_hours.critical";
-            case HIGH -> "sla.deadline_hours.high";
-            case MEDIUM -> "sla.deadline_hours.medium";
-            case LOW -> "sla.deadline_hours.low";
+            case CRITICAL -> "sla.deadline_hours.critical" ;
+            case HIGH -> "sla.deadline_hours.high" ;
+            case MEDIUM -> "sla.deadline_hours.medium" ;
+            case LOW -> "sla.deadline_hours.low" ;
         };
         long defaultHours = switch (priority) {
-            case CRITICAL -> 8;
-            case HIGH -> 24;
-            case MEDIUM -> 48;
-            case LOW -> 72;
+            case CRITICAL -> 8 ;
+            case HIGH -> 24 ;
+            case MEDIUM -> 48 ;
+            case LOW -> 72 ;
         };
         return orgSettingRepository.findById(key)
                 .map(setting -> setting.getValue().trim())
@@ -672,7 +717,7 @@ public class ChangeRequestService {
                     try {
                         long parsed = Long.parseLong(value);
                         return parsed > 0 ? parsed : defaultHours;
-                    } catch (NumberFormatException ex) {
+                    } catch (NumberFormatException _) {
                         return defaultHours;
                     }
                 })

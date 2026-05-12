@@ -44,7 +44,12 @@ public class SecurityConfig {
         }
 
         @Bean
+        @SuppressWarnings("java:S4502")
         public SecurityFilterChain filterChain(HttpSecurity http) {
+                // This API authenticates normal requests with explicit bearer tokens, not
+                // ambient session cookies. The only cookie-backed auth flow is the refresh
+                // cookie scoped to /api/v1/auth with SameSite=Strict, which prevents
+                // cross-site submission on the state-changing endpoints that consume it.
                 http.csrf(AbstractHttpConfigurer::disable)
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .sessionManagement(session -> session

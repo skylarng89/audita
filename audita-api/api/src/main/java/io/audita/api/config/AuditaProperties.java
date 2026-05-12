@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class AuditaProperties {
 
 	private Jwt jwt = new Jwt();
+	private Invite invite = new Invite();
 
 	public Jwt getJwt() {
 		return jwt;
@@ -13,6 +14,14 @@ public class AuditaProperties {
 
 	public void setJwt(Jwt jwt) {
 		this.jwt = jwt;
+	}
+
+	public Invite getInvite() {
+		return invite;
+	}
+
+	public void setInvite(Invite invite) {
+		this.invite = invite;
 	}
 
 	public static class Jwt {
@@ -42,6 +51,18 @@ public class AuditaProperties {
 
 		public void setStreamExpirySeconds(Integer streamExpirySeconds) {
 			this.streamExpirySeconds = streamExpirySeconds;
+		}
+	}
+
+	public static class Invite {
+		private Integer expiryHours;
+
+		public Integer getExpiryHours() {
+			return expiryHours;
+		}
+
+		public void setExpiryHours(Integer expiryHours) {
+			this.expiryHours = expiryHours;
 		}
 	}
 }
