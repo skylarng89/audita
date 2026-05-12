@@ -246,7 +246,7 @@ const strength = computed(() => {
   const p = form.password;
   if (p.length < 6) return 1;
   if (p.length < 8) return 2;
-  if (/[A-Z]/.test(p) && /[0-9]/.test(p)) return 4;
+  if (/[A-Z]/.test(p) && /\d/.test(p)) return 4;
   return 3;
 });
 
