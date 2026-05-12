@@ -27,22 +27,36 @@ class UserControllerSecurityAnnotationsTest {
     @Test
     void mutatingControllersKeepAuditorOutOfWriteEndpoints() {
         assertMutatingMethodsExcludeAuditor(GroupController.class, Set.of(
-                "createGroup", "updateGroup", "deleteGroup", "addMember", "removeMember"
-        ));
+                "createGroup", "updateGroup", "deleteGroup", "addMember", "removeMember"));
 
         assertMutatingMethodsExcludeAuditor(ChangeRequestController.class, Set.of(
                 "create", "update", "submit", "cancel",
                 "addApprover", "reorderApprovers", "removeApprover",
-                "approve", "reject", "upsertCustomFields", "uploadAttachment"
-        ));
+                "approve", "reject", "upsertCustomFields", "uploadAttachment"));
+    }
+
+    @Test
+    void changeRequestApprovalEndpointsAllowAssignedRequesterApprovers() {
+        Map<String, String> preAuthByMethod = readPreAuthorizeByMethod(ChangeRequestController.class);
+
+        assertThat(preAuthByMethod.get("approve")).contains("isAuthenticated()");
+        assertThat(preAuthByMethod.get("approve")).doesNotContain("APPROVER");
+        assertThat(preAuthByMethod.get("reject")).contains("isAuthenticated()");
+        assertThat(preAuthByMethod.get("reject")).doesNotContain("APPROVER");
     }
 
     private void assertMutatingMethodsExcludeAuditor(Class<?> controller, Set<String> methods) {
         Map<String, String> preAuthByMethod = readPreAuthorizeByMethod(controller);
         for (String methodName : methods) {
-            assertThat(preAuthByMethod.get(methodName))
+            String expression = preAuthByMethod.get(methodName);
+            assertThat(expression)
                     .as("Method %s.%s should exclude AUDITOR", controller.getSimpleName(), methodName)
-                    .doesNotContain("AUDITOR");
+                    .isNotBlank();
+            assertThat(expression.contains("AUDITOR"))
+                    .as("Method %s.%s should only reference AUDITOR when explicitly excluding that role",
+                            controller.getSimpleName(), methodName)
+                    .isEqualTo(
+                            expression.contains("!hasRole('AUDITOR')") || expression.contains("! hasRole('AUDITOR')"));
         }
     }
 
@@ -52,7 +66,6 @@ class UserControllerSecurityAnnotationsTest {
                 .collect(java.util.stream.Collectors.toMap(
                         Method::getName,
                         m -> m.getAnnotation(PreAuthorize.class).value(),
-                        (left, right) -> left
-                ));
+                        (left, right) -> left));
     }
 }

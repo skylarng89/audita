@@ -108,6 +108,9 @@ audita:
   refresh-token:
     expiry-days: ${REFRESH_TOKEN_EXPIRY_DAYS}
 
+  auth:
+    cookie-secure: ${AUTH_COOKIE_SECURE:true}
+
   encryption:
     key: ${APP_ENCRYPTION_KEY}
 
@@ -164,6 +167,8 @@ spring:
       on-profile: dev
 
 audita:
+  auth:
+    cookie-secure: ${AUTH_COOKIE_SECURE:false}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS}
 
@@ -174,5 +179,7 @@ spring:
       on-profile: prod
 
 audita:
+  auth:
+    cookie-secure: ${AUTH_COOKIE_SECURE:true}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS}

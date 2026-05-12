@@ -35,6 +35,9 @@ public class AuthController {
     @Value("${audita.auth.cookie-path:/api/v1/auth}")
     private String refreshCookiePath;
 
+    @Value("${audita.auth.cookie-secure:true}")
+    private boolean refreshCookieSecure;
+
     @Value("${audita.security.trust-forwarded-headers:false}")
     private boolean trustForwardedHeaders;
 
@@ -132,7 +135,7 @@ public class AuthController {
             return;
         Cookie cookie = new Cookie(REFRESH_COOKIE, rawToken);
         cookie.setHttpOnly(true);
-        cookie.setSecure(true);
+        cookie.setSecure(refreshCookieSecure);
         cookie.setPath(refreshCookiePath);
         cookie.setAttribute("SameSite", "Strict");
         cookie.setMaxAge((int) (refreshExpiryDays * 24 * 60 * 60));
@@ -142,7 +145,7 @@ public class AuthController {
     private void clearRefreshCookie(HttpServletResponse response) {
         Cookie cookie = new Cookie(REFRESH_COOKIE, "");
         cookie.setHttpOnly(true);
-        cookie.setSecure(true);
+        cookie.setSecure(refreshCookieSecure);
         cookie.setPath(refreshCookiePath);
         cookie.setMaxAge(0);
         response.addCookie(cookie);

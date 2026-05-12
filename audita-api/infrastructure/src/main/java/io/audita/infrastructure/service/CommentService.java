@@ -28,7 +28,8 @@ import java.util.regex.Pattern;
 @Transactional
 public class CommentService {
 
-    private static final Pattern EMAIL_MENTION_PATTERN = Pattern.compile("@([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,})");
+    private static final Pattern EMAIL_MENTION_PATTERN = Pattern
+            .compile("@([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,})");
 
     private final ChangeRequestRepository changeRequestRepository;
     private final CommentRepository commentRepository;
@@ -40,12 +41,12 @@ public class CommentService {
     private final PolicyFactory htmlPolicy = Sanitizers.FORMATTING.and(Sanitizers.BLOCKS).and(Sanitizers.LINKS);
 
     public CommentService(ChangeRequestRepository changeRequestRepository,
-                          CommentRepository commentRepository,
-                          CommentMentionRepository commentMentionRepository,
-                          UserRepository userRepository,
-                          ActivityStreamRepository activityStreamRepository,
-                          NotificationService notificationService,
-                          EmailService emailService) {
+            CommentRepository commentRepository,
+            CommentMentionRepository commentMentionRepository,
+            UserRepository userRepository,
+            ActivityStreamRepository activityStreamRepository,
+            NotificationService notificationService,
+            EmailService emailService) {
         this.changeRequestRepository = changeRequestRepository;
         this.commentRepository = commentRepository;
         this.commentMentionRepository = commentMentionRepository;
@@ -58,7 +59,9 @@ public class CommentService {
     @Transactional(readOnly = true)
     public List<CommentEntity> list(UUID changeRequestId) {
         ensureChangeRequestExists(changeRequestId);
-        return commentRepository.findByChangeRequestIdOrderByCreatedAtDesc(changeRequestId);
+        List<CommentEntity> comments = commentRepository.findByChangeRequestIdOrderByCreatedAtDesc(changeRequestId);
+        comments.forEach(this::initializeAuthor);
+        return comments;
     }
 
     public CommentEntity create(UUID changeRequestId, UUID authorId, String rawBody) {
@@ -80,25 +83,36 @@ public class CommentService {
                     "MENTION",
                     author.getFullName() + " mentioned you",
                     "In change request: " + changeRequest.getTitle(),
-                    "/change-requests/" + changeRequest.getId()
-            );
+                    "/change-requests/" + changeRequest.getId());
             emailService.sendMentionEmail(
                     user.getEmail(),
                     user.getFullName(),
                     changeRequest.getTitle(),
                     changeRequest.getId().toString(),
-                    author.getFullName()
-            );
+                    author.getFullName());
         }
 
         activityStreamRepository.save(new ActivityStreamEntity(
                 changeRequest,
                 author,
                 "CR_COMMENT_ADDED",
-                Map.of("commentId", comment.getId().toString(), "mentions", mentionedUsers.size())
-        ));
+                Map.of("commentId", comment.getId().toString(), "mentions", mentionedUsers.size())));
 
+        initializeAuthor(comment);
         return comment;
+    }
+
+    private void initializeAuthor(CommentEntity comment) {
+        UserEntity author = comment.getAuthor();
+        if (author == null) {
+            return;
+        }
+
+        author.getEmail();
+        if (author.getRole() != null) {
+            author.getRole().getId();
+            author.getRole().getName();
+        }
     }
 
     private ChangeRequestEntity ensureChangeRequestExists(UUID changeRequestId) {

@@ -160,14 +160,14 @@ public class ChangeRequestController {
     }
 
     @PostMapping("/{id}/approve")
-    @PreAuthorize("hasAnyRole('APPROVER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("isAuthenticated() and !hasRole('AUDITOR')")
     public ChangeRequestResponse approve(@PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ChangeRequestResponse.from(changeRequestService.approve(id, principal.userId()));
     }
 
     @PostMapping("/{id}/reject")
-    @PreAuthorize("hasAnyRole('APPROVER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("isAuthenticated() and !hasRole('AUDITOR')")
     public ChangeRequestResponse reject(@PathVariable UUID id,
             @Valid @RequestBody RejectChangeRequestRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {

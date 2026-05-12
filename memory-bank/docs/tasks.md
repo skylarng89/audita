@@ -257,18 +257,77 @@
 
 ### Group G — WCAG 2.2 Compliance
 
-| Task ID  | Task                                                                                             | Priority | Status         | Assigned To | Notes                                                                                                                                                                                                  |
+| Task ID | Task | Priority | Status | Assigned To | Notes |
+
+---
+
+## Sprint 11: Session Recovery & CR Workflow Polish (2026-05-12)
+
+> **Goal:** Remove localhost auth/session regressions after the HttpOnly-cookie migration and finish the blocked CR collaboration flows on create/detail pages.
+
+### Backend + Frontend Workflow Recovery
+
+| Task ID | Task                                                                             | Priority | Status       | Assigned To | Notes                                                                                                                                                       |
+| ------- | -------------------------------------------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UXR-001 | Restore localhost session persistence on page refresh                            | High     | ✅ Completed | Developer 1 | Added configurable refresh-cookie `Secure` flag in `AuthController` and disabled it for `dev` profile HTTP local runs.                                      |
+| UXR-002 | Allow assigned non-auditor approvers to approve and reject CRs                   | High     | ✅ Completed | Developer 1 | Changed `ChangeRequestController.approve/reject` from fixed role gate to authenticated non-auditor gate; service still enforces actual approver membership. |
+| UXR-003 | Fix CR comments 500 and harden detail DTO lazy-loading                           | High     | ✅ Completed | Developer 1 | Initialized comment author role plus activity actor and attachment uploader relations before controller DTO mapping.                                        |
+| UXR-004 | Center reject modal and restore full-screen overlay                              | Medium   | ✅ Completed | Developer 2 | Reworked `AppModal` root container from native dialog layout to fixed fullscreen dialog wrapper.                                                            |
+| UXR-005 | Add rich-text formatting controls and pre-create attachment queue on new CR form | High     | ✅ Completed | Developer 2 | Added shared TipTap toolbar and queued file picker on `pages/change-requests/new.vue`; uploads now run immediately after draft creation.                    |
+| UXR-006 | Show recorded votes and human-readable activity stream on CR detail              | High     | ✅ Completed | Developer 2 | Added recorded-votes card, approval-action gating, and formatted activity payload rendering in `pages/change-requests/[id].vue`.                            |
+
+## Progress Tracking
+
+### Overall Progress by Sprint
+
+| Sprint    | Total Tasks | Not Started | In Progress | Completed | Progress % |
+| --------- | ----------- | ----------- | ----------- | --------- | ---------- |
+| Sprint 11 | 6           | 0           | 0           | 6         | 100%       |
+| **TOTAL** | **6**       | **0**       | **0**       | **6**     | **100%**   |
+
+### Progress by Developer
+
+| Developer   | Assigned Tasks | Not Started | In Progress | Completed | Progress % |
+| ----------- | -------------- | ----------- | ----------- | --------- | ---------- |
+| Developer 1 | 3              | 0           | 0           | 3         | 100%       |
+| Developer 2 | 3              | 0           | 0           | 3         | 100%       |
+
+## Recent Implementations
+
+### Session Recovery & CR Workflow Polish (Completed 2026-05-12)
+
+**Overview**: Restored durable localhost session recovery and removed the remaining blocked CR approval, comment, modal, attachment, and activity UX failures.
+
+**Files Created/Modified**:
+
+- `audita-api/api/src/main/java/io/audita/api/controller/AuthController.java` — refresh-cookie security flag
+- `audita-api/api/src/main/java/io/audita/api/controller/ChangeRequestController.java` — approval/rejection authorization gate
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/CommentService.java` — eager author initialization for comment DTO mapping
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — eager activity/attachment actor initialization
+- `audita-web/components/shared/AppModal.vue` — fullscreen centered modal container
+- `audita-web/components/shared/RichTextToolbar.vue` — reusable rich text toolbar
+- `audita-web/pages/change-requests/new.vue` — attachment queue + richer description editor
+- `audita-web/pages/change-requests/[id].vue` — approval UX, votes card, activity formatting, action error handling
+
+**Key Changes**:
+
+- Restored refresh-cookie persistence on `http://localhost` while keeping secure-cookie defaults for production.
+- Allowed assigned requester/admin approvers to cast votes without requiring the fixed `APPROVER` role.
+- Replaced raw JSON/enum activity rendering with readable labels and structured detail fields.
+- Added recorded vote visibility and pre-create attachment queuing for the CR workflow.
+
+**Test Coverage**: Focused backend tests passing and frontend typecheck passing
 | -------- | ------------------------------------------------------------------------------------------------ | -------- | -------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| WCAG-001 | Add skip-to-main-content link at top of default layout (2.4.1)                                   | High     | ✅ Completed   | Developer 2 | `.skip-link` class in `main.css`; `<a href="#main-content" class="skip-link">` at top of `layouts/default.vue`; `<main id="main-content" tabindex="-1">` as target.                                    |
-| WCAG-002 | Add `<title>` to every page via `useHead` (2.4.2)                                                | High     | ✅ Completed   | Developer 2 | `useHead({ title: '… — Audita' })` added to all pages: Dashboard, CR list/create/detail, Audit Trail, Users, Groups, Custom Fields, Settings, Sign In, Reset Password, Forgot Password, Accept Invite. |
-| WCAG-003 | Fix `<label for>` / `<input id>` wiring in CR list filter bar (4.1.2)                            | High     | ✅ Completed   | Developer 2 | `<label for="filter-status">` + `<select id="filter-status">` and `<label for="filter-priority">` + `<select id="filter-priority">` added in CR list.                                                  |
-| WCAG-004 | Fix `<label for>` wiring in auth and settings forms (4.1.2)                                      | High     | ✅ Completed   | Developer 2 | `reset-password.vue` and `accept-invite.vue` password inputs now have matching `id`/`for` pairs. `sign-in.vue` had `id` added.                                                                         |
-| WCAG-005 | Add proper `role="tablist"` / `role="tab"` / `aria-selected` to CR detail tabs (1.3.1, 4.1.2)    | High     | ✅ Completed   | Developer 2 | Full ARIA tablist semantics + Arrow key/Home/End keyboard nav added inline to `[id].vue` via `crTabs` computed array and `onTabKeyDown()`.                                                             |
-| WCAG-006 | Implement focus trap in `AppModal` (2.4.3)                                                       | High     | ✅ Completed   | Developer 2 | Full focus-trap implemented in `AppModal.vue`: `getFocusable()`, Tab/Shift+Tab loop, Escape close, auto-focus first element on open, `aria-labelledby`, `role="dialog"`.                               |
-| WCAG-007 | Add `scroll-margin-top` to main content so fixed header never obscures focused elements (2.4.12) | Medium   | ✅ Completed   | Developer 2 | `scroll-margin-top: 4.5rem` added to `:focus-visible` selector in `@layer base` of `assets/css/main.css`.                                                                                              |
-| WCAG-008 | Announce dynamic content changes via `aria-live` (4.1.3)                                         | Medium   | ✅ Completed   | Developer 2 | `aria-live="polite"` SR-only span on CR list for filter results; `role="log" aria-live="polite"` on toast container; `role="alert"` on error toasts; `aria-live="polite"` on password strength text.   |
-| WCAG-009 | Add `autocomplete` tokens to all auth form inputs (1.3.5)                                        | Medium   | ✅ Completed   | Developer 2 | `autocomplete="new-password"` added to both password inputs in `accept-invite.vue`. `sign-in.vue` and `reset-password.vue` already had correct values.                                                 |
-| WCAG-010 | Ensure all interactive targets meet 24×24 px minimum (2.5.8)                                     | Medium   | 🔴 Not Started | Developer 2 | Deferred. Most icon buttons are `w-8 h-8` (32px), satisfying WCAG 2.5.8. Inline table action links (Users page) still lack explicit min-size enforcement.                                              |
+| WCAG-001 | Add skip-to-main-content link at top of default layout (2.4.1) | High | ✅ Completed | Developer 2 | `.skip-link` class in `main.css`; `<a href="#main-content" class="skip-link">` at top of `layouts/default.vue`; `<main id="main-content" tabindex="-1">` as target. |
+| WCAG-002 | Add `<title>` to every page via `useHead` (2.4.2) | High | ✅ Completed | Developer 2 | `useHead({ title: '… — Audita' })` added to all pages: Dashboard, CR list/create/detail, Audit Trail, Users, Groups, Custom Fields, Settings, Sign In, Reset Password, Forgot Password, Accept Invite. |
+| WCAG-003 | Fix `<label for>` / `<input id>` wiring in CR list filter bar (4.1.2) | High | ✅ Completed | Developer 2 | `<label for="filter-status">` + `<select id="filter-status">` and `<label for="filter-priority">` + `<select id="filter-priority">` added in CR list. |
+| WCAG-004 | Fix `<label for>` wiring in auth and settings forms (4.1.2) | High | ✅ Completed | Developer 2 | `reset-password.vue` and `accept-invite.vue` password inputs now have matching `id`/`for` pairs. `sign-in.vue` had `id` added. |
+| WCAG-005 | Add proper `role="tablist"` / `role="tab"` / `aria-selected` to CR detail tabs (1.3.1, 4.1.2) | High | ✅ Completed | Developer 2 | Full ARIA tablist semantics + Arrow key/Home/End keyboard nav added inline to `[id].vue` via `crTabs` computed array and `onTabKeyDown()`. |
+| WCAG-006 | Implement focus trap in `AppModal` (2.4.3) | High | ✅ Completed | Developer 2 | Full focus-trap implemented in `AppModal.vue`: `getFocusable()`, Tab/Shift+Tab loop, Escape close, auto-focus first element on open, `aria-labelledby`, `role="dialog"`. |
+| WCAG-007 | Add `scroll-margin-top` to main content so fixed header never obscures focused elements (2.4.12) | Medium | ✅ Completed | Developer 2 | `scroll-margin-top: 4.5rem` added to `:focus-visible` selector in `@layer base` of `assets/css/main.css`. |
+| WCAG-008 | Announce dynamic content changes via `aria-live` (4.1.3) | Medium | ✅ Completed | Developer 2 | `aria-live="polite"` SR-only span on CR list for filter results; `role="log" aria-live="polite"` on toast container; `role="alert"` on error toasts; `aria-live="polite"` on password strength text. |
+| WCAG-009 | Add `autocomplete` tokens to all auth form inputs (1.3.5) | Medium | ✅ Completed | Developer 2 | `autocomplete="new-password"` added to both password inputs in `accept-invite.vue`. `sign-in.vue` and `reset-password.vue` already had correct values. |
+| WCAG-010 | Ensure all interactive targets meet 24×24 px minimum (2.5.8) | Medium | 🔴 Not Started | Developer 2 | Deferred. Most icon buttons are `w-8 h-8` (32px), satisfying WCAG 2.5.8. Inline table action links (Users page) still lack explicit min-size enforcement. |
 
 ## Sprint 11: Session Hardening (2026-05-12)
 

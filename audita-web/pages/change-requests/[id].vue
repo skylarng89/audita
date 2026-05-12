@@ -201,10 +201,13 @@
             <!-- Description -->
             <div class="md:col-span-2">
               <p class="field-label">Description</p>
-              <EditorContent
-                :editor="editEditor"
-                class="input mt-1 min-h-36 p-3"
-              />
+              <div class="rich-editor-shell">
+                <SharedRichTextToolbar :editor="editEditor" />
+                <EditorContent
+                  :editor="editEditor"
+                  class="rich-editor-content"
+                />
+              </div>
             </div>
           </div>
 
@@ -376,15 +379,17 @@
             Cancel
           </button>
           <button
+            v-if="canSeeApprovalActions"
             class="btn-ghost btn-md"
-            :disabled="changeRequest.status !== 'PENDING_APPROVAL'"
+            :disabled="!canCastVote"
             @click="approveCr"
           >
             Approve
           </button>
           <button
+            v-if="canSeeApprovalActions"
             class="btn-ghost btn-md"
-            :disabled="changeRequest.status !== 'PENDING_APPROVAL'"
+            :disabled="!canCastVote"
             @click="showReject = true"
           >
             Reject
@@ -449,6 +454,33 @@
           </div>
           <div v-if="!attachments.length" class="text-sm text-muted">
             No attachments uploaded yet.
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-5 md:col-span-2" v-if="recordedVotes.length">
+        <h3 class="font-semibold mb-3">Recorded Votes</h3>
+        <div class="space-y-2 text-sm">
+          <div
+            v-for="approver in recordedVotes"
+            :key="approver.id"
+            class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-outline-variant/50 bg-surface-container-low px-3 py-2 dark:border-slate-600 dark:bg-slate-800/70"
+          >
+            <div>
+              <p class="font-medium text-on-surface dark:text-gray-100">
+                {{ approver.userFullName }}
+              </p>
+              <p class="text-xs text-muted">{{ approver.userEmail }}</p>
+            </div>
+            <div class="text-right">
+              <p class="font-medium">{{ formatEnumLabel(approver.status) }}</p>
+              <p v-if="approver.decidedAt" class="text-xs text-muted">
+                {{ fmt(approver.decidedAt) }}
+              </p>
+              <p v-if="approver.rejectionReason" class="text-xs text-danger">
+                {{ approver.rejectionReason }}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -524,17 +556,43 @@
         <div
           v-for="event in activity"
           :key="event.id"
-          class="border border-border dark:border-border-dark rounded-lg p-3"
+          class="border border-border dark:border-border-dark rounded-xl p-4 bg-surface-container-low/50 dark:bg-slate-800/70"
         >
-          <p class="text-sm font-semibold">{{ event.actionType }}</p>
-          <p class="text-xs text-muted mt-1">
-            {{ event.actorFullName ?? "System" }} • {{ fmt(event.createdAt) }}
-          </p>
-          <pre
-            v-if="event.payload"
-            class="text-xs mt-2 p-2 bg-surface dark:bg-surface-dark rounded"
-            >{{ JSON.stringify(event.payload, null, 2) }}</pre
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p
+                class="text-sm font-semibold text-on-surface dark:text-gray-100"
+              >
+                {{ formatActivityAction(event.actionType) }}
+              </p>
+              <p class="text-xs text-muted mt-1">
+                {{ event.actorFullName ?? "System" }} •
+                {{ fmt(event.createdAt) }}
+              </p>
+            </div>
+            <span class="badge badge-draft">{{
+              formatActivityBadge(event.actionType)
+            }}</span>
+          </div>
+          <p
+            v-if="activitySummary(event)"
+            class="mt-3 text-sm text-gray-700 dark:text-gray-300"
           >
+            {{ activitySummary(event) }}
+          </p>
+          <dl
+            v-if="activityFields(event).length"
+            class="mt-3 grid gap-2 rounded-lg bg-white/80 p-3 text-xs dark:bg-slate-900/50 sm:grid-cols-2"
+          >
+            <div v-for="field in activityFields(event)" :key="field.label">
+              <dt class="font-semibold uppercase tracking-[0.08em] text-muted">
+                {{ field.label }}
+              </dt>
+              <dd class="mt-1 text-sm text-on-surface dark:text-gray-200">
+                {{ field.value }}
+              </dd>
+            </div>
+          </dl>
         </div>
       </div>
     </section>
@@ -672,6 +730,7 @@ useHead(
 );
 
 const { error: toastError } = useToast();
+const auth = useAuthStore();
 const api = useApi();
 
 const route = useRoute();
@@ -706,6 +765,58 @@ const activity = ref<ActivityEntry[]>([]);
 const comments = ref<Comment[]>([]);
 const tab = ref<string>("details");
 const newComment = ref("");
+
+const sortedApprovers = computed(() =>
+  [...approvers.value].sort((left, right) => left.position - right.position),
+);
+const recordedVotes = computed(() =>
+  sortedApprovers.value.filter((approver) => approver.status !== "PENDING"),
+);
+const canSeeApprovalActions = computed(() => {
+  if (
+    !changeRequest.value ||
+    changeRequest.value.status !== "PENDING_APPROVAL"
+  ) {
+    return false;
+  }
+  if (auth.role === "Auditor") {
+    return false;
+  }
+  if (auth.isSuperAdmin || auth.role === "Admin") {
+    return true;
+  }
+  return approvers.value.some((approver) => approver.userId === auth.userId);
+});
+const canCastVote = computed(() => {
+  if (
+    !changeRequest.value ||
+    changeRequest.value.status !== "PENDING_APPROVAL"
+  ) {
+    return false;
+  }
+  if (auth.role === "Auditor") {
+    return false;
+  }
+  if (auth.isSuperAdmin || auth.role === "Admin") {
+    return true;
+  }
+
+  const selfApprover = sortedApprovers.value.find(
+    (approver) =>
+      approver.userId === auth.userId && approver.status === "PENDING",
+  );
+  if (!selfApprover) {
+    return false;
+  }
+  if (changeRequest.value.approvalType !== "LINEAR") {
+    return true;
+  }
+
+  return (
+    sortedApprovers.value.find((approver) => approver.status === "PENDING")
+      ?.id === selfApprover.id
+  );
+});
 
 // ── Tab list with counts ────────────────────────────────────────────────────
 const crTabs = computed(() => [
@@ -917,41 +1028,119 @@ async function saveEditAction() {
 }
 
 async function loadAll() {
-  const [
-    cr,
-    approverList,
-    savedFields,
-    definitions,
-    attachmentList,
-    activityList,
-    commentList,
-  ] = await Promise.all([
-    get(id.value),
-    listApprovers(id.value),
-    listCustomFields(id.value),
-    api<CustomFieldDefinition[]>("/api/v1/admin/custom-fields"),
-    listAttachments(id.value),
-    listActivity(id.value),
-    listComments(id.value),
-  ]);
-  changeRequest.value = cr;
-  approvers.value = approverList;
-  customFields.value = savedFields;
-  fieldDefinitions.value = definitions;
-  attachments.value = attachmentList;
-  activity.value = activityList;
-  comments.value = commentList;
-  // Build the editable map from saved values; fall back to empty string per definition.
-  const valueMap: Record<string, string> = {};
-  for (const def of definitions) {
-    const saved = savedFields.find((f) => f.fieldId === def.id);
-    valueMap[def.id] = saved?.value ?? "";
+  try {
+    const [
+      cr,
+      approverList,
+      savedFields,
+      definitions,
+      attachmentList,
+      activityList,
+      commentList,
+    ] = await Promise.all([
+      get(id.value),
+      listApprovers(id.value),
+      listCustomFields(id.value),
+      api<CustomFieldDefinition[]>("/api/v1/admin/custom-fields"),
+      listAttachments(id.value),
+      listActivity(id.value),
+      listComments(id.value),
+    ]);
+    changeRequest.value = cr;
+    approvers.value = approverList;
+    customFields.value = savedFields;
+    fieldDefinitions.value = definitions;
+    attachments.value = attachmentList;
+    activity.value = activityList;
+    comments.value = commentList;
+    const valueMap: Record<string, string> = {};
+    for (const def of definitions) {
+      const saved = savedFields.find((field) => field.fieldId === def.id);
+      valueMap[def.id] = saved?.value ?? "";
+    }
+    localFieldValues.value = valueMap;
+  } catch (error: unknown) {
+    toastError(
+      extractErrorMessage(error, "Failed to load change request details."),
+    );
   }
-  localFieldValues.value = valueMap;
 }
 
 function fmt(value: string | null) {
   return value ? format(parseISO(value), "MMM d, yyyy HH:mm") : "—";
+}
+
+function formatEnumLabel(value: string | null | undefined) {
+  if (!value) {
+    return "—";
+  }
+
+  const normalized = value.replace(/^CR_/, "CHANGE_REQUEST_");
+  return normalized
+    .split("_")
+    .filter(Boolean)
+    .map((segment) => {
+      if (segment === "CHANGE") {
+        return "Change";
+      }
+      if (segment === "REQUEST") {
+        return "Request";
+      }
+      return segment.charAt(0) + segment.slice(1).toLowerCase();
+    })
+    .join(" ");
+}
+
+function formatActivityAction(actionType: string) {
+  return formatEnumLabel(actionType);
+}
+
+function formatActivityBadge(actionType: string) {
+  return actionType.startsWith("CR_") ? "Workflow" : "Event";
+}
+
+function formatActivityValue(value: unknown) {
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+  if (typeof value === "string") {
+    return value.includes("_") ? formatEnumLabel(value) : value;
+  }
+  return String(value);
+}
+
+function activitySummary(event: ActivityEntry) {
+  const reason = event.payload?.reason;
+  if (typeof reason === "string" && reason.trim()) {
+    return reason.trim();
+  }
+  const mentions = event.payload?.mentions;
+  if (typeof mentions === "number" && mentions > 0) {
+    return `${mentions} mention${mentions === 1 ? "" : "s"} included in this comment.`;
+  }
+  return null;
+}
+
+function activityFields(event: ActivityEntry) {
+  if (!event.payload) {
+    return [];
+  }
+  return Object.entries(event.payload)
+    .filter(
+      ([key, value]) =>
+        !key.endsWith("Id") &&
+        key !== "reason" &&
+        value !== null &&
+        value !== undefined,
+    )
+    .map(([key, value]) => ({
+      label: formatEnumLabel(key),
+      value: formatActivityValue(value),
+    }));
+}
+
+function extractErrorMessage(error: unknown, fallback: string) {
+  return (error as { data?: { detail?: string } })?.data?.detail ?? fallback;
 }
 
 async function saveCustomFieldsAction() {
@@ -1054,31 +1243,56 @@ function formatSize(bytes: number) {
 }
 
 async function submitCr() {
-  changeRequest.value = await submit(id.value);
-  activity.value = await listActivity(id.value);
+  try {
+    changeRequest.value = await submit(id.value);
+    activity.value = await listActivity(id.value);
+  } catch (error: unknown) {
+    toastError(
+      extractErrorMessage(error, "Unable to submit this change request."),
+    );
+  }
 }
 
 async function cancelCr() {
-  await cancel(id.value);
-  changeRequest.value = await get(id.value);
-  activity.value = await listActivity(id.value);
+  try {
+    await cancel(id.value);
+    changeRequest.value = await get(id.value);
+    activity.value = await listActivity(id.value);
+  } catch (error: unknown) {
+    toastError(
+      extractErrorMessage(error, "Unable to cancel this change request."),
+    );
+  }
 }
 
 async function approveCr() {
-  changeRequest.value = await approve(id.value);
-  approvers.value = await listApprovers(id.value);
-  activity.value = await listActivity(id.value);
+  try {
+    changeRequest.value = await approve(id.value);
+    approvers.value = await listApprovers(id.value);
+    activity.value = await listActivity(id.value);
+  } catch (error: unknown) {
+    toastError(
+      extractErrorMessage(error, "Unable to approve this change request."),
+    );
+  }
 }
 
 async function rejectCr() {
   if (!rejectReason.value.trim()) {
+    toastError("A rejection reason is required.");
     return;
   }
-  changeRequest.value = await reject(id.value, rejectReason.value);
-  showReject.value = false;
-  rejectReason.value = "";
-  approvers.value = await listApprovers(id.value);
-  activity.value = await listActivity(id.value);
+  try {
+    changeRequest.value = await reject(id.value, rejectReason.value);
+    showReject.value = false;
+    rejectReason.value = "";
+    approvers.value = await listApprovers(id.value);
+    activity.value = await listActivity(id.value);
+  } catch (error: unknown) {
+    toastError(
+      extractErrorMessage(error, "Unable to reject this change request."),
+    );
+  }
 }
 
 async function addApproverAction() {
@@ -1121,10 +1335,14 @@ async function postCommentAction() {
   if (!body) {
     return;
   }
-  await postComment(id.value, body);
-  newComment.value = "";
-  comments.value = await listComments(id.value);
-  activity.value = await listActivity(id.value);
+  try {
+    await postComment(id.value, body);
+    newComment.value = "";
+    comments.value = await listComments(id.value);
+    activity.value = await listActivity(id.value);
+  } catch (error: unknown) {
+    toastError(extractErrorMessage(error, "Unable to post your comment."));
+  }
 }
 
 onMounted(() => {

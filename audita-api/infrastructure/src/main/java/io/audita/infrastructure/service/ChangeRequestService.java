@@ -371,13 +371,19 @@ public class ChangeRequestService {
     @Transactional(readOnly = true)
     public List<ActivityStreamEntity> listActivity(UUID changeRequestId) {
         getById(changeRequestId);
-        return activityStreamRepository.findByChangeRequestIdOrderByCreatedAtDesc(changeRequestId);
+        List<ActivityStreamEntity> activityEntries = activityStreamRepository
+                .findByChangeRequestIdOrderByCreatedAtDesc(changeRequestId);
+        activityEntries.forEach(this::initializeActivityActor);
+        return activityEntries;
     }
 
     @Transactional(readOnly = true)
     public List<AttachmentEntity> listAttachments(UUID changeRequestId) {
         getById(changeRequestId);
-        return attachmentRepository.findByChangeRequestIdOrderByCreatedAtDesc(changeRequestId);
+        List<AttachmentEntity> attachments = attachmentRepository
+                .findByChangeRequestIdOrderByCreatedAtDesc(changeRequestId);
+        attachments.forEach(this::initializeAttachmentUploader);
+        return attachments;
     }
 
     @Transactional(readOnly = true)
@@ -557,6 +563,22 @@ public class ChangeRequestService {
     private void initializeCreator(ChangeRequestEntity changeRequest) {
         if (changeRequest.getCreatedBy() != null) {
             changeRequest.getCreatedBy().getEmail();
+        }
+    }
+
+    private void initializeActivityActor(ActivityStreamEntity activityStream) {
+        UserEntity actor = activityStream.getActor();
+        if (actor != null) {
+            actor.getEmail();
+            actor.getFullName();
+        }
+    }
+
+    private void initializeAttachmentUploader(AttachmentEntity attachment) {
+        UserEntity uploader = attachment.getUploader();
+        if (uploader != null) {
+            uploader.getId();
+            uploader.getFullName();
         }
     }
 

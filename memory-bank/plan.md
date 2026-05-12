@@ -178,3 +178,25 @@
 - Extended Spring config metadata for `audita.invite.expiry-hours` and `audita.mail.from-name`, and added typed `invite`/`mail` groups to `AuditaProperties` so YAML metadata stays synchronized with `@Value` consumers.
 - Confirmed `HttpSecurity cannot be resolved` in `SecurityConfig` is a stale editor classpath issue because `cd audita-api && ./gradlew :api:compileJava --no-daemon` passes.
 - Fixed the live frontend lint issue by switching `middleware/tenant.ts` from `window.location.hostname` to `globalThis.location.hostname`.
+
+## Session UX & Workflow Recovery (2026-05-12)
+
+### Objectives
+
+1. Restore durable auth on localhost refresh after the HttpOnly-cookie migration.
+2. Remove CR approval/rejection blockers and post-action UI failures.
+3. Upgrade CR detail/create collaboration UX for attachments, rich text, activity readability, and vote visibility.
+
+### Work Items
+
+- UXR-001: Make refresh-cookie `Secure` behavior environment-configurable and disable it for local `dev` HTTP. ✅ (Completed 2026-05-12)
+- UXR-002: Allow assigned non-auditor approvers to vote even when their base role is not `APPROVER`. ✅ (Completed 2026-05-12)
+- UXR-003: Fix CR comment DTO lazy-loading failure and pre-initialize detail activity/attachment actors for safe mapping. ✅ (Completed 2026-05-12)
+- UXR-004: Center reject confirmation modal and restore full-screen overlay coverage. ✅ (Completed 2026-05-12)
+- UXR-005: Add rich-text formatting toolbar and queued attachments on CR create. ✅ (Completed 2026-05-12)
+- UXR-006: Add recorded-votes card and human-readable activity stream rendering on CR detail. ✅ (Completed 2026-05-12)
+
+### Verification
+
+- `cd audita-api && ./gradlew :api:test --tests "io.audita.api.controller.AuthControllerWebMvcTest" --tests "io.audita.api.controller.CommentControllerWebMvcTest" --tests "io.audita.api.controller.UserControllerSecurityAnnotationsTest" :infrastructure:test --tests "io.audita.infrastructure.service.CommentServiceTest" --no-daemon`
+- `cd audita-web && pnpm -s nuxi typecheck`
