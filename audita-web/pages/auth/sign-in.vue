@@ -86,7 +86,7 @@
             id="sign-in-password"
             v-model="form.password"
             :type="showPassword ? 'text' : 'password'"
-            autocomplete="current-password"
+            :autocomplete="showPassword ? 'off' : 'current-password'"
             placeholder="••••••••••••"
             class="input pr-10"
             :class="{ 'input-error': errors.password }"
