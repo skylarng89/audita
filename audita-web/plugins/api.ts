@@ -1,3 +1,8 @@
+import {
+  API_CONTRACT_HEADER,
+  isApiContractCompatible,
+} from "~/composables/apiContract";
+import { clearServerSession } from "~/composables/sessionRestore";
 import { shouldAttemptTokenRefresh } from "~/composables/authSession";
 import { useAuthStore } from "~/stores/auth";
 import type { AuthResponse } from "~/types";
@@ -8,6 +13,7 @@ export default defineNuxtPlugin(() => {
   const baseURL = import.meta.server
     ? config.apiInternalBase
     : config.public.apiBase;
+  let contractMismatchHandled = false;
   let refreshPromise: Promise<AuthResponse | null> | null = null;
   let apiClient: ReturnType<typeof $fetch.create>;
   type ApiClientOptions = Parameters<typeof apiClient>[1];
@@ -19,15 +25,43 @@ export default defineNuxtPlugin(() => {
     };
   }
 
+  async function forceContractLogout() {
+    if (contractMismatchHandled) {
+      return;
+    }
+
+    contractMismatchHandled = true;
+    try {
+      await clearServerSession();
+    } catch {}
+    auth.clearAuth({ broadcast: true });
+    await navigateTo("/auth/sign-in");
+  }
+
+  function hasCompatibleApiContract(response: { headers?: Headers }) {
+    const actualApiContract =
+      response.headers?.get(API_CONTRACT_HEADER) ?? null;
+    return isApiContractCompatible(
+      actualApiContract,
+      config.public.apiContractVersion,
+    );
+  }
+
   function refreshSession() {
     if (!refreshPromise) {
-      refreshPromise = $fetch<AuthResponse>("/api/v1/auth/refresh", {
-        method: "POST",
-        baseURL,
-      })
-        .then((refreshed) => {
-          auth.setAuth(refreshed);
-          return refreshed;
+      refreshPromise = $fetch
+        .raw<AuthResponse>("/api/v1/auth/refresh", {
+          method: "POST",
+          baseURL,
+        })
+        .then(async (response) => {
+          if (!hasCompatibleApiContract(response)) {
+            await forceContractLogout();
+            return null;
+          }
+
+          auth.setAuth(response._data, { broadcast: true });
+          return response._data;
         })
         .catch(async (error) => {
           console.error("Token refresh failed", error);
@@ -78,8 +112,19 @@ export default defineNuxtPlugin(() => {
       options.headers = headers;
     },
 
+    onResponse({ response }) {
+      if (!hasCompatibleApiContract(response)) {
+        return forceContractLogout();
+      }
+    },
+
     onResponseError: (async (ctx: OnResponseErrorContext) => {
       const { request, options, response } = ctx;
+
+      if (!hasCompatibleApiContract(response)) {
+        await forceContractLogout();
+        return;
+      }
 
       let requestPath = "";
       if (typeof request === "string") {

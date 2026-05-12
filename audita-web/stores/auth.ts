@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import { createAuthSessionSyncEvent } from "~/composables/authSessionSync";
 import {
   computeTokenExpiresAt,
   hasActiveAccessToken,
@@ -14,6 +15,29 @@ interface AuthState {
   role: UserRole | null;
   tenantSlug: string | null;
   sessionInitialized: boolean;
+}
+
+interface AuthMutationOptions {
+  broadcast?: boolean;
+}
+
+function broadcastAuthEvent(type: "session-restored" | "session-logged-out") {
+  if (!import.meta.client) {
+    return;
+  }
+
+  const tabId = useState<string>("auth-sync-tab-id", () => crypto.randomUUID());
+  const event = createAuthSessionSyncEvent(type, tabId.value);
+
+  if (typeof BroadcastChannel !== "undefined") {
+    const channel = new BroadcastChannel("audita-auth-session");
+    channel.postMessage(event);
+    channel.close();
+    return;
+  }
+
+  localStorage.setItem("audita-auth-session", JSON.stringify(event));
+  localStorage.removeItem("audita-auth-session");
 }
 
 export const useAuthStore = defineStore("auth", {
@@ -52,7 +76,7 @@ export const useAuthStore = defineStore("auth", {
       this.tenantSlug = tenantSlug;
     },
 
-    setAuth(response: AuthResponse) {
+    setAuth(response: AuthResponse, options: AuthMutationOptions = {}) {
       this.accessToken = response.accessToken;
       this.tokenExpiresAt = computeTokenExpiresAt(response.expiresIn);
       this.userId = response.userId;
@@ -62,9 +86,13 @@ export const useAuthStore = defineStore("auth", {
       this.tenantSlug = response.tenantSlug;
       this.sessionInitialized = true;
       this.invalidateCachedSessionState();
+
+      if (options.broadcast) {
+        broadcastAuthEvent("session-restored");
+      }
     },
 
-    clearAuth() {
+    clearAuth(options: AuthMutationOptions = {}) {
       this.accessToken = null;
       this.tokenExpiresAt = null;
       this.userId = null;
@@ -74,16 +102,20 @@ export const useAuthStore = defineStore("auth", {
       this.tenantSlug = null;
       this.sessionInitialized = true;
       this.invalidateCachedSessionState();
+
+      if (options.broadcast) {
+        broadcastAuthEvent("session-logged-out");
+      }
     },
 
     // Called by the API plugin on 401 responses
-    async logout() {
+    async logout(options: AuthMutationOptions = {}) {
       try {
         await $fetch("/api/v1/auth/logout", { method: "POST" });
       } catch (error) {
         console.error("Logout API failed", error);
       }
-      this.clearAuth();
+      this.clearAuth({ broadcast: options.broadcast ?? true });
       await navigateTo("/auth/sign-in");
     },
   },

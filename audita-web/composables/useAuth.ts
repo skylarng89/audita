@@ -15,7 +15,7 @@ export function useAuth() {
       headers,
     });
 
-    auth.setAuth(response);
+    auth.setAuth(response, { broadcast: true });
 
     // Role-based redirect
     if (response.role === "SUPER_ADMIN") {
