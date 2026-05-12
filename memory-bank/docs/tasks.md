@@ -261,6 +261,24 @@
 
 ---
 
+## Sprint 11: RBAC Expansion & CR Auto-Assignment (2026-05-12)
+
+> **Goal:** Auto-populate CR approvers at creation time and evolve tenant RBAC to support multi-role users plus admin-managed custom roles safely.
+
+| Task ID  | Task                                                                             | Priority | Status       | Assigned To | Notes                                                                                                                 |
+| -------- | -------------------------------------------------------------------------------- | -------- | ------------ | ----------- | --------------------------------------------------------------------------------------------------------------------- |
+| RBAC-001 | Auto-add Approver/Auditor/Admin users when CR is created                         | High     | ✅ Completed | Developer 1 | `ChangeRequestService.create()` now invokes default approver population on persisted CR entity (with generated UUID). |
+| RBAC-002 | Keep submit-time approver population idempotent                                  | High     | ✅ Completed | Developer 1 | Submit path reuses same dedupe logic and does not create duplicates if create already auto-populated.                 |
+| RBAC-003 | Introduce `user_roles` many-to-many tenant schema migration with legacy backfill | High     | ✅ Completed | Developer 1 | Added `tenant/V6__add_user_roles.sql`; backfills from `users.role_id` for zero-downtime compatibility.                |
+| RBAC-004 | Support multi-role assignment in invite/update user APIs                         | High     | ✅ Completed | Developer 1 | `InviteUserRequest`/`UpdateUserRequest` now accept `roleIds` (legacy `roleId` retained).                              |
+| RBAC-005 | Add effective-role precedence for users with multiple roles                      | Medium   | ✅ Completed | Developer 1 | Added `RoleHierarchy` utility; highest role remains the primary compatibility role (`users.role_id`).                 |
+| RBAC-006 | Extend JWT claims/principal with all roles + permission authorities              | High     | ✅ Completed | Developer 1 | JWT now carries `roles` + `permissions`; `JwtAuthenticationFilter`/`UserPrincipal` map them into Spring authorities.  |
+| RBAC-007 | Add admin endpoints for custom role creation and permission updates              | High     | ✅ Completed | Developer 1 | `POST /api/v1/roles` + `PATCH /api/v1/roles/{id}/permissions`; system roles remain immutable.                         |
+| RBAC-008 | Prevent custom role permission-rule overlap and duplicates                       | High     | ✅ Completed | Developer 1 | Service rejects duplicate permission codes and exact permission-set overlaps with existing roles.                     |
+| RBAC-009 | Add regression test for create-time CR auto-population                           | High     | ✅ Completed | Developer 1 | Added `createAutoAddsApproversAuditorsAndAdmins()` in `ChangeRequestServiceSecurityTest`.                             |
+
+---
+
 ## Sprint 11: Session Recovery & CR Workflow Polish (2026-05-12)
 
 > **Goal:** Remove localhost auth/session regressions after the HttpOnly-cookie migration and finish the blocked CR collaboration flows on create/detail pages.
