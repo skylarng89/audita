@@ -50,7 +50,8 @@ class TenantSettingsControllerWebMvcTest {
                 new TenantSettingsPort.TenantSettings(
                         new TenantSettingsPort.TenantProfile("Acme Corp", "acme", "ACTIVE"),
                         new TenantSettingsPort.WorkflowDefaults(ApprovalType.LINEAR, true),
-                        new TenantSettingsPort.SlaDefaults(72, 48, 24, 8, 1)));
+                        new TenantSettingsPort.SlaDefaults(72, 48, 24, 8, 1),
+                        new TenantSettingsPort.AutoApproverDefaults(java.util.List.of(), java.util.List.of())));
 
         try {
             mockMvc.perform(get("/api/v1/settings"))
@@ -72,13 +73,18 @@ class TenantSettingsControllerWebMvcTest {
                 new TenantSettingsPort.TenantSettings(
                         new TenantSettingsPort.TenantProfile("Acme Corp", "acme", "ACTIVE"),
                         new TenantSettingsPort.WorkflowDefaults(ApprovalType.NON_LINEAR, false),
-                        new TenantSettingsPort.SlaDefaults(96, 72, 36, 12, 3)));
+                        new TenantSettingsPort.SlaDefaults(96, 72, 36, 12, 3),
+                        new TenantSettingsPort.AutoApproverDefaults(java.util.List.of(), java.util.List.of())));
 
         String body = """
                 {
                   "workflowDefaults": {
                     "approvalTypeDefault": "NON_LINEAR",
                     "requireDefaultApprovers": false
+                  },
+                  "autoApproverDefaults": {
+                    "userIds": [],
+                    "groupIds": []
                   },
                   "slaDefaults": {
                     "lowHours": 96,
@@ -115,6 +121,10 @@ class TenantSettingsControllerWebMvcTest {
                     "approvalTypeDefault": "LINEAR",
                     "requireDefaultApprovers": true
                   },
+                  "autoApproverDefaults": {
+                    "userIds": [],
+                    "groupIds": []
+                  },
                   "slaDefaults": {
                     "lowHours": 72,
                     "mediumHours": 48,
@@ -140,6 +150,8 @@ class TenantSettingsControllerWebMvcTest {
                 UUID.randomUUID(),
                 "admin@acme.com",
                 "ADMIN",
+                java.util.List.of("ADMIN"),
+                java.util.List.of(),
                 "acme");
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));

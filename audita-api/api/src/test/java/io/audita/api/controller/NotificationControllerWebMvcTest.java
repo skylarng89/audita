@@ -39,8 +39,10 @@ class NotificationControllerWebMvcTest {
 
         MockMvc mockMvc;
 
-        @Mock NotificationService notificationService;
-        @Mock JwtService jwtService;
+        @Mock
+        NotificationService notificationService;
+        @Mock
+        JwtService jwtService;
 
         @BeforeEach
         void setUp() {
@@ -50,92 +52,91 @@ class NotificationControllerWebMvcTest {
                                 .build();
         }
 
-    @Test
-    void list_returns_notifications_and_unread_header() throws Exception {
-        UUID userId = UUID.randomUUID();
-        UUID notificationId = UUID.randomUUID();
+        @Test
+        void list_returns_notifications_and_unread_header() throws Exception {
+                UUID userId = UUID.randomUUID();
+                UUID notificationId = UUID.randomUUID();
 
-        UserPrincipal principal = UserPrincipal.ofTenantUser(
-                userId,
-                "user@example.com",
-                "APPROVER",
-                "tenant-acme"
-        );
+                UserPrincipal principal = UserPrincipal.ofTenantUser(
+                                userId,
+                                "user@example.com",
+                                "APPROVER",
+                                List.of("APPROVER"),
+                                List.of(),
+                                "tenant-acme");
 
-        UserEntity recipient = new UserEntity("user@example.com", "User One");
-        ReflectionTestUtils.setField(recipient, "id", userId);
-        NotificationEntity notification = new NotificationEntity(
-                recipient,
-                "MENTION",
-                "Mentioned",
-                "You were mentioned",
-                "/change-requests/1"
-        );
-        ReflectionTestUtils.setField(notification, "id", notificationId);
+                UserEntity recipient = new UserEntity("user@example.com", "User One");
+                ReflectionTestUtils.setField(recipient, "id", userId);
+                NotificationEntity notification = new NotificationEntity(
+                                recipient,
+                                "MENTION",
+                                "Mentioned",
+                                "You were mentioned",
+                                "/change-requests/1");
+                ReflectionTestUtils.setField(notification, "id", notificationId);
 
-        when(notificationService.list(userId, 0, 20)).thenReturn(List.of(notification));
-        when(notificationService.unreadCount(userId)).thenReturn(5L);
+                when(notificationService.list(userId, 0, 20)).thenReturn(List.of(notification));
+                when(notificationService.unreadCount(userId)).thenReturn(5L);
 
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())
-        );
-        try {
-            mockMvc.perform(get("/api/v1/notifications"))
-                    .andExpect(status().isOk())
-                    .andExpect(header().string("X-Unread-Count", "5"))
-                    .andExpect(jsonPath("$[0].id").value(notificationId.toString()))
-                    .andExpect(jsonPath("$[0].type").value("MENTION"));
-        } finally {
-            SecurityContextHolder.clearContext();
-        }
-    }
-
-    @Test
-    void mark_read_returns_no_content() throws Exception {
-        UUID userId = UUID.randomUUID();
-        UUID notificationId = UUID.randomUUID();
-        UserPrincipal principal = UserPrincipal.ofTenantUser(
-                userId,
-                "user@example.com",
-                "APPROVER",
-                "tenant-acme"
-        );
-
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())
-        );
-        try {
-            mockMvc.perform(patch("/api/v1/notifications/{id}/read", notificationId))
-                    .andExpect(status().isNoContent());
-        } finally {
-            SecurityContextHolder.clearContext();
+                SecurityContextHolder.getContext().setAuthentication(
+                                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
+                try {
+                        mockMvc.perform(get("/api/v1/notifications"))
+                                        .andExpect(status().isOk())
+                                        .andExpect(header().string("X-Unread-Count", "5"))
+                                        .andExpect(jsonPath("$[0].id").value(notificationId.toString()))
+                                        .andExpect(jsonPath("$[0].type").value("MENTION"));
+                } finally {
+                        SecurityContextHolder.clearContext();
+                }
         }
 
-        verify(notificationService).markRead(userId, notificationId);
-    }
+        @Test
+        void mark_read_returns_no_content() throws Exception {
+                UUID userId = UUID.randomUUID();
+                UUID notificationId = UUID.randomUUID();
+                UserPrincipal principal = UserPrincipal.ofTenantUser(
+                                userId,
+                                "user@example.com",
+                                "APPROVER",
+                                List.of("APPROVER"),
+                                List.of(),
+                                "tenant-acme");
 
-    @Test
-    void read_all_returns_no_content() throws Exception {
-        UUID userId = UUID.randomUUID();
-        UserPrincipal principal = UserPrincipal.ofTenantUser(
-                userId,
-                "user@example.com",
-                "APPROVER",
-                "tenant-acme"
-        );
+                SecurityContextHolder.getContext().setAuthentication(
+                                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
+                try {
+                        mockMvc.perform(patch("/api/v1/notifications/{id}/read", notificationId))
+                                        .andExpect(status().isNoContent());
+                } finally {
+                        SecurityContextHolder.clearContext();
+                }
 
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())
-        );
-        try {
-            mockMvc.perform(post("/api/v1/notifications/read-all"))
-                    .andExpect(status().isNoContent());
-        } finally {
-            SecurityContextHolder.clearContext();
+                verify(notificationService).markRead(userId, notificationId);
         }
 
-        verify(notificationService).markAllRead(eq(userId));
-    }
+        @Test
+        void read_all_returns_no_content() throws Exception {
+                UUID userId = UUID.randomUUID();
+                UserPrincipal principal = UserPrincipal.ofTenantUser(
+                                userId,
+                                "user@example.com",
+                                "APPROVER",
+                                List.of("APPROVER"),
+                                List.of(),
+                                "tenant-acme");
+
+                SecurityContextHolder.getContext().setAuthentication(
+                                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
+                try {
+                        mockMvc.perform(post("/api/v1/notifications/read-all"))
+                                        .andExpect(status().isNoContent());
+                } finally {
+                        SecurityContextHolder.clearContext();
+                }
+
+                verify(notificationService).markAllRead(eq(userId));
+        }
 
         @Test
         void issue_stream_token_returns_token_for_authenticated_user() throws Exception {
@@ -144,14 +145,14 @@ class NotificationControllerWebMvcTest {
                                 userId,
                                 "user@example.com",
                                 "APPROVER",
-                                "tenant-acme"
-                );
+                                List.of("APPROVER"),
+                                List.of(),
+                                "tenant-acme");
 
                 when(jwtService.issueStreamToken(userId, "tenant-acme")).thenReturn("stream-token-123");
 
                 SecurityContextHolder.getContext().setAuthentication(
-                                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())
-                );
+                                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
                 try {
                         mockMvc.perform(post("/api/v1/notifications/stream-token"))
                                         .andExpect(status().isOk())
@@ -167,7 +168,8 @@ class NotificationControllerWebMvcTest {
                 SseEmitter emitter = new SseEmitter();
 
                 when(jwtService.isValidStreamToken("valid-stream")).thenReturn(true);
-                when(jwtService.parse("valid-stream")).thenReturn(io.jsonwebtoken.Jwts.claims().subject(userId.toString()).build());
+                when(jwtService.parse("valid-stream"))
+                                .thenReturn(io.jsonwebtoken.Jwts.claims().subject(userId.toString()).build());
                 when(notificationService.subscribe(userId)).thenReturn(emitter);
 
                 mockMvc.perform(get("/api/v1/notifications/stream").param("streamToken", "valid-stream"))
@@ -181,7 +183,8 @@ class NotificationControllerWebMvcTest {
                 when(jwtService.isValidStreamToken("invalid-stream")).thenReturn(false);
 
                 jakarta.servlet.ServletException ex = assertThrows(jakarta.servlet.ServletException.class,
-                                () -> mockMvc.perform(get("/api/v1/notifications/stream").param("streamToken", "invalid-stream")));
+                                () -> mockMvc.perform(get("/api/v1/notifications/stream").param("streamToken",
+                                                "invalid-stream")));
                 assertInstanceOf(AccessDeniedException.class, ex.getCause());
         }
 }
