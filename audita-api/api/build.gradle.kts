@@ -15,6 +15,7 @@ dependencies {
     implementation("org.springframework.data:spring-data-commons")
 
     implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.security:spring-security-config")
 
     // Spring Boot 4: spring-boot-starter-oauth2-client renamed to spring-boot-starter-security-oauth2-client
     implementation("org.springframework.boot:spring-boot-starter-security-oauth2-client")

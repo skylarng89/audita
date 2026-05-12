@@ -6,7 +6,7 @@
           Change Request
         </p>
         <h1
-          class="text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
+          class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
         >
           {{ changeRequest.title }}
         </h1>
@@ -14,68 +14,56 @@
           Created by {{ changeRequest.createdByFullName ?? "Unknown" }}
         </p>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
         <CrStatusBadge :status="changeRequest.status" />
         <CrPriorityBadge :priority="changeRequest.priority" />
-        <template v-if="!isEditing">
-          <button
-            v-if="changeRequest.status === 'DRAFT'"
-            class="btn-ghost btn-md"
-            @click="enterEditMode"
-          >
-            Edit
-          </button>
-        </template>
-        <template v-else>
-          <button
-            class="btn-primary btn-md"
-            :disabled="isSaving"
-            @click="saveEditAction"
-          >
-            {{ isSaving ? "Saving…" : "Save" }}
-          </button>
-          <button class="btn-ghost btn-md" @click="cancelEdit">Cancel</button>
-        </template>
+        <button
+          v-if="changeRequest.status === 'DRAFT' && !isEditing"
+          class="btn-ghost btn-md"
+          @click="enterEditMode"
+        >
+          Edit
+        </button>
       </div>
     </div>
 
-    <div class="card p-4 flex flex-wrap gap-2">
-      <button
-        class="btn-ghost btn-md"
-        :class="{
-          'ring-2 ring-primary bg-primary/10 text-primary': tab === 'details',
-        }"
-        @click="tab = 'details'"
+    <div class="card p-4">
+      <div
+        role="tablist"
+        aria-label="Change request sections"
+        class="flex items-center gap-1 p-1 bg-surface-container-low dark:bg-slate-800 rounded-xl"
       >
-        Details
-      </button>
-      <button
-        class="btn-ghost btn-md"
-        :class="{
-          'ring-2 ring-primary bg-primary/10 text-primary': tab === 'approvers',
-        }"
-        @click="tab = 'approvers'"
-      >
-        Approvers
-      </button>
-      <button
-        class="btn-ghost btn-md"
-        :class="{
-          'ring-2 ring-primary bg-primary/10 text-primary': tab === 'activity',
-        }"
-        @click="tab = 'activity'"
-      >
-        Activity
-      </button>
-      <button
-        class="btn-ghost btn-md"
-        :class="{
-          'ring-2 ring-primary bg-primary/10 text-primary': tab === 'comments',
-        }"
-        @click="tab = 'comments'"
-      >
-        Comments
-      </button>
+        <button
+          v-for="crTab in crTabs"
+          :key="crTab.key"
+          role="tab"
+          :aria-selected="tab === crTab.key"
+          :tabindex="tab === crTab.key ? 0 : -1"
+          type="button"
+          @click="tab = crTab.key"
+          @keydown="onTabKeyDown($event, crTab.key)"
+          class="relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+          :class="
+            tab === crTab.key
+              ? 'bg-white dark:bg-slate-700 text-on-surface dark:text-gray-100 shadow-sm'
+              : 'text-muted hover:text-on-surface hover:bg-white/50 dark:hover:text-gray-300 dark:hover:bg-slate-700/50'
+          "
+        >
+          {{ crTab.label }}
+          <span
+            v-if="crTab.count !== undefined"
+            class="flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold"
+            :class="
+              tab === crTab.key
+                ? 'bg-primary/15 text-primary'
+                : 'bg-outline-variant/40 text-muted'
+            "
+            aria-hidden="true"
+          >
+            {{ crTab.count }}
+          </span>
+        </button>
+      </div>
     </div>
 
     <section
@@ -90,9 +78,9 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Title -->
             <div class="md:col-span-2">
-              <label class="field-label"
-                >Title <span class="text-danger">*</span></label
-              >
+              <p class="field-label">
+                Title <span class="text-danger">*</span>
+              </p>
               <input
                 v-model="editForm.title"
                 class="input mt-1"
@@ -102,7 +90,7 @@
 
             <!-- Priority -->
             <div>
-              <label class="field-label">Priority</label>
+              <p class="field-label">Priority</p>
               <select v-model="editForm.priority" class="input mt-1">
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
@@ -113,7 +101,7 @@
 
             <!-- Risk -->
             <div>
-              <label class="field-label">Risk Level</label>
+              <p class="field-label">Risk Level</p>
               <select v-model="editForm.riskLevel" class="input mt-1">
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
@@ -124,16 +112,16 @@
 
             <!-- Approval Type -->
             <div>
-              <label class="field-label">Approval Type</label>
+              <p class="field-label">Approval Type</p>
               <select v-model="editForm.approvalType" class="input mt-1">
                 <option value="LINEAR">Linear</option>
-                <option value="NON_LINEAR">Non Linear</option>
+                <option value="NON_LINEAR">Non-Linear</option>
               </select>
             </div>
 
             <!-- Category -->
             <div>
-              <label class="field-label">Category</label>
+              <p class="field-label">Category</p>
               <input
                 v-model="editForm.category"
                 class="input mt-1"
@@ -143,59 +131,76 @@
 
             <!-- Scheduled Start -->
             <div>
-              <label class="field-label">Scheduled Start</label>
+              <p class="field-label">Scheduled Start</p>
               <div class="mt-1 grid grid-cols-2 gap-2">
-                <input
+                <FlatPickr
                   v-model="editForm.scheduledStartDate"
-                  type="date"
+                  :config="datePickerConfig"
                   class="input"
-                  :style="{ colorScheme: isDark ? 'dark' : 'light' }"
-                  @change="onEditStartChange"
                 />
-                <input
+                <FlatPickr
                   v-model="editForm.scheduledStartTime"
-                  type="time"
+                  :config="timePickerConfig"
                   class="input"
-                  :style="{ colorScheme: isDark ? 'dark' : 'light' }"
-                  @change="onEditStartChange"
                 />
               </div>
             </div>
 
             <!-- Scheduled End -->
             <div>
-              <label class="field-label">Scheduled End</label>
+              <p class="field-label">Scheduled End</p>
               <div class="mt-1 grid grid-cols-2 gap-2">
-                <input
+                <FlatPickr
                   v-model="editForm.scheduledEndDate"
-                  type="date"
+                  :config="endDatePickerConfig"
                   class="input"
-                  :min="editForm.scheduledStartDate || undefined"
-                  :style="{ colorScheme: isDark ? 'dark' : 'light' }"
                 />
-                <input
+                <FlatPickr
                   v-model="editForm.scheduledEndTime"
-                  type="time"
+                  :config="timePickerConfig"
                   class="input"
-                  :style="{ colorScheme: isDark ? 'dark' : 'light' }"
                 />
               </div>
             </div>
 
             <!-- Affected Systems -->
             <div class="md:col-span-2">
-              <label class="field-label"
-                >Affected Systems (comma separated)</label
+              <p class="field-label">Affected Systems</p>
+              <div
+                class="input mt-1 flex flex-wrap gap-1 min-h-[2.5rem] cursor-text"
+                @click="editAffectedSystemsInputRef?.focus()"
               >
-              <input
-                v-model="editForm.affectedSystemsInput"
-                class="input mt-1"
-              />
+                <span
+                  v-for="sys in editForm.affectedSystems"
+                  :key="sys"
+                  class="inline-flex items-center gap-1 rounded bg-primary/10 text-primary text-xs px-2 py-0.5 shrink-0"
+                >
+                  {{ sys }}
+                  <button
+                    type="button"
+                    class="hover:text-danger leading-none"
+                    :aria-label="`Remove ${sys}`"
+                    @click.stop="removeEditAffectedSystem(sys)"
+                  >
+                    ×
+                  </button>
+                </span>
+                <input
+                  ref="editAffectedSystemsInputRef"
+                  v-model="editAffectedSystemsTagInput"
+                  class="flex-1 min-w-[10rem] bg-transparent outline-none text-sm"
+                  placeholder="Add system and press Enter…"
+                  @keydown.enter.prevent="addEditAffectedSystem"
+                  @keydown="onEditAffectedSystemsKeydown"
+                  @keydown.backspace="onEditAffectedSystemsBackspace"
+                />
+              </div>
+              <p class="field-hint">Press Enter or comma to add each system.</p>
             </div>
 
             <!-- Description -->
             <div class="md:col-span-2">
-              <label class="field-label">Description</label>
+              <p class="field-label">Description</p>
               <EditorContent
                 :editor="editEditor"
                 class="input mt-1 min-h-36 p-3"
@@ -213,7 +218,7 @@
                 :key="def.id"
                 class="grid grid-cols-[200px_1fr] gap-3 items-center"
               >
-                <label class="text-sm font-medium">
+                <label class="text-sm font-medium" :for="`cf-${def.id}`">
                   {{ def.label }}
                   <span v-if="def.isRequired" class="text-danger ml-0.5"
                     >*</span
@@ -221,6 +226,7 @@
                 </label>
                 <select
                   v-if="def.fieldType === 'DROPDOWN'"
+                  :id="`cf-${def.id}`"
                   v-model="localFieldValues[def.id]"
                   class="input"
                 >
@@ -231,6 +237,7 @@
                 </select>
                 <input
                   v-else-if="def.fieldType === 'CHECKBOX'"
+                  :id="`cf-${def.id}`"
                   type="checkbox"
                   class="h-4 w-4 accent-primary"
                   :checked="localFieldValues[def.id] === 'true'"
@@ -244,6 +251,7 @@
                 />
                 <input
                   v-else
+                  :id="`cf-${def.id}`"
                   :type="
                     def.fieldType === 'NUMBER'
                       ? 'number'
@@ -386,7 +394,7 @@
 
       <div class="card p-5 md:col-span-2">
         <h3 class="font-semibold mb-3">Attachments</h3>
-        <template v-if="changeRequest.status === 'DRAFT'">
+        <template v-if="changeRequest.status === 'DRAFT' && isEditing">
           <div
             class="border-2 border-dashed border-border dark:border-border-dark rounded-lg p-6 text-center"
             @dragover.prevent
@@ -568,28 +576,67 @@
       </div>
     </section>
 
-    <div
-      v-if="showReject"
-      class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50"
+    <!-- Reject modal using AppModal for proper focus management -->
+    <SharedAppModal
+      :open="showReject"
+      title="Reject Change Request"
+      @close="showReject = false"
     >
-      <div class="card p-5 max-w-lg w-full space-y-3">
-        <h3 class="font-semibold">Reject Change Request</h3>
-        <textarea
-          v-model="rejectReason"
-          class="input"
-          rows="4"
-          placeholder="Reason"
-        ></textarea>
-        <div class="flex justify-end gap-2">
-          <button class="btn-ghost btn-md" @click="showReject = false">
-            Close
-          </button>
-          <button class="btn-primary btn-md" @click="rejectCr">
-            Confirm Reject
+      <div class="space-y-3">
+        <p class="text-sm text-muted">
+          Provide a reason for rejecting this change request.
+        </p>
+        <div>
+          <label for="reject-reason" class="field-label"
+            >Reason <span class="text-danger">*</span></label
+          >
+          <textarea
+            id="reject-reason"
+            v-model="rejectReason"
+            class="input mt-1"
+            rows="4"
+            placeholder="Describe why this change request is being rejected…"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <button class="btn-ghost btn-md" @click="showReject = false">
+          Cancel
+        </button>
+        <button class="btn-primary btn-md" @click="rejectCr">
+          Confirm Reject
+        </button>
+      </template>
+    </SharedAppModal>
+
+    <!-- Sticky save bar (visible when editing) -->
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="translate-y-full opacity-0"
+      enter-to-class="translate-y-0 opacity-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="translate-y-0 opacity-100"
+      leave-to-class="translate-y-full opacity-0"
+    >
+      <div
+        v-if="isEditing"
+        class="fixed bottom-0 left-0 md:left-56 right-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-outline-variant/50 dark:border-border-dark px-6 py-3 flex items-center justify-between gap-3 shadow-[0_-2px_8px_rgba(0,35,111,0.06)]"
+      >
+        <p class="text-sm text-muted hidden sm:block">
+          You have unsaved changes
+        </p>
+        <div class="flex items-center gap-2">
+          <button class="btn-ghost btn-md" @click="cancelEdit">Discard</button>
+          <button
+            class="btn-primary btn-md"
+            :disabled="isSaving"
+            @click="saveEditAction"
+          >
+            {{ isSaving ? "Saving…" : "Save Changes" }}
           </button>
         </div>
       </div>
-    </div>
+    </Transition>
   </div>
 
   <div v-else class="py-16 text-center text-sm text-muted">
@@ -610,8 +657,19 @@ import type {
 import { format, parseISO } from "date-fns";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
+import FlatPickr from "vue-flatpickr-component";
 
 definePageMeta({ middleware: "auth" });
+
+const changeRequest = ref<ChangeRequest | null>(null);
+
+useHead(
+  computed(() => ({
+    title: changeRequest.value
+      ? `${changeRequest.value.title} — Audita`
+      : "Change Request — Audita",
+  })),
+);
 
 const { error: toastError } = useToast();
 const api = useApi();
@@ -639,7 +697,6 @@ const {
   postComment,
 } = useChangeRequests();
 
-const changeRequest = ref<ChangeRequest | null>(null);
 const approvers = ref<CrApprover[]>([]);
 const customFields = ref<ChangeRequestCustomFieldValue[]>([]);
 const fieldDefinitions = ref<CustomFieldDefinition[]>([]);
@@ -647,8 +704,37 @@ const localFieldValues = ref<Record<string, string>>({});
 const attachments = ref<Attachment[]>([]);
 const activity = ref<ActivityEntry[]>([]);
 const comments = ref<Comment[]>([]);
-const tab = ref<"details" | "approvers" | "activity" | "comments">("details");
+const tab = ref<string>("details");
 const newComment = ref("");
+
+// ── Tab list with counts ────────────────────────────────────────────────────
+const crTabs = computed(() => [
+  { key: "details", label: "Details" },
+  { key: "approvers", label: "Approvers", count: approvers.value.length },
+  { key: "activity", label: "Activity", count: activity.value.length },
+  { key: "comments", label: "Comments", count: comments.value.length },
+]);
+
+const tabKeys = ["details", "approvers", "activity", "comments"];
+
+function onTabKeyDown(e: KeyboardEvent, key: string) {
+  const idx = tabKeys.indexOf(key);
+  if (e.key === "ArrowRight") {
+    e.preventDefault();
+    const next = (idx + 1) % tabKeys.length;
+    tab.value = tabKeys[next];
+  } else if (e.key === "ArrowLeft") {
+    e.preventDefault();
+    const prev = (idx - 1 + tabKeys.length) % tabKeys.length;
+    tab.value = tabKeys[prev];
+  } else if (e.key === "Home") {
+    e.preventDefault();
+    tab.value = tabKeys[0];
+  } else if (e.key === "End") {
+    e.preventDefault();
+    tab.value = tabKeys[tabKeys.length - 1];
+  }
+}
 
 const showAddApprover = ref(false);
 const newApproverUserId = ref("");
@@ -672,8 +758,37 @@ const editForm = reactive({
   scheduledStartTime: "",
   scheduledEndDate: "",
   scheduledEndTime: "",
-  affectedSystemsInput: "",
+  affectedSystems: [] as string[],
 });
+
+// ── Edit affected-systems tag input ────────────────────────────────────────
+const editAffectedSystemsInputRef = ref<HTMLInputElement | null>(null);
+const editAffectedSystemsTagInput = ref("");
+
+function addEditAffectedSystem() {
+  const val = editAffectedSystemsTagInput.value.replaceAll(",", "").trim();
+  if (val && !editForm.affectedSystems.includes(val)) {
+    editForm.affectedSystems.push(val);
+  }
+  editAffectedSystemsTagInput.value = "";
+}
+
+function removeEditAffectedSystem(sys: string) {
+  editForm.affectedSystems = editForm.affectedSystems.filter((s) => s !== sys);
+}
+
+function onEditAffectedSystemsKeydown(e: KeyboardEvent) {
+  if (e.key === ",") {
+    e.preventDefault();
+    addEditAffectedSystem();
+  }
+}
+
+function onEditAffectedSystemsBackspace() {
+  if (!editAffectedSystemsTagInput.value && editForm.affectedSystems.length) {
+    editForm.affectedSystems.pop();
+  }
+}
 
 const editEditor = useEditor({
   extensions: [StarterKit],
@@ -685,8 +800,27 @@ const editEditor = useEditor({
   },
 });
 
-// ── Dark mode detection for VueDatePicker ──────────────────────────────────
-const isDark = ref(false);
+const datePickerConfig = {
+  dateFormat: "Y-m-d",
+  allowInput: false,
+  clickOpens: true,
+  disableMobile: true,
+};
+
+const timePickerConfig = {
+  enableTime: true,
+  noCalendar: true,
+  dateFormat: "H:i",
+  time_24hr: true,
+  allowInput: false,
+  clickOpens: true,
+  disableMobile: true,
+};
+
+const endDatePickerConfig = computed(() => ({
+  ...datePickerConfig,
+  minDate: editForm.scheduledStartDate || undefined,
+}));
 
 function combineParts(dateStr: string, timeStr: string): Date | null {
   if (!dateStr) return null;
@@ -734,7 +868,7 @@ function enterEditMode() {
     editForm.scheduledEndDate = "";
     editForm.scheduledEndTime = "";
   }
-  editForm.affectedSystemsInput = cr.affectedSystems.join(", ");
+  editForm.affectedSystems = cr.affectedSystems.slice();
   editEditor.value?.commands.setContent(cr.description ?? "");
   isEditing.value = true;
 }
@@ -767,10 +901,7 @@ async function saveEditAction() {
           editForm.scheduledEndDate,
           editForm.scheduledEndTime,
         )?.toISOString() ?? null,
-      affectedSystems: editForm.affectedSystemsInput
-        .split(",")
-        .map((v) => v.trim())
-        .filter(Boolean),
+      affectedSystems: editForm.affectedSystems,
     };
     changeRequest.value = await update(id.value, payload);
     await saveCustomFieldsAction();
@@ -861,6 +992,13 @@ function isFileTypeAllowed(file: File): boolean {
 }
 
 async function uploadSelected(file: File | null) {
+  if (!isEditing.value || changeRequest.value?.status !== "DRAFT") {
+    const msg =
+      "Enter Edit mode to upload attachments for this change request.";
+    uploadError.value = msg;
+    toastError(msg);
+    return;
+  }
   if (!file) {
     return;
   }
@@ -990,19 +1128,11 @@ async function postCommentAction() {
 }
 
 onMounted(() => {
-  isDark.value = document.documentElement.classList.contains("dark");
-  const darkObserver = new MutationObserver(() => {
-    isDark.value = document.documentElement.classList.contains("dark");
-  });
-  darkObserver.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["class"],
-  });
-  onUnmounted(() => darkObserver.disconnect());
   loadAll();
 });
 
-onBeforeUnmount(() => {
-  editEditor.value?.destroy();
-});
+watch(
+  () => [editForm.scheduledStartDate, editForm.scheduledStartTime],
+  () => onEditStartChange(),
+);
 </script>

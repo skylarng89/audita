@@ -68,3 +68,64 @@
 - FE-TAIL-002: Convert Tailwind config entrypoint to v4-compatible setup (`tailwind.config.js` + CSS `@config`/`@import`). ✅
 - FE-TAIL-003: Refactor custom CSS component layer to remove unsupported Tailwind v4 custom-class `@apply` chaining. ✅
 - FE-TAIL-004: Re-verify frontend quality gates after migration (`pnpm test`, `pnpm -s nuxi typecheck`, `pnpm build`). ✅
+
+## Sprint 8 — Admin Settings Activation & SLA Defaults (2026-05-11)
+
+### Sprint 8 Objectives
+
+1. Replace read-only admin workflow/SLA placeholders with persistent tenant-scoped settings.
+2. Use configured SLA defaults at runtime for CR deadlines and warning windows.
+3. Add regression coverage for settings contract and validation rules.
+
+### Sprint 8 Work Items
+
+- SET-001: Add persisted workflow/SLA defaults to tenant settings API. ✅ (Completed 2026-05-11)
+- SET-002: Activate admin settings UI save flow for workflow/SLA defaults. 🟡 (In progress)
+- SET-003: Read SLA defaults at runtime in CR creation and SLA monitor. 🟡 (In progress)
+- SET-004: Add regression tests for tenant settings GET/PATCH + runtime effects. 🟡 (In progress)
+
+### Sprint 9 Completed in this Session
+
+- Added `PATCH /api/v1/settings` with nested workflow/sla validation contract.
+- Added `OrgSettingEntity` + `OrgSettingRepository` backed by existing `org_settings` table.
+- Extended `TenantSettingsPort` and implemented tenant-scoped read/write defaults in `TenantService`.
+- Expanded `TenantAdminSettingsResponse` with `workflowDefaults` and `slaDefaults`.
+- Replaced hard-coded SLA values in `ChangeRequestService` and warning window in `SlaMonitoringService` with tenant settings lookups (with safe defaults).
+- Enabled admin workflow/SLA editing + save flow in `audita-web/pages/admin/settings/index.vue`.
+- Added `TenantSettingsControllerWebMvcTest` for GET/PATCH success and validation failure paths.
+
+### Sprint 9 Verification (Completed)
+
+- `cd audita-api && ./gradlew :api:test --tests "io.audita.api.controller.TenantSettingsControllerWebMvcTest" --no-daemon`
+- `cd audita-api && ./gradlew :api:compileJava :infrastructure:compileJava --no-daemon`
+- `cd audita-web && pnpm -s nuxi typecheck`
+
+### Sprint 9 Next Steps
+
+1. Sprint 8 settings activation scope is complete. Start Sprint 9 prioritization (roles CRUD, SLA policy admin page, and group default approvers).
+
+## Sprint 9 — CR List Scalability Follow-Up (2026-05-11)
+
+### Sprint 9 Objectives
+
+1. Ensure change-request list performance remains stable as dataset volume grows.
+2. Bound per-request payload size while keeping explicit page navigation controls.
+
+### Sprint 9 Work Items
+
+- CR-LIST-001: Paginate `/change-requests` with max 50 per page and pagination buttons. ✅ (Completed 2026-05-11)
+
+### Completed in this session
+
+- Updated `audita-web/pages/change-requests/index.vue` to request `size=50`.
+- Implemented explicit previous/next pagination buttons with page-index navigation.
+- Preserved filter-driven reload behavior and total-count visibility.
+
+### Verification (completed)
+
+- `cd audita-web && pnpm -s nuxi typecheck`
+- `cd audita-web && pnpm test -- --runInBand`
+
+### Next Steps
+
+1. Optionally add direct page-number buttons if users need quicker jumps across large result sets.

@@ -8,7 +8,7 @@ export default defineNuxtConfig({
 
   modules: ["@pinia/nuxt", "@nuxt/eslint"],
 
-  css: ["~/assets/css/main.css"],
+  css: ["flatpickr/dist/flatpickr.min.css", "~/assets/css/main.css"],
 
   sourcemap: {
     client: debug,

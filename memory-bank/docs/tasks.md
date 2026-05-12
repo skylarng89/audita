@@ -158,6 +158,118 @@
 | CR-031  | Replace VueDatePicker with native date/time inputs in Create CR   | High     | ✅ Completed | Developer 2 | `new.vue`: 4 native inputs, `colorScheme` dark mode, `combineParts(string, string)`, state types `""` not null                                                                  |
 | CR-032  | Replace VueDatePicker with native date/time inputs in CR Edit     | High     | ✅ Completed | Developer 2 | `[id].vue`: same as CR-031 + `enterEditMode` serialises `"HH:mm"` strings; plugin + CSS removed                                                                                 |
 
+## Sprint 8: Admin Settings Activation & SLA Defaults (2026-05-11)
+
+> **Goal:** Activate editable tenant admin settings for workflow/SLA defaults and wire runtime SLA behavior to persisted tenant-level settings.
+
+### Backend + Frontend Settings Slice (`audita-api` + `audita-web`)
+
+- SET-001 | Add persisted workflow/SLA defaults to tenant settings API | Priority: High | Status: ✅ Completed | Assigned To: Developer 1 | Notes: Added `PATCH /api/v1/settings`, `org_settings` persistence entity/repository, expanded response contract, and validation guard for warning/deadline ratio.
+- SET-002 | Activate admin settings UI save flow for workflow/SLA defaults | Priority: High | Status: ✅ Completed | Assigned To: Developer 2 | Notes: Added testable form interaction logic (`composables/adminSettingsForm.ts`) and Vitest coverage (`tests/admin/settings-form.spec.ts`) for dirty-state, validation, and payload behavior.
+- SET-003 | Read SLA defaults at runtime in CR creation and SLA monitor | Priority: High | Status: ✅ Completed | Assigned To: Developer 1 | Notes: Added runtime tests in `ChangeRequestServiceSecurityTest` and `SlaMonitoringServiceTest` to verify configured SLA hours and warning window behavior.
+- SET-004 | Add regression tests for tenant settings GET/PATCH | Priority: High | Status: ✅ Completed | Assigned To: Developer 1 | Notes: Added `TenantSettingsControllerWebMvcTest` and `TenantServiceSettingsTest` covering defaults, malformed persisted values, and settings write assertions.
+
+## Sprint 9: Change Request List Scalability (2026-05-11)
+
+> **Goal:** Improve CR list performance and usability for larger datasets with bounded page size and explicit page navigation.
+
+### Frontend — CR List Pagination (`audita-web`)
+
+| Task ID     | Task                                                                          | Priority | Status       | Assigned To | Notes                                                                                                                                             |
+| ----------- | ----------------------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CR-LIST-001 | Paginate `/change-requests` with max 50 items per page and pagination buttons | High     | ✅ Completed | Developer 2 | Updated `pages/change-requests/index.vue` to fetch `size=50`, use previous/next page buttons, preserve filter behavior, and keep totals accurate. |
+
+---
+
+## Sprint 10: UX & UI Polish (2026-05-11)
+
+> **Goal:** Systematically address every UX and UI deficiency identified across the full application — navigation, responsiveness, consistency, forms, empty states, and interaction feedback — to bring the product to a professional, production-quality standard.
+
+---
+
+### Group A — Navigation & Mobile Responsiveness
+
+| Task ID  | Task                                                          | Priority | Status       | Assigned To | Notes                                                                                                                                                                                                                          |
+| -------- | ------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| UX10-001 | Implement mobile navigation drawer (hamburger menu)           | High     | ✅ Completed | Developer 2 | Full slide-in `<nav>` drawer added to `layouts/default.vue` with hamburger button, backdrop, `aria-expanded`, Escape close, `aria-current="page"` on active links, and create CTA.                                             |
+| UX10-002 | Fix page header layout collapse on small screens              | High     | ✅ Completed | Developer 2 | CR list header wraps to `flex-col sm:flex-row` gap at small breakpoint. CR detail action buttons use `flex-wrap`.                                                                                                              |
+| UX10-003 | Collapse sidebar to icon-only rail on `md` breakpoint         | Medium   | ✅ Completed | Developer 2 | `AppSidebar.vue` fully rewritten: collapsible rail (`w-14`/`w-56`), `localStorage` persistence, CSS `--sidebar-w` var on `<html>` for layout sync. `.sidebar-link-rail` + `.sidebar-link-rail-active` utilities in `main.css`. |
+| UX10-004 | Make CR list filter bar collapse to "Filters" pill on mobile  | Medium   | ✅ Completed | Developer 2 | `pages/change-requests/index.vue` filter bar replaced with `"Filters ▾"` pill + animated dropdown panel. Active filter count badge on pill. Outside-click close via `onDocumentClick`.                                         |
+| UX10-005 | Make CR detail page action buttons stack vertically on mobile | Medium   | ✅ Completed | Developer 2 | CR detail top action area uses `flex-wrap` and sticky save bar handles save/cancel at bottom.                                                                                                                                  |
+
+---
+
+### Group B — Button & Component System Consolidation
+
+| Task ID  | Task                                                           | Priority | Status         | Assigned To | Notes                                                                                                                                                                                                                                                                            |
+| -------- | -------------------------------------------------------------- | -------- | -------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UX10-006 | Align `AppButton.vue` and CSS class system                     | High     | 🔴 Not Started | Developer 2 | Two parallel button systems exist: the `AppButton` component (`rounded`, `font-medium`) and CSS classes (`rounded-lg`, `font-semibold`). Reconcile to a single design token set. Update `AppButton` to match the CSS variants exactly so either usage produces identical output. |
+| UX10-007 | Replace raw `btn-*` class usage in auth pages with `AppButton` | Low      | ✅ Completed   | Developer 2 | `sign-in.vue`, `reset-password.vue`, `accept-invite.vue`, `forgot-password.vue` submit buttons migrated to `<SharedAppButton type="submit" size="lg" :loading="isLoading">`.                                                                                                     |
+| UX10-008 | Wire the CR list pagination to `AppPagination`                 | Medium   | 🔴 Not Started | Developer 2 | `/change-requests/index.vue` re-implements its own prev/next buttons inline. Replace with `<SharedAppPagination>` (already used on Users and Groups) for consistent styling and keyboard nav.                                                                                    |
+
+---
+
+### Group C — Change Request List UX
+
+| Task ID  | Task                                                                | Priority | Status       | Assigned To | Notes                                                                                                                                             |
+| -------- | ------------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UX10-009 | Add SLA status indicator column to CR list table                    | High     | ✅ Completed | Developer 2 | Added "SLA Deadline" column (`hidden xl:table-cell`) with overdue red styling via `isPast()` from date-fns. `pages/change-requests/index.vue`     |
+| UX10-010 | Fix filter dropdown display values                                  | Low      | ✅ Completed | Developer 2 | Verified filter options already use human-readable labels ("All States", "Pending Approval", etc.). Options confirmed correct in updated CR list. |
+| UX10-011 | Add "Clear Filters" reset button to CR filter bar                   | Medium   | ✅ Completed | Developer 2 | `clearFilters()` ghost button visible only when any filter is active; resets all filters + reloads. Also shown in empty state CTA.                |
+| UX10-012 | Replace CR list plain-text empty state with illustrated empty state | Low      | ✅ Completed | Developer 2 | Icon + heading + contextual copy (filters-active vs. first-run). "Create Change Request" CTA shown when no filters applied.                       |
+| UX10-013 | Add skeleton loader for initial CR list load                        | Low      | ✅ Completed | Developer 2 | 5 `animate-pulse` skeleton rows replace the plain "Loading…" text row.                                                                            |
+
+---
+
+### Group D — CR Detail Page UX
+
+| Task ID  | Task                                                               | Priority | Status       | Assigned To | Notes                                                                                                                                                                                          |
+| -------- | ------------------------------------------------------------------ | -------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UX10-014 | Replace ad-hoc tab buttons with a proper Tab component             | High     | ✅ Completed | Developer 2 | Inline `role="tablist"` / `role="tab"` / `aria-selected` / Arrow key navigation added to `pages/change-requests/[id].vue`.                                                                     |
+| UX10-015 | Show item count badges on CR detail tabs                           | Low      | ✅ Completed | Developer 2 | Tab labels show counts: "Approvers (3)", "Activity (12)", "Comments (2)" via `crTabs` computed array.                                                                                          |
+| UX10-016 | Replace "Affected Systems" comma-input with tag UI in edit mode    | Medium   | ✅ Completed | Developer 2 | Tag UI implemented in both `new.vue` and `[id].vue`. Pill chips with × remove, Enter/comma to add, backspace-to-remove-last. `form.affectedSystems`/`editForm.affectedSystems` are now arrays. |
+| UX10-017 | Add sticky "Save / Cancel" action bar when in CR edit mode         | Medium   | ✅ Completed | Developer 2 | Fixed bottom bar with Discard + Save Changes buttons added via `<Transition>` block, visible when `isEditing`. Left offset adjusts for sidebar on `md+`.                                       |
+| UX10-018 | Add confirmation for destructive workflow actions (Decline/Reject) | High     | ✅ Completed | Developer 2 | Reject on CR detail now uses `<SharedAppModal>` with labelled textarea for rejection reason before committing. `showReject` ref controls visibility.                                           |
+
+---
+
+### Group E — Form & Input UX
+
+| Task ID  | Task                                            | Priority | Status       | Assigned To | Notes                                                                                                                    |
+| -------- | ----------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------ |
+| UX10-019 | Add show/hide toggle to all password inputs     | High     | ✅ Completed | Developer 2 | Eye/eye-slash toggle added to sign-in, reset-password, and accept-invite. `aria-pressed` on toggle button.               |
+| UX10-020 | Normalize page `h1` font sizes across all pages | Medium   | ✅ Completed | Developer 2 | CR list, CR create, CR detail h1 changed from `text-4xl` to `text-3xl`. All pages now use consistent `text-3xl` heading. |
+| UX10-021 | Move sign-in error banner above the form fields | Low      | ✅ Completed | Developer 2 | Error banner moved above `<form>` with `role="alert" aria-live="assertive"` in `pages/auth/sign-in.vue`.                 |
+| UX10-022 | Fix `<select>` option text for approval type    | Low      | ✅ Completed | Developer 2 | `NON_LINEAR` option label changed to `"Non-Linear"` in both `new.vue` and `[id].vue`.                                    |
+
+---
+
+### Group F — Global Chrome & Feedback
+
+| Task ID  | Task                                                              | Priority | Status       | Assigned To | Notes                                                                                                                                                                                       |
+| -------- | ----------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UX10-023 | Add auto-dismiss progress bar to toast notifications              | Medium   | ✅ Completed | Developer 2 | Thin `@keyframes toast-drain` progress bar depletes from right to left over `toast.duration` ms in `components/shared/AppToastContainer.vue`.                                               |
+| UX10-024 | Make dark mode toggle accessible via keyboard shortcut or surface | Medium   | ✅ Completed | Developer 2 | Sun/moon icon button surfaced directly in header right area (`layouts/default.vue`) using `useColorMode()`.                                                                                 |
+| UX10-025 | Remove or connect the non-functional global search bar            | High     | ✅ Completed | Developer 2 | Dead search input removed from `layouts/default.vue` header. Spacer div added to maintain layout balance.                                                                                   |
+| UX10-026 | Add `aria-label` to all icon-only header control buttons          | Medium   | ✅ Completed | Developer 2 | Dark mode toggle has `aria-label="Toggle dark mode"`. Mobile nav hamburger has `aria-label="Open navigation"`. Bell already labelled. `aria-label="Main navigation"` on AppSidebar `<nav>`. |
+
+---
+
+### Group G — WCAG 2.2 Compliance
+
+| Task ID  | Task                                                                                             | Priority | Status         | Assigned To | Notes                                                                                                                                                                                                  |
+| -------- | ------------------------------------------------------------------------------------------------ | -------- | -------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| WCAG-001 | Add skip-to-main-content link at top of default layout (2.4.1)                                   | High     | ✅ Completed   | Developer 2 | `.skip-link` class in `main.css`; `<a href="#main-content" class="skip-link">` at top of `layouts/default.vue`; `<main id="main-content" tabindex="-1">` as target.                                    |
+| WCAG-002 | Add `<title>` to every page via `useHead` (2.4.2)                                                | High     | ✅ Completed   | Developer 2 | `useHead({ title: '… — Audita' })` added to all pages: Dashboard, CR list/create/detail, Audit Trail, Users, Groups, Custom Fields, Settings, Sign In, Reset Password, Forgot Password, Accept Invite. |
+| WCAG-003 | Fix `<label for>` / `<input id>` wiring in CR list filter bar (4.1.2)                            | High     | ✅ Completed   | Developer 2 | `<label for="filter-status">` + `<select id="filter-status">` and `<label for="filter-priority">` + `<select id="filter-priority">` added in CR list.                                                  |
+| WCAG-004 | Fix `<label for>` wiring in auth and settings forms (4.1.2)                                      | High     | ✅ Completed   | Developer 2 | `reset-password.vue` and `accept-invite.vue` password inputs now have matching `id`/`for` pairs. `sign-in.vue` had `id` added.                                                                         |
+| WCAG-005 | Add proper `role="tablist"` / `role="tab"` / `aria-selected` to CR detail tabs (1.3.1, 4.1.2)    | High     | ✅ Completed   | Developer 2 | Full ARIA tablist semantics + Arrow key/Home/End keyboard nav added inline to `[id].vue` via `crTabs` computed array and `onTabKeyDown()`.                                                             |
+| WCAG-006 | Implement focus trap in `AppModal` (2.4.3)                                                       | High     | ✅ Completed   | Developer 2 | Full focus-trap implemented in `AppModal.vue`: `getFocusable()`, Tab/Shift+Tab loop, Escape close, auto-focus first element on open, `aria-labelledby`, `role="dialog"`.                               |
+| WCAG-007 | Add `scroll-margin-top` to main content so fixed header never obscures focused elements (2.4.12) | Medium   | ✅ Completed   | Developer 2 | `scroll-margin-top: 4.5rem` added to `:focus-visible` selector in `@layer base` of `assets/css/main.css`.                                                                                              |
+| WCAG-008 | Announce dynamic content changes via `aria-live` (4.1.3)                                         | Medium   | ✅ Completed   | Developer 2 | `aria-live="polite"` SR-only span on CR list for filter results; `role="log" aria-live="polite"` on toast container; `role="alert"` on error toasts; `aria-live="polite"` on password strength text.   |
+| WCAG-009 | Add `autocomplete` tokens to all auth form inputs (1.3.5)                                        | Medium   | ✅ Completed   | Developer 2 | `autocomplete="new-password"` added to both password inputs in `accept-invite.vue`. `sign-in.vue` and `reset-password.vue` already had correct values.                                                 |
+| WCAG-010 | Ensure all interactive targets meet 24×24 px minimum (2.5.8)                                     | Medium   | 🔴 Not Started | Developer 2 | Deferred. Most icon buttons are `w-8 h-8` (32px), satisfying WCAG 2.5.8. Inline table action links (Users page) still lack explicit min-size enforcement.                                              |
+
 ---
 
 ## Progress Tracking
@@ -173,11 +285,62 @@
 | Sprint 4  | 10          | 0           | 0           | 10        | 100%       |
 | Sprint 5  | 5           | 0           | 0           | 5         | 100%       |
 | Sprint 7  | 8           | 0           | 0           | 8         | 100%       |
-| **TOTAL** | **104**     | **0**       | **0**       | **104**   | **100%**   |
+| Sprint 8  | 4           | 0           | 0           | 4         | 100%       |
+| Sprint 9  | 1           | 0           | 0           | 1         | 100%       |
+| Sprint 10 | 36          | 0           | 0           | 36        | 100%       |
+| **TOTAL** | **145**     | **0**       | **0**       | **145**   | **100%**   |
 
 ---
 
 ## Recent Implementations
+
+### Sprint 8 — Workflow/SLA Settings Activation (In Progress 2026-05-11)
+
+**Overview**: Started Sprint 8 with a vertical settings slice: workflow and SLA defaults are now editable in Admin Settings, persisted in tenant scope, and consumed by SLA runtime calculations.
+
+**Files Created/Modified**:
+
+- `audita-api/application/src/main/java/io/audita/application/port/TenantSettingsPort.java` — added settings aggregate + workflow/sla records + update contracts
+- `audita-api/api/src/main/java/io/audita/api/controller/TenantSettingsController.java` — added `PATCH /api/v1/settings` and workflow/sla mapping in GET
+- `audita-api/api/src/main/java/io/audita/api/dto/request/PatchTenantAdminSettingsRequest.java` — request validation contract
+- `audita-api/api/src/main/java/io/audita/api/dto/response/TenantAdminSettingsResponse.java` — workflow/sla defaults in response model
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/entity/OrgSettingEntity.java` — `org_settings` entity mapping
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/repository/OrgSettingRepository.java` — key-value settings repository
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/TenantService.java` — settings persistence/read implementation with safe defaults
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — SLA deadline hours resolved from `org_settings`
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/SlaMonitoringService.java` — warning window resolved from `org_settings`
+- `audita-api/api/src/test/java/io/audita/api/controller/TenantSettingsControllerWebMvcTest.java` — GET/PATCH + validation regression tests
+- `audita-web/pages/admin/settings/index.vue` — editable workflow/sla controls + dirty-state + save flow
+
+**Key Changes**:
+
+- Admin settings are no longer read-only for workflow and SLA defaults.
+- SLA warning threshold is validated against configured deadline windows.
+- Runtime SLA calculations now honor tenant-configured values when present.
+
+**Test Coverage**: `TenantSettingsControllerWebMvcTest` passes; backend compile passes; frontend `nuxi typecheck` passes.
+
+**Additional Verification (2026-05-11 continuation)**: `ChangeRequestServiceSecurityTest` and `SlaMonitoringServiceTest` pass with new runtime SLA configuration assertions.
+
+**Additional Verification (2026-05-11 continuation 2)**: `TenantServiceSettingsTest` passes with tenant settings default/malformed-value/write-path assertions.
+
+**Additional Verification (2026-05-11 continuation 3)**: `tests/admin/settings-form.spec.ts` passes; frontend test suite and Nuxt typecheck pass after extracting admin settings interaction logic to a reusable module.
+
+### Sprint 9 — Change Requests Pagination (Completed 2026-05-11)
+
+**Overview**: Scaled the change request list to fetch 50 records per page and use explicit previous/next pagination controls for predictable navigation across large datasets.
+
+**Files Created/Modified**:
+
+- `audita-web/pages/change-requests/index.vue` — switched to `size=50` with page-by-page previous/next controls and loading-state-safe navigation
+
+**Key Changes**:
+
+- Restored explicit page navigation buttons while preserving server-side filtering and sort.
+- Added explicit `PAGE_SIZE = 50` boundary in the page query contract.
+- Preserved accurate total/count display for each server-returned page.
+
+**Test Coverage**: `cd audita-web && pnpm -s nuxi typecheck && pnpm test -- --runInBand` passes.
 
 ### Sprint 7 — VueDatePicker Replaced with Native Inputs (Completed 2026-05-11)
 

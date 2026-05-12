@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,8 +46,7 @@ public class AuditTrailController {
 
         return PageResponse.from(
                 auditTrailPort.query(actorEmail, actionType, entityType, from, to, pageable),
-                AuditLogResponse::from
-        );
+                AuditLogResponse::from);
     }
 
     @GetMapping(value = "/export.csv", produces = "text/csv")
@@ -58,32 +58,36 @@ public class AuditTrailController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to)
             throws IOException {
 
-        List<AuditTrailPort.AuditLogEntry> entries =
-                auditTrailPort.export(actorEmail, actionType, entityType, from, to);
+        List<AuditTrailPort.AuditLogEntry> entries = auditTrailPort.export(actorEmail, actionType, entityType, from,
+                to);
 
-        StringWriter sw = new StringWriter();
-        sw.write("id,actorEmail,actionType,entityType,entityId,ipAddress,createdAt\n");
-        for (AuditTrailPort.AuditLogEntry e : entries) {
-            sw.write(String.join(",",
-                    safe(e.id() != null ? e.id().toString() : ""),
-                    safe(e.actorEmail()),
-                    safe(e.actionType()),
-                    safe(e.entityType()),
-                    safe(e.entityId() != null ? e.entityId().toString() : ""),
-                    safe(e.ipAddress()),
-                    safe(e.createdAt() != null ? e.createdAt().format(CSV_TS_FORMAT) : "")
-            ));
-            sw.write("\n");
+        String csv;
+        try (StringWriter sw = new StringWriter()) {
+            sw.write("id,actorEmail,actionType,entityType,entityId,ipAddress,createdAt\n");
+            for (AuditTrailPort.AuditLogEntry e : entries) {
+                sw.write(String.join(",",
+                        safe(e.id() != null ? e.id().toString() : ""),
+                        safe(e.actorEmail()),
+                        safe(e.actionType()),
+                        safe(e.entityType()),
+                        safe(e.entityId() != null ? e.entityId().toString() : ""),
+                        safe(e.ipAddress()),
+                        safe(e.createdAt() != null ? e.createdAt().format(CSV_TS_FORMAT) : "")));
+                sw.write("\n");
+            }
+            csv = sw.toString();
         }
 
-        byte[] bytes = sw.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"audit-trail.csv\"")
-                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
-                .body(bytes);
+        byte[] bytes = csv.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"audit-trail.csv\"");
+        headers.setContentType(MediaType.parseMediaType("text/csv; charset=UTF-8"));
+        return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
     }
 
-    /** Escapes a CSV field: wraps in quotes if it contains comma, quote, or newline. */
+    /**
+     * Escapes a CSV field: wraps in quotes if it contains comma, quote, or newline.
+     */
     private static String safe(String value) {
         if (value == null) {
             return "";

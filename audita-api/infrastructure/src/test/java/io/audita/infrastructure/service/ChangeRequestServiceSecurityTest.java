@@ -11,6 +11,7 @@ import io.audita.infrastructure.persistence.repository.AttachmentRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestCustomFieldRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestRepository;
 import io.audita.infrastructure.persistence.repository.CrApproverRepository;
+import io.audita.infrastructure.persistence.repository.OrgSettingRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,7 +24,8 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -37,6 +39,8 @@ class ChangeRequestServiceSecurityTest {
     @Mock ActivityStreamRepository activityStreamRepository;
     @Mock AttachmentRepository attachmentRepository;
     @Mock UserRepository userRepository;
+    @Mock OrgSettingRepository orgSettingRepository;
+    @Mock AuditLogService auditLogService;
 
     @InjectMocks
     ChangeRequestService changeRequestService;
@@ -50,10 +54,11 @@ class ChangeRequestServiceSecurityTest {
         ChangeRequestEntity changeRequest = buildDraftChangeRequest(ownerId);
         when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
 
-        assertThatThrownBy(() -> tryUnauthorizedUpdate(changeRequestId, otherRequesterId))
-                .isInstanceOf(DomainNotPermittedException.class)
-                .extracting(ex -> ((DomainNotPermittedException) ex).getErrorCode())
-                .isEqualTo("FORBIDDEN");
+        DomainNotPermittedException ex = assertThrows(
+            DomainNotPermittedException.class,
+            () -> tryUnauthorizedUpdate(changeRequestId, otherRequesterId)
+        );
+        assertThat(ex.getErrorCode()).isEqualTo("FORBIDDEN");
 
         verifyNoInteractions(activityStreamRepository);
         verify(changeRequestRepository).findById(changeRequestId);
@@ -85,13 +90,37 @@ class ChangeRequestServiceSecurityTest {
         ChangeRequestEntity changeRequest = buildDraftChangeRequest(ownerId);
         when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
 
-        assertThatThrownBy(() -> changeRequestService.submit(changeRequestId, otherRequesterId, "REQUESTER"))
-                .isInstanceOf(DomainNotPermittedException.class)
-                .extracting(ex -> ((DomainNotPermittedException) ex).getErrorCode())
-                .isEqualTo("FORBIDDEN");
+        DomainNotPermittedException ex = assertThrows(
+            DomainNotPermittedException.class,
+            () -> changeRequestService.submit(changeRequestId, otherRequesterId, "REQUESTER")
+        );
+        assertThat(ex.getErrorCode()).isEqualTo("FORBIDDEN");
 
         verifyNoInteractions(activityStreamRepository);
         verify(changeRequestRepository).findById(changeRequestId);
+    }
+
+    @Test
+    void submitUsesConfiguredSlaHoursForOwner() {
+        UUID changeRequestId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+
+        ChangeRequestEntity changeRequest = buildDraftChangeRequest(ownerId);
+        changeRequest.setPriority(Priority.HIGH);
+
+        when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
+        when(orgSettingRepository.findById("sla.deadline_hours.high"))
+                .thenReturn(Optional.of(new io.audita.infrastructure.persistence.entity.OrgSettingEntity("sla.deadline_hours.high", "36")));
+        when(changeRequestRepository.save(changeRequest)).thenReturn(changeRequest);
+
+        OffsetDateTime before = OffsetDateTime.now();
+        ChangeRequestEntity submitted = changeRequestService.submit(changeRequestId, ownerId, "REQUESTER");
+        OffsetDateTime after = OffsetDateTime.now();
+
+        assertThat(submitted.getStatus()).isEqualTo(io.audita.domain.model.ChangeRequestStatus.PENDING_APPROVAL);
+        assertThat(submitted.getSlaDeadline()).isAfterOrEqualTo(before.plusHours(35));
+        assertThat(submitted.getSlaDeadline()).isBeforeOrEqualTo(after.plusHours(37));
+        verify(changeRequestRepository).save(changeRequest);
     }
 
     private ChangeRequestEntity buildDraftChangeRequest(UUID ownerId) {

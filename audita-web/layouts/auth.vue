@@ -29,11 +29,11 @@
         </div>
 
         <div class="relative z-10 flex items-center gap-3">
-          <div
-            class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center font-bold text-sm backdrop-blur-sm"
-          >
-            A
-          </div>
+          <img
+            src="/brand/audita-icon-dark.svg"
+            alt="Audita"
+            class="w-10 h-10 rounded-xl"
+          />
           <span class="font-bold text-lg tracking-tight">Audita</span>
         </div>
 

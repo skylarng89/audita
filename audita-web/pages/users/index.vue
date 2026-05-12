@@ -199,6 +199,8 @@ definePageMeta({
   requiredRole: "Admin",
 });
 
+useHead({ title: "Users — Audita" });
+
 const api = useApi();
 const auth = useAuthStore();
 const { success: toastSuccess, error: toastError } = useToast();

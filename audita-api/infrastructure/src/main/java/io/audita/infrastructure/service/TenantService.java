@@ -10,6 +10,7 @@ import io.audita.infrastructure.persistence.entity.*;
 import io.audita.infrastructure.persistence.repository.*;
 import io.audita.infrastructure.security.AesEncryptionService;
 import io.audita.infrastructure.tenant.FlywayTenantMigrator;
+import io.audita.domain.model.ApprovalType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import io.audita.infrastructure.tenant.TenantContext;
 import org.slf4j.Logger;
@@ -42,8 +43,16 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
 
     private static final Logger log = LoggerFactory.getLogger(TenantService.class);
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final String WORKFLOW_APPROVAL_TYPE_KEY = "workflow.approval_type_default";
+    private static final String WORKFLOW_REQUIRE_DEFAULT_APPROVERS_KEY = "workflow.require_default_approvers";
+    private static final String SLA_LOW_HOURS_KEY = "sla.deadline_hours.low";
+    private static final String SLA_MEDIUM_HOURS_KEY = "sla.deadline_hours.medium";
+    private static final String SLA_HIGH_HOURS_KEY = "sla.deadline_hours.high";
+    private static final String SLA_CRITICAL_HOURS_KEY = "sla.deadline_hours.critical";
+    private static final String SLA_WARNING_BEFORE_HOURS_KEY = "sla.warning_before_hours";
 
     private final TenantRepository tenantRepository;
+    private final OrgSettingRepository orgSettingRepository;
     private final TenantAllowedDomainRepository allowedDomainRepository;
     private final TenantSsoConfigRepository ssoConfigRepository;
     private final UserRepository userRepository;
@@ -56,6 +65,7 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
     private final TransactionTemplate transactionTemplate;
 
     public TenantService(TenantRepository tenantRepository,
+                         OrgSettingRepository orgSettingRepository,
                          TenantAllowedDomainRepository allowedDomainRepository,
                          TenantSsoConfigRepository ssoConfigRepository,
                          UserRepository userRepository,
@@ -67,6 +77,7 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
                          PasswordEncoder passwordEncoder,
                          PlatformTransactionManager transactionManager) {
         this.tenantRepository = tenantRepository;
+        this.orgSettingRepository = orgSettingRepository;
         this.allowedDomainRepository = allowedDomainRepository;
         this.ssoConfigRepository = ssoConfigRepository;
         this.userRepository = userRepository;
@@ -109,9 +120,38 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
 
     @Transactional(readOnly = true)
     @Override
-    public TenantProfile getTenantProfile(String tenantSlug) {
+    public TenantSettings getTenantSettings(String tenantSlug) {
         TenantEntity tenant = getTenantBySlug(tenantSlug);
-        return new TenantProfile(tenant.getName(), tenant.getSlug(), tenant.getStatus().name());
+        TenantProfile profile = new TenantProfile(tenant.getName(), tenant.getSlug(), tenant.getStatus().name());
+        WorkflowDefaults workflowDefaults = new WorkflowDefaults(
+                readApprovalTypeSetting(WORKFLOW_APPROVAL_TYPE_KEY, ApprovalType.LINEAR),
+                readBooleanSetting(WORKFLOW_REQUIRE_DEFAULT_APPROVERS_KEY, true)
+        );
+        SlaDefaults slaDefaults = new SlaDefaults(
+                readIntSetting(SLA_LOW_HOURS_KEY, 72),
+                readIntSetting(SLA_MEDIUM_HOURS_KEY, 48),
+                readIntSetting(SLA_HIGH_HOURS_KEY, 24),
+                readIntSetting(SLA_CRITICAL_HOURS_KEY, 8),
+                readIntSetting(SLA_WARNING_BEFORE_HOURS_KEY, 1)
+        );
+        return new TenantSettings(profile, workflowDefaults, slaDefaults);
+    }
+
+    @Override
+    public void updateWorkflowDefaults(String tenantSlug, WorkflowDefaults workflowDefaults) {
+        getTenantBySlug(tenantSlug);
+        saveSetting(WORKFLOW_APPROVAL_TYPE_KEY, workflowDefaults.approvalTypeDefault().name());
+        saveSetting(WORKFLOW_REQUIRE_DEFAULT_APPROVERS_KEY, Boolean.toString(workflowDefaults.requireDefaultApprovers()));
+    }
+
+    @Override
+    public void updateSlaDefaults(String tenantSlug, SlaDefaults slaDefaults) {
+        getTenantBySlug(tenantSlug);
+        saveSetting(SLA_LOW_HOURS_KEY, Integer.toString(slaDefaults.lowHours()));
+        saveSetting(SLA_MEDIUM_HOURS_KEY, Integer.toString(slaDefaults.mediumHours()));
+        saveSetting(SLA_HIGH_HOURS_KEY, Integer.toString(slaDefaults.highHours()));
+        saveSetting(SLA_CRITICAL_HOURS_KEY, Integer.toString(slaDefaults.criticalHours()));
+        saveSetting(SLA_WARNING_BEFORE_HOURS_KEY, Integer.toString(slaDefaults.warningBeforeHours()));
     }
 
     private TenantEntity loadTenantOrThrow(UUID id) {
@@ -308,5 +348,54 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
         byte[] bytes = new byte[32];
         SECURE_RANDOM.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private void saveSetting(String key, String value) {
+        OrgSettingEntity existing = orgSettingRepository.findById(key).orElse(null);
+        if (existing == null) {
+            orgSettingRepository.save(new OrgSettingEntity(key, value));
+        } else {
+            existing.setValue(value);
+            orgSettingRepository.save(existing);
+        }
+    }
+
+    private String readSetting(String key) {
+        return orgSettingRepository.findById(key)
+                .map(OrgSettingEntity::getValue)
+                .orElse(null);
+    }
+
+    private int readIntSetting(String key, int defaultValue) {
+        String value = readSetting(key);
+        if (value == null || value.isBlank()) {
+            return defaultValue;
+        }
+        try {
+            int parsed = Integer.parseInt(value);
+            return parsed > 0 ? parsed : defaultValue;
+        } catch (NumberFormatException ex) {
+            return defaultValue;
+        }
+    }
+
+    private boolean readBooleanSetting(String key, boolean defaultValue) {
+        String value = readSetting(key);
+        if (value == null || value.isBlank()) {
+            return defaultValue;
+        }
+        return Boolean.parseBoolean(value);
+    }
+
+    private ApprovalType readApprovalTypeSetting(String key, ApprovalType defaultValue) {
+        String value = readSetting(key);
+        if (value == null || value.isBlank()) {
+            return defaultValue;
+        }
+        try {
+            return ApprovalType.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            return defaultValue;
+        }
     }
 }

@@ -16,7 +16,6 @@ import io.audita.api.security.UserPrincipal;
 import io.audita.domain.model.ChangeRequestStatus;
 import io.audita.domain.model.Priority;
 import io.audita.infrastructure.service.ChangeRequestService;
-import io.audita.infrastructure.service.AttachmentDownload;
 import jakarta.validation.Valid;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Pageable;
@@ -52,45 +51,43 @@ public class ChangeRequestController {
 
         UUID createdById = principal.userId();
         var created = changeRequestService.create(
-            req.title(),
-            req.description(),
-            req.priority(),
-            req.riskLevel(),
-            req.category(),
-            req.approvalType(),
-            req.scheduledStart(),
-            req.scheduledEnd(),
-            req.affectedSystems() == null ? null : req.affectedSystems().toArray(String[]::new),
-            createdById
-        );
-        return ResponseEntity.status(HttpStatus.CREATED).body(ChangeRequestResponse.from(created));
+                req.title(),
+                req.description(),
+                req.priority(),
+                req.riskLevel(),
+                req.category(),
+                req.approvalType(),
+                req.scheduledStart(),
+                req.scheduledEnd(),
+                req.affectedSystems() == null ? null : req.affectedSystems().toArray(String[]::new),
+                createdById);
+        return new ResponseEntity<>(ChangeRequestResponse.from(created), HttpStatus.CREATED);
     }
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
     public ChangeRequestResponse update(@PathVariable UUID id,
-                                        @Valid @RequestBody UpdateChangeRequestRequest req,
-                                        @AuthenticationPrincipal UserPrincipal principal) {
+            @Valid @RequestBody UpdateChangeRequestRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
         return ChangeRequestResponse.from(changeRequestService.update(
-            id,
-            req.title(),
-            req.description(),
-            req.priority(),
-            req.riskLevel(),
-            req.category(),
-            req.approvalType(),
-            req.scheduledStart(),
-            req.scheduledEnd(),
-            req.affectedSystems() == null ? null : req.affectedSystems().toArray(String[]::new),
-            principal.userId(),
-            principal.role()
-        ));
+                id,
+                req.title(),
+                req.description(),
+                req.priority(),
+                req.riskLevel(),
+                req.category(),
+                req.approvalType(),
+                req.scheduledStart(),
+                req.scheduledEnd(),
+                req.affectedSystems() == null ? null : req.affectedSystems().toArray(String[]::new),
+                principal.userId(),
+                principal.role()));
     }
 
     @PostMapping("/{id}/submit")
     @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
     public ChangeRequestResponse submit(@PathVariable UUID id,
-                                        @AuthenticationPrincipal UserPrincipal principal) {
+            @AuthenticationPrincipal UserPrincipal principal) {
         return ChangeRequestResponse.from(changeRequestService.submit(id, principal.userId(), principal.role()));
     }
 
@@ -98,7 +95,7 @@ public class ChangeRequestController {
     @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancel(@PathVariable UUID id,
-                       @AuthenticationPrincipal UserPrincipal principal) {
+            @AuthenticationPrincipal UserPrincipal principal) {
         changeRequestService.cancel(id, principal.userId(), principal.role());
     }
 
@@ -114,8 +111,7 @@ public class ChangeRequestController {
 
         return PageResponse.from(
                 changeRequestService.list(status, priority, category, createdBy, principal.userId(), pageable),
-                ChangeRequestResponse::from
-        );
+                ChangeRequestResponse::from);
     }
 
     @GetMapping("/categories")
@@ -127,7 +123,7 @@ public class ChangeRequestController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ChangeRequestResponse get(@PathVariable UUID id,
-                                     @AuthenticationPrincipal UserPrincipal principal) {
+            @AuthenticationPrincipal UserPrincipal principal) {
         return ChangeRequestResponse.from(changeRequestService.getById(id, principal.userId()));
     }
 
@@ -142,15 +138,15 @@ public class ChangeRequestController {
     @PostMapping("/{id}/approvers")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<CrApproverResponse> addApprover(@PathVariable UUID id,
-                                                           @Valid @RequestBody AddApproverRequest req) {
+            @Valid @RequestBody AddApproverRequest req) {
         var created = changeRequestService.addApprover(id, req.userId(), req.isRequired());
-        return ResponseEntity.status(HttpStatus.CREATED).body(CrApproverResponse.from(created));
+        return new ResponseEntity<>(CrApproverResponse.from(created), HttpStatus.CREATED);
     }
 
     @PatchMapping("/{id}/approvers/reorder")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public List<CrApproverResponse> reorderApprovers(@PathVariable UUID id,
-                                                     @Valid @RequestBody ReorderApproversRequest req) {
+            @Valid @RequestBody ReorderApproversRequest req) {
         return changeRequestService.reorderApprovers(id, req.approverIds()).stream()
                 .map(CrApproverResponse::from)
                 .toList();
@@ -166,15 +162,15 @@ public class ChangeRequestController {
     @PostMapping("/{id}/approve")
     @PreAuthorize("hasAnyRole('APPROVER', 'ADMIN', 'SUPER_ADMIN')")
     public ChangeRequestResponse approve(@PathVariable UUID id,
-                                         @AuthenticationPrincipal UserPrincipal principal) {
+            @AuthenticationPrincipal UserPrincipal principal) {
         return ChangeRequestResponse.from(changeRequestService.approve(id, principal.userId()));
     }
 
     @PostMapping("/{id}/reject")
     @PreAuthorize("hasAnyRole('APPROVER', 'ADMIN', 'SUPER_ADMIN')")
     public ChangeRequestResponse reject(@PathVariable UUID id,
-                                        @Valid @RequestBody RejectChangeRequestRequest req,
-                                        @AuthenticationPrincipal UserPrincipal principal) {
+            @Valid @RequestBody RejectChangeRequestRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
         return ChangeRequestResponse.from(changeRequestService.reject(id, principal.userId(), req.reason()));
     }
 
@@ -226,7 +222,7 @@ public class ChangeRequestController {
             @AuthenticationPrincipal UserPrincipal principal) {
 
         var saved = changeRequestService.uploadAttachment(id, principal.userId(), principal.role(), file);
-        return ResponseEntity.status(HttpStatus.CREATED).body(AttachmentResponse.from(saved));
+        return new ResponseEntity<>(AttachmentResponse.from(saved), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}/attachments/{attachmentId}/download")
@@ -243,8 +239,6 @@ public class ChangeRequestController {
                 ContentDisposition.attachment().filename(dl.fileName()).build());
         headers.setContentLength(dl.sizeBytes());
 
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(new InputStreamResource(dl.stream()));
+        return new ResponseEntity<>(new InputStreamResource(dl.stream()), headers, HttpStatus.OK);
     }
 }

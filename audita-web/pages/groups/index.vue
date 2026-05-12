@@ -52,6 +52,8 @@
 <script setup lang="ts">
 definePageMeta({ layout: "default" });
 
+useHead({ title: "Groups — Audita" });
+
 const api = useApi();
 
 interface GroupRow {

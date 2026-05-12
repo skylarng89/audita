@@ -1,11 +1,16 @@
 <template>
   <Teleport to="body">
-    <div class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 w-80">
+    <div
+      role="log"
+      aria-live="polite"
+      aria-atomic="false"
+      class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 w-80"
+    >
       <TransitionGroup name="toast">
         <div
           v-for="toast in toasts"
           :key="toast.id"
-          class="flex items-start gap-3 rounded-xl shadow-card-md px-4 py-3.5 text-sm font-medium border"
+          class="relative flex items-start gap-3 rounded-xl shadow-card-md px-4 py-3.5 text-sm font-medium border overflow-hidden"
           :class="{
             'bg-white text-on-surface border-outline-variant/50':
               toast.type === 'info',
@@ -15,8 +20,8 @@
             'bg-white text-on-surface border-warning/30':
               toast.type === 'warning',
           }"
+          :role="toast.type === 'error' ? 'alert' : undefined"
         >
-          <!-- Icon -->
           <span class="mt-0.5 shrink-0">
             <span
               v-if="toast.type === 'success'"
@@ -91,11 +96,13 @@
               </svg>
             </span>
           </span>
+
           <span class="flex-1 text-on-surface">{{ toast.message }}</span>
+
           <button
             @click="dismiss(toast.id)"
             class="text-muted hover:text-on-surface ml-1 shrink-0 transition-colors"
-            aria-label="Close"
+            aria-label="Close notification"
           >
             <svg
               class="w-4 h-4"
@@ -111,6 +118,19 @@
               />
             </svg>
           </button>
+
+          <div class="absolute bottom-0 left-0 right-0 h-0.5">
+            <div
+              class="h-full origin-left toast-progress"
+              :class="{
+                'bg-primary/30': toast.type === 'info',
+                'bg-success/40': toast.type === 'success',
+                'bg-danger/40': toast.type === 'error',
+                'bg-warning/40': toast.type === 'warning',
+              }"
+              :style="`animation-duration: ${toast.duration}ms`"
+            />
+          </div>
         </div>
       </TransitionGroup>
     </div>
@@ -125,15 +145,31 @@ const { toasts, dismiss } = useToast();
 .toast-enter-active {
   transition: all 0.25s ease;
 }
+
 .toast-leave-active {
   transition: all 0.2s ease;
 }
+
 .toast-enter-from {
   opacity: 0;
   transform: translateX(24px);
 }
+
 .toast-leave-to {
   opacity: 0;
   transform: translateX(24px);
+}
+
+@keyframes toast-drain {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.toast-progress {
+  animation: toast-drain linear forwards;
 }
 </style>

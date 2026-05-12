@@ -2,6 +2,14 @@
 @import "tailwindcss";
 
 @layer base {
+  /* Sidebar width token — toggled by AppSidebar.vue via data attribute */
+  :root {
+    --sidebar-w: 14rem;
+  }
+  :root[data-sidebar-collapsed] {
+    --sidebar-w: 3.5rem;
+  }
+
   html {
     @apply text-[#191c1e] bg-[#f7f9fb] antialiased;
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -29,10 +37,19 @@
 
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-primary;
+    /* WCAG 2.4.12 — prevent fixed header from obscuring focused elements */
+    scroll-margin-top: 4.5rem;
   }
 }
 
 @layer components {
+  /* ── Skip navigation link (WCAG 2.4.1) ────────────────────────────────── */
+  .skip-link {
+    @apply absolute -top-full left-4 z-[9999] bg-primary text-white
+           text-sm font-semibold px-4 py-2 rounded-lg
+           focus:top-4 transition-all duration-150;
+  }
+
   /* ── Buttons ────────────────────────────────────────────────────────────── */
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-lg font-semibold
@@ -73,12 +90,13 @@
   }
 
   .btn-primary {
-    @apply bg-primary text-white hover:bg-primary-dark shadow-sm hover:shadow-md;
+    @apply bg-primary text-white hover:bg-primary-dark shadow-sm hover:shadow-md
+           dark:bg-blue-700 dark:hover:bg-blue-600 dark:shadow-none;
   }
 
   .btn-secondary {
     @apply border border-border text-[#444651] bg-white hover:bg-surface-container-low shadow-sm
-           dark:bg-transparent dark:text-gray-300 dark:border-border-dark;
+           dark:bg-transparent dark:text-gray-300 dark:border-border-dark dark:hover:bg-slate-800;
   }
 
   .btn-danger {
@@ -86,7 +104,8 @@
   }
 
   .btn-ghost {
-    @apply text-muted hover:bg-surface-container hover:text-on-surface dark:hover:bg-slate-800;
+    @apply text-muted hover:bg-surface-container hover:text-on-surface
+           dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100;
   }
 
   /* ── Card ───────────────────────────────────────────────────────────────── */
@@ -131,11 +150,11 @@
   }
 
   .field-label {
-    @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted;
+    @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted dark:text-slate-400;
   }
 
   .field-hint {
-    @apply mt-1 text-xs text-muted;
+    @apply mt-1 text-xs text-muted dark:text-slate-400;
   }
 
   .field-error {
@@ -160,39 +179,48 @@
   }
 
   .badge-draft {
-    @apply bg-surface-container text-on-surface-variant border border-outline-variant;
+    @apply bg-surface-container text-on-surface-variant border border-outline-variant
+           dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600;
   }
   .badge-pending {
-    @apply bg-amber-50 text-amber-700 border border-amber-200;
+    @apply bg-amber-50 text-amber-700 border border-amber-200
+           dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700/50;
   }
   .badge-approved {
-    @apply bg-success-light text-green-700 border border-green-200;
+    @apply bg-success-light text-green-700 border border-green-200
+           dark:bg-green-900/30 dark:text-green-400 dark:border-green-700/50;
   }
   .badge-rejected {
-    @apply bg-danger-light text-danger border border-danger/20;
+    @apply bg-danger-light text-danger border border-danger/20
+           dark:bg-red-900/30 dark:text-red-400 dark:border-red-700/50;
   }
   .badge-cancelled {
-    @apply bg-surface-container text-muted border border-outline-variant;
+    @apply bg-surface-container text-muted border border-outline-variant
+           dark:bg-slate-700 dark:text-slate-400 dark:border-slate-600;
   }
 
   .badge-low {
-    @apply bg-surface-container text-on-surface-variant border border-outline-variant;
+    @apply bg-surface-container text-on-surface-variant border border-outline-variant
+           dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600;
   }
   .badge-medium {
-    @apply bg-info-light text-blue-700 border border-blue-200;
+    @apply bg-info-light text-blue-700 border border-blue-200
+           dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700/50;
   }
   .badge-high {
-    @apply bg-orange-50 text-orange-700 border border-orange-200;
+    @apply bg-orange-50 text-orange-700 border border-orange-200
+           dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-700/50;
   }
   .badge-critical {
-    @apply bg-danger-light text-danger border border-danger/20;
+    @apply bg-danger-light text-danger border border-danger/20
+           dark:bg-red-900/30 dark:text-red-400 dark:border-red-700/50;
   }
 
   /* ── Sidebar ────────────────────────────────────────────────────────────── */
   .sidebar-link {
     @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-on-surface-variant
            hover:bg-surface-container hover:text-on-surface transition-colors
-           dark:hover:bg-slate-800 dark:hover:text-gray-100;
+           dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-gray-100;
   }
 
   .sidebar-link-active {
@@ -202,9 +230,30 @@
            dark:bg-primary/20 dark:text-primary-fixed;
   }
 
+  /* Collapsed icon-only rail variants */
+  .sidebar-link-rail {
+    @apply flex items-center justify-center rounded-lg w-10 h-10 mx-auto
+           text-on-surface-variant hover:bg-surface-container hover:text-on-surface
+           transition-colors dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-gray-100;
+  }
+
+  .sidebar-link-rail-active {
+    @apply flex items-center justify-center rounded-lg w-10 h-10 mx-auto
+           bg-primary/10 text-primary transition-colors
+           hover:bg-surface-container hover:text-on-surface
+           dark:bg-primary/20 dark:text-primary-fixed dark:hover:bg-slate-800;
+  }
+
+  /* Sidebar-aware main content — margin follows --sidebar-w at md+ */
+  @media (min-width: 768px) {
+    .sidebar-main {
+      margin-left: var(--sidebar-w, 14rem);
+    }
+  }
+
   /* ── Table ──────────────────────────────────────────────────────────────── */
   .table-header {
-    @apply text-[11px] font-semibold uppercase tracking-[0.1em] text-muted;
+    @apply text-[11px] font-semibold uppercase tracking-[0.1em] text-muted dark:text-slate-400;
   }
 
   .table-row {
@@ -214,15 +263,277 @@
 
   /* ── Section label (eyebrow text) ───────────────────────────────────────── */
   .section-label {
-    @apply text-xs font-semibold uppercase tracking-[0.14em] text-primary/70;
+    @apply text-xs font-semibold uppercase tracking-[0.14em] text-primary/70 dark:text-blue-400/70;
   }
 
   /* ── Page heading ───────────────────────────────────────────────────────── */
   .page-title {
-    @apply text-3xl font-bold tracking-tight text-on-surface;
+    @apply text-3xl font-bold tracking-tight text-on-surface dark:text-slate-100;
   }
 
   .page-subtitle {
-    @apply text-sm text-muted mt-1;
+    @apply text-sm text-muted mt-1 dark:text-slate-400;
   }
+
+  /* ── Flatpickr (date/time picker) ─────────────────────────────────────── */
+  .flatpickr-calendar {
+    @apply rounded-xl border border-outline-variant/60 bg-white text-on-surface shadow-card-hover;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .flatpickr-calendar.open,
+  .flatpickr-calendar.inline {
+    @apply p-1;
+  }
+
+  .flatpickr-months,
+  .flatpickr-weekdays {
+    @apply bg-surface-container-low;
+  }
+
+  .flatpickr-months {
+    @apply rounded-lg px-1 pt-1;
+  }
+
+  .flatpickr-weekdays {
+    @apply rounded-md px-2 pb-1;
+  }
+
+  .flatpickr-month {
+    @apply text-on-surface;
+  }
+
+  .flatpickr-current-month {
+    @apply text-sm font-semibold text-on-surface;
+  }
+
+  .flatpickr-days {
+    @apply px-1 pb-1;
+  }
+
+  .dayContainer {
+    @apply gap-0.5;
+  }
+
+  .flatpickr-current-month .flatpickr-monthDropdown-months {
+    @apply rounded-md bg-transparent text-on-surface;
+  }
+
+  .flatpickr-current-month input.cur-year {
+    @apply rounded-md bg-transparent text-on-surface;
+  }
+
+  .flatpickr-weekday {
+    @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-muted;
+  }
+
+  .flatpickr-day {
+    @apply text-sm text-on-surface rounded-md border border-transparent;
+    line-height: 2.125rem;
+    max-width: 2.125rem;
+    height: 2.125rem;
+  }
+
+  .flatpickr-day:hover,
+  .flatpickr-day:focus {
+    @apply bg-surface-container text-on-surface border-outline-variant;
+  }
+
+  .flatpickr-day.today {
+    @apply border-primary text-primary;
+  }
+
+  .flatpickr-day.today:hover,
+  .flatpickr-day.today:focus {
+    @apply bg-primary/10 text-primary border-primary;
+  }
+
+  .flatpickr-day.selected,
+  .flatpickr-day.startRange,
+  .flatpickr-day.endRange,
+  .flatpickr-day.selected:hover,
+  .flatpickr-day.startRange:hover,
+  .flatpickr-day.endRange:hover,
+  .flatpickr-day.selected:focus,
+  .flatpickr-day.startRange:focus,
+  .flatpickr-day.endRange:focus {
+    @apply bg-primary border-primary text-white;
+  }
+
+  .flatpickr-day.inRange {
+    @apply bg-primary/10 border-primary/20 text-primary;
+    box-shadow: none;
+  }
+
+  .flatpickr-day.flatpickr-disabled,
+  .flatpickr-day.flatpickr-disabled:hover {
+    @apply text-muted/50 bg-transparent border-transparent;
+  }
+
+  .flatpickr-time {
+    @apply border-t border-outline-variant/60 bg-surface-container-low;
+    @apply rounded-b-lg mt-1 h-11;
+  }
+
+  .flatpickr-time .numInputWrapper,
+  .flatpickr-time input,
+  .flatpickr-time .flatpickr-am-pm {
+    @apply text-sm;
+  }
+
+  .flatpickr-time .flatpickr-time-separator {
+    @apply text-muted font-semibold;
+  }
+
+  .flatpickr-time .numInputWrapper span.arrowUp:after,
+  .flatpickr-time .numInputWrapper span.arrowDown:after {
+    @apply border-muted;
+  }
+
+  .flatpickr-time input,
+  .flatpickr-time .flatpickr-am-pm {
+    @apply text-on-surface;
+  }
+
+  .flatpickr-time input:hover,
+  .flatpickr-time .flatpickr-am-pm:hover,
+  .flatpickr-time input:focus,
+  .flatpickr-time .flatpickr-am-pm:focus {
+    @apply bg-surface-container text-on-surface;
+  }
+
+  .flatpickr-prev-month,
+  .flatpickr-next-month {
+    @apply rounded-md text-muted h-7 w-7 p-1 flex items-center justify-center;
+  }
+
+  .flatpickr-prev-month:hover,
+  .flatpickr-next-month:hover {
+    @apply bg-surface-container text-primary;
+  }
+
+  .flatpickr-calendar.arrowTop:before,
+  .flatpickr-calendar.arrowTop:after,
+  .flatpickr-calendar.arrowBottom:before,
+  .flatpickr-calendar.arrowBottom:after {
+    @apply border-transparent;
+  }
+
+  html.dark .flatpickr-calendar {
+    @apply bg-slate-800 border-border-dark text-gray-100;
+  }
+
+  html.dark .flatpickr-months,
+  html.dark .flatpickr-weekdays,
+  html.dark .flatpickr-time {
+    @apply bg-slate-900 border-border-dark;
+  }
+
+  html.dark .flatpickr-current-month,
+  html.dark .flatpickr-current-month .flatpickr-monthDropdown-months,
+  html.dark .flatpickr-current-month input.cur-year,
+  html.dark .flatpickr-weekday,
+  html.dark .flatpickr-time input,
+  html.dark .flatpickr-time .flatpickr-am-pm,
+  html.dark .flatpickr-day {
+    @apply text-gray-100;
+  }
+
+  html.dark .flatpickr-day:hover,
+  html.dark .flatpickr-day:focus,
+  html.dark .flatpickr-time input:hover,
+  html.dark .flatpickr-time input:focus,
+  html.dark .flatpickr-time .flatpickr-am-pm:hover,
+  html.dark .flatpickr-time .flatpickr-am-pm:focus,
+  html.dark .flatpickr-prev-month:hover,
+  html.dark .flatpickr-next-month:hover {
+    @apply bg-slate-700 text-primary-fixed;
+  }
+
+  html.dark .flatpickr-day.today {
+    @apply border-primary-fixed text-primary-fixed;
+  }
+
+  html.dark .flatpickr-day.today:hover,
+  html.dark .flatpickr-day.today:focus {
+    @apply bg-primary/30 text-primary-fixed;
+  }
+
+  html.dark .flatpickr-day.inRange {
+    @apply bg-primary/25 border-primary/40 text-primary-fixed;
+  }
+
+  html.dark .flatpickr-day.selected,
+  html.dark .flatpickr-day.startRange,
+  html.dark .flatpickr-day.endRange,
+  html.dark .flatpickr-day.selected:hover,
+  html.dark .flatpickr-day.startRange:hover,
+  html.dark .flatpickr-day.endRange:hover,
+  html.dark .flatpickr-day.selected:focus,
+  html.dark .flatpickr-day.startRange:focus,
+  html.dark .flatpickr-day.endRange:focus {
+    @apply bg-primary/85 text-white border-primary/80;
+  }
+
+  html.dark .flatpickr-day.flatpickr-disabled,
+  html.dark .flatpickr-day.flatpickr-disabled:hover {
+    @apply text-slate-500;
+  }
+}
+
+/* ── Dark mode: inline utility overrides ────────────────────────────────────
+   Tailwind inlines custom color hex values rather than CSS variables, so
+   CSS-variable overrides in html.dark don't cascade to utility classes.
+   These unlayered rules (cascade layer = "none", highest implicit priority)
+   fix inline usages of text-primary, bg-primary/*, etc. in page templates.
+────────────────────────────────────────────────────────────────────────────── */
+.dark .text-primary {
+  color: #4f80ff;
+}
+.dark .text-primary\/60 {
+  color: rgb(79 128 255 / 0.6);
+}
+.dark .text-primary\/70 {
+  color: rgb(79 128 255 / 0.7);
+}
+.dark .text-primary\/80 {
+  color: rgb(79 128 255 / 0.8);
+}
+
+/* bg-primary used directly in templates (logos, step indicators, etc.) */
+.dark .bg-primary {
+  background-color: #1d4ed8;
+}
+.dark .hover\:bg-primary-dark:hover {
+  background-color: #1e40af;
+}
+
+/* Translucent primary used for tag chips, active tabs, avatar rings */
+.dark .bg-primary\/10 {
+  background-color: rgb(79 128 255 / 0.12);
+}
+.dark .bg-primary\/15 {
+  background-color: rgb(79 128 255 / 0.15);
+}
+.dark .bg-primary\/20 {
+  background-color: rgb(79 128 255 / 0.2);
+}
+
+/* Semantic text tokens used inline (without a component class wrapper) */
+.dark .text-on-surface {
+  color: #e2e8f0;
+}
+.dark .text-on-surface-variant {
+  color: #94a3b8;
+}
+.dark .text-muted {
+  color: #94a3b8;
+}
+
+/* Border and outline tokens */
+.dark .border-primary {
+  border-color: #4f80ff;
+}
+.dark .outline-primary {
+  outline-color: #4f80ff;
 }

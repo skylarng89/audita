@@ -8,7 +8,7 @@
           Change Requests
         </p>
         <h1
-          class="text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
+          class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
         >
           Create Change Request
         </h1>
@@ -32,9 +32,9 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <!-- Title -->
         <div class="md:col-span-2">
-          <label class="field-label"
-            >Change Title <span class="text-danger">*</span></label
-          >
+          <p class="field-label">
+            Change Title <span class="text-danger">*</span>
+          </p>
           <input
             v-model="form.title"
             class="input mt-1"
@@ -48,9 +48,9 @@
 
         <!-- Priority -->
         <div>
-          <label class="field-label"
-            >Priority Level <span class="text-danger">*</span></label
-          >
+          <p class="field-label">
+            Priority Level <span class="text-danger">*</span>
+          </p>
           <select
             v-model="form.priority"
             class="input mt-1"
@@ -70,9 +70,9 @@
 
         <!-- Risk -->
         <div>
-          <label class="field-label"
-            >Risk Assessment <span class="text-danger">*</span></label
-          >
+          <p class="field-label">
+            Risk Assessment <span class="text-danger">*</span>
+          </p>
           <select
             v-model="form.riskLevel"
             class="input mt-1"
@@ -92,9 +92,9 @@
 
         <!-- Approval Type -->
         <div>
-          <label class="field-label"
-            >Approval Type <span class="text-danger">*</span></label
-          >
+          <p class="field-label">
+            Approval Type <span class="text-danger">*</span>
+          </p>
           <select
             v-model="form.approvalType"
             class="input mt-1"
@@ -103,7 +103,7 @@
           >
             <option value="" disabled>Select approval type</option>
             <option value="LINEAR">Linear</option>
-            <option value="NON_LINEAR">Non Linear</option>
+            <option value="NON_LINEAR">Non-Linear</option>
           </select>
           <p v-if="errors.approvalType" class="field-error">
             {{ errors.approvalType }}
@@ -112,7 +112,7 @@
 
         <!-- Category -->
         <div class="relative" ref="categoryWrapperRef">
-          <label class="field-label">Category</label>
+          <p class="field-label">Category</p>
           <!-- Selected tags + search input -->
           <div
             class="input mt-1 flex flex-wrap gap-1 min-h-[2.5rem] cursor-text"
@@ -167,21 +167,17 @@
 
         <!-- Scheduled Start -->
         <div>
-          <label class="field-label">Scheduled Start</label>
+          <p class="field-label">Scheduled Start</p>
           <div class="mt-1 grid grid-cols-2 gap-2">
-            <input
+            <FlatPickr
               v-model="form.scheduledStartDate"
-              type="date"
+              :config="datePickerConfig"
               class="input"
-              :style="{ colorScheme: isDark ? 'dark' : 'light' }"
-              @change="onStartChange"
             />
-            <input
+            <FlatPickr
               v-model="form.scheduledStartTime"
-              type="time"
+              :config="timePickerConfig"
               class="input"
-              :style="{ colorScheme: isDark ? 'dark' : 'light' }"
-              @change="onStartChange"
             />
           </div>
           <p v-if="errors.scheduledStart" class="field-error">
@@ -191,22 +187,17 @@
 
         <!-- Scheduled End -->
         <div>
-          <label class="field-label">Scheduled End</label>
+          <p class="field-label">Scheduled End</p>
           <div class="mt-1 grid grid-cols-2 gap-2">
-            <input
+            <FlatPickr
               v-model="form.scheduledEndDate"
-              type="date"
+              :config="endDatePickerConfig"
               class="input"
-              :min="form.scheduledStartDate || undefined"
-              :style="{ colorScheme: isDark ? 'dark' : 'light' }"
-              @change="touch('scheduledEnd')"
             />
-            <input
+            <FlatPickr
               v-model="form.scheduledEndTime"
-              type="time"
+              :config="timePickerConfig"
               class="input"
-              :style="{ colorScheme: isDark ? 'dark' : 'light' }"
-              @change="touch('scheduledEnd')"
             />
           </div>
           <p v-if="errors.scheduledEnd" class="field-error">
@@ -216,17 +207,42 @@
 
         <!-- Affected Systems -->
         <div class="md:col-span-2">
-          <label class="field-label">Affected Systems (comma separated)</label>
-          <input
-            v-model="form.affectedSystemsInput"
-            class="input mt-1"
-            placeholder="payment-api, nginx-prod, postgres-replica"
-          />
+          <p class="field-label">Affected Systems</p>
+          <div
+            class="input mt-1 flex flex-wrap gap-1 min-h-[2.5rem] cursor-text"
+            @click="affectedSystemsInputRef?.focus()"
+          >
+            <span
+              v-for="sys in form.affectedSystems"
+              :key="sys"
+              class="inline-flex items-center gap-1 rounded bg-primary/10 text-primary text-xs px-2 py-0.5 shrink-0"
+            >
+              {{ sys }}
+              <button
+                type="button"
+                class="hover:text-danger leading-none"
+                :aria-label="`Remove ${sys}`"
+                @click.stop="removeAffectedSystem(sys)"
+              >
+                ×
+              </button>
+            </span>
+            <input
+              ref="affectedSystemsInputRef"
+              v-model="affectedSystemsTagInput"
+              class="flex-1 min-w-[10rem] bg-transparent outline-none text-sm"
+              placeholder="Add system and press Enter…"
+              @keydown.enter.prevent="addAffectedSystem"
+              @keydown="onAffectedSystemsKeydown"
+              @keydown.backspace="onAffectedSystemsBackspace"
+            />
+          </div>
+          <p class="field-hint">Press Enter or comma to add each system.</p>
         </div>
 
         <!-- Description -->
         <div class="md:col-span-2">
-          <label class="field-label">Scope and Description</label>
+          <p class="field-label">Scope and Description</p>
           <ClientOnly>
             <EditorContent :editor="editor" class="input mt-1 min-h-44 p-4" />
           </ClientOnly>
@@ -256,8 +272,11 @@
 <script setup lang="ts">
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
+import FlatPickr from "vue-flatpickr-component";
 
 definePageMeta({ middleware: "auth" });
+
+useHead({ title: "Create Change Request — Audita" });
 
 const { create, listCategories } = useChangeRequests();
 
@@ -284,8 +303,37 @@ const form = reactive({
   scheduledStartTime: "",
   scheduledEndDate: "",
   scheduledEndTime: "",
-  affectedSystemsInput: "",
+  affectedSystems: [] as string[],
 });
+
+// ── Affected systems tag input ────────────────────────────────────────────
+const affectedSystemsInputRef = ref<HTMLInputElement | null>(null);
+const affectedSystemsTagInput = ref("");
+
+function addAffectedSystem() {
+  const val = affectedSystemsTagInput.value.replaceAll(",", "").trim();
+  if (val && !form.affectedSystems.includes(val)) {
+    form.affectedSystems.push(val);
+  }
+  affectedSystemsTagInput.value = "";
+}
+
+function removeAffectedSystem(sys: string) {
+  form.affectedSystems = form.affectedSystems.filter((s) => s !== sys);
+}
+
+function onAffectedSystemsKeydown(e: KeyboardEvent) {
+  if (e.key === ",") {
+    e.preventDefault();
+    addAffectedSystem();
+  }
+}
+
+function onAffectedSystemsBackspace() {
+  if (!affectedSystemsTagInput.value && form.affectedSystems.length) {
+    form.affectedSystems.pop();
+  }
+}
 
 // ── Category combobox ─────────────────────────────────────────────────────
 const allCategories = ref<string[]>([]);
@@ -336,21 +384,30 @@ function onCategoryBackspace() {
   }
 }
 
-// ── Dark mode detection for VueDatePicker ──────────────────────────────────
-const isDark = ref(false);
+const datePickerConfig = {
+  dateFormat: "Y-m-d",
+  allowInput: false,
+  clickOpens: true,
+  disableMobile: true,
+};
+
+const timePickerConfig = {
+  enableTime: true,
+  noCalendar: true,
+  dateFormat: "H:i",
+  time_24hr: true,
+  allowInput: false,
+  clickOpens: true,
+  disableMobile: true,
+};
+
+const endDatePickerConfig = computed(() => ({
+  ...datePickerConfig,
+  minDate: form.scheduledStartDate || undefined,
+}));
 
 // Close dropdown when clicking outside
 onMounted(async () => {
-  isDark.value = document.documentElement.classList.contains("dark");
-  const darkObserver = new MutationObserver(() => {
-    isDark.value = document.documentElement.classList.contains("dark");
-  });
-  darkObserver.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["class"],
-  });
-  onUnmounted(() => darkObserver.disconnect());
-
   allCategories.value = await listCategories().catch(() => []);
 
   document.addEventListener("click", (e) => {
@@ -362,6 +419,16 @@ onMounted(async () => {
     }
   });
 });
+
+watch(
+  () => [form.scheduledStartDate, form.scheduledStartTime],
+  () => onStartChange(),
+);
+
+watch(
+  () => [form.scheduledEndDate, form.scheduledEndTime],
+  () => touch("scheduledEnd"),
+);
 
 // Per-field error messages — only shown after the field has been touched
 const errors = reactive<Record<string, string>>({});
@@ -454,10 +521,7 @@ async function createChangeRequest() {
           form.scheduledEndDate,
           form.scheduledEndTime,
         )?.toISOString() ?? null,
-      affectedSystems: form.affectedSystemsInput
-        .split(",")
-        .map((v) => v.trim())
-        .filter(Boolean),
+      affectedSystems: form.affectedSystems,
     };
     const created = await create(payload);
     await navigateTo(`/change-requests/${created.id}`);

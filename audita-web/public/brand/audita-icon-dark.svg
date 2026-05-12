@@ -1,0 +1,23 @@
+<svg width="160" height="160" viewBox="0 0 160 160" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>Audita — icon dark</title>
+  <rect x="0" y="0" width="160" height="160" rx="22" fill="#00236F"/>
+  <line x1="0"   y1="81"  x2="42"  y2="81"  stroke="#1ABC9C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="42"  y1="81"  x2="42"  y2="103" stroke="#1ABC9C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="42"  y1="103" x2="60"  y2="103" stroke="#1ABC9C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="60"  y1="103" x2="60"  y2="57"  stroke="#1ABC9C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="60"  y1="57"  x2="100" y2="57"  stroke="#1ABC9C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="100" y1="57"  x2="100" y2="103" stroke="#1ABC9C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="100" y1="103" x2="118" y2="103" stroke="#1ABC9C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="118" y1="103" x2="118" y2="81"  stroke="#1ABC9C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="118" y1="81"  x2="160" y2="81"  stroke="#1ABC9C" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="42"  cy="81"  r="4.5" fill="#1ABC9C"/>
+  <circle cx="42"  cy="103" r="4.5" fill="#1ABC9C"/>
+  <circle cx="60"  cy="103" r="4.5" fill="#1ABC9C"/>
+  <circle cx="60"  cy="57"  r="4.5" fill="#1ABC9C"/>
+  <circle cx="100" cy="57"  r="4.5" fill="#1ABC9C"/>
+  <circle cx="100" cy="103" r="4.5" fill="#1ABC9C"/>
+  <circle cx="118" cy="103" r="4.5" fill="#1ABC9C"/>
+  <circle cx="118" cy="81"  r="4.5" fill="#1ABC9C"/>
+  <circle cx="80"  cy="57"  r="8"   fill="#1ABC9C"/>
+  <circle cx="80"  cy="57"  r="13"  fill="none" stroke="#1ABC9C" stroke-width="1.5" opacity="0.3"/>
+</svg>

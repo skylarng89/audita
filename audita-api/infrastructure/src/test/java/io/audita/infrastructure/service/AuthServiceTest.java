@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doNothing;
@@ -43,15 +43,24 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
-    @Mock UserRepository userRepository;
-    @Mock SuperAdminRepository superAdminRepository;
-    @Mock RefreshTokenRepository refreshTokenRepository;
-    @Mock PasswordResetTokenRepository passwordResetTokenRepository;
-    @Mock InviteTokenRepository inviteTokenRepository;
-    @Mock TenantRepository tenantRepository;
-    @Mock TenantAllowedDomainRepository allowedDomainRepository;
-    @Mock JwtService jwtService;
-    @Mock EmailService emailService;
+    @Mock
+    UserRepository userRepository;
+    @Mock
+    SuperAdminRepository superAdminRepository;
+    @Mock
+    RefreshTokenRepository refreshTokenRepository;
+    @Mock
+    PasswordResetTokenRepository passwordResetTokenRepository;
+    @Mock
+    InviteTokenRepository inviteTokenRepository;
+    @Mock
+    TenantRepository tenantRepository;
+    @Mock
+    TenantAllowedDomainRepository allowedDomainRepository;
+    @Mock
+    JwtService jwtService;
+    @Mock
+    EmailService emailService;
 
     PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(4);
 
@@ -94,13 +103,13 @@ class AuthServiceTest {
     void login_domain_not_in_whitelist_throws() {
         UserEntity user = activeUser("alice@other.com", "StrongPass1!A");
         when(userRepository.findByEmail("alice@other.com")).thenReturn(Optional.of(user));
-        when(allowedDomainRepository.findByTenantSlug(TENANT)).thenReturn(List.of(new TenantAllowedDomainEntity(null, "acme.com")));
+        when(allowedDomainRepository.findByTenantSlug(TENANT))
+                .thenReturn(List.of(new TenantAllowedDomainEntity(null, "acme.com")));
 
-        assertThatThrownBy(() -> authService.loginTenantUser(
-                "alice@other.com", "StrongPass1!A", TENANT, CLIENT_IP, USER_AGENT))
-                .isInstanceOf(DomainNotPermittedException.class)
-                .extracting(e -> ((DomainNotPermittedException) e).getErrorCode())
-                .isEqualTo("DOMAIN_NOT_PERMITTED");
+        DomainNotPermittedException ex = assertThrows(DomainNotPermittedException.class,
+                () -> authService.loginTenantUser(
+                        "alice@other.com", "StrongPass1!A", TENANT, CLIENT_IP, USER_AGENT));
+        assertThat(ex.getErrorCode()).isEqualTo("DOMAIN_NOT_PERMITTED");
     }
 
     @Test
@@ -139,19 +148,18 @@ class AuthServiceTest {
         when(refreshTokenRepository.findByTokenHash(AuthService.sha256(raw)))
                 .thenReturn(Optional.of(stored));
 
-        assertThatThrownBy(() -> authService.refreshToken(raw, "10.0.0.1", USER_AGENT))
-                .isInstanceOf(DomainNotPermittedException.class)
-                .hasMessageContaining("invalid");
+        DomainNotPermittedException ex = assertThrows(DomainNotPermittedException.class,
+                () -> authService.refreshToken(raw, "10.0.0.1", USER_AGENT));
+        assertThat(ex).hasMessageContaining("invalid");
     }
 
     @Test
     void reset_password_requires_strong_password() {
         String raw = "reset-token";
 
-        assertThatThrownBy(() -> authService.resetPassword(raw, "weak"))
-                .isInstanceOf(DomainNotPermittedException.class)
-                .extracting(e -> ((DomainNotPermittedException) e).getErrorCode())
-                .isEqualTo("WEAK_PASSWORD");
+        DomainNotPermittedException ex = assertThrows(DomainNotPermittedException.class,
+                () -> authService.resetPassword(raw, "weak"));
+        assertThat(ex.getErrorCode()).isEqualTo("WEAK_PASSWORD");
     }
 
     @Test
@@ -180,14 +188,13 @@ class AuthServiceTest {
 
         authService.bootstrap("Admin", "admin@audita.io", "StrongPass1!A");
 
-        verify(superAdminRepository).save(argThat((SuperAdminEntity sa) ->
-                sa.getEmail().equals("admin@audita.io") && sa.getFullName().equals("Admin")));
+        verify(superAdminRepository).save(argThat(
+                (SuperAdminEntity sa) -> sa.getEmail().equals("admin@audita.io") && sa.getFullName().equals("Admin")));
 
         when(superAdminRepository.count()).thenReturn(1L);
-        assertThatThrownBy(() -> authService.bootstrap("Admin", "admin@audita.io", "StrongPass1!A"))
-                .isInstanceOf(DomainNotPermittedException.class)
-                .extracting(e -> ((DomainNotPermittedException) e).getErrorCode())
-                .isEqualTo("ALREADY_BOOTSTRAPPED");
+        DomainNotPermittedException ex = assertThrows(DomainNotPermittedException.class,
+                () -> authService.bootstrap("Admin", "admin@audita.io", "StrongPass1!A"));
+        assertThat(ex.getErrorCode()).isEqualTo("ALREADY_BOOTSTRAPPED");
     }
 
     @Test
