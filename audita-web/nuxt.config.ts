@@ -20,7 +20,7 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    apiInternalBase: process.env.NUXT_API_INTERNAL_BASE ?? "http://api:8080",
+    apiInternalBase: process.env.NUXT_API_INTERNAL_BASE,
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE ?? "",
       apiContractVersion:
