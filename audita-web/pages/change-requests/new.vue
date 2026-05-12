@@ -362,7 +362,7 @@ const form = reactive({
   title: "",
   priority: "" as string,
   riskLevel: "" as string,
-  approvalType: "" as string,
+  approvalType: "NON_LINEAR" as string,
   categories: [] as string[],
   scheduledStartDate: "",
   scheduledStartTime: "",

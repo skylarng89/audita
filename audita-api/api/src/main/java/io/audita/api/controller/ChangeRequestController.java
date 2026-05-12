@@ -13,6 +13,7 @@ import io.audita.api.dto.response.PageResponse;
 import io.audita.api.dto.response.ChangeRequestResponse;
 import io.audita.api.dto.response.CrApproverResponse;
 import io.audita.api.security.UserPrincipal;
+import io.audita.domain.model.ApprovalType;
 import io.audita.domain.model.ChangeRequestStatus;
 import io.audita.domain.model.Priority;
 import io.audita.infrastructure.service.ChangeRequestService;
@@ -56,7 +57,7 @@ public class ChangeRequestController {
                 req.priority(),
                 req.riskLevel(),
                 req.category(),
-                req.approvalType(),
+                req.approvalType() != null ? req.approvalType() : ApprovalType.NON_LINEAR,
                 req.scheduledStart(),
                 req.scheduledEnd(),
                 req.affectedSystems(),
@@ -153,10 +154,12 @@ public class ChangeRequestController {
     }
 
     @DeleteMapping("/{id}/approvers/{approverId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeApprover(@PathVariable UUID id, @PathVariable UUID approverId) {
-        changeRequestService.removeApprover(id, approverId);
+    public void removeApprover(@PathVariable UUID id,
+            @PathVariable UUID approverId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        changeRequestService.removeApprover(id, approverId, principal.userId(), principal.role());
     }
 
     @PostMapping("/{id}/approve")

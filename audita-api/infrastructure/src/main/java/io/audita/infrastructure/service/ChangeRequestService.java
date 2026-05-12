@@ -7,6 +7,7 @@ import io.audita.domain.model.ApproverStatus;
 import io.audita.domain.model.ChangeRequestStatus;
 import io.audita.domain.model.Priority;
 import io.audita.domain.model.RiskLevel;
+import io.audita.domain.model.UserStatus;
 import io.audita.infrastructure.persistence.entity.ActivityStreamEntity;
 import io.audita.infrastructure.persistence.entity.AttachmentEntity;
 import io.audita.infrastructure.persistence.entity.ChangeRequestEntity;
@@ -46,8 +47,10 @@ import java.util.UUID;
 public class ChangeRequestService {
 
     private static final Set<String> ELEVATED_ROLES = Set.of("ADMIN", "SUPER_ADMIN");
+    private static final List<String> AUTO_APPROVER_ROLE_NAMES = List.of("Approver", "Auditor");
     private static final String ERROR_NOT_FOUND = "NOT_FOUND";
     private static final String PAYLOAD_STATUS = "status";
+    private static final String PAYLOAD_COUNT = "count";
     private static final String ENTITY_CHANGE_REQUEST = "change_request";
     private static final String PAYLOAD_APPROVER_ID = "approverId";
 
@@ -97,7 +100,8 @@ public class ChangeRequestService {
         changeRequest.setPriority(request.priority());
         changeRequest.setRiskLevel(request.riskLevel());
         changeRequest.setCategory(request.category());
-        changeRequest.setApprovalType(request.approvalType());
+        changeRequest.setApprovalType(
+                request.approvalType() != null ? request.approvalType() : ApprovalType.NON_LINEAR);
         changeRequest.setScheduledStart(request.scheduledStart());
         changeRequest.setScheduledEnd(request.scheduledEnd());
         changeRequest.setCreatedBy(createdBy);
@@ -158,6 +162,7 @@ public class ChangeRequestService {
     public ChangeRequestEntity submit(UUID id, UUID actorUserId, String actorRole) {
         ChangeRequestEntity changeRequest = getById(id);
         assertCanMutate(changeRequest, actorUserId, actorRole);
+        ensureDefaultApproversForSubmission(changeRequest);
         changeRequest.submit();
         changeRequest.setSlaDeadline(OffsetDateTime.now().plusHours(resolveSlaHours(changeRequest.getPriority())));
         ChangeRequestEntity submitted = changeRequestRepository.save(changeRequest);
@@ -256,8 +261,9 @@ public class ChangeRequestService {
         return created;
     }
 
-    public void removeApprover(UUID changeRequestId, UUID approverId) {
+    public void removeApprover(UUID changeRequestId, UUID approverId, UUID actorUserId, String actorRole) {
         ChangeRequestEntity changeRequest = getById(changeRequestId);
+        assertCanMutate(changeRequest, actorUserId, actorRole);
         if (changeRequest.isApprovalLocked()) {
             throw new InvalidStateTransitionException("Approvers are locked and cannot be changed.");
         }
@@ -300,7 +306,7 @@ public class ChangeRequestService {
                 .sorted(Comparator.comparingInt(CrApproverEntity::getPosition))
                 .toList();
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVERS_REORDERED",
-                Map.of("count", saved.size()));
+                Map.of(PAYLOAD_COUNT, saved.size()));
         return saved;
     }
 
@@ -496,7 +502,7 @@ public class ChangeRequestService {
                 .toList();
         List<ChangeRequestCustomFieldEntity> saved = customFieldRepository.saveAll(newRows);
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("count", saved.size());
+        payload.put(PAYLOAD_COUNT, saved.size());
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_CUSTOM_FIELDS_UPDATED", payload);
         return saved;
     }
@@ -551,6 +557,48 @@ public class ChangeRequestService {
             approvers.get(i).setPosition(i + 1);
         }
         crApproverRepository.saveAll(approvers);
+    }
+
+    private void ensureDefaultApproversForSubmission(ChangeRequestEntity changeRequest) {
+        UUID changeRequestId = changeRequest.getId();
+        List<CrApproverEntity> existingApprovers = crApproverRepository
+                .findByChangeRequestIdOrderByPositionAsc(changeRequestId);
+        Map<UUID, CrApproverEntity> existingByUserId = existingApprovers.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        approver -> approver.getUser().getId(),
+                        approver -> approver,
+                        (left, ignored) -> left,
+                        LinkedHashMap::new));
+
+        List<UserEntity> eligibleUsers = userRepository
+                .findByRole_NameInAndStatusOrderByFullNameAsc(AUTO_APPROVER_ROLE_NAMES, UserStatus.ACTIVE);
+
+        int nextPosition = existingApprovers.size() + 1;
+        List<CrApproverEntity> newApprovers = new java.util.ArrayList<>();
+        for (UserEntity user : eligibleUsers) {
+            if (existingByUserId.containsKey(user.getId())) {
+                continue;
+            }
+
+            String roleName = user.getRole() != null ? user.getRole().getName() : "";
+            boolean isRequired = "Approver".equalsIgnoreCase(roleName);
+            CrApproverEntity approver = new CrApproverEntity(
+                    changeRequest,
+                    user,
+                    isRequired,
+                    nextPosition++,
+                    false);
+            newApprovers.add(approver);
+        }
+
+        if (newApprovers.isEmpty()) {
+            return;
+        }
+
+        crApproverRepository.saveAll(newApprovers);
+        logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVERS_AUTO_ADDED", Map.of(
+                PAYLOAD_COUNT, newApprovers.size(),
+                PAYLOAD_STATUS, changeRequest.getStatus().name()));
     }
 
     private void logActivity(ChangeRequestEntity changeRequest,
