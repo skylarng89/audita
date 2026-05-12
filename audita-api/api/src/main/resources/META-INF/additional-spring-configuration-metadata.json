@@ -46,6 +46,10 @@
       "type": "java.lang.Object"
     },
     {
+      "name": "audita.invite",
+      "type": "java.lang.Object"
+    },
+    {
       "name": "audita.storage",
       "type": "java.lang.Object"
     }
@@ -68,6 +72,8 @@
     { "name": "audita.sso.frontend-base-url", "type": "java.lang.String" },
     { "name": "audita.app.base-url", "type": "java.lang.String" },
     { "name": "audita.mail.from", "type": "java.lang.String" },
+    { "name": "audita.mail.from-name", "type": "java.lang.String" },
+    { "name": "audita.invite.expiry-hours", "type": "java.lang.Integer" },
     { "name": "audita.storage.backend", "type": "java.lang.String" },
     { "name": "audita.storage.local.base-path", "type": "java.lang.String" },
     { "name": "audita.storage.s3.bucket", "type": "java.lang.String" },
