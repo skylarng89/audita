@@ -10,9 +10,9 @@ import type { AuthResponse } from "~/types";
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig();
   const auth = useAuthStore();
-  const baseURL = import.meta.server
-    ? config.apiInternalBase
-    : config.public.apiBase;
+  // Browser requests should use same-origin paths so HttpOnly auth cookies
+  // are set/sent via the Nuxt proxy on localhost and in deployments.
+  const baseURL = import.meta.server ? config.apiInternalBase : "";
   let contractMismatchHandled = false;
   let refreshPromise: Promise<AuthResponse | null> | null = null;
   let apiClient: ReturnType<typeof $fetch.create>;
