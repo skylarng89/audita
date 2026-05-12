@@ -17,6 +17,14 @@
 
 - **Refresh-token logout revocation gap**: refresh-cookie path widened from `/api/v1/auth/refresh` to `/api/v1/auth` so logout can receive and revoke backend refresh state.
 - **Broken half-authenticated redeploy states**: expired or incompatible client auth state now clears deterministically instead of looping through stale refresh/authorization failures.
+- **Filename normalization regex risk**: `ChangeRequestService` now normalizes file stems with a single-pass character loop instead of regex replacement/trimming, eliminating Sonar `java:S5852` ReDoS concerns on user-controlled filenames.
+- **Tenant middleware browser-global lint warning**: replaced `window.location.hostname` with `globalThis.location.hostname` in `audita-web/middleware/tenant.ts`.
+- **Spring configuration metadata drift**: added explicit metadata for `audita.invite.expiry-hours` and `audita.mail.from-name`, and expanded `AuditaProperties` with typed `invite` and `mail` groups so YAML/editor property discovery matches runtime usage.
+
+### Changed (Sprint 11 Follow-Through — 2026-05-12)
+
+- **CSRF-rule documentation**: `SecurityConfig` now documents why disabling CSRF is acceptable for this stateless bearer-token API, and suppresses noisy Sonar `java:S4502` on the filter-chain method.
+- **Diagnostics handling guidance**: repeated `HttpSecurity cannot be resolved` editor errors in `SecurityConfig` were verified as stale language-server/classpath issues after successful Gradle compile, so no code workaround was reintroduced.
 
 ### Added (Sprint 7 — File Security, Custom Fields UX, CR Edit Mode & Date Picker Replacement — 2026-05-11)
 

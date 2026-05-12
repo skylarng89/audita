@@ -170,3 +170,11 @@
 - Security-first session hardening is fully implemented: refresh-cookie logout revocation, HttpOnly-only cold-start restore, `401`-only refresh, API contract enforcement, and token-free cross-tab session sync are all in place.
 - The temporary reflection-based `SecurityConfig` workaround was removed. Request authorization now uses Spring Security public APIs: `RequestMatcherDelegatingAuthorizationManager`, `AuthorizationFilter`, and `PathPatternRequestMatcher`.
 - Added focused authorization regression coverage so public auth routes, authenticated fallback, and super-admin platform routes are locked by tests without relying on framework-internal DSL types.
+
+### Post-Session Cleanup (Completed 2026-05-12)
+
+- Removed regex-based filename normalization from `ChangeRequestService` and replaced it with a single-pass stem normalizer to eliminate Sonar `java:S5852` backtracking risk.
+- Documented the stateless/bearer-token CSRF rationale directly in `SecurityConfig` and suppressed noisy Sonar `java:S4502` on the filter-chain method instead of introducing fake CSRF protection.
+- Extended Spring config metadata for `audita.invite.expiry-hours` and `audita.mail.from-name`, and added typed `invite`/`mail` groups to `AuditaProperties` so YAML metadata stays synchronized with `@Value` consumers.
+- Confirmed `HttpSecurity cannot be resolved` in `SecurityConfig` is a stale editor classpath issue because `cd audita-api && ./gradlew :api:compileJava --no-daemon` passes.
+- Fixed the live frontend lint issue by switching `middleware/tenant.ts` from `window.location.hostname` to `globalThis.location.hostname`.
