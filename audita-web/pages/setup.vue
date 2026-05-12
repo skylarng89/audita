@@ -287,8 +287,7 @@ async function handleSubmit() {
     });
 
     // Store tenant slug so the login API call sends X-Tenant-Slug
-    auth.tenantSlug = form.slug;
-    auth.persistToCookie();
+    auth.setTenantSlug(form.slug);
 
     // Bust the cached onboarding status so the next navigation check
     // fetches fresh data and sees onboardingCompleted: true.

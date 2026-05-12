@@ -1,4 +1,6 @@
+import { shouldAttemptTokenRefresh } from "~/composables/authSession";
 import { useAuthStore } from "~/stores/auth";
+import type { AuthResponse } from "~/types";
 
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig();
@@ -6,15 +8,44 @@ export default defineNuxtPlugin(() => {
   const baseURL = import.meta.server
     ? config.apiInternalBase
     : config.public.apiBase;
+  let refreshPromise: Promise<AuthResponse | null> | null = null;
+  let apiClient: ReturnType<typeof $fetch.create>;
+  type ApiClientOptions = Parameters<typeof apiClient>[1];
+  interface OnResponseErrorContext {
+    request: Request | string;
+    options: ApiClientOptions & { _authRetry?: boolean };
+    response: {
+      status: number;
+    };
+  }
 
-  const $api = $fetch.create({
+  function refreshSession() {
+    if (!refreshPromise) {
+      refreshPromise = $fetch<AuthResponse>("/api/v1/auth/refresh", {
+        method: "POST",
+        baseURL,
+      })
+        .then((refreshed) => {
+          auth.setAuth(refreshed);
+          return refreshed;
+        })
+        .catch(async (error) => {
+          console.error("Token refresh failed", error);
+          await auth.logout();
+          return null;
+        })
+        .finally(() => {
+          refreshPromise = null;
+        });
+    }
+
+    return refreshPromise;
+  }
+
+  apiClient = $fetch.create({
     baseURL,
 
     onRequest({ request, options }) {
-      if (!auth.isAuthenticated) {
-        auth.hydrateFromCookie();
-      }
-
       let requestPath = "";
       if (typeof request === "string") {
         requestPath = request;
@@ -35,7 +66,7 @@ export default defineNuxtPlugin(() => {
       const headers = new Headers(options.headers);
 
       // Inject Bearer token on every authenticated request
-      if (auth.accessToken) {
+      if (auth.isAuthenticated && auth.accessToken) {
         headers.set("Authorization", `Bearer ${auth.accessToken}`);
       }
 
@@ -47,7 +78,7 @@ export default defineNuxtPlugin(() => {
       options.headers = headers;
     },
 
-    async onResponseError(ctx) {
+    onResponseError: (async (ctx: OnResponseErrorContext) => {
       const { request, options, response } = ctx;
 
       let requestPath = "";
@@ -61,36 +92,28 @@ export default defineNuxtPlugin(() => {
       const alreadyRetried = Boolean(
         (options as { _authRetry?: boolean })._authRetry,
       );
-      const isEmptyForbidden =
-        response.status === 403 && response._data == null;
-      const shouldAttemptRefresh =
-        auth.isAuthenticated &&
-        !isRefreshEndpoint &&
-        !alreadyRetried &&
-        (response.status === 401 || isEmptyForbidden);
+      const shouldRefresh = shouldAttemptTokenRefresh({
+        alreadyRetried,
+        isAuthenticated: auth.isAuthenticated,
+        isRefreshEndpoint,
+        responseStatus: response.status,
+      });
 
-      if (!shouldAttemptRefresh) {
+      if (!shouldRefresh) {
         return;
       }
 
-      try {
-        const refreshed = await $fetch<{ accessToken: string }>(
-          "/api/v1/auth/refresh",
-          {
-            method: "POST",
-            baseURL,
-          },
-        );
-        auth.setAccessToken(refreshed.accessToken);
-        (options as { _authRetry?: boolean })._authRetry = true;
-        return $api(request, options);
-      } catch {
-        await auth.logout();
+      const refreshed = await refreshSession();
+      if (!refreshed) {
+        return;
       }
-    },
+
+      (options as { _authRetry?: boolean })._authRetry = true;
+      return apiClient(request, options as ApiClientOptions);
+    }) as never,
   });
 
   return {
-    provide: { api: $api },
+    provide: { api: apiClient },
   };
 });

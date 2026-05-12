@@ -23,16 +23,20 @@ import java.nio.charset.StandardCharsets;
  * can follow redirects. Both are marked permitAll in SecurityConfig.
  *
  * Callback flow:
- *   1. User clicks SSO button → browser navigates to /api/v1/auth/oauth/{provider}?tenant=acme
- *   2. Server generates state, redirects browser to provider
- *   3. Provider redirects to /api/v1/auth/oauth/{provider}/callback?code=...&state=...
- *   4. Server validates state, exchanges code, issues tokens, redirects to frontend
+ * 1. User clicks SSO button → browser navigates to
+ * /api/v1/auth/oauth/{provider}?tenant=acme
+ * 2. Server generates state, redirects browser to provider
+ * 3. Provider redirects to
+ * /api/v1/auth/oauth/{provider}/callback?code=...&state=...
+ * 4. Server validates state, exchanges code, issues tokens, redirects to
+ * frontend
  */
 @RestController
 @RequestMapping("/api/v1/auth/oauth")
 public class SsoController {
 
     private static final String REFRESH_COOKIE = "refreshToken";
+    private static final String REFRESH_COOKIE_PATH = "/api/v1/auth";
 
     private final SsoPort ssoService;
 
@@ -46,7 +50,9 @@ public class SsoController {
         this.ssoService = ssoService;
     }
 
-    /** Initiates Google SSO — redirects browser to Google's authorization endpoint. */
+    /**
+     * Initiates Google SSO — redirects browser to Google's authorization endpoint.
+     */
     @GetMapping("/google")
     public void initiateGoogle(
             @RequestParam("tenant") String tenantSlug,
@@ -54,7 +60,10 @@ public class SsoController {
         redirect(response, ssoService.buildAuthorizationUrl(tenantSlug, OAuthProvider.GOOGLE));
     }
 
-    /** Initiates Microsoft SSO — redirects browser to Azure AD's authorization endpoint. */
+    /**
+     * Initiates Microsoft SSO — redirects browser to Azure AD's authorization
+     * endpoint.
+     */
     @GetMapping("/microsoft")
     public void initiateMicrosoft(
             @RequestParam("tenant") String tenantSlug,
@@ -83,7 +92,7 @@ public class SsoController {
     // ── Shared callback handler ──────────────────────────────────────────────────
 
     private void handleCallback(OAuthProvider provider, String code, String state,
-                                HttpServletResponse response) throws IOException {
+            HttpServletResponse response) throws IOException {
         SsoResult result;
         try {
             result = ssoService.handleCallback(provider, code, state);
@@ -93,12 +102,14 @@ public class SsoController {
             return;
         }
 
-        // Set refresh token as HttpOnly cookie; frontend exchanges a short-lived code for access token.
+        // Set refresh token as HttpOnly cookie; frontend exchanges a short-lived code
+        // for access token.
         setRefreshCookie(response, result.rawRefreshToken());
 
         String exchangeCode = ssoService.issueFrontendExchangeCode(result);
 
-        // Use URL fragment so one-time code is never sent in HTTP requests/referrer headers.
+        // Use URL fragment so one-time code is never sent in HTTP requests/referrer
+        // headers.
         String redirectUrl = frontendBaseUrl + "/auth/sso-callback"
                 + "#code=" + URLEncoder.encode(exchangeCode, StandardCharsets.UTF_8);
 
@@ -123,7 +134,7 @@ public class SsoController {
         Cookie cookie = new Cookie(REFRESH_COOKIE, rawToken);
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
-        cookie.setPath("/api/v1/auth/refresh");
+        cookie.setPath(REFRESH_COOKIE_PATH);
         cookie.setAttribute("SameSite", "Lax"); // Lax required for cross-origin redirect callbacks
         cookie.setMaxAge((int) (refreshExpiryDays * 24 * 60 * 60));
         response.addCookie(cookie);

@@ -1,3 +1,6 @@
+import { useAuthStore } from "~/stores/auth";
+import { resolveTenantSlug } from "~/composables/tenantResolution";
+
 // Resolves the active tenant slug from the request host and makes it
 // available to the API plugin via the auth store.
 //
@@ -8,39 +11,32 @@
 // The resolved slug is written to auth.tenantSlug so that plugins/api.ts
 // can inject X-Tenant-Slug on every outgoing request without duplicating
 // the resolution logic.
-export default defineNuxtRouteMiddleware((to) => {
+export default defineNuxtRouteMiddleware(async (to) => {
   const auth = useAuthStore();
   const { ssrContext } = useNuxtApp();
+  const isDev = Boolean(import.meta.dev);
 
   // Determine host: server-side from SSR context, client-side from window.
   const host = import.meta.server
     ? (ssrContext?.event.node.req.headers.host ?? "")
     : window.location.hostname;
+  const resolved = resolveTenantSlug({
+    hostname: host,
+    queryTenant: (to.query.tenant as string | undefined) ?? null,
+    isDev,
+  });
 
-  // Strip port if present (e.g. "acme.localhost:3000" → "acme.localhost")
-  const hostname = host.split(":")[0];
-
-  // Extract slug from the first subdomain segment.
-  // "acme.audita.io"  → ["acme", "audita", "io"]  → "acme"
-  // "localhost"       → ["localhost"]               → no subdomain
-  const parts = hostname.split(".");
-  const subdomain = parts.length >= 3 ? parts[0] : null;
-
-  // Reject generic subdomains that are not tenant identifiers.
-  const reservedSubdomains = new Set(["www", "app", "api", "mail", "smtp"]);
-  const slugFromSubdomain =
-    subdomain && !reservedSubdomains.has(subdomain) ? subdomain : null;
-
-  // Fallback: ?tenant= query param — only respected in dev environments
-  // (i.e. when there is no real subdomain) to prevent client-side bypass.
-  const slugFromQuery =
-    !slugFromSubdomain && import.meta.dev
-      ? ((to.query.tenant as string | undefined) ?? null)
-      : null;
-
-  const resolved = slugFromSubdomain ?? slugFromQuery;
+  if (
+    resolved &&
+    auth.isAuthenticated &&
+    auth.tenantSlug &&
+    resolved !== auth.tenantSlug
+  ) {
+    await auth.logout();
+    return;
+  }
 
   if (resolved) {
-    auth.tenantSlug = resolved;
+    auth.setTenantSlug(resolved);
   }
 });

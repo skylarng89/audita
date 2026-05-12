@@ -129,3 +129,32 @@
 ### Next Steps
 
 1. Optionally add direct page-number buttons if users need quicker jumps across large result sets.
+
+## Session Hardening Follow-Up (2026-05-12)
+
+### Objectives
+
+1. Eliminate broken half-authenticated states after redeploys and refresh failures.
+2. Ensure forced logout can revoke the backend refresh token reliably.
+3. Make the frontend fail closed on authentication expiry and tenant-context mismatches.
+
+### Work Items
+
+- SESS-001: Broaden refresh cookie scope from `/api/v1/auth/refresh` to `/api/v1/auth` so logout receives and clears the refresh token. ✅ (Completed 2026-05-12)
+- SESS-002: Harden frontend refresh policy to retry only on `401`, not on `403`. ✅ (Completed 2026-05-12)
+- SESS-003: Persist access-token expiry and treat expired/missing-expiry tokens as unauthenticated. ✅ (Completed 2026-05-12)
+- SESS-004: Invalidate onboarding/session-derived cache on auth transitions. ✅ (Completed 2026-05-12)
+- SESS-005: Force logout on tenant-context mismatch detected in route middleware. ✅ (Completed 2026-05-12)
+- SESS-006: Add narrow backend/frontend regression tests for session hardening. ✅ (Completed 2026-05-12)
+
+### Verification
+
+- `cd audita-api && ./gradlew :api:test --tests "io.audita.api.controller.AuthControllerWebMvcTest"`
+- `cd audita-web && pnpm test -- tests/auth/session.spec.ts tests/middleware/tenant.spec.ts tests/middleware/auth.global.spec.ts`
+- `cd audita-web && pnpm -s nuxi typecheck`
+
+### Next Steps
+
+1. Move access-token persistence out of the JS-readable cookie if we want to complete the stricter HttpOnly-only session model.
+2. Add a compatibility/version check for deploy-time contract mismatches and force re-auth on incompatible auth payloads.
+3. Consider serializing refresh attempts across tabs if multi-tab race conditions appear in production telemetry.

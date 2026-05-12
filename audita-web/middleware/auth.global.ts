@@ -39,10 +39,6 @@ async function resolveSetupRoute() {
 export default defineNuxtRouteMiddleware(async (to) => {
   const auth = useAuthStore();
 
-  if (!auth.isAuthenticated && typeof auth.hydrateFromCookie === "function") {
-    auth.hydrateFromCookie();
-  }
-
   if (to.path === "/") {
     return navigateTo(await resolveRootRoute(auth));
   }
