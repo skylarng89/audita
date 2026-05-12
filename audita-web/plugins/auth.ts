@@ -1,6 +1,8 @@
-import { clearServerSession } from "~/composables/sessionRestore";
+import {
+  clearServerSession,
+  restoreSessionFromCookie,
+} from "~/composables/sessionRestore";
 import { resolveTenantSlug } from "~/composables/tenantResolution";
-import { restoreSessionFromCookie } from "~/composables/sessionRestore";
 import { useAuthStore } from "~/stores/auth";
 
 /**
@@ -12,7 +14,7 @@ export default defineNuxtPlugin(async () => {
   const auth = useAuthStore();
   const isDev = Boolean(import.meta.dev);
   const config = useRuntimeConfig();
-  const requestUrl = new URL(window.location.href);
+  const requestUrl = new URL(globalThis.location.href);
   const tenantSlug = resolveTenantSlug({
     hostname: requestUrl.host,
     queryTenant: requestUrl.searchParams.get("tenant"),

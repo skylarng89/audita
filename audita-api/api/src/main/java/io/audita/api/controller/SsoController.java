@@ -36,7 +36,6 @@ import java.nio.charset.StandardCharsets;
 public class SsoController {
 
     private static final String REFRESH_COOKIE = "refreshToken";
-    private static final String REFRESH_COOKIE_PATH = "/api/v1/auth";
 
     private final SsoPort ssoService;
 
@@ -45,6 +44,9 @@ public class SsoController {
 
     @Value("${audita.refresh-token.expiry-days:7}")
     private long refreshExpiryDays;
+
+    @Value("${audita.auth.cookie-path:/api/v1/auth}")
+    private String refreshCookiePath;
 
     public SsoController(SsoPort ssoService) {
         this.ssoService = ssoService;
@@ -134,7 +136,7 @@ public class SsoController {
         Cookie cookie = new Cookie(REFRESH_COOKIE, rawToken);
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
-        cookie.setPath(REFRESH_COOKIE_PATH);
+        cookie.setPath(refreshCookiePath);
         cookie.setAttribute("SameSite", "Lax"); // Lax required for cross-origin redirect callbacks
         cookie.setMaxAge((int) (refreshExpiryDays * 24 * 60 * 60));
         response.addCookie(cookie);

@@ -54,9 +54,6 @@ public class AuthService implements AuthPort {
     private static final Pattern STRONG_PASSWORD_PATTERN = Pattern.compile(
             "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{12,128}$");
 
-    @Value("${audita.jwt.expiry-seconds:900}")
-    private long jwtExpirySeconds;
-
     @Value("${audita.refresh-token.expiry-days:7}")
     private long refreshExpiryDays;
 

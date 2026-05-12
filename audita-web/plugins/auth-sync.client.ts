@@ -40,7 +40,7 @@ export default defineNuxtPlugin(() => {
     return;
   }
 
-  window.addEventListener("storage", (event) => {
+  globalThis.addEventListener("storage", (event: StorageEvent) => {
     if (event.key !== AUTH_SESSION_SYNC_CHANNEL || !event.newValue) {
       return;
     }

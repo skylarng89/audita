@@ -74,7 +74,6 @@ class AuthServiceTest {
         @BeforeEach
         void setUp() {
                 ReflectionTestUtils.setField(authService, "passwordEncoder", passwordEncoder);
-                ReflectionTestUtils.setField(authService, "jwtExpirySeconds", 900L);
                 ReflectionTestUtils.setField(authService, "refreshExpiryDays", 7L);
                 TenantContext.setCurrentTenant(TENANT);
         }
