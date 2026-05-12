@@ -19,11 +19,14 @@ import io.audita.infrastructure.persistence.repository.AttachmentRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestCustomFieldRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestRepository;
 import io.audita.infrastructure.persistence.repository.CrApproverRepository;
+import io.audita.infrastructure.persistence.repository.GroupRepository;
+import io.audita.infrastructure.persistence.repository.GroupMemberRepository;
 import io.audita.infrastructure.persistence.repository.OrgSettingRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
 import io.audita.infrastructure.tenant.TenantContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,15 +50,19 @@ import java.util.UUID;
 public class ChangeRequestService {
 
     private static final Set<String> ELEVATED_ROLES = Set.of("ADMIN", "SUPER_ADMIN");
-    private static final List<String> AUTO_APPROVER_ROLE_NAMES = List.of("Approver", "Auditor", "Admin");
     private static final String ERROR_NOT_FOUND = "NOT_FOUND";
     private static final String PAYLOAD_STATUS = "status";
     private static final String PAYLOAD_COUNT = "count";
     private static final String ENTITY_CHANGE_REQUEST = "change_request";
     private static final String PAYLOAD_APPROVER_ID = "approverId";
+    private static final String WORKFLOW_REQUIRE_DEFAULT_APPROVERS_KEY = "workflow.require_default_approvers";
+    private static final String WORKFLOW_DEFAULT_APPROVER_USER_IDS_KEY = "workflow.default_approver_user_ids";
+    private static final String WORKFLOW_DEFAULT_APPROVER_GROUP_IDS_KEY = "workflow.default_approver_group_ids";
 
     private final ChangeRequestRepository changeRequestRepository;
     private final CrApproverRepository crApproverRepository;
+    private final GroupRepository groupRepository;
+    private final GroupMemberRepository groupMemberRepository;
     private final ChangeRequestCustomFieldRepository customFieldRepository;
     private final ActivityStreamRepository activityStreamRepository;
     private final AttachmentRepository attachmentRepository;
@@ -74,6 +81,8 @@ public class ChangeRequestService {
 
     public ChangeRequestService(ChangeRequestRepository changeRequestRepository,
             CrApproverRepository crApproverRepository,
+            GroupRepository groupRepository,
+            GroupMemberRepository groupMemberRepository,
             ChangeRequestCustomFieldRepository customFieldRepository,
             ActivityStreamRepository activityStreamRepository,
             AttachmentRepository attachmentRepository,
@@ -82,6 +91,8 @@ public class ChangeRequestService {
             AuditLogService auditLogService) {
         this.changeRequestRepository = changeRequestRepository;
         this.crApproverRepository = crApproverRepository;
+        this.groupRepository = groupRepository;
+        this.groupMemberRepository = groupMemberRepository;
         this.customFieldRepository = customFieldRepository;
         this.activityStreamRepository = activityStreamRepository;
         this.attachmentRepository = attachmentRepository;
@@ -241,8 +252,13 @@ public class ChangeRequestService {
         return crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId);
     }
 
-    public CrApproverEntity addApprover(UUID changeRequestId, UUID userId, boolean isRequired) {
+    public CrApproverEntity addApprover(UUID changeRequestId,
+            UUID userId,
+            boolean isRequired,
+            UUID actorUserId,
+            String actorRole) {
         ChangeRequestEntity changeRequest = getById(changeRequestId);
+        assertCanMutate(changeRequest, actorUserId, actorRole);
         if (changeRequest.isApprovalLocked()) {
             throw new InvalidStateTransitionException("Approvers are locked and cannot be changed.");
         }
@@ -260,6 +276,51 @@ public class ChangeRequestService {
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVER_ADDED",
                 Map.of(PAYLOAD_APPROVER_ID, created.getId().toString(), "userId", userId.toString()));
         return created;
+    }
+
+    public List<CrApproverEntity> addApproverGroup(UUID changeRequestId,
+            UUID groupId,
+            boolean isRequired,
+            UUID actorUserId,
+            String actorRole) {
+        ChangeRequestEntity changeRequest = getById(changeRequestId);
+        assertCanMutate(changeRequest, actorUserId, actorRole);
+        if (changeRequest.isApprovalLocked()) {
+            throw new InvalidStateTransitionException("Approvers are locked and cannot be changed.");
+        }
+
+        if (!groupRepository.existsById(groupId)) {
+            throw new DomainNotPermittedException(ERROR_NOT_FOUND, "Group not found.");
+        }
+
+        List<UserEntity> groupUsers = groupMemberRepository
+                .findDistinctUsersByGroupIdInAndUserStatus(List.of(groupId), UserStatus.ACTIVE);
+        if (groupUsers.isEmpty()) {
+            return List.of();
+        }
+
+        List<CrApproverEntity> existing = crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId);
+        Set<UUID> existingUserIds = existing.stream()
+                .map(entry -> entry.getUser().getId())
+                .collect(java.util.stream.Collectors.toSet());
+
+        int nextPosition = existing.size() + 1;
+        List<CrApproverEntity> additions = new java.util.ArrayList<>();
+        for (UserEntity user : groupUsers.stream().sorted(java.util.Comparator.comparing(UserEntity::getFullName))
+                .toList()) {
+            if (existingUserIds.contains(user.getId())) {
+                continue;
+            }
+            additions.add(new CrApproverEntity(changeRequest, user, isRequired, nextPosition++, true));
+        }
+        if (additions.isEmpty()) {
+            return List.of();
+        }
+
+        List<CrApproverEntity> saved = crApproverRepository.saveAll(additions);
+        logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVER_GROUP_ADDED",
+                Map.of("groupId", groupId.toString(), PAYLOAD_COUNT, saved.size()));
+        return saved;
     }
 
     public void removeApprover(UUID changeRequestId, UUID approverId, UUID actorUserId, String actorRole) {
@@ -281,8 +342,12 @@ public class ChangeRequestService {
         resequenceApprovers(changeRequestId);
     }
 
-    public List<CrApproverEntity> reorderApprovers(UUID changeRequestId, List<UUID> approverIds) {
+    public List<CrApproverEntity> reorderApprovers(UUID changeRequestId,
+            List<UUID> approverIds,
+            UUID actorUserId,
+            String actorRole) {
         ChangeRequestEntity changeRequest = getById(changeRequestId);
+        assertCanMutate(changeRequest, actorUserId, actorRole);
         if (changeRequest.isApprovalLocked()) {
             throw new InvalidStateTransitionException("Approvers are locked and cannot be changed.");
         }
@@ -309,6 +374,44 @@ public class ChangeRequestService {
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVERS_REORDERED",
                 Map.of(PAYLOAD_COUNT, saved.size()));
         return saved;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ApproverCandidate> searchApproverCandidates(String query, int limit) {
+        String trimmed = query == null ? "" : query.trim();
+        int cappedLimit = Math.max(1, Math.min(limit, 25));
+
+        List<UserEntity> userMatches;
+        List<io.audita.infrastructure.persistence.entity.GroupEntity> groupMatches;
+        if (trimmed.isEmpty()) {
+            userMatches = userRepository.findByStatus(UserStatus.ACTIVE, PageRequest.of(0, cappedLimit)).getContent();
+            groupMatches = groupRepository.findAll(PageRequest.of(0, cappedLimit)).getContent();
+        } else {
+            userMatches = userRepository
+                    .findByStatusAndFullNameContainingIgnoreCaseOrStatusAndEmailContainingIgnoreCaseOrderByFullNameAsc(
+                            UserStatus.ACTIVE,
+                            trimmed,
+                            UserStatus.ACTIVE,
+                            trimmed)
+                    .stream()
+                    .limit(cappedLimit)
+                    .toList();
+            groupMatches = groupRepository.findByNameContainingIgnoreCase(trimmed, PageRequest.of(0, cappedLimit))
+                    .getContent();
+        }
+
+        List<ApproverCandidate> candidates = new java.util.ArrayList<>();
+        userMatches.forEach(user -> candidates.add(new ApproverCandidate(
+                user.getId(),
+                "USER",
+                user.getFullName(),
+                user.getEmail())));
+        groupMatches.forEach(group -> candidates.add(new ApproverCandidate(
+                group.getId(),
+                "GROUP",
+                group.getName(),
+                group.getDescription())));
+        return candidates;
     }
 
     public ChangeRequestEntity approve(UUID changeRequestId, UUID actorUserId) {
@@ -561,6 +664,10 @@ public class ChangeRequestService {
     }
 
     private void ensureDefaultApprovers(ChangeRequestEntity changeRequest) {
+        if (!resolveRequireDefaultApprovers()) {
+            return;
+        }
+
         UUID changeRequestId = changeRequest.getId();
         List<CrApproverEntity> existingApprovers = crApproverRepository
                 .findByChangeRequestIdOrderByPositionAsc(changeRequestId);
@@ -571,8 +678,23 @@ public class ChangeRequestService {
                         (left, ignored) -> left,
                         LinkedHashMap::new));
 
-        List<UserEntity> eligibleUsers = userRepository
-                .findDistinctByRoles_NameInAndStatusOrderByFullNameAsc(AUTO_APPROVER_ROLE_NAMES, UserStatus.ACTIVE);
+        List<UUID> configuredUserIds = resolveUuidListSetting(WORKFLOW_DEFAULT_APPROVER_USER_IDS_KEY);
+        List<UUID> configuredGroupIds = resolveUuidListSetting(WORKFLOW_DEFAULT_APPROVER_GROUP_IDS_KEY);
+
+        List<UserEntity> usersFromSettings = configuredUserIds.isEmpty()
+                ? List.of()
+                : userRepository.findByIdInAndStatusOrderByFullNameAsc(configuredUserIds, UserStatus.ACTIVE);
+        List<UserEntity> usersFromGroups = configuredGroupIds.isEmpty()
+                ? List.of()
+                : groupMemberRepository.findDistinctUsersByGroupIdInAndUserStatus(configuredGroupIds,
+                        UserStatus.ACTIVE);
+
+        Map<UUID, UserEntity> eligibleUsersById = new LinkedHashMap<>();
+        usersFromSettings.forEach(user -> eligibleUsersById.put(user.getId(), user));
+        usersFromGroups.forEach(user -> eligibleUsersById.put(user.getId(), user));
+        List<UserEntity> eligibleUsers = eligibleUsersById.values().stream()
+                .sorted(java.util.Comparator.comparing(UserEntity::getFullName, String.CASE_INSENSITIVE_ORDER))
+                .toList();
 
         int nextPosition = existingApprovers.size() + 1;
         List<CrApproverEntity> newApprovers = new java.util.ArrayList<>();
@@ -581,7 +703,7 @@ public class ChangeRequestService {
                 continue;
             }
 
-            boolean isRequired = hasRole(user, "Approver");
+            boolean isRequired = true;
             CrApproverEntity approver = new CrApproverEntity(
                     changeRequest,
                     user,
@@ -601,14 +723,25 @@ public class ChangeRequestService {
                 PAYLOAD_STATUS, changeRequest.getStatus().name()));
     }
 
-    private boolean hasRole(UserEntity user, String roleName) {
-        boolean assignedRolesMatch = user.getRoles().stream()
-                .map(role -> role.getName() == null ? "" : role.getName())
-                .anyMatch(name -> name.equalsIgnoreCase(roleName));
-        if (assignedRolesMatch) {
-            return true;
-        }
-        return user.getRole() != null && roleName.equalsIgnoreCase(user.getRole().getName());
+    private boolean resolveRequireDefaultApprovers() {
+        return orgSettingRepository.findById(WORKFLOW_REQUIRE_DEFAULT_APPROVERS_KEY)
+                .map(setting -> Boolean.parseBoolean(setting.getValue()))
+                .orElse(true);
+    }
+
+    private List<UUID> resolveUuidListSetting(String key) {
+        return orgSettingRepository.findById(key)
+                .map(setting -> setting.getValue() == null ? "" : setting.getValue())
+                .stream()
+                .flatMap(value -> java.util.Arrays.stream(value.split(",")))
+                .map(String::trim)
+                .filter(v -> !v.isEmpty())
+                .map(UUID::fromString)
+                .distinct()
+                .toList();
+    }
+
+    public record ApproverCandidate(UUID id, String kind, String label, String secondary) {
     }
 
     private void logActivity(ChangeRequestEntity changeRequest,

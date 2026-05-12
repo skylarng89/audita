@@ -28,6 +28,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 import java.util.Base64;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
@@ -54,6 +55,8 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
     private static final String SLA_HIGH_HOURS_KEY = "sla.deadline_hours.high";
     private static final String SLA_CRITICAL_HOURS_KEY = "sla.deadline_hours.critical";
     private static final String SLA_WARNING_BEFORE_HOURS_KEY = "sla.warning_before_hours";
+    private static final String WORKFLOW_DEFAULT_APPROVER_USER_IDS_KEY = "workflow.default_approver_user_ids";
+    private static final String WORKFLOW_DEFAULT_APPROVER_GROUP_IDS_KEY = "workflow.default_approver_group_ids";
 
     private final TenantRepository tenantRepository;
     private final OrgSettingRepository orgSettingRepository;
@@ -136,7 +139,10 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
                 readIntSetting(SLA_HIGH_HOURS_KEY, 24),
                 readIntSetting(SLA_CRITICAL_HOURS_KEY, 8),
                 readIntSetting(SLA_WARNING_BEFORE_HOURS_KEY, 1));
-        return new TenantSettings(profile, workflowDefaults, slaDefaults);
+        AutoApproverDefaults autoApproverDefaults = new AutoApproverDefaults(
+                readUuidListSetting(WORKFLOW_DEFAULT_APPROVER_USER_IDS_KEY),
+                readUuidListSetting(WORKFLOW_DEFAULT_APPROVER_GROUP_IDS_KEY));
+        return new TenantSettings(profile, workflowDefaults, slaDefaults, autoApproverDefaults);
     }
 
     @Override
@@ -155,6 +161,13 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
         saveSetting(SLA_HIGH_HOURS_KEY, Integer.toString(slaDefaults.highHours()));
         saveSetting(SLA_CRITICAL_HOURS_KEY, Integer.toString(slaDefaults.criticalHours()));
         saveSetting(SLA_WARNING_BEFORE_HOURS_KEY, Integer.toString(slaDefaults.warningBeforeHours()));
+    }
+
+    @Override
+    public void updateAutoApproverDefaults(String tenantSlug, AutoApproverDefaults autoApproverDefaults) {
+        getTenantBySlug(tenantSlug);
+        saveSetting(WORKFLOW_DEFAULT_APPROVER_USER_IDS_KEY, writeUuidListSetting(autoApproverDefaults.userIds()));
+        saveSetting(WORKFLOW_DEFAULT_APPROVER_GROUP_IDS_KEY, writeUuidListSetting(autoApproverDefaults.groupIds()));
     }
 
     private TenantEntity loadTenantOrThrow(UUID id) {
@@ -404,5 +417,24 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
         } catch (IllegalArgumentException ex) {
             return defaultValue;
         }
+    }
+
+    private List<UUID> readUuidListSetting(String key) {
+        return orgSettingRepository.findById(key)
+                .map(OrgSettingEntity::getValue)
+                .stream()
+                .flatMap(value -> Arrays.stream(value.split(",")))
+                .map(String::trim)
+                .filter(v -> !v.isEmpty())
+                .map(UUID::fromString)
+                .distinct()
+                .toList();
+    }
+
+    private String writeUuidListSetting(List<UUID> values) {
+        return values.stream()
+                .distinct()
+                .map(UUID::toString)
+                .collect(java.util.stream.Collectors.joining(","));
     }
 }

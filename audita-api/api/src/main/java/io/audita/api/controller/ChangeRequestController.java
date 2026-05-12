@@ -1,6 +1,7 @@
 package io.audita.api.controller;
 
 import io.audita.api.dto.request.AddApproverRequest;
+import io.audita.api.dto.request.AddApproverGroupRequest;
 import io.audita.api.dto.request.CreateChangeRequestRequest;
 import io.audita.api.dto.request.RejectChangeRequestRequest;
 import io.audita.api.dto.request.ReorderApproversRequest;
@@ -11,6 +12,7 @@ import io.audita.api.dto.request.UpdateChangeRequestRequest;
 import io.audita.api.dto.response.ChangeRequestCustomFieldResponse;
 import io.audita.api.dto.response.PageResponse;
 import io.audita.api.dto.response.ChangeRequestResponse;
+import io.audita.api.dto.response.ApproverCandidateResponse;
 import io.audita.api.dto.response.CrApproverResponse;
 import io.audita.api.security.UserPrincipal;
 import io.audita.domain.model.ApprovalType;
@@ -136,19 +138,51 @@ public class ChangeRequestController {
                 .toList();
     }
 
+    @GetMapping("/approver-candidates")
+    @PreAuthorize("hasAnyRole('REQUESTER', 'APPROVER', 'AUDITOR', 'ADMIN', 'SUPER_ADMIN')")
+    public List<ApproverCandidateResponse> searchApproverCandidates(
+            @RequestParam(required = false) String query,
+            @RequestParam(defaultValue = "10") int limit) {
+        return changeRequestService.searchApproverCandidates(query, limit).stream()
+                .map(ApproverCandidateResponse::from)
+                .toList();
+    }
+
     @PostMapping("/{id}/approvers")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<CrApproverResponse> addApprover(@PathVariable UUID id,
-            @Valid @RequestBody AddApproverRequest req) {
-        var created = changeRequestService.addApprover(id, req.userId(), req.isRequired());
+            @Valid @RequestBody AddApproverRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        var created = changeRequestService.addApprover(
+                id,
+                req.userId(),
+                req.isRequired(),
+                principal.userId(),
+                principal.role());
         return new ResponseEntity<>(CrApproverResponse.from(created), HttpStatus.CREATED);
     }
 
+    @PostMapping("/{id}/approvers/groups")
+    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<List<CrApproverResponse>> addApproverGroup(@PathVariable UUID id,
+            @Valid @RequestBody AddApproverGroupRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        List<CrApproverResponse> created = changeRequestService.addApproverGroup(
+                id,
+                req.groupId(),
+                req.isRequired(),
+                principal.userId(),
+                principal.role()).stream().map(CrApproverResponse::from).toList();
+        return new ResponseEntity<>(created, HttpStatus.CREATED);
+    }
+
     @PatchMapping("/{id}/approvers/reorder")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
     public List<CrApproverResponse> reorderApprovers(@PathVariable UUID id,
-            @Valid @RequestBody ReorderApproversRequest req) {
-        return changeRequestService.reorderApprovers(id, req.approverIds()).stream()
+            @Valid @RequestBody ReorderApproversRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return changeRequestService.reorderApprovers(id, req.approverIds(), principal.userId(), principal.role())
+                .stream()
                 .map(CrApproverResponse::from)
                 .toList();
     }
