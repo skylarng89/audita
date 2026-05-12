@@ -10,8 +10,21 @@ const emit = defineEmits<{
   close: [];
 }>();
 
+let modalIdSequence = 0;
+
 // Unique id for aria-labelledby association
-const titleId = "modal-title-" + Math.random().toString(36).slice(2, 8);
+function createSecureId() {
+  const cryptoApi = globalThis.crypto;
+  if (cryptoApi?.getRandomValues) {
+    const values = new Uint32Array(1);
+    cryptoApi.getRandomValues(values);
+    return "modal-title-" + values[0].toString(36);
+  }
+  modalIdSequence += 1;
+  return "modal-title-" + modalIdSequence.toString(36);
+}
+
+const titleId = createSecureId();
 const panelRef = ref<HTMLElement | null>(null);
 
 function onBackdropClick() {
