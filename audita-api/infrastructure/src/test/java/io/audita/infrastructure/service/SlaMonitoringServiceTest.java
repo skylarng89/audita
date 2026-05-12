@@ -40,15 +40,24 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class SlaMonitoringServiceTest {
 
-    @Mock ChangeRequestRepository changeRequestRepository;
-    @Mock CrApproverRepository crApproverRepository;
-    @Mock ActivityStreamRepository activityStreamRepository;
-    @Mock NotificationService notificationService;
-    @Mock EmailService emailService;
-    @Mock TenantRepository tenantRepository;
-    @Mock OrgSettingRepository orgSettingRepository;
-    @Mock PlatformTransactionManager transactionManager;
-    @Mock TransactionStatus transactionStatus;
+    @Mock
+    ChangeRequestRepository changeRequestRepository;
+    @Mock
+    CrApproverRepository crApproverRepository;
+    @Mock
+    ActivityStreamRepository activityStreamRepository;
+    @Mock
+    NotificationService notificationService;
+    @Mock
+    EmailService emailService;
+    @Mock
+    TenantRepository tenantRepository;
+    @Mock
+    OrgSettingRepository orgSettingRepository;
+    @Mock
+    PlatformTransactionManager transactionManager;
+    @Mock
+    TransactionStatus transactionStatus;
 
     @InjectMocks
     SlaMonitoringService slaMonitoringService;
@@ -91,11 +100,10 @@ class SlaMonitoringServiceTest {
         verify(changeRequestRepository).save(cr);
         verify(notificationService).createAndPush(eq(creator.getId()), eq("SLA_BREACH"), any(), any(), any());
         verify(emailService).sendSlaBreachEmail(
-                eq(creator.getEmail()),
-                eq(creator.getFullName()),
-                eq(cr.getTitle()),
-                eq(cr.getId().toString())
-        );
+                creator.getEmail(),
+                creator.getFullName(),
+                cr.getTitle(),
+                cr.getId().toString());
     }
 
     @Test

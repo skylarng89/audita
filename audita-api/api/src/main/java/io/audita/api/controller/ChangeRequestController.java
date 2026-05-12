@@ -61,7 +61,7 @@ public class ChangeRequestController {
                 req.scheduledEnd(),
                 req.affectedSystems() == null ? null : req.affectedSystems().toArray(String[]::new),
                 createdById);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ChangeRequestResponse.from(created));
+        return new ResponseEntity<>(ChangeRequestResponse.from(created), HttpStatus.CREATED);
     }
 
     @PatchMapping("/{id}")
@@ -140,7 +140,7 @@ public class ChangeRequestController {
     public ResponseEntity<CrApproverResponse> addApprover(@PathVariable UUID id,
             @Valid @RequestBody AddApproverRequest req) {
         var created = changeRequestService.addApprover(id, req.userId(), req.isRequired());
-        return ResponseEntity.status(HttpStatus.CREATED).body(CrApproverResponse.from(created));
+        return new ResponseEntity<>(CrApproverResponse.from(created), HttpStatus.CREATED);
     }
 
     @PatchMapping("/{id}/approvers/reorder")
@@ -222,7 +222,7 @@ public class ChangeRequestController {
             @AuthenticationPrincipal UserPrincipal principal) {
 
         var saved = changeRequestService.uploadAttachment(id, principal.userId(), principal.role(), file);
-        return ResponseEntity.status(HttpStatus.CREATED).body(AttachmentResponse.from(saved));
+        return new ResponseEntity<>(AttachmentResponse.from(saved), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}/attachments/{attachmentId}/download")

@@ -1,8 +1,25 @@
 {
   "java.configuration.updateBuildConfiguration": "automatic",
+  "java.import.gradle.enabled": true,
+  "java.import.gradle.wrapper.enabled": true,
+  "java.import.gradle.nestedProjects": true,
+  "java.import.gradle.java.home": "/usr/lib/jvm/java-25-openjdk-amd64",
+  "java.jdt.ls.java.home": "/usr/lib/jvm/java-25-openjdk-amd64",
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-25",
+      "path": "/usr/lib/jvm/java-25-openjdk-amd64",
+      "default": true
+    },
+    {
+      "name": "JavaSE-21",
+      "path": "/usr/lib/jvm/java-21-openjdk-amd64"
+    }
+  ],
+  "java.errors.incompleteClasspath.severity": "ignore",
   "java.compile.nullAnalysis.mode": "automatic",
   "sonarlint.connectedMode.project": {
-    "connectionId": "sonarqube-server-local",
-    "projectKey": "audita-api"
+    "connectionId": "skylarng89",
+    "projectKey": "skylarng89_audita"
   }
 }

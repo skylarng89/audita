@@ -2,9 +2,16 @@
   <div>
     <!-- Logo / brand mark -->
     <div class="flex justify-center mb-8">
-      <span class="text-3xl font-black tracking-tight text-primary"
-        >audita</span
-      >
+      <img
+        src="/brand/audita-icon-light.svg"
+        alt="Audita"
+        class="w-14 h-14 rounded-2xl dark:hidden"
+      />
+      <img
+        src="/brand/audita-icon-dark.svg"
+        alt="Audita"
+        class="w-14 h-14 rounded-2xl hidden dark:block"
+      />
     </div>
 
     <div

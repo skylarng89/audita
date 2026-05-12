@@ -78,9 +78,9 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Title -->
             <div class="md:col-span-2">
-              <label class="field-label"
-                >Title <span class="text-danger">*</span></label
-              >
+              <p class="field-label">
+                Title <span class="text-danger">*</span>
+              </p>
               <input
                 v-model="editForm.title"
                 class="input mt-1"
@@ -90,7 +90,7 @@
 
             <!-- Priority -->
             <div>
-              <label class="field-label">Priority</label>
+              <p class="field-label">Priority</p>
               <select v-model="editForm.priority" class="input mt-1">
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
@@ -101,7 +101,7 @@
 
             <!-- Risk -->
             <div>
-              <label class="field-label">Risk Level</label>
+              <p class="field-label">Risk Level</p>
               <select v-model="editForm.riskLevel" class="input mt-1">
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
@@ -112,7 +112,7 @@
 
             <!-- Approval Type -->
             <div>
-              <label class="field-label">Approval Type</label>
+              <p class="field-label">Approval Type</p>
               <select v-model="editForm.approvalType" class="input mt-1">
                 <option value="LINEAR">Linear</option>
                 <option value="NON_LINEAR">Non-Linear</option>
@@ -121,7 +121,7 @@
 
             <!-- Category -->
             <div>
-              <label class="field-label">Category</label>
+              <p class="field-label">Category</p>
               <input
                 v-model="editForm.category"
                 class="input mt-1"
@@ -131,7 +131,7 @@
 
             <!-- Scheduled Start -->
             <div>
-              <label class="field-label">Scheduled Start</label>
+              <p class="field-label">Scheduled Start</p>
               <div class="mt-1 grid grid-cols-2 gap-2">
                 <FlatPickr
                   v-model="editForm.scheduledStartDate"
@@ -148,7 +148,7 @@
 
             <!-- Scheduled End -->
             <div>
-              <label class="field-label">Scheduled End</label>
+              <p class="field-label">Scheduled End</p>
               <div class="mt-1 grid grid-cols-2 gap-2">
                 <FlatPickr
                   v-model="editForm.scheduledEndDate"
@@ -165,7 +165,7 @@
 
             <!-- Affected Systems -->
             <div class="md:col-span-2">
-              <label class="field-label">Affected Systems</label>
+              <p class="field-label">Affected Systems</p>
               <div
                 class="input mt-1 flex flex-wrap gap-1 min-h-[2.5rem] cursor-text"
                 @click="editAffectedSystemsInputRef?.focus()"
@@ -200,7 +200,7 @@
 
             <!-- Description -->
             <div class="md:col-span-2">
-              <label class="field-label">Description</label>
+              <p class="field-label">Description</p>
               <EditorContent
                 :editor="editEditor"
                 class="input mt-1 min-h-36 p-3"
@@ -218,7 +218,7 @@
                 :key="def.id"
                 class="grid grid-cols-[200px_1fr] gap-3 items-center"
               >
-                <label class="text-sm font-medium">
+                <label class="text-sm font-medium" :for="`cf-${def.id}`">
                   {{ def.label }}
                   <span v-if="def.isRequired" class="text-danger ml-0.5"
                     >*</span
@@ -226,6 +226,7 @@
                 </label>
                 <select
                   v-if="def.fieldType === 'DROPDOWN'"
+                  :id="`cf-${def.id}`"
                   v-model="localFieldValues[def.id]"
                   class="input"
                 >
@@ -236,6 +237,7 @@
                 </select>
                 <input
                   v-else-if="def.fieldType === 'CHECKBOX'"
+                  :id="`cf-${def.id}`"
                   type="checkbox"
                   class="h-4 w-4 accent-primary"
                   :checked="localFieldValues[def.id] === 'true'"
@@ -249,6 +251,7 @@
                 />
                 <input
                   v-else
+                  :id="`cf-${def.id}`"
                   :type="
                     def.fieldType === 'NUMBER'
                       ? 'number'
@@ -658,6 +661,8 @@ import FlatPickr from "vue-flatpickr-component";
 
 definePageMeta({ middleware: "auth" });
 
+const changeRequest = ref<ChangeRequest | null>(null);
+
 useHead(
   computed(() => ({
     title: changeRequest.value
@@ -692,7 +697,6 @@ const {
   postComment,
 } = useChangeRequests();
 
-const changeRequest = ref<ChangeRequest | null>(null);
 const approvers = ref<CrApprover[]>([]);
 const customFields = ref<ChangeRequestCustomFieldValue[]>([]);
 const fieldDefinitions = ref<CustomFieldDefinition[]>([]);
@@ -762,7 +766,7 @@ const editAffectedSystemsInputRef = ref<HTMLInputElement | null>(null);
 const editAffectedSystemsTagInput = ref("");
 
 function addEditAffectedSystem() {
-  const val = editAffectedSystemsTagInput.value.replace(/,/g, "").trim();
+  const val = editAffectedSystemsTagInput.value.replaceAll(",", "").trim();
   if (val && !editForm.affectedSystems.includes(val)) {
     editForm.affectedSystems.push(val);
   }
@@ -1131,8 +1135,4 @@ watch(
   () => [editForm.scheduledStartDate, editForm.scheduledStartTime],
   () => onEditStartChange(),
 );
-
-onBeforeUnmount(() => {
-  editEditor.value?.destroy();
-});
 </script>

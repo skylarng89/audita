@@ -86,7 +86,7 @@ const initials = computed(() =>
 function toggleDark() {
   isDark.value = !isDark.value;
   document.documentElement.classList.toggle("dark", isDark.value);
-  localStorage.setItem("audita-theme", isDark.value ? "dark" : "light");
+  localStorage.setItem("color-scheme", isDark.value ? "dark" : "light");
   open.value = false;
 }
 
@@ -103,9 +103,12 @@ onMounted(() => {
     }
   });
 
-  // Restore persisted theme
-  const saved = localStorage.getItem("audita-theme");
-  isDark.value = saved === "dark";
+  // Restore persisted preference or system preference
+  const saved = localStorage.getItem("color-scheme");
+  const prefersDark = globalThis.matchMedia(
+    "(prefers-color-scheme: dark)",
+  ).matches;
+  isDark.value = saved ? saved === "dark" : prefersDark;
   document.documentElement.classList.toggle("dark", isDark.value);
 });
 </script>

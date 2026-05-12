@@ -50,9 +50,7 @@ class TenantSettingsControllerWebMvcTest {
                 new TenantSettingsPort.TenantSettings(
                         new TenantSettingsPort.TenantProfile("Acme Corp", "acme", "ACTIVE"),
                         new TenantSettingsPort.WorkflowDefaults(ApprovalType.LINEAR, true),
-                        new TenantSettingsPort.SlaDefaults(72, 48, 24, 8, 1)
-                )
-        );
+                        new TenantSettingsPort.SlaDefaults(72, 48, 24, 8, 1)));
 
         try {
             mockMvc.perform(get("/api/v1/settings"))
@@ -64,7 +62,7 @@ class TenantSettingsControllerWebMvcTest {
             SecurityContextHolder.clearContext();
         }
 
-        verify(tenantSettingsPort).getTenantSettings(eq(principal.tenantSlug()));
+        verify(tenantSettingsPort).getTenantSettings(principal.tenantSlug());
     }
 
     @Test
@@ -74,9 +72,7 @@ class TenantSettingsControllerWebMvcTest {
                 new TenantSettingsPort.TenantSettings(
                         new TenantSettingsPort.TenantProfile("Acme Corp", "acme", "ACTIVE"),
                         new TenantSettingsPort.WorkflowDefaults(ApprovalType.NON_LINEAR, false),
-                        new TenantSettingsPort.SlaDefaults(96, 72, 36, 12, 3)
-                )
-        );
+                        new TenantSettingsPort.SlaDefaults(96, 72, 36, 12, 3)));
 
         String body = """
                 {
@@ -96,8 +92,8 @@ class TenantSettingsControllerWebMvcTest {
 
         try {
             mockMvc.perform(patch("/api/v1/settings")
-                            .contentType("application/json")
-                            .content(body))
+                    .contentType("application/json")
+                    .content(body))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.workflowDefaults.approvalTypeDefault").value("NON_LINEAR"))
                     .andExpect(jsonPath("$.slaDefaults.warningBeforeHours").value(3));
@@ -131,8 +127,8 @@ class TenantSettingsControllerWebMvcTest {
 
         try {
             mockMvc.perform(patch("/api/v1/settings")
-                            .contentType("application/json")
-                            .content(body))
+                    .contentType("application/json")
+                    .content(body))
                     .andExpect(status().isBadRequest());
         } finally {
             SecurityContextHolder.clearContext();
@@ -144,11 +140,9 @@ class TenantSettingsControllerWebMvcTest {
                 UUID.randomUUID(),
                 "admin@acme.com",
                 "ADMIN",
-                "acme"
-        );
+                "acme");
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())
-        );
+                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
         return principal;
     }
 }

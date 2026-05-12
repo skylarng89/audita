@@ -30,12 +30,19 @@
             />
           </svg>
         </button>
-        <div
-          class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-xs"
+        <img
+          src="/brand/audita-icon-light.svg"
+          alt="Audita"
+          class="w-7 h-7 rounded-md dark:hidden"
+        />
+        <img
+          src="/brand/audita-icon-dark.svg"
+          alt="Audita"
+          class="w-7 h-7 rounded-md hidden dark:block"
+        />
+        <span class="font-bold text-sm text-on-surface dark:text-gray-100"
+          >Audita</span
         >
-          A
-        </div>
-        <span class="font-bold text-sm text-primary">Audita</span>
       </div>
 
       <!-- Desktop: spacer that matches sidebar width (width driven by --sidebar-w CSS var) -->
@@ -132,8 +139,6 @@
         v-if="mobileNavOpen"
         id="mobile-nav"
         class="fixed inset-0 z-40 md:hidden"
-        role="dialog"
-        aria-modal="true"
         aria-label="Navigation menu"
       >
         <!-- Backdrop -->
@@ -152,12 +157,19 @@
             class="flex items-center justify-between px-4 py-3 border-b border-outline-variant/50 dark:border-border-dark shrink-0"
           >
             <div class="flex items-center gap-2">
-              <div
-                class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-xs"
+              <img
+                src="/brand/audita-icon-light.svg"
+                alt="Audita"
+                class="w-7 h-7 rounded-md dark:hidden"
+              />
+              <img
+                src="/brand/audita-icon-dark.svg"
+                alt="Audita"
+                class="w-7 h-7 rounded-md hidden dark:block"
+              />
+              <span class="font-bold text-sm text-on-surface dark:text-gray-100"
+                >Audita</span
               >
-                A
-              </div>
-              <span class="font-bold text-sm text-primary">Audita</span>
             </div>
             <button
               class="btn-ghost btn-sm w-9 h-9 p-0 rounded-full"
@@ -425,19 +437,24 @@ function toggleDark() {
 
 const mobileNavOpen = ref(false);
 
+function onEsc(e: KeyboardEvent) {
+  if (e.key === "Escape" && mobileNavOpen.value) {
+    mobileNavOpen.value = false;
+  }
+}
+
 onMounted(() => {
   // Sync with persisted preference or system preference
   const stored = localStorage.getItem("color-scheme");
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const prefersDark = globalThis.matchMedia(
+    "(prefers-color-scheme: dark)",
+  ).matches;
   isDark.value = stored ? stored === "dark" : prefersDark;
   document.documentElement.classList.toggle("dark", isDark.value);
+  globalThis.addEventListener("keydown", onEsc);
+});
 
-  function onEsc(e: KeyboardEvent) {
-    if (e.key === "Escape" && mobileNavOpen.value) {
-      mobileNavOpen.value = false;
-    }
-  }
-  window.addEventListener("keydown", onEsc);
-  onUnmounted(() => window.removeEventListener("keydown", onEsc));
+onUnmounted(() => {
+  globalThis.removeEventListener("keydown", onEsc);
 });
 </script>

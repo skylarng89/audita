@@ -32,9 +32,9 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <!-- Title -->
         <div class="md:col-span-2">
-          <label class="field-label"
-            >Change Title <span class="text-danger">*</span></label
-          >
+          <p class="field-label">
+            Change Title <span class="text-danger">*</span>
+          </p>
           <input
             v-model="form.title"
             class="input mt-1"
@@ -48,9 +48,9 @@
 
         <!-- Priority -->
         <div>
-          <label class="field-label"
-            >Priority Level <span class="text-danger">*</span></label
-          >
+          <p class="field-label">
+            Priority Level <span class="text-danger">*</span>
+          </p>
           <select
             v-model="form.priority"
             class="input mt-1"
@@ -70,9 +70,9 @@
 
         <!-- Risk -->
         <div>
-          <label class="field-label"
-            >Risk Assessment <span class="text-danger">*</span></label
-          >
+          <p class="field-label">
+            Risk Assessment <span class="text-danger">*</span>
+          </p>
           <select
             v-model="form.riskLevel"
             class="input mt-1"
@@ -92,9 +92,9 @@
 
         <!-- Approval Type -->
         <div>
-          <label class="field-label"
-            >Approval Type <span class="text-danger">*</span></label
-          >
+          <p class="field-label">
+            Approval Type <span class="text-danger">*</span>
+          </p>
           <select
             v-model="form.approvalType"
             class="input mt-1"
@@ -112,7 +112,7 @@
 
         <!-- Category -->
         <div class="relative" ref="categoryWrapperRef">
-          <label class="field-label">Category</label>
+          <p class="field-label">Category</p>
           <!-- Selected tags + search input -->
           <div
             class="input mt-1 flex flex-wrap gap-1 min-h-[2.5rem] cursor-text"
@@ -167,7 +167,7 @@
 
         <!-- Scheduled Start -->
         <div>
-          <label class="field-label">Scheduled Start</label>
+          <p class="field-label">Scheduled Start</p>
           <div class="mt-1 grid grid-cols-2 gap-2">
             <FlatPickr
               v-model="form.scheduledStartDate"
@@ -187,7 +187,7 @@
 
         <!-- Scheduled End -->
         <div>
-          <label class="field-label">Scheduled End</label>
+          <p class="field-label">Scheduled End</p>
           <div class="mt-1 grid grid-cols-2 gap-2">
             <FlatPickr
               v-model="form.scheduledEndDate"
@@ -207,7 +207,7 @@
 
         <!-- Affected Systems -->
         <div class="md:col-span-2">
-          <label class="field-label">Affected Systems</label>
+          <p class="field-label">Affected Systems</p>
           <div
             class="input mt-1 flex flex-wrap gap-1 min-h-[2.5rem] cursor-text"
             @click="affectedSystemsInputRef?.focus()"
@@ -242,7 +242,7 @@
 
         <!-- Description -->
         <div class="md:col-span-2">
-          <label class="field-label">Scope and Description</label>
+          <p class="field-label">Scope and Description</p>
           <ClientOnly>
             <EditorContent :editor="editor" class="input mt-1 min-h-44 p-4" />
           </ClientOnly>
@@ -311,7 +311,7 @@ const affectedSystemsInputRef = ref<HTMLInputElement | null>(null);
 const affectedSystemsTagInput = ref("");
 
 function addAffectedSystem() {
-  const val = affectedSystemsTagInput.value.replace(/,/g, "").trim();
+  const val = affectedSystemsTagInput.value.replaceAll(",", "").trim();
   if (val && !form.affectedSystems.includes(val)) {
     form.affectedSystems.push(val);
   }
