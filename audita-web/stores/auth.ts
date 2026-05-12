@@ -24,7 +24,7 @@ interface AuthMutationOptions {
 const TENANT_SLUG_STORAGE_KEY = "audita-tenant-slug";
 
 function persistTenantSlug(tenantSlug: string | null) {
-  if (!import.meta.client) {
+  if (typeof localStorage === "undefined") {
     return;
   }
 
@@ -37,7 +37,7 @@ function persistTenantSlug(tenantSlug: string | null) {
 }
 
 function readPersistedTenantSlug() {
-  if (!import.meta.client) {
+  if (typeof localStorage === "undefined") {
     return null;
   }
 

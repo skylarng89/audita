@@ -26,6 +26,13 @@ export default defineNuxtPlugin(() => {
     };
   }
 
+  function getRequestPath(request: Request | string) {
+    if (typeof request === "string") {
+      return request;
+    }
+    return request.url;
+  }
+
   async function forceContractLogout() {
     if (contractMismatchHandled) {
       return;
@@ -84,12 +91,7 @@ export default defineNuxtPlugin(() => {
     baseURL,
 
     onRequest({ request, options }) {
-      let requestPath = "";
-      if (typeof request === "string") {
-        requestPath = request;
-      } else if (request instanceof Request) {
-        requestPath = request.url;
-      }
+      const requestPath = getRequestPath(request);
 
       const isBootstrapEndpoint =
         requestPath.includes("/api/platform/v1/bootstrap") ||
@@ -130,12 +132,7 @@ export default defineNuxtPlugin(() => {
         return;
       }
 
-      let requestPath = "";
-      if (typeof request === "string") {
-        requestPath = request;
-      } else if (request instanceof Request) {
-        requestPath = request.url;
-      }
+      const requestPath = getRequestPath(request);
 
       const isRefreshEndpoint = requestPath.includes("/api/v1/auth/refresh");
       const alreadyRetried = Boolean(
