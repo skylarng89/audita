@@ -24,7 +24,9 @@ const skeletonRows = Array.from({ length: 5 });
 
 <template>
   <div class="w-full overflow-x-auto">
-    <table class="min-w-full divide-y divide-border dark:divide-border-dark">
+    <table
+      class="w-full min-w-[980px] table-auto divide-y divide-border dark:divide-border-dark"
+    >
       <thead>
         <tr>
           <th
@@ -32,7 +34,7 @@ const skeletonRows = Array.from({ length: 5 });
             :key="col.key"
             scope="col"
             :class="[
-              'px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted',
+              'px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-muted whitespace-nowrap',
               col.headerClass,
             ]"
           >
@@ -45,7 +47,7 @@ const skeletonRows = Array.from({ length: 5 });
         <!-- Loading skeleton -->
         <template v-if="loading">
           <tr v-for="(_, i) in skeletonRows" :key="i" class="animate-pulse">
-            <td v-for="col in columns" :key="col.key" class="px-4 py-3">
+            <td v-for="col in columns" :key="col.key" class="px-6 py-4">
               <div class="h-4 rounded bg-gray-200 dark:bg-slate-700" />
             </td>
           </tr>
@@ -55,7 +57,7 @@ const skeletonRows = Array.from({ length: 5 });
         <tr v-else-if="data.length === 0">
           <td
             :colspan="columns.length"
-            class="px-4 py-12 text-center text-sm text-muted"
+            class="px-6 py-12 text-center text-sm text-muted"
           >
             {{ emptyMessage ?? "No data to display." }}
           </td>
@@ -73,7 +75,7 @@ const skeletonRows = Array.from({ length: 5 });
               v-for="col in columns"
               :key="col.key"
               :class="[
-                'px-4 py-3 text-sm text-gray-700 dark:text-gray-300',
+                'px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-middle',
                 col.class,
               ]"
             >

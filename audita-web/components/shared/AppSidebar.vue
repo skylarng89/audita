@@ -6,36 +6,6 @@
     ]"
     aria-label="Main navigation"
   >
-    <!-- Logo area -->
-    <div
-      :class="[
-        'flex items-center border-b border-outline-variant/50 dark:border-border-dark shrink-0',
-        sidebarCollapsed ? 'justify-center py-5' : 'gap-2.5 px-4 py-5',
-      ]"
-    >
-      <!-- Logo icon: light colourway on light bg, dark colourway on dark bg -->
-      <img
-        src="/brand/audita-icon-light.svg"
-        alt="Audita"
-        class="w-8 h-8 rounded-lg shrink-0 dark:hidden"
-      />
-      <img
-        src="/brand/audita-icon-dark.svg"
-        alt="Audita"
-        class="w-8 h-8 rounded-lg shrink-0 hidden dark:block"
-      />
-      <div v-if="!sidebarCollapsed" class="overflow-hidden min-w-0">
-        <p
-          class="font-bold text-sm text-on-surface dark:text-gray-100 tracking-tight truncate"
-        >
-          Audita
-        </p>
-        <p class="text-[10px] uppercase tracking-[0.16em] text-muted truncate">
-          Sovereign Architect
-        </p>
-      </div>
-    </div>
-
     <!-- Nav links -->
     <div
       :class="[

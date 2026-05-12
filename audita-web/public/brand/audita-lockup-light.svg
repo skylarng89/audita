@@ -1,15 +1,15 @@
 <svg width="640" height="160" viewBox="0 0 640 160" role="img" xmlns="http://www.w3.org/2000/svg">
-  <title>Audita — lockup light</title>
-  <rect x="0" y="0" width="640" height="160" rx="22" fill="#EEF9F6"/>
-  <line x1="110" y1="80"  x2="132" y2="80"  stroke="#00236F" stroke-width="4" stroke-linecap="round"/>
-  <line x1="132" y1="80"  x2="132" y2="102" stroke="#00236F" stroke-width="4" stroke-linecap="round"/>
-  <line x1="132" y1="102" x2="150" y2="102" stroke="#00236F" stroke-width="4" stroke-linecap="round"/>
-  <line x1="150" y1="102" x2="150" y2="56"  stroke="#00236F" stroke-width="4" stroke-linecap="round"/>
-  <line x1="150" y1="56"  x2="190" y2="56"  stroke="#00236F" stroke-width="4" stroke-linecap="round"/>
-  <line x1="190" y1="56"  x2="190" y2="102" stroke="#00236F" stroke-width="4" stroke-linecap="round"/>
-  <line x1="190" y1="102" x2="208" y2="102" stroke="#00236F" stroke-width="4" stroke-linecap="round"/>
-  <line x1="208" y1="102" x2="208" y2="80"  stroke="#00236F" stroke-width="4" stroke-linecap="round"/>
-  <line x1="208" y1="80"  x2="230" y2="80"  stroke="#00236F" stroke-width="4" stroke-linecap="round"/>
+  <title>Audita — lockup dark</title>
+  <rect x="0" y="0" width="640" height="160" rx="22" fill="#00236F"/>
+  <line x1="110" y1="80"  x2="132" y2="80"  stroke="#1ABC9C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="132" y1="80"  x2="132" y2="102" stroke="#1ABC9C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="132" y1="102" x2="150" y2="102" stroke="#1ABC9C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="150" y1="102" x2="150" y2="56"  stroke="#1ABC9C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="150" y1="56"  x2="190" y2="56"  stroke="#1ABC9C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="190" y1="56"  x2="190" y2="102" stroke="#1ABC9C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="190" y1="102" x2="208" y2="102" stroke="#1ABC9C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="208" y1="102" x2="208" y2="80"  stroke="#1ABC9C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="208" y1="80"  x2="230" y2="80"  stroke="#1ABC9C" stroke-width="4" stroke-linecap="round"/>
   <circle cx="132" cy="80"  r="4.5" fill="#1ABC9C"/>
   <circle cx="132" cy="102" r="4.5" fill="#1ABC9C"/>
   <circle cx="150" cy="102" r="4.5" fill="#1ABC9C"/>
@@ -19,7 +19,7 @@
   <circle cx="208" cy="102" r="4.5" fill="#1ABC9C"/>
   <circle cx="208" cy="80"  r="4.5" fill="#1ABC9C"/>
   <circle cx="170" cy="56"  r="8"   fill="#1ABC9C"/>
-  <circle cx="170" cy="56"  r="13"  fill="none" stroke="#1ABC9C" stroke-width="1.5" opacity="0.35"/>
-  <line x1="246" y1="20" x2="246" y2="140" stroke="#00236F" stroke-width="1" opacity="0.2"/>
-  <text x="443" y="80" font-family="'DM Sans','Helvetica Neue',Arial,sans-serif" font-size="52" font-weight="700" fill="#00236F" text-anchor="middle" letter-spacing="8" dominant-baseline="middle">AUDITA</text>
+  <circle cx="170" cy="56"  r="13"  fill="none" stroke="#1ABC9C" stroke-width="1.5" opacity="0.3"/>
+  <line x1="246" y1="20" x2="246" y2="140" stroke="#1ABC9C" stroke-width="1" opacity="0.3"/>
+  <text x="443" y="80" font-family="'DM Sans','Helvetica Neue',Arial,sans-serif" font-size="52" font-weight="700" fill="white" text-anchor="middle" letter-spacing="8" dominant-baseline="middle">AUDITA</text>
 </svg>

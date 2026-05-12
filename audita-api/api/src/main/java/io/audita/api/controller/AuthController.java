@@ -22,6 +22,7 @@ public class AuthController {
 
     private static final String REFRESH_COOKIE = "refreshToken";
     private static final String MESSAGE_KEY = "message";
+    private static final String REFRESH_COOKIE_PATH = "/api/v1/auth";
 
     private final AuthPort authService;
 
@@ -75,6 +76,20 @@ public class AuthController {
         return ResponseEntity.ok(toAuthResponse(result));
     }
 
+    @PostMapping("/session")
+    public ResponseEntity<AuthResponse> session(HttpServletRequest request) {
+
+        String rawToken = extractRefreshCookie(request);
+        if (rawToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String clientIp = resolveClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
+        LoginResult result = authService.restoreSession(rawToken, clientIp, userAgent);
+        return ResponseEntity.ok(toAuthResponse(result));
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
             HttpServletRequest request,
@@ -110,11 +125,12 @@ public class AuthController {
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     private void setRefreshCookie(HttpServletResponse response, String rawToken) {
-        if (rawToken == null) return;
+        if (rawToken == null)
+            return;
         Cookie cookie = new Cookie(REFRESH_COOKIE, rawToken);
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
-        cookie.setPath("/api/v1/auth/refresh");
+        cookie.setPath(REFRESH_COOKIE_PATH);
         cookie.setAttribute("SameSite", "Strict");
         cookie.setMaxAge((int) (refreshExpiryDays * 24 * 60 * 60));
         response.addCookie(cookie);
@@ -124,13 +140,14 @@ public class AuthController {
         Cookie cookie = new Cookie(REFRESH_COOKIE, "");
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
-        cookie.setPath("/api/v1/auth/refresh");
+        cookie.setPath(REFRESH_COOKIE_PATH);
         cookie.setMaxAge(0);
         response.addCookie(cookie);
     }
 
     private String extractRefreshCookie(HttpServletRequest request) {
-        if (request.getCookies() == null) return null;
+        if (request.getCookies() == null)
+            return null;
         return Arrays.stream(request.getCookies())
                 .filter(c -> REFRESH_COOKIE.equals(c.getName()))
                 .map(Cookie::getValue)
@@ -150,7 +167,8 @@ public class AuthController {
         }
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {
-            // X-Forwarded-For may contain a comma-separated list; take the first (client) IP
+            // X-Forwarded-For may contain a comma-separated list; take the first (client)
+            // IP
             return forwarded.split(",")[0].trim();
         }
         return request.getRemoteAddr();

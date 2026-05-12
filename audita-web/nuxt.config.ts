@@ -23,6 +23,8 @@ export default defineNuxtConfig({
     apiInternalBase: process.env.NUXT_API_INTERNAL_BASE ?? "http://api:8080",
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE ?? "",
+      apiContractVersion:
+        process.env.NUXT_PUBLIC_API_CONTRACT_VERSION ?? "2026-05-12-auth-v2",
     },
   },
 
@@ -39,7 +41,23 @@ export default defineNuxtConfig({
         },
       ],
       link: [
-        { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+        {
+          rel: "icon",
+          type: "image/svg+xml",
+          href: "/brand/audita-icon-light.svg",
+          media: "(prefers-color-scheme: light)",
+        },
+        {
+          rel: "icon",
+          type: "image/svg+xml",
+          href: "/brand/audita-icon-dark.svg",
+          media: "(prefers-color-scheme: dark)",
+        },
+        {
+          rel: "icon",
+          type: "image/svg+xml",
+          href: "/brand/audita-icon-light.svg",
+        },
         { rel: "preconnect", href: "https://fonts.googleapis.com" },
         {
           rel: "stylesheet",

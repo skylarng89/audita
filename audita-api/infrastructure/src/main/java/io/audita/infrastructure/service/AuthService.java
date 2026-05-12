@@ -61,15 +61,15 @@ public class AuthService implements AuthPort {
     private long refreshExpiryDays;
 
     public AuthService(UserRepository userRepository,
-                       SuperAdminRepository superAdminRepository,
-                       RefreshTokenRepository refreshTokenRepository,
-                       PasswordResetTokenRepository passwordResetTokenRepository,
-                       InviteTokenRepository inviteTokenRepository,
-                       TenantRepository tenantRepository,
-                       TenantAllowedDomainRepository allowedDomainRepository,
-                       JwtService jwtService,
-                       PasswordEncoder passwordEncoder,
-                       EmailService emailService) {
+            SuperAdminRepository superAdminRepository,
+            RefreshTokenRepository refreshTokenRepository,
+            PasswordResetTokenRepository passwordResetTokenRepository,
+            InviteTokenRepository inviteTokenRepository,
+            TenantRepository tenantRepository,
+            TenantAllowedDomainRepository allowedDomainRepository,
+            JwtService jwtService,
+            PasswordEncoder passwordEncoder,
+            EmailService emailService) {
         this.userRepository = userRepository;
         this.superAdminRepository = superAdminRepository;
         this.refreshTokenRepository = refreshTokenRepository;
@@ -86,10 +86,10 @@ public class AuthService implements AuthPort {
 
     @Override
     public LoginResult loginTenantUser(String email,
-                                       String rawPassword,
-                                       String tenantSlug,
-                                       String clientIp,
-                                       String userAgent) {
+            String rawPassword,
+            String tenantSlug,
+            String clientIp,
+            String userAgent) {
         // Rate limit: 5 attempts per 15 minutes per IP+email composite key
         String rateLimitKey = "login:" + clientIp + ":" + email.toLowerCase();
         enforceRateLimit(rateLimitKey, 5, Duration.ofMinutes(15), "TOO_MANY_ATTEMPTS",
@@ -108,7 +108,8 @@ public class AuthService implements AuthPort {
             throw new DomainNotPermittedException("INVALID_CREDENTIALS", "Invalid email or password.");
         }
 
-        // AUTH-009: Domain whitelist check — if any domains are configured for the tenant,
+        // AUTH-009: Domain whitelist check — if any domains are configured for the
+        // tenant,
         // the user's email domain must be in the list.
         checkDomainWhitelist(email, tenantSlug);
 
@@ -133,23 +134,21 @@ public class AuthService implements AuthPort {
     // ── Refresh ────────────────────────────────────────────────────────────────
 
     @Override
-    public LoginResult refreshToken(String rawRefreshToken, String clientIp, String userAgent) {
-        String hash = sha256(rawRefreshToken);
-        RefreshTokenEntity token = refreshTokenRepository.findByTokenHash(hash)
-                .orElseThrow(() -> new DomainNotPermittedException(
-                        INVALID_TOKEN_CODE, "Refresh token is invalid or expired."));
+    public LoginResult restoreSession(String rawRefreshToken, String clientIp, String userAgent) {
+        RefreshTokenEntity token = requireValidRefreshToken(rawRefreshToken, clientIp, userAgent);
+        String tenantSlug = TenantContext.getCurrentTenant();
+        return issueAccessTokenForExistingSession(token.getUser(), tenantSlug);
+    }
 
-        if (!token.isValid()) {
-            throw new DomainNotPermittedException(INVALID_TOKEN_CODE, "Refresh token is invalid or expired.");
-        }
-        if (!isSessionContextValid(token, clientIp, userAgent)) {
-            throw new DomainNotPermittedException(INVALID_TOKEN_CODE, "Refresh token context is invalid.");
-        }
+    @Override
+    public LoginResult refreshToken(String rawRefreshToken, String clientIp, String userAgent) {
+        RefreshTokenEntity token = requireValidRefreshToken(rawRefreshToken, clientIp, userAgent);
 
         token.setRevoked(true);
         refreshTokenRepository.save(token);
 
-        // TenantContext is already set by TenantResolutionFilter from X-Tenant-Slug header
+        // TenantContext is already set by TenantResolutionFilter from X-Tenant-Slug
+        // header
         String tenantSlug = TenantContext.getCurrentTenant();
         return issueTokensForUser(token.getUser(), tenantSlug, clientIp, userAgent);
     }
@@ -158,7 +157,8 @@ public class AuthService implements AuthPort {
 
     @Override
     public void logout(String rawRefreshToken) {
-        if (rawRefreshToken == null) return;
+        if (rawRefreshToken == null)
+            return;
         String hash = sha256(rawRefreshToken);
         refreshTokenRepository.findByTokenHash(hash).ifPresent(t -> {
             t.setRevoked(true);
@@ -170,7 +170,8 @@ public class AuthService implements AuthPort {
 
     @Override
     public void forgotPassword(String email) {
-        // Rate limit: 3 requests per hour per email (prevents token flooding / email bombing)
+        // Rate limit: 3 requests per hour per email (prevents token flooding / email
+        // bombing)
         String rateLimitKey = "forgot:" + email.toLowerCase();
         enforceRateLimit(rateLimitKey, 3, Duration.ofHours(1), "TOO_MANY_ATTEMPTS",
                 "Too many reset requests. Please try again in an hour.");
@@ -191,7 +192,7 @@ public class AuthService implements AuthPort {
         String hash = sha256(rawToken);
         PasswordResetTokenEntity token = passwordResetTokenRepository.findByTokenHash(hash)
                 .orElseThrow(() -> new DomainNotPermittedException(
-                INVALID_TOKEN_CODE, "Password reset link is invalid or has expired."));
+                        INVALID_TOKEN_CODE, "Password reset link is invalid or has expired."));
 
         if (!token.isValid()) {
             throw new DomainNotPermittedException(INVALID_TOKEN_CODE,
@@ -216,7 +217,7 @@ public class AuthService implements AuthPort {
         String hash = sha256(rawToken);
         InviteTokenEntity token = inviteTokenRepository.findByTokenHash(hash)
                 .orElseThrow(() -> new DomainNotPermittedException(
-                INVALID_TOKEN_CODE, "Invite link is invalid or has expired."));
+                        INVALID_TOKEN_CODE, "Invite link is invalid or has expired."));
 
         if (!token.isValid()) {
             throw new DomainNotPermittedException(INVALID_TOKEN_CODE,
@@ -252,16 +253,17 @@ public class AuthService implements AuthPort {
     @Override
     @Cacheable(value = "onboardingStatus", key = "'completed'")
     public boolean isOnboardingCompleted() {
-        // True if either the legacy SUPER_ADMIN bootstrap or the single-tenant setup has run.
+        // True if either the legacy SUPER_ADMIN bootstrap or the single-tenant setup
+        // has run.
         return superAdminRepository.count() > 0 || tenantRepository.count() > 0;
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────────
 
     private LoginResult issueTokensForUser(UserEntity user,
-                                           String tenantSlug,
-                                           String clientIp,
-                                           String userAgent) {
+            String tenantSlug,
+            String clientIp,
+            String userAgent) {
         String role = user.getRole() != null ? user.getRole().getName() : "Requester";
         String accessToken = jwtService.issue(user.getId(), user.getEmail(), role, tenantSlug);
 
@@ -278,9 +280,34 @@ public class AuthService implements AuthPort {
                 user.getEmail(), user.getFullName(), role, tenantSlug);
     }
 
+    private LoginResult issueAccessTokenForExistingSession(UserEntity user, String tenantSlug) {
+        String role = user.getRole() != null ? user.getRole().getName() : "Requester";
+        String accessToken = jwtService.issue(user.getId(), user.getEmail(), role, tenantSlug);
+        return new LoginResult(accessToken, null, user.getId(),
+                user.getEmail(), user.getFullName(), role, tenantSlug);
+    }
+
+    private RefreshTokenEntity requireValidRefreshToken(String rawRefreshToken,
+            String clientIp,
+            String userAgent) {
+        String hash = sha256(rawRefreshToken);
+        RefreshTokenEntity token = refreshTokenRepository.findByTokenHash(hash)
+                .orElseThrow(() -> new DomainNotPermittedException(
+                        INVALID_TOKEN_CODE, "Refresh token is invalid or expired."));
+
+        if (!token.isValid()) {
+            throw new DomainNotPermittedException(INVALID_TOKEN_CODE, "Refresh token is invalid or expired.");
+        }
+        if (!isSessionContextValid(token, clientIp, userAgent)) {
+            throw new DomainNotPermittedException(INVALID_TOKEN_CODE, "Refresh token context is invalid.");
+        }
+        return token;
+    }
+
     /**
      * Domain whitelist check (AUTH-009).
-     * If no domains are configured for the tenant, all domains are allowed (open tenant).
+     * If no domains are configured for the tenant, all domains are allowed (open
+     * tenant).
      * If domains are configured, the user's email domain must match one of them.
      */
     private void checkDomainWhitelist(String email, String tenantSlug) {
@@ -300,10 +327,11 @@ public class AuthService implements AuthPort {
     /**
      * Sliding-window in-memory rate limiter.
      * Evicts timestamps outside the window on each check.
-     * Not distributed — suitable for single-instance deployment; replace with Redis/Bucket4j for HA.
+     * Not distributed — suitable for single-instance deployment; replace with
+     * Redis/Bucket4j for HA.
      */
     private void enforceRateLimit(String key, int maxRequests, Duration window,
-                                   String errorCode, String message) {
+            String errorCode, String message) {
         Instant cutoff = Instant.now().minus(window);
         LinkedList<Instant> bucket = rateBuckets.computeIfAbsent(key, k -> new LinkedList<>());
         synchronized (bucket) {

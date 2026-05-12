@@ -13,6 +13,11 @@
   html {
     @apply text-[#191c1e] bg-[#f7f9fb] antialiased;
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(15px, 0.2vw + 14px, 18px);
+    line-height: 1.45;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   html.dark {
@@ -56,6 +61,7 @@
            transition-all duration-150 focus-visible:outline-none focus-visible:ring-2
            focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50
            disabled:cursor-not-allowed cursor-pointer;
+    min-height: clamp(2.25rem, 1.6rem + 0.8vw, 2.75rem);
   }
 
   /* Variant buttons get a consistent default size even if btn-sm|md|lg is omitted. */
@@ -70,6 +76,7 @@
            transition-all duration-150 focus-visible:outline-none focus-visible:ring-2
            focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50
            disabled:cursor-not-allowed cursor-pointer;
+    min-height: clamp(2.25rem, 1.6rem + 0.8vw, 2.75rem);
   }
 
   .btn-primary,
@@ -273,6 +280,16 @@
 
   .page-subtitle {
     @apply text-sm text-muted mt-1 dark:text-slate-400;
+  }
+
+  /* ── App shell sizing for fluid desktop/4K layouts ────────────────────── */
+  .app-main {
+    padding: clamp(1rem, 1.2vw, 2rem);
+  }
+
+  .app-content {
+    width: 100%;
+    max-width: none;
   }
 
   /* ── Flatpickr (date/time picker) ─────────────────────────────────────── */

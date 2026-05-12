@@ -2,7 +2,7 @@
 
 **Project:** Audita — Multi-Tenant ITIL/ITSM Change Management Platform
 **Version:** 0.1.0
-**Last Updated:** 2026-05-11
+**Last Updated:** 2026-05-12
 **Team Size:** 2–3 Developers
 
 ---
@@ -257,18 +257,64 @@
 
 ### Group G — WCAG 2.2 Compliance
 
-| Task ID  | Task                                                                                             | Priority | Status         | Assigned To | Notes                                                                                                                                                                                                  |
+| Task ID | Task | Priority | Status | Assigned To | Notes |
+
+## Sprint 11: Session Hardening (2026-05-12)
+
+> **Goal:** Make auth recovery fail closed after redeploys, prevent stale-session loops, and ensure logout revokes refresh state reliably.
+
+### Backend + Frontend Session Resilience (`audita-api` + `audita-web`)
+
+| Task ID  | Task                                                                       | Priority | Status       | Assigned To | Notes                                                                                                                                                                                     |
+| -------- | -------------------------------------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SESS-001 | Fix refresh cookie scope so logout receives and revokes refresh token      | High     | ✅ Completed | Developer 1 | `AuthController` and `SsoController` now scope refresh cookie to `/api/v1/auth`; added `AuthControllerWebMvcTest`.                                                                        |
+| SESS-002 | Restrict frontend silent refresh to `401` responses only                   | High     | ✅ Completed | Developer 2 | `plugins/api.ts` no longer treats empty `403` as token expiry; retry remains single-shot.                                                                                                 |
+| SESS-003 | Persist and enforce access-token expiry in frontend auth state             | High     | ✅ Completed | Developer 2 | `stores/auth.ts` now stores `tokenExpiresAt`, invalidates stale persisted sessions, and refresh responses refresh the full auth state.                                                    |
+| SESS-004 | Invalidate onboarding/session cache on auth transitions                    | Medium   | ✅ Completed | Developer 2 | `setAuth`, `setAccessToken`, and `clearAuth` now invalidate onboarding bootstrap cache to avoid stale route decisions after redeploy or logout.                                           |
+| SESS-005 | Force logout on tenant-context mismatch                                    | High     | ✅ Completed | Developer 2 | `middleware/tenant.ts` now fails closed by calling logout when the resolved tenant does not match the authenticated tenant context.                                                       |
+| SESS-006 | Add regression coverage for session-hardening helpers and middleware flows | High     | ✅ Completed | Developer 2 | Added `tests/auth/session.spec.ts`, `tests/auth/tenant-resolution.spec.ts`, `tests/middleware/tenant.spec.ts`, and backend `AuthControllerWebMvcTest`; frontend typecheck passes cleanly. |
+| SESS-007 | Remove JS-readable auth-token persistence and restore session via refresh  | High     | ✅ Completed | Developer 2 | `stores/auth.ts` no longer persists access tokens in cookies; `plugins/auth.ts` restores in-memory auth via the HttpOnly refresh cookie at startup.                                       |
+
+## Recent Implementations
+
+### Session Hardening (Completed 2026-05-12)
+
+**Overview**: Hardened auth/session behavior so redeploy-time failures either recover through the existing refresh-token path or fail closed without stale 403 loops.
+
+**Files Created/Modified**:
+
+- `audita-api/api/src/main/java/io/audita/api/controller/AuthController.java` — broadened refresh-cookie path so logout can revoke refresh state.
+- `audita-api/api/src/main/java/io/audita/api/controller/SsoController.java` — aligned SSO-issued refresh-cookie path with auth controller scope.
+- `audita-api/api/src/test/java/io/audita/api/controller/AuthControllerWebMvcTest.java` — added focused cookie-scope regression coverage.
+- `audita-web/plugins/api.ts` — restricted silent refresh to `401`, serialized refresh calls, and refreshed full auth state on success.
+- `audita-web/stores/auth.ts` — removed JS-readable auth-token persistence, kept access tokens in memory, and retained cache invalidation on auth transitions.
+- `audita-web/plugins/auth.ts` — restores the in-memory session from the HttpOnly refresh cookie before first render.
+- `audita-web/composables/authSession.ts` — added pure session helper functions for expiry and refresh decisions.
+- `audita-web/composables/tenantResolution.ts` — shared tenant slug resolution used by startup auth restore and tenant middleware.
+- `audita-web/middleware/tenant.ts` — fail-closed logout on tenant mismatch.
+- `audita-web/tests/auth/session.spec.ts` — session-helper regression tests.
+- `audita-web/tests/auth/tenant-resolution.spec.ts` — tenant-resolution regression tests.
+- `audita-web/tests/middleware/tenant.spec.ts` — tenant-mismatch logout regression test.
+
+**Key Changes**:
+
+- Logout can now receive the refresh cookie and revoke server-side refresh state instead of only clearing client state.
+- Frontend no longer hides real authorization failures behind refresh retries on `403`.
+- Frontend no longer stores access tokens in JS-readable cookies; a cold load now restores session state through the HttpOnly refresh cookie only.
+- Expired or legacy persisted access tokens no longer keep the UI in a broken half-authenticated state.
+
+**Test Coverage**: Backend focused auth controller test passing; frontend focused session/tenant tests passing; frontend typecheck passing.
 | -------- | ------------------------------------------------------------------------------------------------ | -------- | -------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| WCAG-001 | Add skip-to-main-content link at top of default layout (2.4.1)                                   | High     | ✅ Completed   | Developer 2 | `.skip-link` class in `main.css`; `<a href="#main-content" class="skip-link">` at top of `layouts/default.vue`; `<main id="main-content" tabindex="-1">` as target.                                    |
-| WCAG-002 | Add `<title>` to every page via `useHead` (2.4.2)                                                | High     | ✅ Completed   | Developer 2 | `useHead({ title: '… — Audita' })` added to all pages: Dashboard, CR list/create/detail, Audit Trail, Users, Groups, Custom Fields, Settings, Sign In, Reset Password, Forgot Password, Accept Invite. |
-| WCAG-003 | Fix `<label for>` / `<input id>` wiring in CR list filter bar (4.1.2)                            | High     | ✅ Completed   | Developer 2 | `<label for="filter-status">` + `<select id="filter-status">` and `<label for="filter-priority">` + `<select id="filter-priority">` added in CR list.                                                  |
-| WCAG-004 | Fix `<label for>` wiring in auth and settings forms (4.1.2)                                      | High     | ✅ Completed   | Developer 2 | `reset-password.vue` and `accept-invite.vue` password inputs now have matching `id`/`for` pairs. `sign-in.vue` had `id` added.                                                                         |
-| WCAG-005 | Add proper `role="tablist"` / `role="tab"` / `aria-selected` to CR detail tabs (1.3.1, 4.1.2)    | High     | ✅ Completed   | Developer 2 | Full ARIA tablist semantics + Arrow key/Home/End keyboard nav added inline to `[id].vue` via `crTabs` computed array and `onTabKeyDown()`.                                                             |
-| WCAG-006 | Implement focus trap in `AppModal` (2.4.3)                                                       | High     | ✅ Completed   | Developer 2 | Full focus-trap implemented in `AppModal.vue`: `getFocusable()`, Tab/Shift+Tab loop, Escape close, auto-focus first element on open, `aria-labelledby`, `role="dialog"`.                               |
-| WCAG-007 | Add `scroll-margin-top` to main content so fixed header never obscures focused elements (2.4.12) | Medium   | ✅ Completed   | Developer 2 | `scroll-margin-top: 4.5rem` added to `:focus-visible` selector in `@layer base` of `assets/css/main.css`.                                                                                              |
-| WCAG-008 | Announce dynamic content changes via `aria-live` (4.1.3)                                         | Medium   | ✅ Completed   | Developer 2 | `aria-live="polite"` SR-only span on CR list for filter results; `role="log" aria-live="polite"` on toast container; `role="alert"` on error toasts; `aria-live="polite"` on password strength text.   |
-| WCAG-009 | Add `autocomplete` tokens to all auth form inputs (1.3.5)                                        | Medium   | ✅ Completed   | Developer 2 | `autocomplete="new-password"` added to both password inputs in `accept-invite.vue`. `sign-in.vue` and `reset-password.vue` already had correct values.                                                 |
-| WCAG-010 | Ensure all interactive targets meet 24×24 px minimum (2.5.8)                                     | Medium   | 🔴 Not Started | Developer 2 | Deferred. Most icon buttons are `w-8 h-8` (32px), satisfying WCAG 2.5.8. Inline table action links (Users page) still lack explicit min-size enforcement.                                              |
+| WCAG-001 | Add skip-to-main-content link at top of default layout (2.4.1) | High | ✅ Completed | Developer 2 | `.skip-link` class in `main.css`; `<a href="#main-content" class="skip-link">` at top of `layouts/default.vue`; `<main id="main-content" tabindex="-1">` as target. |
+| WCAG-002 | Add `<title>` to every page via `useHead` (2.4.2) | High | ✅ Completed | Developer 2 | `useHead({ title: '… — Audita' })` added to all pages: Dashboard, CR list/create/detail, Audit Trail, Users, Groups, Custom Fields, Settings, Sign In, Reset Password, Forgot Password, Accept Invite. |
+| WCAG-003 | Fix `<label for>` / `<input id>` wiring in CR list filter bar (4.1.2) | High | ✅ Completed | Developer 2 | `<label for="filter-status">` + `<select id="filter-status">` and `<label for="filter-priority">` + `<select id="filter-priority">` added in CR list. |
+| WCAG-004 | Fix `<label for>` wiring in auth and settings forms (4.1.2) | High | ✅ Completed | Developer 2 | `reset-password.vue` and `accept-invite.vue` password inputs now have matching `id`/`for` pairs. `sign-in.vue` had `id` added. |
+| WCAG-005 | Add proper `role="tablist"` / `role="tab"` / `aria-selected` to CR detail tabs (1.3.1, 4.1.2) | High | ✅ Completed | Developer 2 | Full ARIA tablist semantics + Arrow key/Home/End keyboard nav added inline to `[id].vue` via `crTabs` computed array and `onTabKeyDown()`. |
+| WCAG-006 | Implement focus trap in `AppModal` (2.4.3) | High | ✅ Completed | Developer 2 | Full focus-trap implemented in `AppModal.vue`: `getFocusable()`, Tab/Shift+Tab loop, Escape close, auto-focus first element on open, `aria-labelledby`, `role="dialog"`. |
+| WCAG-007 | Add `scroll-margin-top` to main content so fixed header never obscures focused elements (2.4.12) | Medium | ✅ Completed | Developer 2 | `scroll-margin-top: 4.5rem` added to `:focus-visible` selector in `@layer base` of `assets/css/main.css`. |
+| WCAG-008 | Announce dynamic content changes via `aria-live` (4.1.3) | Medium | ✅ Completed | Developer 2 | `aria-live="polite"` SR-only span on CR list for filter results; `role="log" aria-live="polite"` on toast container; `role="alert"` on error toasts; `aria-live="polite"` on password strength text. |
+| WCAG-009 | Add `autocomplete` tokens to all auth form inputs (1.3.5) | Medium | ✅ Completed | Developer 2 | `autocomplete="new-password"` added to both password inputs in `accept-invite.vue`. `sign-in.vue` and `reset-password.vue` already had correct values. |
+| WCAG-010 | Ensure all interactive targets meet 24×24 px minimum (2.5.8) | Medium | 🔴 Not Started | Developer 2 | Deferred. Most icon buttons are `w-8 h-8` (32px), satisfying WCAG 2.5.8. Inline table action links (Users page) still lack explicit min-size enforcement. |
 
 ---
 

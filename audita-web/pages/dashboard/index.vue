@@ -7,7 +7,7 @@
         Operations Overview
       </p>
       <h1 class="text-3xl font-bold tracking-tight text-on-surface">
-        Audita Dashboard
+        Dashboard
       </h1>
       <p class="text-sm text-muted mt-1">
         Overview of your organisation's change activity.
@@ -149,18 +149,23 @@
           </NuxtLink>
         </div>
 
-        <div class="space-y-3">
-          <div
-            v-if="pendingCRs.length === 0"
-            class="card p-8 text-center text-sm text-muted"
-          >
-            No change requests awaiting your action.
-          </div>
+        <div
+          v-if="pendingCRs.length === 0"
+          class="card p-8 text-center text-sm text-muted"
+        >
+          No change requests awaiting your action.
+        </div>
 
-          <div
-            v-for="cr in pendingCRs"
+        <div v-else class="card overflow-hidden shadow-card-hover">
+          <NuxtLink
+            v-for="(cr, index) in pendingCRs"
             :key="cr.id"
-            class="card p-4 flex items-center gap-4 shadow-card-hover"
+            class="flex items-center gap-4 px-4 py-4 cursor-pointer hover:bg-surface-container-low transition-colors"
+            :class="
+              index > 0 ? 'border-t border-border dark:border-border-dark' : ''
+            "
+            :to="`/change-requests/${cr.id}`"
+            :aria-label="`Open change request ${cr.title}`"
           >
             <div
               class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"
@@ -190,23 +195,7 @@
                 >
               </p>
             </div>
-            <div v-if="auth.canApprove" class="flex gap-2 shrink-0">
-              <button
-                class="btn-secondary btn-sm"
-                :aria-label="`Decline change request: ${cr.title}`"
-                @click="rejectCr(cr.id)"
-              >
-                Decline
-              </button>
-              <button
-                class="btn-primary btn-sm"
-                :aria-label="`Approve change request: ${cr.title}`"
-                @click="approveCr(cr.id)"
-              >
-                Approve
-              </button>
-            </div>
-          </div>
+          </NuxtLink>
         </div>
       </div>
 
@@ -250,7 +239,7 @@ useHead({ title: "Dashboard — Audita" });
 
 const api = useApi();
 const auth = useAuthStore();
-const { list, approve } = useChangeRequests();
+const { list } = useChangeRequests();
 const { error: toastError } = useToast();
 
 interface DashboardSummaryResponse {
@@ -275,10 +264,15 @@ async function load() {
       api<DashboardSummaryResponse>("/api/v1/dashboard/summary", {
         method: "GET",
       }),
-      list({ status: "PENDING_APPROVAL", size: 3 }),
+      list({
+        status: "PENDING_APPROVAL",
+        page: 0,
+        size: 10,
+        sort: "createdAt,desc",
+      }),
       api<Notification[]>("/api/v1/notifications", {
         method: "GET",
-        query: { page: 0, size: 5 },
+        query: { page: 0, size: 10, sort: "createdAt,desc" },
       }),
     ]);
 
@@ -292,19 +286,6 @@ async function load() {
   } catch {
     toastError("Failed to load dashboard data.");
   }
-}
-
-async function approveCr(id: string) {
-  try {
-    await approve(id);
-    await load();
-  } catch {
-    toastError("Failed to approve change request.");
-  }
-}
-
-function rejectCr(id: string) {
-  navigateTo(`/change-requests/${id}#reject`);
 }
 
 function riskClass(level: string) {

@@ -1,4 +1,11 @@
+import {
+  API_CONTRACT_HEADER,
+  isApiContractCompatible,
+} from "~/composables/apiContract";
+import { clearServerSession } from "~/composables/sessionRestore";
+import { shouldAttemptTokenRefresh } from "~/composables/authSession";
 import { useAuthStore } from "~/stores/auth";
+import type { AuthResponse } from "~/types";
 
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig();
@@ -6,15 +13,73 @@ export default defineNuxtPlugin(() => {
   const baseURL = import.meta.server
     ? config.apiInternalBase
     : config.public.apiBase;
+  let contractMismatchHandled = false;
+  let refreshPromise: Promise<AuthResponse | null> | null = null;
+  let apiClient: ReturnType<typeof $fetch.create>;
+  type ApiClientOptions = Parameters<typeof apiClient>[1];
+  interface OnResponseErrorContext {
+    request: Request | string;
+    options: ApiClientOptions & { _authRetry?: boolean };
+    response: {
+      status: number;
+    };
+  }
 
-  const $api = $fetch.create({
+  async function forceContractLogout() {
+    if (contractMismatchHandled) {
+      return;
+    }
+
+    contractMismatchHandled = true;
+    try {
+      await clearServerSession();
+    } catch {}
+    auth.clearAuth({ broadcast: true });
+    await navigateTo("/auth/sign-in");
+  }
+
+  function hasCompatibleApiContract(response: { headers?: Headers }) {
+    const actualApiContract =
+      response.headers?.get(API_CONTRACT_HEADER) ?? null;
+    return isApiContractCompatible(
+      actualApiContract,
+      config.public.apiContractVersion,
+    );
+  }
+
+  function refreshSession() {
+    if (!refreshPromise) {
+      refreshPromise = $fetch
+        .raw<AuthResponse>("/api/v1/auth/refresh", {
+          method: "POST",
+          baseURL,
+        })
+        .then(async (response) => {
+          if (!hasCompatibleApiContract(response)) {
+            await forceContractLogout();
+            return null;
+          }
+
+          auth.setAuth(response._data, { broadcast: true });
+          return response._data;
+        })
+        .catch(async (error) => {
+          console.error("Token refresh failed", error);
+          await auth.logout();
+          return null;
+        })
+        .finally(() => {
+          refreshPromise = null;
+        });
+    }
+
+    return refreshPromise;
+  }
+
+  apiClient = $fetch.create({
     baseURL,
 
     onRequest({ request, options }) {
-      if (!auth.isAuthenticated) {
-        auth.hydrateFromCookie();
-      }
-
       let requestPath = "";
       if (typeof request === "string") {
         requestPath = request;
@@ -35,7 +100,7 @@ export default defineNuxtPlugin(() => {
       const headers = new Headers(options.headers);
 
       // Inject Bearer token on every authenticated request
-      if (auth.accessToken) {
+      if (auth.isAuthenticated && auth.accessToken) {
         headers.set("Authorization", `Bearer ${auth.accessToken}`);
       }
 
@@ -47,31 +112,53 @@ export default defineNuxtPlugin(() => {
       options.headers = headers;
     },
 
-    async onResponseError({ response }) {
-      // Only treat 401 as an expired-token signal worth refreshing.
-      // 403 responses are domain-level permission/business errors (e.g. UPLOAD_FAILED,
-      // NOT_PERMITTED) — retrying with a fresh token would still return 403, and
-      // the catch below would force an erroneous logout.
-      if (response.status === 401 && auth.isAuthenticated) {
-        // Attempt silent refresh via the HttpOnly cookie
-        try {
-          const refreshed = await $fetch<{ accessToken: string }>(
-            "/api/v1/auth/refresh",
-            {
-              method: "POST",
-              baseURL,
-            },
-          );
-          auth.setAccessToken(refreshed.accessToken);
-        } catch {
-          // Refresh failed — force logout
-          await auth.logout();
-        }
+    onResponse({ response }) {
+      if (!hasCompatibleApiContract(response)) {
+        return forceContractLogout();
       }
     },
+
+    onResponseError: (async (ctx: OnResponseErrorContext) => {
+      const { request, options, response } = ctx;
+
+      if (!hasCompatibleApiContract(response)) {
+        await forceContractLogout();
+        return;
+      }
+
+      let requestPath = "";
+      if (typeof request === "string") {
+        requestPath = request;
+      } else if (request instanceof Request) {
+        requestPath = request.url;
+      }
+
+      const isRefreshEndpoint = requestPath.includes("/api/v1/auth/refresh");
+      const alreadyRetried = Boolean(
+        (options as { _authRetry?: boolean })._authRetry,
+      );
+      const shouldRefresh = shouldAttemptTokenRefresh({
+        alreadyRetried,
+        isAuthenticated: auth.isAuthenticated,
+        isRefreshEndpoint,
+        responseStatus: response.status,
+      });
+
+      if (!shouldRefresh) {
+        return;
+      }
+
+      const refreshed = await refreshSession();
+      if (!refreshed) {
+        return;
+      }
+
+      (options as { _authRetry?: boolean })._authRetry = true;
+      return apiClient(request, options as ApiClientOptions);
+    }) as never,
   });
 
   return {
-    provide: { api: $api },
+    provide: { api: apiClient },
   };
 });

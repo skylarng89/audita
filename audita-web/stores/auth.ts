@@ -1,45 +1,60 @@
 import { defineStore } from "pinia";
+import { createAuthSessionSyncEvent } from "~/composables/authSessionSync";
+import {
+  computeTokenExpiresAt,
+  hasActiveAccessToken,
+} from "~/composables/authSession";
 import type { AuthResponse, UserRole } from "~/types";
-
-const AUTH_COOKIE_KEY = "audita_auth";
-
-interface PersistedAuth {
-  accessToken: string | null;
-  userId: string | null;
-  email: string | null;
-  fullName: string | null;
-  role: UserRole | null;
-  tenantSlug: string | null;
-}
-
-function useAuthCookie() {
-  return useCookie<PersistedAuth | null>(AUTH_COOKIE_KEY, {
-    path: "/",
-    sameSite: "lax",
-  });
-}
 
 interface AuthState {
   accessToken: string | null;
+  tokenExpiresAt: number | null;
   userId: string | null;
   email: string | null;
   fullName: string | null;
   role: UserRole | null;
   tenantSlug: string | null;
+  sessionInitialized: boolean;
+}
+
+interface AuthMutationOptions {
+  broadcast?: boolean;
+}
+
+function broadcastAuthEvent(type: "session-restored" | "session-logged-out") {
+  if (!import.meta.client) {
+    return;
+  }
+
+  const tabId = useState<string>("auth-sync-tab-id", () => crypto.randomUUID());
+  const event = createAuthSessionSyncEvent(type, tabId.value);
+
+  if (typeof BroadcastChannel !== "undefined") {
+    const channel = new BroadcastChannel("audita-auth-session");
+    channel.postMessage(event);
+    channel.close();
+    return;
+  }
+
+  localStorage.setItem("audita-auth-session", JSON.stringify(event));
+  localStorage.removeItem("audita-auth-session");
 }
 
 export const useAuthStore = defineStore("auth", {
   state: (): AuthState => ({
     accessToken: null,
+    tokenExpiresAt: null,
     userId: null,
     email: null,
     fullName: null,
     role: null,
     tenantSlug: null,
+    sessionInitialized: false,
   }),
 
   getters: {
-    isAuthenticated: (s) => !!s.accessToken,
+    isAuthenticated: (s) =>
+      hasActiveAccessToken(s.accessToken, s.tokenExpiresAt),
     isSuperAdmin: (s) => s.role === "SUPER_ADMIN",
     isAdmin: (s) => s.role === "Admin",
     isAuditor: (s) => s.role === "Auditor",
@@ -48,65 +63,59 @@ export const useAuthStore = defineStore("auth", {
   },
 
   actions: {
-    hydrateFromCookie() {
-      const persisted = useAuthCookie();
-      const value = persisted.value;
-
-      if (!value || !value.accessToken) return;
-
-      this.accessToken = value.accessToken;
-      this.userId = value.userId;
-      this.email = value.email;
-      this.fullName = value.fullName;
-      this.role = value.role;
-      this.tenantSlug = value.tenantSlug;
+    invalidateCachedSessionState() {
+      const { invalidateStatus } = useOnboarding();
+      invalidateStatus();
     },
 
-    persistToCookie() {
-      const persisted = useAuthCookie();
-      persisted.value = {
-        accessToken: this.accessToken,
-        userId: this.userId,
-        email: this.email,
-        fullName: this.fullName,
-        role: this.role,
-        tenantSlug: this.tenantSlug,
-      };
+    markSessionInitialized() {
+      this.sessionInitialized = true;
     },
 
-    setAuth(response: AuthResponse) {
+    setTenantSlug(tenantSlug: string | null) {
+      this.tenantSlug = tenantSlug;
+    },
+
+    setAuth(response: AuthResponse, options: AuthMutationOptions = {}) {
       this.accessToken = response.accessToken;
+      this.tokenExpiresAt = computeTokenExpiresAt(response.expiresIn);
       this.userId = response.userId;
       this.email = response.email;
       this.fullName = response.fullName;
       this.role = response.role;
       this.tenantSlug = response.tenantSlug;
-      this.persistToCookie();
+      this.sessionInitialized = true;
+      this.invalidateCachedSessionState();
+
+      if (options.broadcast) {
+        broadcastAuthEvent("session-restored");
+      }
     },
 
-    setAccessToken(accessToken: string) {
-      this.accessToken = accessToken;
-      this.persistToCookie();
-    },
-
-    clearAuth() {
+    clearAuth(options: AuthMutationOptions = {}) {
       this.accessToken = null;
+      this.tokenExpiresAt = null;
       this.userId = null;
       this.email = null;
       this.fullName = null;
       this.role = null;
       this.tenantSlug = null;
+      this.sessionInitialized = true;
+      this.invalidateCachedSessionState();
 
-      const persisted = useAuthCookie();
-      persisted.value = null;
+      if (options.broadcast) {
+        broadcastAuthEvent("session-logged-out");
+      }
     },
 
     // Called by the API plugin on 401 responses
-    async logout() {
+    async logout(options: AuthMutationOptions = {}) {
       try {
         await $fetch("/api/v1/auth/logout", { method: "POST" });
-      } catch {}
-      this.clearAuth();
+      } catch (error) {
+        console.error("Logout API failed", error);
+      }
+      this.clearAuth({ broadcast: options.broadcast ?? true });
       await navigateTo("/auth/sign-in");
     },
   },

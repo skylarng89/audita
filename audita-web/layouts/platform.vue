@@ -168,8 +168,8 @@
         </div>
       </nav>
 
-      <main class="flex-1 ml-56 p-6 min-w-0">
-        <div class="mx-auto max-w-7xl">
+      <main class="flex-1 ml-56 app-main min-w-0">
+        <div class="w-full app-content">
           <slot />
         </div>
       </main>
