@@ -120,7 +120,7 @@ class ChangeRequestServiceSecurityTest {
 
         when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
         when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId)).thenReturn(List.of());
-        when(userRepository.findByRole_NameInAndStatusOrderByFullNameAsc(List.of("Approver", "Auditor"),
+        when(userRepository.findByRole_NameInAndStatusOrderByFullNameAsc(List.of("Approver", "Auditor", "Admin"),
                 UserStatus.ACTIVE))
                 .thenReturn(List.of());
         when(orgSettingRepository.findById("sla.deadline_hours.high"))
@@ -139,7 +139,7 @@ class ChangeRequestServiceSecurityTest {
     }
 
     @Test
-    void submitAutoAddsApproversAndAuditorsForOwner() {
+    void submitAutoAddsApproversAuditorsAndAdminsForOwner() {
         UUID changeRequestId = UUID.randomUUID();
         UUID ownerId = UUID.randomUUID();
 
@@ -156,11 +156,16 @@ class ChangeRequestServiceSecurityTest {
         auditorUser.setStatus(UserStatus.ACTIVE);
         auditorUser.setRole(new io.audita.infrastructure.persistence.entity.RoleEntity("Auditor", ""));
 
+        UserEntity adminUser = new UserEntity("admin@example.com", "Admin User");
+        ReflectionTestUtils.setField(adminUser, "id", UUID.randomUUID());
+        adminUser.setStatus(UserStatus.ACTIVE);
+        adminUser.setRole(new io.audita.infrastructure.persistence.entity.RoleEntity("Admin", ""));
+
         when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
         when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId)).thenReturn(List.of());
-        when(userRepository.findByRole_NameInAndStatusOrderByFullNameAsc(List.of("Approver", "Auditor"),
+        when(userRepository.findByRole_NameInAndStatusOrderByFullNameAsc(List.of("Approver", "Auditor", "Admin"),
                 UserStatus.ACTIVE))
-                .thenReturn(List.of(approverUser, auditorUser));
+                .thenReturn(List.of(approverUser, auditorUser, adminUser));
         when(orgSettingRepository.findById(any())).thenReturn(Optional.empty());
         when(changeRequestRepository.save(changeRequest)).thenReturn(changeRequest);
 
@@ -168,17 +173,21 @@ class ChangeRequestServiceSecurityTest {
 
         verify(crApproverRepository)
                 .saveAll(org.mockito.ArgumentMatchers.argThat((List<CrApproverEntity> approvers) -> {
-                    if (approvers.size() != 2) {
+                    if (approvers.size() != 3) {
                         return false;
                     }
                     CrApproverEntity first = approvers.get(0);
                     CrApproverEntity second = approvers.get(1);
+                    CrApproverEntity third = approvers.get(2);
                     return first.getUser().getEmail().equals("approver@example.com")
                             && first.isRequired()
                             && first.getPosition() == 1
                             && second.getUser().getEmail().equals("auditor@example.com")
                             && !second.isRequired()
-                            && second.getPosition() == 2;
+                            && second.getPosition() == 2
+                            && third.getUser().getEmail().equals("admin@example.com")
+                            && !third.isRequired()
+                            && third.getPosition() == 3;
                 }));
     }
 

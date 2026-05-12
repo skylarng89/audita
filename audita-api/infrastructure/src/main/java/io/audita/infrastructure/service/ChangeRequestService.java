@@ -47,7 +47,7 @@ import java.util.UUID;
 public class ChangeRequestService {
 
     private static final Set<String> ELEVATED_ROLES = Set.of("ADMIN", "SUPER_ADMIN");
-    private static final List<String> AUTO_APPROVER_ROLE_NAMES = List.of("Approver", "Auditor");
+    private static final List<String> AUTO_APPROVER_ROLE_NAMES = List.of("Approver", "Auditor", "Admin");
     private static final String ERROR_NOT_FOUND = "NOT_FOUND";
     private static final String PAYLOAD_STATUS = "status";
     private static final String PAYLOAD_COUNT = "count";
