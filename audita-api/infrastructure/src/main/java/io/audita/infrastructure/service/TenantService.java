@@ -28,14 +28,18 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 import java.util.Base64;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
 
 /**
- * Handles tenant lifecycle: provisioning (atomic), CRUD, domain whitelist, SSO config.
+ * Handles tenant lifecycle: provisioning (atomic), CRUD, domain whitelist, SSO
+ * config.
  *
- * Provisioning is the critical path: schema creation + Flyway + Admin user + invite
- * must all succeed or none of it persists (Outbox pattern simplified via single TX).
+ * Provisioning is the critical path: schema creation + Flyway + Admin user +
+ * invite
+ * must all succeed or none of it persists (Outbox pattern simplified via single
+ * TX).
  */
 @Service
 @Transactional
@@ -65,17 +69,17 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
     private final TransactionTemplate transactionTemplate;
 
     public TenantService(TenantRepository tenantRepository,
-                         OrgSettingRepository orgSettingRepository,
-                         TenantAllowedDomainRepository allowedDomainRepository,
-                         TenantSsoConfigRepository ssoConfigRepository,
-                         UserRepository userRepository,
-                         RoleRepository roleRepository,
-                         InviteTokenRepository inviteTokenRepository,
-                         FlywayTenantMigrator flywayTenantMigrator,
-                         EmailService emailService,
-                         AesEncryptionService aesEncryptionService,
-                         PasswordEncoder passwordEncoder,
-                         PlatformTransactionManager transactionManager) {
+            OrgSettingRepository orgSettingRepository,
+            TenantAllowedDomainRepository allowedDomainRepository,
+            TenantSsoConfigRepository ssoConfigRepository,
+            UserRepository userRepository,
+            RoleRepository roleRepository,
+            InviteTokenRepository inviteTokenRepository,
+            FlywayTenantMigrator flywayTenantMigrator,
+            EmailService emailService,
+            AesEncryptionService aesEncryptionService,
+            PasswordEncoder passwordEncoder,
+            PlatformTransactionManager transactionManager) {
         this.tenantRepository = tenantRepository;
         this.orgSettingRepository = orgSettingRepository;
         this.allowedDomainRepository = allowedDomainRepository;
@@ -125,15 +129,13 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
         TenantProfile profile = new TenantProfile(tenant.getName(), tenant.getSlug(), tenant.getStatus().name());
         WorkflowDefaults workflowDefaults = new WorkflowDefaults(
                 readApprovalTypeSetting(WORKFLOW_APPROVAL_TYPE_KEY, ApprovalType.LINEAR),
-                readBooleanSetting(WORKFLOW_REQUIRE_DEFAULT_APPROVERS_KEY, true)
-        );
+                readBooleanSetting(WORKFLOW_REQUIRE_DEFAULT_APPROVERS_KEY, true));
         SlaDefaults slaDefaults = new SlaDefaults(
                 readIntSetting(SLA_LOW_HOURS_KEY, 72),
                 readIntSetting(SLA_MEDIUM_HOURS_KEY, 48),
                 readIntSetting(SLA_HIGH_HOURS_KEY, 24),
                 readIntSetting(SLA_CRITICAL_HOURS_KEY, 8),
-                readIntSetting(SLA_WARNING_BEFORE_HOURS_KEY, 1)
-        );
+                readIntSetting(SLA_WARNING_BEFORE_HOURS_KEY, 1));
         return new TenantSettings(profile, workflowDefaults, slaDefaults);
     }
 
@@ -141,7 +143,8 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
     public void updateWorkflowDefaults(String tenantSlug, WorkflowDefaults workflowDefaults) {
         getTenantBySlug(tenantSlug);
         saveSetting(WORKFLOW_APPROVAL_TYPE_KEY, workflowDefaults.approvalTypeDefault().name());
-        saveSetting(WORKFLOW_REQUIRE_DEFAULT_APPROVERS_KEY, Boolean.toString(workflowDefaults.requireDefaultApprovers()));
+        saveSetting(WORKFLOW_REQUIRE_DEFAULT_APPROVERS_KEY,
+                Boolean.toString(workflowDefaults.requireDefaultApprovers()));
     }
 
     @Override
@@ -184,7 +187,8 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
         TenantEntity tenant = tenantRepository.save(new TenantEntity(name, normalisedSlug));
         log.info("Tenant created: id={} slug={}", tenant.getId(), normalisedSlug);
 
-        // 2. Run per-tenant Flyway migrations (creates schema + seeds roles/permissions)
+        // 2. Run per-tenant Flyway migrations (creates schema + seeds
+        // roles/permissions)
         // This runs outside the JPA transaction against the DataSource directly.
         // On failure, the JPA transaction will roll back the tenant record.
         flywayTenantMigrator.migrate(normalisedSlug);
@@ -193,26 +197,27 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
         TenantContext.setCurrentTenant(normalisedSlug);
         try {
             transactionTemplate.executeWithoutResult(status -> {
-            RoleEntity adminRole = roleRepository.findByName("Admin")
-                .orElseThrow(() -> new IllegalStateException(
-                    "Admin role not found after migration for tenant: " + normalisedSlug));
+                RoleEntity adminRole = roleRepository.findByName("Admin")
+                        .orElseThrow(() -> new IllegalStateException(
+                                "Admin role not found after migration for tenant: " + normalisedSlug));
 
-            UserEntity adminUser = new UserEntity(adminEmail, adminFullName);
-            adminUser.setRole(adminRole);
-            adminUser.setStatus(UserStatus.PENDING);
-            userRepository.save(adminUser);
+                UserEntity adminUser = new UserEntity(adminEmail, adminFullName);
+                adminUser.setRole(adminRole);
+                adminUser.setRoles(new LinkedHashSet<>(List.of(adminRole)));
+                adminUser.setStatus(UserStatus.PENDING);
+                userRepository.save(adminUser);
 
-            // 4. Issue invite token (48-hour expiry)
-            String rawToken = generateSecureToken();
-            String tokenHash = AuthService.sha256(rawToken);
-            InviteTokenEntity invite = new InviteTokenEntity(
-                adminUser, tokenHash, OffsetDateTime.now().plusHours(48));
-            inviteTokenRepository.save(invite);
+                // 4. Issue invite token (48-hour expiry)
+                String rawToken = generateSecureToken();
+                String tokenHash = AuthService.sha256(rawToken);
+                InviteTokenEntity invite = new InviteTokenEntity(
+                        adminUser, tokenHash, OffsetDateTime.now().plusHours(48));
+                inviteTokenRepository.save(invite);
 
-            // 5. Send invite email asynchronously — failure logged but never rethrows
-            emailService.sendInviteEmail(adminEmail, adminFullName, rawToken, name, normalisedSlug);
+                // 5. Send invite email asynchronously — failure logged but never rethrows
+                emailService.sendInviteEmail(adminEmail, adminFullName, rawToken, name, normalisedSlug);
 
-            log.info("Admin invited for tenant={} email={}", normalisedSlug, adminEmail);
+                log.info("Admin invited for tenant={} email={}", normalisedSlug, adminEmail);
             });
         } finally {
             TenantContext.clear();
@@ -225,13 +230,14 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
 
     /**
      * Single-tenant first-run setup.
-     * Creates the tenant and the Admin user with a password set directly (no invite).
+     * Creates the tenant and the Admin user with a password set directly (no
+     * invite).
      * Guard: fails if any tenant already exists.
      */
     @Override
     @CacheEvict(value = "onboardingStatus", allEntries = true)
     public void setupSingleTenant(String orgName, String slug, String adminFullName,
-                                  String adminEmail, String rawPassword) {
+            String adminEmail, String rawPassword) {
         if (tenantRepository.count() > 0) {
             throw new DomainNotPermittedException("ALREADY_SETUP",
                     "Organisation has already been set up.");
@@ -256,6 +262,7 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
 
                 UserEntity adminUser = new UserEntity(adminEmail, adminFullName);
                 adminUser.setRole(adminRole);
+                adminUser.setRoles(new LinkedHashSet<>(List.of(adminRole)));
                 adminUser.setPasswordHash(passwordEncoder.encode(rawPassword));
                 adminUser.setStatus(UserStatus.ACTIVE);
                 userRepository.save(adminUser);
@@ -318,8 +325,8 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
     }
 
     public TenantSsoConfigEntity upsertSsoConfig(UUID tenantId, OAuthProvider provider,
-                                                  String clientId, String rawClientSecret,
-                                                  String msTenantId) {
+            String clientId, String rawClientSecret,
+            String msTenantId) {
         TenantEntity tenant = loadTenantOrThrow(tenantId);
         String encryptedSecret = aesEncryptionService.encrypt(rawClientSecret);
 

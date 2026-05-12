@@ -107,6 +107,7 @@ public class ChangeRequestService {
         changeRequest.setCreatedBy(createdBy);
         changeRequest.setAffectedSystems(normalizeAffectedSystems(request.affectedSystems()));
         ChangeRequestEntity created = changeRequestRepository.save(changeRequest);
+        ensureDefaultApprovers(created);
         logActivity(created, createdBy, "CR_CREATED", Map.of(PAYLOAD_STATUS, created.getStatus().name()));
         auditLogService.log("CR_CREATED", ENTITY_CHANGE_REQUEST, created.getId(),
                 createdBy.getId(), createdBy.getEmail(),
@@ -162,7 +163,7 @@ public class ChangeRequestService {
     public ChangeRequestEntity submit(UUID id, UUID actorUserId, String actorRole) {
         ChangeRequestEntity changeRequest = getById(id);
         assertCanMutate(changeRequest, actorUserId, actorRole);
-        ensureDefaultApproversForSubmission(changeRequest);
+        ensureDefaultApprovers(changeRequest);
         changeRequest.submit();
         changeRequest.setSlaDeadline(OffsetDateTime.now().plusHours(resolveSlaHours(changeRequest.getPriority())));
         ChangeRequestEntity submitted = changeRequestRepository.save(changeRequest);
@@ -559,7 +560,7 @@ public class ChangeRequestService {
         crApproverRepository.saveAll(approvers);
     }
 
-    private void ensureDefaultApproversForSubmission(ChangeRequestEntity changeRequest) {
+    private void ensureDefaultApprovers(ChangeRequestEntity changeRequest) {
         UUID changeRequestId = changeRequest.getId();
         List<CrApproverEntity> existingApprovers = crApproverRepository
                 .findByChangeRequestIdOrderByPositionAsc(changeRequestId);
@@ -571,7 +572,7 @@ public class ChangeRequestService {
                         LinkedHashMap::new));
 
         List<UserEntity> eligibleUsers = userRepository
-                .findByRole_NameInAndStatusOrderByFullNameAsc(AUTO_APPROVER_ROLE_NAMES, UserStatus.ACTIVE);
+                .findDistinctByRoles_NameInAndStatusOrderByFullNameAsc(AUTO_APPROVER_ROLE_NAMES, UserStatus.ACTIVE);
 
         int nextPosition = existingApprovers.size() + 1;
         List<CrApproverEntity> newApprovers = new java.util.ArrayList<>();
@@ -580,8 +581,7 @@ public class ChangeRequestService {
                 continue;
             }
 
-            String roleName = user.getRole() != null ? user.getRole().getName() : "";
-            boolean isRequired = "Approver".equalsIgnoreCase(roleName);
+            boolean isRequired = hasRole(user, "Approver");
             CrApproverEntity approver = new CrApproverEntity(
                     changeRequest,
                     user,
@@ -599,6 +599,16 @@ public class ChangeRequestService {
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVERS_AUTO_ADDED", Map.of(
                 PAYLOAD_COUNT, newApprovers.size(),
                 PAYLOAD_STATUS, changeRequest.getStatus().name()));
+    }
+
+    private boolean hasRole(UserEntity user, String roleName) {
+        boolean assignedRolesMatch = user.getRoles().stream()
+                .map(role -> role.getName() == null ? "" : role.getName())
+                .anyMatch(name -> name.equalsIgnoreCase(roleName));
+        if (assignedRolesMatch) {
+            return true;
+        }
+        return user.getRole() != null && roleName.equalsIgnoreCase(user.getRole().getName());
     }
 
     private void logActivity(ChangeRequestEntity changeRequest,

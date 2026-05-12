@@ -4,6 +4,7 @@ import io.audita.domain.exception.DomainNotPermittedException;
 import io.audita.domain.model.UserStatus;
 import io.audita.infrastructure.persistence.entity.*;
 import io.audita.infrastructure.persistence.repository.*;
+import io.audita.infrastructure.security.RoleHierarchy;
 import io.audita.infrastructure.tenant.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,10 +17,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 import java.util.Base64;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
- * Manages tenant-scoped user operations: invite, list, update, deactivate, role assignment.
+ * Manages tenant-scoped user operations: invite, list, update, deactivate, role
+ * assignment.
  * All operations run within the tenant schema set by TenantContext.
  */
 @Service
@@ -29,6 +34,7 @@ public class UserService {
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final String NOT_FOUND = "NOT_FOUND";
+    private static final String ADMIN_ROLE_NAME = "Admin";
 
     @Value("${audita.invite.expiry-hours:48}")
     private int inviteExpiryHours;
@@ -40,10 +46,10 @@ public class UserService {
     private final EmailService emailService;
 
     public UserService(UserRepository userRepository,
-                       RoleRepository roleRepository,
-                       InviteTokenRepository inviteTokenRepository,
-                       TenantRepository tenantRepository,
-                       EmailService emailService) {
+            RoleRepository roleRepository,
+            InviteTokenRepository inviteTokenRepository,
+            TenantRepository tenantRepository,
+            EmailService emailService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.inviteTokenRepository = inviteTokenRepository;
@@ -67,22 +73,24 @@ public class UserService {
 
     /**
      * Invites a new user to the current tenant.
-     * Creates the user in PENDING status, issues a 48-hour invite token, and sends email.
+     * Creates the user in PENDING status, issues a 48-hour invite token, and sends
+     * email.
      * Idempotent on email: if user exists in PENDING state, re-sends the invite.
      */
-    public UserEntity inviteUser(String email, String fullName, UUID roleId, UUID invitedByUserId) {
+    public UserEntity inviteUser(String email, String fullName, UUID roleId, List<UUID> roleIds, UUID invitedByUserId) {
         if (userRepository.existsByEmail(email)) {
             throw new DomainNotPermittedException("EMAIL_TAKEN",
                     "A user with this email already exists in this organisation.");
         }
 
-        RoleEntity role = roleRepository.findById(roleId)
-            .orElseThrow(() -> new DomainNotPermittedException(NOT_FOUND, "Role not found."));
+        Set<RoleEntity> assignedRoles = resolveRoles(roleId, roleIds, true);
+        RoleEntity effectiveRole = resolveEffectiveRole(assignedRoles);
 
         UserEntity invitedBy = userRepository.findById(invitedByUserId).orElse(null);
 
         UserEntity user = new UserEntity(email, fullName);
-        user.setRole(role);
+        user.setRole(effectiveRole);
+        user.setRoles(new LinkedHashSet<>(assignedRoles));
         user.setStatus(UserStatus.PENDING);
         user.setInvitedBy(invitedBy);
         userRepository.save(user);
@@ -99,23 +107,26 @@ public class UserService {
                 .orElse(tenantSlug);
 
         emailService.sendInviteEmail(email, fullName, rawToken, orgName, tenantSlug);
-        log.info("User invited: email={} role={} tenant={}", email, role.getName(), tenantSlug);
+        log.info("User invited: email={} roles={} tenant={}",
+                email,
+                assignedRoles.stream().map(RoleEntity::getName).sorted().toList(),
+                tenantSlug);
         return user;
     }
 
     // ── Update ─────────────────────────────────────────────────────────────────
 
-    public UserEntity updateUser(UUID id, String fullName, UUID roleId) {
+    public UserEntity updateUser(UUID id, String fullName, UUID roleId, List<UUID> roleIds) {
         UserEntity user = findUserOrThrow(id);
 
         if (fullName != null && !fullName.isBlank()) {
             user.setFullName(fullName);
         }
 
-        if (roleId != null) {
-            RoleEntity role = roleRepository.findById(roleId)
-                    .orElseThrow(() -> new DomainNotPermittedException(NOT_FOUND, "Role not found."));
-            user.setRole(role);
+        if (roleId != null || (roleIds != null && !roleIds.isEmpty())) {
+            Set<RoleEntity> assignedRoles = resolveRoles(roleId, roleIds, false);
+            user.setRoles(new LinkedHashSet<>(assignedRoles));
+            user.setRole(resolveEffectiveRole(assignedRoles));
         }
 
         return userRepository.save(user);
@@ -130,8 +141,9 @@ public class UserService {
         UserEntity user = findUserOrThrow(id);
 
         // Prevent removing the last active Admin — organisation would be locked out.
-        if (user.getRole() != null && "Admin".equals(user.getRole().getName())
-                && userRepository.countByRole_NameAndStatus("Admin", UserStatus.ACTIVE) <= 1) {
+        boolean isAdmin = user.getRoles().stream().anyMatch(role -> ADMIN_ROLE_NAME.equals(role.getName()))
+                || (user.getRole() != null && ADMIN_ROLE_NAME.equals(user.getRole().getName()));
+        if (isAdmin && userRepository.countDistinctByRoles_NameAndStatus(ADMIN_ROLE_NAME, UserStatus.ACTIVE) <= 1) {
             throw new DomainNotPermittedException("LAST_ADMIN",
                     "Cannot deactivate the last Admin. Assign another Admin first.");
         }
@@ -155,7 +167,8 @@ public class UserService {
     // ── Invite management ──────────────────────────────────────────────────────
 
     /**
-     * Voids all existing invite tokens for a PENDING user and sends a fresh 48-hour invite.
+     * Voids all existing invite tokens for a PENDING user and sends a fresh 48-hour
+     * invite.
      */
     public UserEntity resendInvite(UUID userId) {
         UserEntity user = findUserOrThrow(userId);
@@ -181,7 +194,8 @@ public class UserService {
     }
 
     /**
-     * Cancels a pending invite by removing all invite tokens and deleting the user record.
+     * Cancels a pending invite by removing all invite tokens and deleting the user
+     * record.
      * The same email address can be re-invited afterwards.
      */
     public void cancelInvite(UUID userId) {
@@ -207,5 +221,37 @@ public class UserService {
     private UserEntity findUserOrThrow(UUID id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new DomainNotPermittedException(NOT_FOUND, "User not found."));
+    }
+
+    private Set<RoleEntity> resolveRoles(UUID roleId, List<UUID> roleIds, boolean requireAtLeastOne) {
+        LinkedHashSet<UUID> ids = new LinkedHashSet<>();
+        if (roleId != null) {
+            ids.add(roleId);
+        }
+        if (roleIds != null) {
+            ids.addAll(roleIds.stream().filter(java.util.Objects::nonNull).toList());
+        }
+
+        if (requireAtLeastOne && ids.isEmpty()) {
+            throw new DomainNotPermittedException("INVALID_ROLE_ASSIGNMENT", "At least one role is required.");
+        }
+        if (ids.isEmpty()) {
+            return Set.of();
+        }
+
+        List<RoleEntity> roles = roleRepository.findAllById(ids);
+        if (roles.size() != ids.size()) {
+            throw new DomainNotPermittedException(NOT_FOUND, "One or more roles were not found.");
+        }
+        return new LinkedHashSet<>(roles);
+    }
+
+    private RoleEntity resolveEffectiveRole(Set<RoleEntity> roles) {
+        String highestRoleName = RoleHierarchy.highestRoleNameOrDefault(roles, "Requester");
+        return roles.stream()
+                .filter(role -> highestRoleName.equalsIgnoreCase(role.getName()))
+                .findFirst()
+                .orElseThrow(() -> new DomainNotPermittedException("INVALID_ROLE_ASSIGNMENT",
+                        "Could not determine effective role for the user."));
     }
 }

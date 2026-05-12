@@ -16,11 +16,11 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
     @Override
-    @EntityGraph(attributePaths = { "role" })
+    @EntityGraph(attributePaths = { "role", "roles", "roles.permissions" })
     Optional<UserEntity> findById(UUID id);
 
     @Override
-    @EntityGraph(attributePaths = { "role" })
+    @EntityGraph(attributePaths = { "role", "roles", "roles.permissions" })
     Page<UserEntity> findAll(Pageable pageable);
 
     Optional<UserEntity> findByEmail(String email);
@@ -33,8 +33,10 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
     List<UserEntity> findByFullNameContainingIgnoreCaseAndStatus(String name, UserStatus status, Pageable pageable);
 
-    @EntityGraph(attributePaths = { "role" })
-    List<UserEntity> findByRole_NameInAndStatusOrderByFullNameAsc(List<String> roleNames, UserStatus status);
+    @EntityGraph(attributePaths = { "role", "roles" })
+    List<UserEntity> findDistinctByRoles_NameInAndStatusOrderByFullNameAsc(List<String> roleNames, UserStatus status);
 
     long countByRole_NameAndStatus(String roleName, UserStatus status);
+
+    long countDistinctByRoles_NameAndStatus(String roleName, UserStatus status);
 }

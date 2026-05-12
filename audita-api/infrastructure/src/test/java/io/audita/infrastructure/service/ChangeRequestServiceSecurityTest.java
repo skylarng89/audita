@@ -120,7 +120,8 @@ class ChangeRequestServiceSecurityTest {
 
         when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
         when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId)).thenReturn(List.of());
-        when(userRepository.findByRole_NameInAndStatusOrderByFullNameAsc(List.of("Approver", "Auditor", "Admin"),
+        when(userRepository.findDistinctByRoles_NameInAndStatusOrderByFullNameAsc(
+                List.of("Approver", "Auditor", "Admin"),
                 UserStatus.ACTIVE))
                 .thenReturn(List.of());
         when(orgSettingRepository.findById("sla.deadline_hours.high"))
@@ -163,7 +164,8 @@ class ChangeRequestServiceSecurityTest {
 
         when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
         when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId)).thenReturn(List.of());
-        when(userRepository.findByRole_NameInAndStatusOrderByFullNameAsc(List.of("Approver", "Auditor", "Admin"),
+        when(userRepository.findDistinctByRoles_NameInAndStatusOrderByFullNameAsc(
+                List.of("Approver", "Auditor", "Admin"),
                 UserStatus.ACTIVE))
                 .thenReturn(List.of(approverUser, auditorUser, adminUser));
         when(orgSettingRepository.findById(any())).thenReturn(Optional.empty());
@@ -189,6 +191,62 @@ class ChangeRequestServiceSecurityTest {
                             && !third.isRequired()
                             && third.getPosition() == 3;
                 }));
+    }
+
+    @Test
+    void createAutoAddsApproversAuditorsAndAdmins() {
+        UUID ownerId = UUID.randomUUID();
+        UUID changeRequestId = UUID.randomUUID();
+
+        UserEntity owner = new UserEntity("owner@example.com", "Owner User");
+        ReflectionTestUtils.setField(owner, "id", ownerId);
+
+        UserEntity approverUser = new UserEntity("approver@example.com", "Approver User");
+        ReflectionTestUtils.setField(approverUser, "id", UUID.randomUUID());
+        approverUser.setStatus(UserStatus.ACTIVE);
+        approverUser.setRole(new io.audita.infrastructure.persistence.entity.RoleEntity("Approver", ""));
+
+        UserEntity auditorUser = new UserEntity("auditor@example.com", "Auditor User");
+        ReflectionTestUtils.setField(auditorUser, "id", UUID.randomUUID());
+        auditorUser.setStatus(UserStatus.ACTIVE);
+        auditorUser.setRole(new io.audita.infrastructure.persistence.entity.RoleEntity("Auditor", ""));
+
+        UserEntity adminUser = new UserEntity("admin@example.com", "Admin User");
+        ReflectionTestUtils.setField(adminUser, "id", UUID.randomUUID());
+        adminUser.setStatus(UserStatus.ACTIVE);
+        adminUser.setRole(new io.audita.infrastructure.persistence.entity.RoleEntity("Admin", ""));
+
+        ChangeRequestEntity created = new ChangeRequestEntity();
+        ReflectionTestUtils.setField(created, "id", changeRequestId);
+        created.setTitle("Created CR");
+        created.setDescription("desc");
+        created.setPriority(Priority.HIGH);
+        created.setRiskLevel(RiskLevel.HIGH);
+        created.setApprovalType(ApprovalType.NON_LINEAR);
+        created.setCreatedBy(owner);
+
+        when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner));
+        when(changeRequestRepository.save(any(ChangeRequestEntity.class))).thenReturn(created);
+        when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId)).thenReturn(List.of());
+        when(userRepository.findDistinctByRoles_NameInAndStatusOrderByFullNameAsc(
+                List.of("Approver", "Auditor", "Admin"),
+                UserStatus.ACTIVE)).thenReturn(List.of(approverUser, auditorUser, adminUser));
+
+        changeRequestService.create(new ChangeRequestService.CreateRequest(
+                "Created CR",
+                "desc",
+                Priority.HIGH,
+                RiskLevel.HIGH,
+                "Security",
+                ApprovalType.NON_LINEAR,
+                null,
+                null,
+                List.of("db"),
+                ownerId));
+
+        verify(crApproverRepository)
+                .saveAll(org.mockito.ArgumentMatchers
+                        .argThat((List<CrApproverEntity> approvers) -> approvers.size() == 3));
     }
 
     private ChangeRequestEntity buildDraftChangeRequest(UUID ownerId) {

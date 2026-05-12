@@ -200,3 +200,23 @@
 
 - `cd audita-api && ./gradlew :api:test --tests "io.audita.api.controller.AuthControllerWebMvcTest" --tests "io.audita.api.controller.CommentControllerWebMvcTest" --tests "io.audita.api.controller.UserControllerSecurityAnnotationsTest" :infrastructure:test --tests "io.audita.infrastructure.service.CommentServiceTest" --no-daemon`
 - `cd audita-web && pnpm -s nuxi typecheck`
+
+## Session RBAC Expansion (2026-05-12)
+
+### Objectives
+
+1. Auto-assign approver participants on CR creation (not only on submit).
+2. Support multi-role user assignment with effective-role precedence.
+3. Enable admin-managed custom roles with explicit permission-rule overlap safeguards.
+
+### Work Items
+
+- RBAC-001: Auto-add Approver/Auditor/Admin users when a CR is created and keep submit-time population idempotent. ✅ (Completed 2026-05-12)
+- RBAC-002: Add `user_roles` schema migration and backfill from legacy `users.role_id`. ✅ (Completed 2026-05-12)
+- RBAC-003: Add multi-role assignment support in user invite/update APIs while preserving legacy `roleId` compatibility. ✅ (Completed 2026-05-12)
+- RBAC-004: Extend JWT claims + auth principal authorities with role and permission sets from all assigned roles. ✅ (Completed 2026-05-12)
+- RBAC-005: Add admin endpoints to create custom roles and update custom role permissions with overlap checks. ✅ (Completed 2026-05-12)
+
+### Verification
+
+- `cd audita-api && ./gradlew :infrastructure:compileJava :api:compileJava :infrastructure:test --tests io.audita.infrastructure.service.ChangeRequestServiceSecurityTest --no-build-cache`
