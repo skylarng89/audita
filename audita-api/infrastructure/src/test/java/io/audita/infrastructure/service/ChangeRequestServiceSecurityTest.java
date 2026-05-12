@@ -21,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,14 +34,22 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ChangeRequestServiceSecurityTest {
 
-    @Mock ChangeRequestRepository changeRequestRepository;
-    @Mock CrApproverRepository crApproverRepository;
-    @Mock ChangeRequestCustomFieldRepository customFieldRepository;
-    @Mock ActivityStreamRepository activityStreamRepository;
-    @Mock AttachmentRepository attachmentRepository;
-    @Mock UserRepository userRepository;
-    @Mock OrgSettingRepository orgSettingRepository;
-    @Mock AuditLogService auditLogService;
+    @Mock
+    ChangeRequestRepository changeRequestRepository;
+    @Mock
+    CrApproverRepository crApproverRepository;
+    @Mock
+    ChangeRequestCustomFieldRepository customFieldRepository;
+    @Mock
+    ActivityStreamRepository activityStreamRepository;
+    @Mock
+    AttachmentRepository attachmentRepository;
+    @Mock
+    UserRepository userRepository;
+    @Mock
+    OrgSettingRepository orgSettingRepository;
+    @Mock
+    AuditLogService auditLogService;
 
     @InjectMocks
     ChangeRequestService changeRequestService;
@@ -55,9 +64,8 @@ class ChangeRequestServiceSecurityTest {
         when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
 
         DomainNotPermittedException ex = assertThrows(
-            DomainNotPermittedException.class,
-            () -> tryUnauthorizedUpdate(changeRequestId, otherRequesterId)
-        );
+                DomainNotPermittedException.class,
+                () -> tryUnauthorizedUpdate(changeRequestId, otherRequesterId));
         assertThat(ex.getErrorCode()).isEqualTo("FORBIDDEN");
 
         verifyNoInteractions(activityStreamRepository);
@@ -65,7 +73,7 @@ class ChangeRequestServiceSecurityTest {
     }
 
     private void tryUnauthorizedUpdate(UUID changeRequestId, UUID requesterId) {
-        changeRequestService.update(
+        changeRequestService.update(new ChangeRequestService.UpdateRequest(
                 changeRequestId,
                 "Updated by attacker",
                 "should fail",
@@ -75,10 +83,9 @@ class ChangeRequestServiceSecurityTest {
                 ApprovalType.LINEAR,
                 OffsetDateTime.now().plusHours(2),
                 OffsetDateTime.now().plusHours(3),
-                new String[] {"db"},
+                List.of("db"),
                 requesterId,
-                "REQUESTER"
-        );
+                "REQUESTER"));
     }
 
     @Test
@@ -91,9 +98,8 @@ class ChangeRequestServiceSecurityTest {
         when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
 
         DomainNotPermittedException ex = assertThrows(
-            DomainNotPermittedException.class,
-            () -> changeRequestService.submit(changeRequestId, otherRequesterId, "REQUESTER")
-        );
+                DomainNotPermittedException.class,
+                () -> changeRequestService.submit(changeRequestId, otherRequesterId, "REQUESTER"));
         assertThat(ex.getErrorCode()).isEqualTo("FORBIDDEN");
 
         verifyNoInteractions(activityStreamRepository);
@@ -110,7 +116,8 @@ class ChangeRequestServiceSecurityTest {
 
         when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
         when(orgSettingRepository.findById("sla.deadline_hours.high"))
-                .thenReturn(Optional.of(new io.audita.infrastructure.persistence.entity.OrgSettingEntity("sla.deadline_hours.high", "36")));
+                .thenReturn(Optional.of(new io.audita.infrastructure.persistence.entity.OrgSettingEntity(
+                        "sla.deadline_hours.high", "36")));
         when(changeRequestRepository.save(changeRequest)).thenReturn(changeRequest);
 
         OffsetDateTime before = OffsetDateTime.now();

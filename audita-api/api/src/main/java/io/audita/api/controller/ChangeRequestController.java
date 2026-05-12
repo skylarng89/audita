@@ -50,7 +50,7 @@ public class ChangeRequestController {
             @AuthenticationPrincipal UserPrincipal principal) {
 
         UUID createdById = principal.userId();
-        var created = changeRequestService.create(
+        var created = changeRequestService.create(new ChangeRequestService.CreateRequest(
                 req.title(),
                 req.description(),
                 req.priority(),
@@ -59,8 +59,8 @@ public class ChangeRequestController {
                 req.approvalType(),
                 req.scheduledStart(),
                 req.scheduledEnd(),
-                req.affectedSystems() == null ? null : req.affectedSystems().toArray(String[]::new),
-                createdById);
+                req.affectedSystems(),
+                createdById));
         return new ResponseEntity<>(ChangeRequestResponse.from(created), HttpStatus.CREATED);
     }
 
@@ -69,7 +69,7 @@ public class ChangeRequestController {
     public ChangeRequestResponse update(@PathVariable UUID id,
             @Valid @RequestBody UpdateChangeRequestRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {
-        return ChangeRequestResponse.from(changeRequestService.update(
+        return ChangeRequestResponse.from(changeRequestService.update(new ChangeRequestService.UpdateRequest(
                 id,
                 req.title(),
                 req.description(),
@@ -79,9 +79,9 @@ public class ChangeRequestController {
                 req.approvalType(),
                 req.scheduledStart(),
                 req.scheduledEnd(),
-                req.affectedSystems() == null ? null : req.affectedSystems().toArray(String[]::new),
+                req.affectedSystems(),
                 principal.userId(),
-                principal.role()));
+                principal.role())));
     }
 
     @PostMapping("/{id}/submit")

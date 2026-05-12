@@ -257,7 +257,18 @@
 
 ### Group G — WCAG 2.2 Compliance
 
-| Task ID | Task | Priority | Status | Assigned To | Notes |
+| Task ID  | Task                                                                                             | Priority | Status         | Assigned To | Notes                                                                                                                                                                                                  |
+| -------- | ------------------------------------------------------------------------------------------------ | -------- | -------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| WCAG-001 | Add skip-to-main-content link at top of default layout (2.4.1)                                   | High     | ✅ Completed   | Developer 2 | `.skip-link` class in `main.css`; `<a href="#main-content" class="skip-link">` at top of `layouts/default.vue`; `<main id="main-content" tabindex="-1">` as target.                                    |
+| WCAG-002 | Add `<title>` to every page via `useHead` (2.4.2)                                                | High     | ✅ Completed   | Developer 2 | `useHead({ title: '… — Audita' })` added to all pages: Dashboard, CR list/create/detail, Audit Trail, Users, Groups, Custom Fields, Settings, Sign In, Reset Password, Forgot Password, Accept Invite. |
+| WCAG-003 | Fix `<label for>` / `<input id>` wiring in CR list filter bar (4.1.2)                            | High     | ✅ Completed   | Developer 2 | `<label for="filter-status">` + `<select id="filter-status">` and `<label for="filter-priority">` + `<select id="filter-priority">` added in CR list.                                                  |
+| WCAG-004 | Fix `<label for>` wiring in auth and settings forms (4.1.2)                                      | High     | ✅ Completed   | Developer 2 | `reset-password.vue` and `accept-invite.vue` password inputs now have matching `id`/`for` pairs. `sign-in.vue` had `id` added.                                                                         |
+| WCAG-005 | Add proper `role="tablist"` / `role="tab"` / `aria-selected` to CR detail tabs (1.3.1, 4.1.2)    | High     | ✅ Completed   | Developer 2 | Full ARIA tablist semantics + Arrow key/Home/End keyboard nav added inline to `[id].vue` via `crTabs` computed array and `onTabKeyDown()`.                                                             |
+| WCAG-006 | Implement focus trap in `AppModal` (2.4.3)                                                       | High     | ✅ Completed   | Developer 2 | Full focus-trap implemented in `AppModal.vue`: `getFocusable()`, Tab/Shift+Tab loop, Escape close, auto-focus first element on open, `aria-labelledby`, `role="dialog"`.                               |
+| WCAG-007 | Add `scroll-margin-top` to main content so fixed header never obscures focused elements (2.4.12) | Medium   | ✅ Completed   | Developer 2 | `scroll-margin-top: 4.5rem` added to `:focus-visible` selector in `@layer base` of `assets/css/main.css`.                                                                                              |
+| WCAG-008 | Announce dynamic content changes via `aria-live` (4.1.3)                                         | Medium   | ✅ Completed   | Developer 2 | `aria-live="polite"` SR-only span on CR list for filter results; `role="log" aria-live="polite"` on toast container; `role="alert"` on error toasts; `aria-live="polite"` on password strength text.   |
+| WCAG-009 | Add `autocomplete` tokens to all auth form inputs (1.3.5)                                        | Medium   | ✅ Completed   | Developer 2 | `autocomplete="new-password"` added to both password inputs in `accept-invite.vue`. `sign-in.vue` and `reset-password.vue` already had correct values.                                                 |
+| WCAG-010 | Ensure all interactive targets meet 24×24 px minimum (2.5.8)                                     | Medium   | 🔴 Not Started | Developer 2 | Deferred. Most icon buttons are `w-8 h-8` (32px), satisfying WCAG 2.5.8. Inline table action links (Users page) still lack explicit min-size enforcement.                                              |
 
 ## Sprint 11: Session Hardening (2026-05-12)
 
@@ -265,18 +276,19 @@
 
 ### Backend + Frontend Session Resilience (`audita-api` + `audita-web`)
 
-| Task ID  | Task                                                                       | Priority | Status       | Assigned To | Notes                                                                                                                                                                                     |
-| -------- | -------------------------------------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| SESS-001 | Fix refresh cookie scope so logout receives and revokes refresh token      | High     | ✅ Completed | Developer 1 | `AuthController` and `SsoController` now scope refresh cookie to `/api/v1/auth`; added `AuthControllerWebMvcTest`.                                                                        |
-| SESS-002 | Restrict frontend silent refresh to `401` responses only                   | High     | ✅ Completed | Developer 2 | `plugins/api.ts` no longer treats empty `403` as token expiry; retry remains single-shot.                                                                                                 |
-| SESS-003 | Persist and enforce access-token expiry in frontend auth state             | High     | ✅ Completed | Developer 2 | `stores/auth.ts` now stores `tokenExpiresAt`, invalidates stale persisted sessions, and refresh responses refresh the full auth state.                                                    |
-| SESS-004 | Invalidate onboarding/session cache on auth transitions                    | Medium   | ✅ Completed | Developer 2 | `setAuth`, `setAccessToken`, and `clearAuth` now invalidate onboarding bootstrap cache to avoid stale route decisions after redeploy or logout.                                           |
-| SESS-005 | Force logout on tenant-context mismatch                                    | High     | ✅ Completed | Developer 2 | `middleware/tenant.ts` now fails closed by calling logout when the resolved tenant does not match the authenticated tenant context.                                                       |
-| SESS-006 | Add regression coverage for session-hardening helpers and middleware flows | High     | ✅ Completed | Developer 2 | Added `tests/auth/session.spec.ts`, `tests/auth/tenant-resolution.spec.ts`, `tests/middleware/tenant.spec.ts`, and backend `AuthControllerWebMvcTest`; frontend typecheck passes cleanly. |
-| SESS-007 | Remove JS-readable auth-token persistence and restore session via refresh  | High     | ✅ Completed | Developer 2 | `stores/auth.ts` no longer persists access tokens in cookies; `plugins/auth.ts` restores in-memory auth via the HttpOnly refresh cookie at startup.                                       |
-| SESS-008 | Add non-rotating backend session introspection for cold-start restore      | High     | ✅ Completed | Developer 1 | Added `POST /api/v1/auth/session`, `AuthPort.restoreSession()`, and `AuthService.restoreSession()` so startup restore no longer rotates refresh tokens.                                   |
-| SESS-009 | Enforce frontend/backend API contract compatibility                        | High     | ✅ Completed | Developer 2 | Added `X-Audita-Api-Contract` response header, frontend contract checks in auth/api plugins, and forced local sign-out when an incompatible contract is detected.                         |
-| SESS-010 | Synchronize session restore/logout across browser tabs without tokens      | Medium   | ✅ Completed | Developer 2 | Added BroadcastChannel/localStorage session sync events so tabs restore or clear local session state without sharing access tokens between tabs.                                          |
+| Task ID  | Task                                                                       | Priority | Status       | Assigned To | Notes                                                                                                                                                                                                                   |
+| -------- | -------------------------------------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SESS-001 | Fix refresh cookie scope so logout receives and revokes refresh token      | High     | ✅ Completed | Developer 1 | `AuthController` and `SsoController` now scope refresh cookie to `/api/v1/auth`; added `AuthControllerWebMvcTest`.                                                                                                      |
+| SESS-002 | Restrict frontend silent refresh to `401` responses only                   | High     | ✅ Completed | Developer 2 | `plugins/api.ts` no longer treats empty `403` as token expiry; retry remains single-shot.                                                                                                                               |
+| SESS-003 | Persist and enforce access-token expiry in frontend auth state             | High     | ✅ Completed | Developer 2 | `stores/auth.ts` now stores `tokenExpiresAt`, invalidates stale persisted sessions, and refresh responses refresh the full auth state.                                                                                  |
+| SESS-004 | Invalidate onboarding/session cache on auth transitions                    | Medium   | ✅ Completed | Developer 2 | `setAuth`, `setAccessToken`, and `clearAuth` now invalidate onboarding bootstrap cache to avoid stale route decisions after redeploy or logout.                                                                         |
+| SESS-005 | Force logout on tenant-context mismatch                                    | High     | ✅ Completed | Developer 2 | `middleware/tenant.ts` now fails closed by calling logout when the resolved tenant does not match the authenticated tenant context.                                                                                     |
+| SESS-006 | Add regression coverage for session-hardening helpers and middleware flows | High     | ✅ Completed | Developer 2 | Added `tests/auth/session.spec.ts`, `tests/auth/tenant-resolution.spec.ts`, `tests/middleware/tenant.spec.ts`, and backend `AuthControllerWebMvcTest`; frontend typecheck passes cleanly.                               |
+| SESS-007 | Remove JS-readable auth-token persistence and restore session via refresh  | High     | ✅ Completed | Developer 2 | `stores/auth.ts` no longer persists access tokens in cookies; `plugins/auth.ts` restores in-memory auth via the HttpOnly refresh cookie at startup.                                                                     |
+| SESS-008 | Add non-rotating backend session introspection for cold-start restore      | High     | ✅ Completed | Developer 1 | Added `POST /api/v1/auth/session`, `AuthPort.restoreSession()`, and `AuthService.restoreSession()` so startup restore no longer rotates refresh tokens.                                                                 |
+| SESS-009 | Enforce frontend/backend API contract compatibility                        | High     | ✅ Completed | Developer 2 | Added `X-Audita-Api-Contract` response header, frontend contract checks in auth/api plugins, and forced local sign-out when an incompatible contract is detected.                                                       |
+| SESS-010 | Synchronize session restore/logout across browser tabs without tokens      | Medium   | ✅ Completed | Developer 2 | Added BroadcastChannel/localStorage session sync events so tabs restore or clear local session state without sharing access tokens between tabs.                                                                        |
+| SESS-011 | Replace temporary security-config workaround with public Spring APIs       | High     | ✅ Completed | Developer 1 | Removed reflective authorization-rule wiring from `SecurityConfig`; now uses `RequestMatcherDelegatingAuthorizationManager`, `AuthorizationFilter`, `PathPatternRequestMatcher`, and focused route-authorization tests. |
 
 ## Session Hardening Implementations
 
@@ -318,17 +330,6 @@
 - Expired or legacy persisted access tokens no longer keep the UI in a broken half-authenticated state.
 
 **Test Coverage**: Focused backend auth/controller/filter tests passing; focused frontend session/tenant/contract/sync tests passing; frontend typecheck passing.
-| -------- | ------------------------------------------------------------------------------------------------ | -------- | -------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| WCAG-001 | Add skip-to-main-content link at top of default layout (2.4.1) | High | ✅ Completed | Developer 2 | `.skip-link` class in `main.css`; `<a href="#main-content" class="skip-link">` at top of `layouts/default.vue`; `<main id="main-content" tabindex="-1">` as target. |
-| WCAG-002 | Add `<title>` to every page via `useHead` (2.4.2) | High | ✅ Completed | Developer 2 | `useHead({ title: '… — Audita' })` added to all pages: Dashboard, CR list/create/detail, Audit Trail, Users, Groups, Custom Fields, Settings, Sign In, Reset Password, Forgot Password, Accept Invite. |
-| WCAG-003 | Fix `<label for>` / `<input id>` wiring in CR list filter bar (4.1.2) | High | ✅ Completed | Developer 2 | `<label for="filter-status">` + `<select id="filter-status">` and `<label for="filter-priority">` + `<select id="filter-priority">` added in CR list. |
-| WCAG-004 | Fix `<label for>` wiring in auth and settings forms (4.1.2) | High | ✅ Completed | Developer 2 | `reset-password.vue` and `accept-invite.vue` password inputs now have matching `id`/`for` pairs. `sign-in.vue` had `id` added. |
-| WCAG-005 | Add proper `role="tablist"` / `role="tab"` / `aria-selected` to CR detail tabs (1.3.1, 4.1.2) | High | ✅ Completed | Developer 2 | Full ARIA tablist semantics + Arrow key/Home/End keyboard nav added inline to `[id].vue` via `crTabs` computed array and `onTabKeyDown()`. |
-| WCAG-006 | Implement focus trap in `AppModal` (2.4.3) | High | ✅ Completed | Developer 2 | Full focus-trap implemented in `AppModal.vue`: `getFocusable()`, Tab/Shift+Tab loop, Escape close, auto-focus first element on open, `aria-labelledby`, `role="dialog"`. |
-| WCAG-007 | Add `scroll-margin-top` to main content so fixed header never obscures focused elements (2.4.12) | Medium | ✅ Completed | Developer 2 | `scroll-margin-top: 4.5rem` added to `:focus-visible` selector in `@layer base` of `assets/css/main.css`. |
-| WCAG-008 | Announce dynamic content changes via `aria-live` (4.1.3) | Medium | ✅ Completed | Developer 2 | `aria-live="polite"` SR-only span on CR list for filter results; `role="log" aria-live="polite"` on toast container; `role="alert"` on error toasts; `aria-live="polite"` on password strength text. |
-| WCAG-009 | Add `autocomplete` tokens to all auth form inputs (1.3.5) | Medium | ✅ Completed | Developer 2 | `autocomplete="new-password"` added to both password inputs in `accept-invite.vue`. `sign-in.vue` and `reset-password.vue` already had correct values. |
-| WCAG-010 | Ensure all interactive targets meet 24×24 px minimum (2.5.8) | Medium | 🔴 Not Started | Developer 2 | Deferred. Most icon buttons are `w-8 h-8` (32px), satisfying WCAG 2.5.8. Inline table action links (Users page) still lack explicit min-size enforcement. |
 
 ---
 
@@ -348,12 +349,52 @@
 | Sprint 8  | 4           | 0           | 0           | 4         | 100%       |
 | Sprint 9  | 1           | 0           | 0           | 1         | 100%       |
 | Sprint 10 | 36          | 0           | 0           | 36        | 100%       |
-| Sprint 11 | 10          | 0           | 0           | 10        | 100%       |
-| **TOTAL** | **155**     | **0**       | **0**       | **155**   | **100%**   |
+| Sprint 11 | 11          | 0           | 0           | 11        | 100%       |
+| **TOTAL** | **156**     | **0**       | **0**       | **156**   | **100%**   |
 
 ---
 
 ## Recent Implementations
+
+### Sprint 11 Follow-Through: Diagnostics and Config Metadata Cleanup (Completed 2026-05-12)
+
+**Overview**: Closed the post-hardening cleanup slice by removing regex risk in filename normalization, documenting the CSRF rationale in the security config, aligning Spring property metadata with runtime usage, and separating live diagnostics from stale editor noise.
+
+**Files Created/Modified**:
+
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — replaced regex-based filename stem cleanup with a single-pass normalizer.
+- `audita-api/api/src/main/java/io/audita/api/config/SecurityConfig.java` — added explicit bearer-token/refresh-cookie CSRF rationale and suppressed noisy `java:S4502` on the filter-chain method.
+- `audita-api/api/src/main/java/io/audita/api/config/AuditaProperties.java` — added typed `invite` and `mail` groups so generated Spring metadata includes the custom config surface.
+- `audita-api/api/src/main/resources/META-INF/additional-spring-configuration-metadata.json` — added `audita.invite.expiry-hours` and `audita.mail.from-name` source metadata.
+- `audita-api/api/src/main/resources/application.yml` — restored the full `audita.mail` block (`from` + `from-name`).
+- `audita-web/middleware/tenant.ts` — switched client hostname lookup to `globalThis`.
+
+**Key Changes**:
+
+- Removed regex backtracking from filename normalization instead of trying to tune the pattern.
+- Recorded the actual CSRF safety argument in code: normal API requests use explicit bearer tokens, while the only cookie-backed auth flow is path-scoped and `SameSite=Strict`.
+- Brought Spring YAML metadata back in sync with `@Value` consumers so editor warnings for `audita.invite` and `audita.mail.from-name` stop representing real config defects.
+- Confirmed `SecurityConfig`'s `HttpSecurity` errors were stale language-server noise because repeated Gradle compiles succeeded.
+- Fixed the one live frontend warning by replacing `window` with `globalThis` in tenant middleware.
+
+**Test Coverage**: `cd audita-api && ./gradlew :infrastructure:compileJava --no-daemon`; `cd audita-api && ./gradlew :api:compileJava --no-daemon`; `cd audita-web && pnpm exec eslint middleware/tenant.ts --quiet`.
+
+### Session Hardening Follow-Through: Security Config Stabilization (Completed 2026-05-12)
+
+**Overview**: Replaced the temporary reflection-based Spring Security authorization workaround with a public, type-safe authorization manager configuration to avoid framework/tooling fragility in the request-authorization layer.
+
+**Files Created/Modified**:
+
+- `audita-api/api/src/main/java/io/audita/api/config/SecurityConfig.java` — replaced reflective authorization-rule wiring with `RequestMatcherDelegatingAuthorizationManager`, `AuthorizationFilter`, and `PathPatternRequestMatcher`.
+- `audita-api/api/src/test/java/io/audita/api/config/SecurityConfigAuthorizationTest.java` — added focused regression coverage for public auth routes, authenticated fallback, and super-admin platform routes.
+
+**Key Changes**:
+
+- Removed the reflection bridge that had been masking a Spring Security DSL nested-type accessibility snag.
+- Kept the same route policy, but expressed it through public Spring Security APIs with compile-time-safe matcher/manager composition.
+- Added direct authorization-manager tests so route-safety rules stay locked even if the framework DSL remains editor-hostile.
+
+**Test Coverage**: `SecurityConfigAuthorizationTest`, `ApiContractHeaderFilterTest`, `AuthControllerWebMvcTest`, and `TenantResolutionFilterTest` passing.
 
 ### Sprint 8 — Workflow/SLA Settings Activation (In Progress 2026-05-11)
 

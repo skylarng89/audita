@@ -4,11 +4,12 @@ import io.audita.api.security.JwtAuthenticationFilter;
 import io.audita.api.security.TenantResolutionFilter;
 import java.util.Arrays;
 import java.util.List;
-import org.springframework.security.config.Customizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.access.intercept.RequestMatcherDelegatingAuthorizationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -18,6 +19,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -26,8 +29,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
-
-        private static final String REQUEST_MATCHERS_METHOD = "requestMatchers";
 
         private final JwtAuthenticationFilter jwtFilter;
         private final TenantResolutionFilter tenantResolutionFilter;
@@ -43,13 +44,18 @@ public class SecurityConfig {
         }
 
         @Bean
-        @SuppressWarnings({ "rawtypes", "unchecked" })
+        @SuppressWarnings("java:S4502")
         public SecurityFilterChain filterChain(HttpSecurity http) {
+                // This API authenticates normal requests with explicit bearer tokens, not
+                // ambient session cookies. The only cookie-backed auth flow is the refresh
+                // cookie scoped to /api/v1/auth with SameSite=Strict, which prevents
+                // cross-site submission on the state-changing endpoints that consume it.
                 http.csrf(AbstractHttpConfigurer::disable)
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .sessionManagement(session -> session
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                .authorizeHttpRequests(authorizeRequests());
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+                http.addFilterAt(new AuthorizationFilter(apiAuthorizationManager()), AuthorizationFilter.class);
 
                 http.addFilterBefore(tenantResolutionFilter, UsernamePasswordAuthenticationFilter.class)
                                 .addFilterAfter(jwtFilter, TenantResolutionFilter.class);
@@ -57,63 +63,44 @@ public class SecurityConfig {
                 return http.build();
         }
 
-        @SuppressWarnings({ "rawtypes", "unchecked" })
-        private Customizer authorizeRequests() {
-                return registry -> {
-                        permitAll(registry, HttpMethod.POST,
-                                        "/api/v1/auth/login",
-                                        "/api/v1/auth/session",
-                                        "/api/v1/auth/refresh",
-                                        "/api/v1/auth/logout",
-                                        "/api/v1/auth/forgot-password",
-                                        "/api/v1/auth/reset-password",
-                                        "/api/v1/auth/accept-invite",
-                                        "/api/v1/auth/oauth/exchange",
-                                        "/api/platform/v1/bootstrap",
-                                        "/api/platform/v1/setup");
-                        permitAll(registry, HttpMethod.GET,
-                                        "/api/platform/v1/bootstrap/status");
-                        permitAll(registry, HttpMethod.GET,
-                                        "/api/v1/auth/oauth/**");
-                        permitAll(registry, HttpMethod.GET,
-                                        "/api/v1/notifications/stream");
-                        permitAll(registry, "/actuator/health");
-                        hasRole(registry, "SUPER_ADMIN", "/api/platform/v1/**");
-                        authenticated(registry);
-                };
+        private RequestMatcherDelegatingAuthorizationManager apiAuthorizationManager() {
+                return RequestMatcherDelegatingAuthorizationManager.builder()
+                                .requestMatchers(methodMatchers(HttpMethod.POST,
+                                                "/api/v1/auth/login",
+                                                "/api/v1/auth/session",
+                                                "/api/v1/auth/refresh",
+                                                "/api/v1/auth/logout",
+                                                "/api/v1/auth/forgot-password",
+                                                "/api/v1/auth/reset-password",
+                                                "/api/v1/auth/accept-invite",
+                                                "/api/v1/auth/oauth/exchange",
+                                                "/api/platform/v1/bootstrap",
+                                                "/api/platform/v1/setup"))
+                                .permitAll()
+                                .requestMatchers(methodMatchers(HttpMethod.GET,
+                                                "/api/platform/v1/bootstrap/status",
+                                                "/api/v1/auth/oauth/**",
+                                                "/api/v1/notifications/stream"))
+                                .permitAll()
+                                .requestMatchers(pathMatchers("/actuator/health"))
+                                .permitAll()
+                                .requestMatchers(pathMatchers("/api/platform/v1/**"))
+                                .hasRole("SUPER_ADMIN")
+                                .anyRequest()
+                                .authenticated()
+                                .build();
         }
 
-        private void permitAll(Object registry, HttpMethod method, String... patterns) {
-                Object matcher = invoke(registry, REQUEST_MATCHERS_METHOD,
-                                new Class<?>[] { HttpMethod.class, String[].class },
-                                method, patterns);
-                invoke(matcher, "permitAll", new Class<?>[0]);
+        private RequestMatcher[] methodMatchers(HttpMethod method, String... patterns) {
+                return Arrays.stream(patterns)
+                                .map(pattern -> PathPatternRequestMatcher.pathPattern(method, pattern))
+                                .toArray(RequestMatcher[]::new);
         }
 
-        private void permitAll(Object registry, String... patterns) {
-                Object matcher = invoke(registry, REQUEST_MATCHERS_METHOD, new Class<?>[] { String[].class },
-                                (Object) patterns);
-                invoke(matcher, "permitAll", new Class<?>[0]);
-        }
-
-        private void hasRole(Object registry, String role, String... patterns) {
-                Object matcher = invoke(registry, REQUEST_MATCHERS_METHOD, new Class<?>[] { String[].class },
-                                (Object) patterns);
-                invoke(matcher, "hasRole", new Class<?>[] { String.class }, role);
-        }
-
-        private void authenticated(Object registry) {
-                Object matcher = invoke(registry, "anyRequest", new Class<?>[0]);
-                invoke(matcher, "authenticated", new Class<?>[0]);
-        }
-
-        private Object invoke(Object target, String methodName, Class<?>[] parameterTypes, Object... args) {
-                try {
-                        return target.getClass().getMethod(methodName, parameterTypes).invoke(target, args);
-                } catch (ReflectiveOperationException exception) {
-                        throw new IllegalStateException("Failed to configure Spring Security authorization rules.",
-                                        exception);
-                }
+        private RequestMatcher[] pathMatchers(String... patterns) {
+                return Arrays.stream(patterns)
+                                .map(PathPatternRequestMatcher::pathPattern)
+                                .toArray(RequestMatcher[]::new);
         }
 
         @Bean
