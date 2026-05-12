@@ -2,6 +2,22 @@
 
 ## [0.1.0] — Unreleased (In Development)
 
+### Changed (Sprint 11 — Session Hardening & Security Config Stabilization — 2026-05-12)
+
+- **Auth/session resilience**: frontend now restores session state from a non-rotating `POST /api/v1/auth/session` flow backed by the HttpOnly refresh cookie, retries refresh on `401` only, fails closed on tenant mismatch, enforces `X-Audita-Api-Contract` compatibility, and synchronizes restore/logout across tabs without storing or sharing access tokens in browser-visible storage.
+- **Spring Security authorization config**: replaced the temporary reflection-based request-authorization workaround in `SecurityConfig` with Spring Security public APIs: `RequestMatcherDelegatingAuthorizationManager`, `AuthorizationFilter`, and `PathPatternRequestMatcher`.
+
+### Added (Sprint 11 — 2026-05-12)
+
+- **Cold-start session restore endpoint**: `POST /api/v1/auth/session` for non-rotating auth bootstrap from the existing refresh cookie.
+- **API contract response signaling**: `X-Audita-Api-Contract` header via `ApiContractHeaderFilter` and frontend contract validation helpers.
+- **Focused authorization regression tests**: `SecurityConfigAuthorizationTest` now locks public auth routes, authenticated fallback, and super-admin platform route boundaries.
+
+### Fixed (Sprint 11 — 2026-05-12)
+
+- **Refresh-token logout revocation gap**: refresh-cookie path widened from `/api/v1/auth/refresh` to `/api/v1/auth` so logout can receive and revoke backend refresh state.
+- **Broken half-authenticated redeploy states**: expired or incompatible client auth state now clears deterministically instead of looping through stale refresh/authorization failures.
+
 ### Added (Sprint 7 — File Security, Custom Fields UX, CR Edit Mode & Date Picker Replacement — 2026-05-11)
 
 - **3-layer file upload type enforcement**: `UPLOAD_ALLOWED_MIME_TYPES` / `UPLOAD_MAX_SIZE_BYTES` in `.env`; backend `isAllowedMimeType()`, `isExtensionAllowed()`, `isSignatureValid()` (magic bytes for PDF/PNG/JPEG/DOCX/XLSX) in `ChangeRequestService`; frontend `isFileTypeAllowed()` pre-flight in `[id].vue`. DOCX/XLSX ZIP-format ambiguity disambiguated by extension.

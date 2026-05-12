@@ -150,15 +150,23 @@
 - SESS-008: Add a non-rotating backend session introspection endpoint for cold-start session restore. ✅ (Completed 2026-05-12)
 - SESS-009: Enforce API contract compatibility between frontend and backend auth flows. ✅ (Completed 2026-05-12)
 - SESS-010: Add token-free cross-tab session synchronization for restore/logout events. ✅ (Completed 2026-05-12)
+- SESS-011: Replace the temporary Spring Security authorization-config workaround with a public, type-safe authorization manager. ✅ (Completed 2026-05-12)
 
 ### Session Verification
 
 - `cd audita-api && ./gradlew :api:test --tests "io.audita.api.controller.AuthControllerWebMvcTest" --tests "io.audita.api.config.ApiContractHeaderFilterTest" --tests "io.audita.infrastructure.service.AuthServiceTest"`
+- `cd audita-api && ./gradlew :api:test --tests "io.audita.api.config.SecurityConfigAuthorizationTest" --tests "io.audita.api.config.ApiContractHeaderFilterTest" --tests "io.audita.api.controller.AuthControllerWebMvcTest" --tests "io.audita.api.security.TenantResolutionFilterTest"`
 - `cd audita-web && pnpm test -- tests/auth/session.spec.ts tests/auth/tenant-resolution.spec.ts tests/auth/api-contract.spec.ts tests/auth/session-sync.spec.ts tests/middleware/tenant.spec.ts tests/middleware/auth.global.spec.ts`
 - `cd audita-web && pnpm -s nuxi typecheck`
 
 ### Session Next Steps
 
-1. Consider serializing refresh attempts across tabs if multi-tab race conditions appear in production telemetry.
-2. Add a user-facing session-expired or app-updated banner on forced contract/logout redirects so the reason is explicit.
-3. If auth startup cost becomes noticeable, cache a short-lived session-presence hint client-side and only call `/api/v1/auth/session` when needed.
+1. Add a user-facing session-expired or app-updated banner on forced contract/logout redirects so the reason is explicit.
+2. If auth startup cost becomes noticeable, cache a short-lived session-presence hint client-side and only call `/api/v1/auth/session` when needed.
+3. Revisit the Spring Security config after future framework/tooling upgrades and collapse back to the higher-level DSL if the nested-type accessibility snag is resolved.
+
+### Session Completion Notes
+
+- Security-first session hardening is fully implemented: refresh-cookie logout revocation, HttpOnly-only cold-start restore, `401`-only refresh, API contract enforcement, and token-free cross-tab session sync are all in place.
+- The temporary reflection-based `SecurityConfig` workaround was removed. Request authorization now uses Spring Security public APIs: `RequestMatcherDelegatingAuthorizationManager`, `AuthorizationFilter`, and `PathPatternRequestMatcher`.
+- Added focused authorization regression coverage so public auth routes, authenticated fallback, and super-admin platform routes are locked by tests without relying on framework-internal DSL types.

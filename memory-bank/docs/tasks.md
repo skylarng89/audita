@@ -265,18 +265,19 @@
 
 ### Backend + Frontend Session Resilience (`audita-api` + `audita-web`)
 
-| Task ID  | Task                                                                       | Priority | Status       | Assigned To | Notes                                                                                                                                                                                     |
-| -------- | -------------------------------------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| SESS-001 | Fix refresh cookie scope so logout receives and revokes refresh token      | High     | ✅ Completed | Developer 1 | `AuthController` and `SsoController` now scope refresh cookie to `/api/v1/auth`; added `AuthControllerWebMvcTest`.                                                                        |
-| SESS-002 | Restrict frontend silent refresh to `401` responses only                   | High     | ✅ Completed | Developer 2 | `plugins/api.ts` no longer treats empty `403` as token expiry; retry remains single-shot.                                                                                                 |
-| SESS-003 | Persist and enforce access-token expiry in frontend auth state             | High     | ✅ Completed | Developer 2 | `stores/auth.ts` now stores `tokenExpiresAt`, invalidates stale persisted sessions, and refresh responses refresh the full auth state.                                                    |
-| SESS-004 | Invalidate onboarding/session cache on auth transitions                    | Medium   | ✅ Completed | Developer 2 | `setAuth`, `setAccessToken`, and `clearAuth` now invalidate onboarding bootstrap cache to avoid stale route decisions after redeploy or logout.                                           |
-| SESS-005 | Force logout on tenant-context mismatch                                    | High     | ✅ Completed | Developer 2 | `middleware/tenant.ts` now fails closed by calling logout when the resolved tenant does not match the authenticated tenant context.                                                       |
-| SESS-006 | Add regression coverage for session-hardening helpers and middleware flows | High     | ✅ Completed | Developer 2 | Added `tests/auth/session.spec.ts`, `tests/auth/tenant-resolution.spec.ts`, `tests/middleware/tenant.spec.ts`, and backend `AuthControllerWebMvcTest`; frontend typecheck passes cleanly. |
-| SESS-007 | Remove JS-readable auth-token persistence and restore session via refresh  | High     | ✅ Completed | Developer 2 | `stores/auth.ts` no longer persists access tokens in cookies; `plugins/auth.ts` restores in-memory auth via the HttpOnly refresh cookie at startup.                                       |
-| SESS-008 | Add non-rotating backend session introspection for cold-start restore      | High     | ✅ Completed | Developer 1 | Added `POST /api/v1/auth/session`, `AuthPort.restoreSession()`, and `AuthService.restoreSession()` so startup restore no longer rotates refresh tokens.                                   |
-| SESS-009 | Enforce frontend/backend API contract compatibility                        | High     | ✅ Completed | Developer 2 | Added `X-Audita-Api-Contract` response header, frontend contract checks in auth/api plugins, and forced local sign-out when an incompatible contract is detected.                         |
-| SESS-010 | Synchronize session restore/logout across browser tabs without tokens      | Medium   | ✅ Completed | Developer 2 | Added BroadcastChannel/localStorage session sync events so tabs restore or clear local session state without sharing access tokens between tabs.                                          |
+| Task ID  | Task                                                                       | Priority | Status       | Assigned To | Notes                                                                                                                                                                                                                   |
+| -------- | -------------------------------------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SESS-001 | Fix refresh cookie scope so logout receives and revokes refresh token      | High     | ✅ Completed | Developer 1 | `AuthController` and `SsoController` now scope refresh cookie to `/api/v1/auth`; added `AuthControllerWebMvcTest`.                                                                                                      |
+| SESS-002 | Restrict frontend silent refresh to `401` responses only                   | High     | ✅ Completed | Developer 2 | `plugins/api.ts` no longer treats empty `403` as token expiry; retry remains single-shot.                                                                                                                               |
+| SESS-003 | Persist and enforce access-token expiry in frontend auth state             | High     | ✅ Completed | Developer 2 | `stores/auth.ts` now stores `tokenExpiresAt`, invalidates stale persisted sessions, and refresh responses refresh the full auth state.                                                                                  |
+| SESS-004 | Invalidate onboarding/session cache on auth transitions                    | Medium   | ✅ Completed | Developer 2 | `setAuth`, `setAccessToken`, and `clearAuth` now invalidate onboarding bootstrap cache to avoid stale route decisions after redeploy or logout.                                                                         |
+| SESS-005 | Force logout on tenant-context mismatch                                    | High     | ✅ Completed | Developer 2 | `middleware/tenant.ts` now fails closed by calling logout when the resolved tenant does not match the authenticated tenant context.                                                                                     |
+| SESS-006 | Add regression coverage for session-hardening helpers and middleware flows | High     | ✅ Completed | Developer 2 | Added `tests/auth/session.spec.ts`, `tests/auth/tenant-resolution.spec.ts`, `tests/middleware/tenant.spec.ts`, and backend `AuthControllerWebMvcTest`; frontend typecheck passes cleanly.                               |
+| SESS-007 | Remove JS-readable auth-token persistence and restore session via refresh  | High     | ✅ Completed | Developer 2 | `stores/auth.ts` no longer persists access tokens in cookies; `plugins/auth.ts` restores in-memory auth via the HttpOnly refresh cookie at startup.                                                                     |
+| SESS-008 | Add non-rotating backend session introspection for cold-start restore      | High     | ✅ Completed | Developer 1 | Added `POST /api/v1/auth/session`, `AuthPort.restoreSession()`, and `AuthService.restoreSession()` so startup restore no longer rotates refresh tokens.                                                                 |
+| SESS-009 | Enforce frontend/backend API contract compatibility                        | High     | ✅ Completed | Developer 2 | Added `X-Audita-Api-Contract` response header, frontend contract checks in auth/api plugins, and forced local sign-out when an incompatible contract is detected.                                                       |
+| SESS-010 | Synchronize session restore/logout across browser tabs without tokens      | Medium   | ✅ Completed | Developer 2 | Added BroadcastChannel/localStorage session sync events so tabs restore or clear local session state without sharing access tokens between tabs.                                                                        |
+| SESS-011 | Replace temporary security-config workaround with public Spring APIs       | High     | ✅ Completed | Developer 1 | Removed reflective authorization-rule wiring from `SecurityConfig`; now uses `RequestMatcherDelegatingAuthorizationManager`, `AuthorizationFilter`, `PathPatternRequestMatcher`, and focused route-authorization tests. |
 
 ## Session Hardening Implementations
 
@@ -348,12 +349,29 @@
 | Sprint 8  | 4           | 0           | 0           | 4         | 100%       |
 | Sprint 9  | 1           | 0           | 0           | 1         | 100%       |
 | Sprint 10 | 36          | 0           | 0           | 36        | 100%       |
-| Sprint 11 | 10          | 0           | 0           | 10        | 100%       |
-| **TOTAL** | **155**     | **0**       | **0**       | **155**   | **100%**   |
+| Sprint 11 | 11          | 0           | 0           | 11        | 100%       |
+| **TOTAL** | **156**     | **0**       | **0**       | **156**   | **100%**   |
 
 ---
 
 ## Recent Implementations
+
+### Session Hardening Follow-Through: Security Config Stabilization (Completed 2026-05-12)
+
+**Overview**: Replaced the temporary reflection-based Spring Security authorization workaround with a public, type-safe authorization manager configuration to avoid framework/tooling fragility in the request-authorization layer.
+
+**Files Created/Modified**:
+
+- `audita-api/api/src/main/java/io/audita/api/config/SecurityConfig.java` — replaced reflective authorization-rule wiring with `RequestMatcherDelegatingAuthorizationManager`, `AuthorizationFilter`, and `PathPatternRequestMatcher`.
+- `audita-api/api/src/test/java/io/audita/api/config/SecurityConfigAuthorizationTest.java` — added focused regression coverage for public auth routes, authenticated fallback, and super-admin platform routes.
+
+**Key Changes**:
+
+- Removed the reflection bridge that had been masking a Spring Security DSL nested-type accessibility snag.
+- Kept the same route policy, but expressed it through public Spring Security APIs with compile-time-safe matcher/manager composition.
+- Added direct authorization-manager tests so route-safety rules stay locked even if the framework DSL remains editor-hostile.
+
+**Test Coverage**: `SecurityConfigAuthorizationTest`, `ApiContractHeaderFilterTest`, `AuthControllerWebMvcTest`, and `TenantResolutionFilterTest` passing.
 
 ### Sprint 8 — Workflow/SLA Settings Activation (In Progress 2026-05-11)
 
