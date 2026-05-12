@@ -169,7 +169,7 @@
       </nav>
 
       <main class="flex-1 ml-56 p-6 min-w-0">
-        <div class="mx-auto max-w-7xl">
+        <div class="mx-auto max-w-[1600px]">
           <slot />
         </div>
       </main>

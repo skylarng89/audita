@@ -408,7 +408,7 @@
         class="flex-1 sidebar-main p-6 min-w-0 transition-[margin-left] duration-200"
         tabindex="-1"
       >
-        <div class="mx-auto max-w-7xl">
+        <div class="mx-auto max-w-[1600px]">
           <slot />
         </div>
       </main>

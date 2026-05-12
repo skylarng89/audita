@@ -7,7 +7,7 @@
         Operations Overview
       </p>
       <h1 class="text-3xl font-bold tracking-tight text-on-surface">
-        Audita Dashboard
+        Dashboard
       </h1>
       <p class="text-sm text-muted mt-1">
         Overview of your organisation's change activity.
