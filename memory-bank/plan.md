@@ -132,13 +132,13 @@
 
 ## Session Hardening Follow-Up (2026-05-12)
 
-### Objectives
+### Session Objectives
 
 1. Eliminate broken half-authenticated states after redeploys and refresh failures.
 2. Ensure forced logout can revoke the backend refresh token reliably.
 3. Make the frontend fail closed on authentication expiry and tenant-context mismatches.
 
-### Work Items
+### Session Work Items
 
 - SESS-001: Broaden refresh cookie scope from `/api/v1/auth/refresh` to `/api/v1/auth` so logout receives and clears the refresh token. ✅ (Completed 2026-05-12)
 - SESS-002: Harden frontend refresh policy to retry only on `401`, not on `403`. ✅ (Completed 2026-05-12)
@@ -146,15 +146,19 @@
 - SESS-004: Invalidate onboarding/session-derived cache on auth transitions. ✅ (Completed 2026-05-12)
 - SESS-005: Force logout on tenant-context mismatch detected in route middleware. ✅ (Completed 2026-05-12)
 - SESS-006: Add narrow backend/frontend regression tests for session hardening. ✅ (Completed 2026-05-12)
+- SESS-007: Remove JS-readable auth-token persistence and restore session state from the HttpOnly refresh cookie. ✅ (Completed 2026-05-12)
+- SESS-008: Add a non-rotating backend session introspection endpoint for cold-start session restore. ✅ (Completed 2026-05-12)
+- SESS-009: Enforce API contract compatibility between frontend and backend auth flows. ✅ (Completed 2026-05-12)
+- SESS-010: Add token-free cross-tab session synchronization for restore/logout events. ✅ (Completed 2026-05-12)
 
-### Verification
+### Session Verification
 
-- `cd audita-api && ./gradlew :api:test --tests "io.audita.api.controller.AuthControllerWebMvcTest"`
-- `cd audita-web && pnpm test -- tests/auth/session.spec.ts tests/middleware/tenant.spec.ts tests/middleware/auth.global.spec.ts`
+- `cd audita-api && ./gradlew :api:test --tests "io.audita.api.controller.AuthControllerWebMvcTest" --tests "io.audita.api.config.ApiContractHeaderFilterTest" --tests "io.audita.infrastructure.service.AuthServiceTest"`
+- `cd audita-web && pnpm test -- tests/auth/session.spec.ts tests/auth/tenant-resolution.spec.ts tests/auth/api-contract.spec.ts tests/auth/session-sync.spec.ts tests/middleware/tenant.spec.ts tests/middleware/auth.global.spec.ts`
 - `cd audita-web && pnpm -s nuxi typecheck`
 
-### Next Steps
+### Session Next Steps
 
-1. Add a compatibility/version check for deploy-time contract mismatches and force re-auth on incompatible auth payloads.
-2. Consider serializing refresh attempts across tabs if multi-tab race conditions appear in production telemetry.
-3. If SSR auth flicker appears under load, add a dedicated backend session-introspection endpoint to avoid rotating refresh tokens on every cold load.
+1. Consider serializing refresh attempts across tabs if multi-tab race conditions appear in production telemetry.
+2. Add a user-facing session-expired or app-updated banner on forced contract/logout redirects so the reason is explicit.
+3. If auth startup cost becomes noticeable, cache a short-lived session-presence hint client-side and only call `/api/v1/auth/session` when needed.

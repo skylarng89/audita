@@ -274,8 +274,11 @@
 | SESS-005 | Force logout on tenant-context mismatch                                    | High     | ✅ Completed | Developer 2 | `middleware/tenant.ts` now fails closed by calling logout when the resolved tenant does not match the authenticated tenant context.                                                       |
 | SESS-006 | Add regression coverage for session-hardening helpers and middleware flows | High     | ✅ Completed | Developer 2 | Added `tests/auth/session.spec.ts`, `tests/auth/tenant-resolution.spec.ts`, `tests/middleware/tenant.spec.ts`, and backend `AuthControllerWebMvcTest`; frontend typecheck passes cleanly. |
 | SESS-007 | Remove JS-readable auth-token persistence and restore session via refresh  | High     | ✅ Completed | Developer 2 | `stores/auth.ts` no longer persists access tokens in cookies; `plugins/auth.ts` restores in-memory auth via the HttpOnly refresh cookie at startup.                                       |
+| SESS-008 | Add non-rotating backend session introspection for cold-start restore      | High     | ✅ Completed | Developer 1 | Added `POST /api/v1/auth/session`, `AuthPort.restoreSession()`, and `AuthService.restoreSession()` so startup restore no longer rotates refresh tokens.                                   |
+| SESS-009 | Enforce frontend/backend API contract compatibility                        | High     | ✅ Completed | Developer 2 | Added `X-Audita-Api-Contract` response header, frontend contract checks in auth/api plugins, and forced local sign-out when an incompatible contract is detected.                         |
+| SESS-010 | Synchronize session restore/logout across browser tabs without tokens      | Medium   | ✅ Completed | Developer 2 | Added BroadcastChannel/localStorage session sync events so tabs restore or clear local session state without sharing access tokens between tabs.                                          |
 
-## Recent Implementations
+## Session Hardening Implementations
 
 ### Session Hardening (Completed 2026-05-12)
 
@@ -286,24 +289,35 @@
 - `audita-api/api/src/main/java/io/audita/api/controller/AuthController.java` — broadened refresh-cookie path so logout can revoke refresh state.
 - `audita-api/api/src/main/java/io/audita/api/controller/SsoController.java` — aligned SSO-issued refresh-cookie path with auth controller scope.
 - `audita-api/api/src/test/java/io/audita/api/controller/AuthControllerWebMvcTest.java` — added focused cookie-scope regression coverage.
+- `audita-api/api/src/main/java/io/audita/api/config/ApiContractHeaderFilter.java` — adds the API contract header to responses used by the frontend compatibility check.
+- `audita-api/api/src/test/java/io/audita/api/config/ApiContractHeaderFilterTest.java` — verifies the API contract header is emitted.
 - `audita-web/plugins/api.ts` — restricted silent refresh to `401`, serialized refresh calls, and refreshed full auth state on success.
 - `audita-web/stores/auth.ts` — removed JS-readable auth-token persistence, kept access tokens in memory, and retained cache invalidation on auth transitions.
 - `audita-web/plugins/auth.ts` — restores the in-memory session from the HttpOnly refresh cookie before first render.
 - `audita-web/composables/authSession.ts` — added pure session helper functions for expiry and refresh decisions.
+- `audita-web/composables/apiContract.ts` — shared API contract compatibility helpers.
+- `audita-web/composables/sessionRestore.ts` — shared cold-start session restore and forced server-side logout helpers.
+- `audita-web/composables/authSessionSync.ts` — token-free cross-tab session event helpers.
 - `audita-web/composables/tenantResolution.ts` — shared tenant slug resolution used by startup auth restore and tenant middleware.
+- `audita-web/plugins/auth-sync.client.ts` — listens for restore/logout events from other tabs and updates local auth state.
 - `audita-web/middleware/tenant.ts` — fail-closed logout on tenant mismatch.
 - `audita-web/tests/auth/session.spec.ts` — session-helper regression tests.
 - `audita-web/tests/auth/tenant-resolution.spec.ts` — tenant-resolution regression tests.
+- `audita-web/tests/auth/api-contract.spec.ts` — API contract compatibility regression tests.
+- `audita-web/tests/auth/session-sync.spec.ts` — cross-tab session event regression tests.
 - `audita-web/tests/middleware/tenant.spec.ts` — tenant-mismatch logout regression test.
 
 **Key Changes**:
 
 - Logout can now receive the refresh cookie and revoke server-side refresh state instead of only clearing client state.
 - Frontend no longer hides real authorization failures behind refresh retries on `403`.
+- Cold-start session restore now uses `/api/v1/auth/session`, so reloads do not rotate refresh tokens.
+- Frontend now checks the backend API contract header and forces sign-out on incompatible auth/API contracts.
+- Tabs now coordinate restore/logout events without ever sharing access tokens through browser storage.
 - Frontend no longer stores access tokens in JS-readable cookies; a cold load now restores session state through the HttpOnly refresh cookie only.
 - Expired or legacy persisted access tokens no longer keep the UI in a broken half-authenticated state.
 
-**Test Coverage**: Backend focused auth controller test passing; frontend focused session/tenant tests passing; frontend typecheck passing.
+**Test Coverage**: Focused backend auth/controller/filter tests passing; focused frontend session/tenant/contract/sync tests passing; frontend typecheck passing.
 | -------- | ------------------------------------------------------------------------------------------------ | -------- | -------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | WCAG-001 | Add skip-to-main-content link at top of default layout (2.4.1) | High | ✅ Completed | Developer 2 | `.skip-link` class in `main.css`; `<a href="#main-content" class="skip-link">` at top of `layouts/default.vue`; `<main id="main-content" tabindex="-1">` as target. |
 | WCAG-002 | Add `<title>` to every page via `useHead` (2.4.2) | High | ✅ Completed | Developer 2 | `useHead({ title: '… — Audita' })` added to all pages: Dashboard, CR list/create/detail, Audit Trail, Users, Groups, Custom Fields, Settings, Sign In, Reset Password, Forgot Password, Accept Invite. |
@@ -334,7 +348,8 @@
 | Sprint 8  | 4           | 0           | 0           | 4         | 100%       |
 | Sprint 9  | 1           | 0           | 0           | 1         | 100%       |
 | Sprint 10 | 36          | 0           | 0           | 36        | 100%       |
-| **TOTAL** | **145**     | **0**       | **0**       | **145**   | **100%**   |
+| Sprint 11 | 10          | 0           | 0           | 10        | 100%       |
+| **TOTAL** | **155**     | **0**       | **0**       | **155**   | **100%**   |
 
 ---
 

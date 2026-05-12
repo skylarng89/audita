@@ -12,14 +12,16 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import javax.sql.DataSource;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class TenantResolutionFilterTest {
 
-    @Mock DataSource dataSource;
-    @Mock FilterChain filterChain;
+    @Mock
+    DataSource dataSource;
+    @Mock
+    FilterChain filterChain;
 
     private TenantResolutionFilter tenantResolutionFilter;
 
@@ -34,8 +36,11 @@ class TenantResolutionFilterTest {
         request.addHeader("X-Tenant-Slug", "tenant-acme");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
-        assertThatThrownBy(() -> tenantResolutionFilter.doFilter(request, response, filterChain))
-                .isInstanceOf(AccessDeniedException.class)
+        AccessDeniedException exception = assertThrows(
+                AccessDeniedException.class,
+                () -> tenantResolutionFilter.doFilter(request, response, filterChain));
+
+        org.assertj.core.api.Assertions.assertThat(exception)
                 .hasMessage("Tenant header is not allowed for bootstrap requests.");
 
         verifyNoInteractions(dataSource);
@@ -48,8 +53,11 @@ class TenantResolutionFilterTest {
         request.addHeader("X-Tenant-Slug", "tenant';drop");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
-        assertThatThrownBy(() -> tenantResolutionFilter.doFilter(request, response, filterChain))
-                .isInstanceOf(AccessDeniedException.class)
+        AccessDeniedException exception = assertThrows(
+                AccessDeniedException.class,
+                () -> tenantResolutionFilter.doFilter(request, response, filterChain));
+
+        org.assertj.core.api.Assertions.assertThat(exception)
                 .hasMessage("Invalid tenant slug.");
 
         verifyNoInteractions(dataSource);

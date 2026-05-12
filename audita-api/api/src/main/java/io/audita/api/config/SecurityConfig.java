@@ -40,45 +40,42 @@ public class SecurityConfig {
         }
 
         @Bean
-        public SecurityFilterChain filterChain(HttpSecurity http) {
-                return http
-                                .csrf(AbstractHttpConfigurer::disable)
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+                http.csrf(AbstractHttpConfigurer::disable)
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                .authorizeHttpRequests(auth -> auth
-                                                // Public auth endpoints
-                                                .requestMatchers(HttpMethod.POST,
-                                                                "/api/v1/auth/login",
-                                                                "/api/v1/auth/session",
-                                                                "/api/v1/auth/refresh",
-                                                                "/api/v1/auth/logout",
-                                                                "/api/v1/auth/forgot-password",
-                                                                "/api/v1/auth/reset-password",
-                                                                "/api/v1/auth/accept-invite",
-                                                                "/api/v1/auth/oauth/exchange",
-                                                                "/api/platform/v1/bootstrap",
-                                                                "/api/platform/v1/setup")
-                                                .permitAll()
-                                                .requestMatchers(HttpMethod.GET,
-                                                                "/api/platform/v1/bootstrap/status")
-                                                .permitAll()
-                                                // SSO redirect initiation (GET — browser navigates here)
-                                                .requestMatchers(HttpMethod.GET,
-                                                                "/api/v1/auth/oauth/**")
-                                                .permitAll()
-                                                .requestMatchers(HttpMethod.GET,
-                                                                "/api/v1/notifications/stream")
-                                                .permitAll()
-                                                // Actuator health (for container probes)
-                                                .requestMatchers("/actuator/health").permitAll()
-                                                // Platform (Super Admin) routes
-                                                .requestMatchers("/api/platform/v1/**").hasRole("SUPER_ADMIN")
-                                                // Everything else requires authentication
-                                                .anyRequest().authenticated())
-                                .addFilterBefore(tenantResolutionFilter, UsernamePasswordAuthenticationFilter.class)
-                                .addFilterAfter(jwtFilter, TenantResolutionFilter.class)
-                                .build();
+                                .authorizeHttpRequests(auth -> {
+                                        auth.requestMatchers(HttpMethod.POST,
+                                                        "/api/v1/auth/login",
+                                                        "/api/v1/auth/session",
+                                                        "/api/v1/auth/refresh",
+                                                        "/api/v1/auth/logout",
+                                                        "/api/v1/auth/forgot-password",
+                                                        "/api/v1/auth/reset-password",
+                                                        "/api/v1/auth/accept-invite",
+                                                        "/api/v1/auth/oauth/exchange",
+                                                        "/api/platform/v1/bootstrap",
+                                                        "/api/platform/v1/setup")
+                                                        .permitAll();
+                                        auth.requestMatchers(HttpMethod.GET,
+                                                        "/api/platform/v1/bootstrap/status")
+                                                        .permitAll();
+                                        auth.requestMatchers(HttpMethod.GET,
+                                                        "/api/v1/auth/oauth/**")
+                                                        .permitAll();
+                                        auth.requestMatchers(HttpMethod.GET,
+                                                        "/api/v1/notifications/stream")
+                                                        .permitAll();
+                                        auth.requestMatchers("/actuator/health").permitAll();
+                                        auth.requestMatchers("/api/platform/v1/**").hasRole("SUPER_ADMIN");
+                                        auth.anyRequest().authenticated();
+                                });
+
+                http.addFilterBefore(tenantResolutionFilter, UsernamePasswordAuthenticationFilter.class)
+                                .addFilterAfter(jwtFilter, TenantResolutionFilter.class);
+
+                return http.build();
         }
 
         @Bean

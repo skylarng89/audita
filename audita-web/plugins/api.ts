@@ -21,6 +21,7 @@ export default defineNuxtPlugin(() => {
     request: Request | string;
     options: ApiClientOptions & { _authRetry?: boolean };
     response: {
+      headers?: Headers;
       status: number;
     };
   }
@@ -48,30 +49,33 @@ export default defineNuxtPlugin(() => {
   }
 
   function refreshSession() {
-    if (!refreshPromise) {
-      refreshPromise = $fetch
-        .raw<AuthResponse>("/api/v1/auth/refresh", {
-          method: "POST",
-          baseURL,
-        })
-        .then(async (response) => {
-          if (!hasCompatibleApiContract(response)) {
-            await forceContractLogout();
-            return null;
-          }
-
-          auth.setAuth(response._data, { broadcast: true });
-          return response._data;
-        })
-        .catch(async (error) => {
-          console.error("Token refresh failed", error);
-          await auth.logout();
+    refreshPromise ??= $fetch
+      .raw<AuthResponse>("/api/v1/auth/refresh", {
+        method: "POST",
+        baseURL,
+      })
+      .then(async (response) => {
+        if (!hasCompatibleApiContract(response)) {
+          await forceContractLogout();
           return null;
-        })
-        .finally(() => {
-          refreshPromise = null;
-        });
-    }
+        }
+
+        const authResponse = response._data;
+        if (!authResponse) {
+          return null;
+        }
+
+        auth.setAuth(authResponse, { broadcast: true });
+        return authResponse;
+      })
+      .catch(async (error) => {
+        console.error("Token refresh failed", error);
+        await auth.logout();
+        return null;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
 
     return refreshPromise;
   }
@@ -154,7 +158,7 @@ export default defineNuxtPlugin(() => {
       }
 
       (options as { _authRetry?: boolean })._authRetry = true;
-      return apiClient(request, options as ApiClientOptions);
+      return apiClient(request, options);
     }) as never,
   });
 

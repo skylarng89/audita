@@ -38,8 +38,13 @@ export async function restoreSessionFromCookie(
     throw new ApiContractMismatchError();
   }
 
-  auth.setAuth(response._data, { broadcast });
-  return response._data;
+  const authResponse = response._data;
+  if (!authResponse) {
+    throw new Error("Session response payload missing");
+  }
+
+  auth.setAuth(authResponse, { broadcast });
+  return authResponse;
 }
 
 export async function clearServerSession() {

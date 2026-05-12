@@ -14,7 +14,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import jakarta.servlet.http.Cookie;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,12 +35,13 @@ class AuthControllerWebMvcTest {
         AuthController controller = new AuthController(authPort);
         ReflectionTestUtils.setField(controller, "jwtExpirySeconds", 900L);
         ReflectionTestUtils.setField(controller, "refreshExpiryDays", 7L);
+        ReflectionTestUtils.setField(controller, "refreshCookiePath", "/api/v1/auth");
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
     @Test
     void login_scopes_refresh_cookie_to_auth_routes() throws Exception {
-        when(authPort.loginSuperAdmin(eq("owner@audita.io"), eq("StrongPass1!A")))
+        when(authPort.loginSuperAdmin("owner@audita.io", "StrongPass1!A"))
                 .thenReturn(new AuthPort.LoginResult(
                         "access-token",
                         "refresh-token",
@@ -77,7 +77,7 @@ class AuthControllerWebMvcTest {
     @Test
     void session_returns_auth_response_without_rotating_refresh_cookie() throws Exception {
         UUID userId = UUID.randomUUID();
-        when(authPort.restoreSession(eq("refresh-token"), eq("127.0.0.1"), isNull()))
+        when(authPort.restoreSession("refresh-token", "127.0.0.1", null))
                 .thenReturn(new AuthPort.LoginResult(
                         "access-token",
                         null,

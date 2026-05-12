@@ -22,7 +22,7 @@ public class AuthController {
 
     private static final String REFRESH_COOKIE = "refreshToken";
     private static final String MESSAGE_KEY = "message";
-    private static final String REFRESH_COOKIE_PATH = "/api/v1/auth";
+    private static final String USER_AGENT_HEADER = "User-Agent";
 
     private final AuthPort authService;
 
@@ -31,6 +31,9 @@ public class AuthController {
 
     @Value("${audita.refresh-token.expiry-days:7}")
     private long refreshExpiryDays;
+
+    @Value("${audita.auth.cookie-path:/api/v1/auth}")
+    private String refreshCookiePath;
 
     @Value("${audita.security.trust-forwarded-headers:false}")
     private boolean trustForwardedHeaders;
@@ -51,7 +54,7 @@ public class AuthController {
             result = authService.loginSuperAdmin(request.email(), request.password());
         } else {
             String clientIp = resolveClientIp(servletRequest);
-            String userAgent = servletRequest.getHeader("User-Agent");
+            String userAgent = servletRequest.getHeader(USER_AGENT_HEADER);
             result = authService.loginTenantUser(request.email(), request.password(), tenantSlug, clientIp, userAgent);
         }
 
@@ -66,11 +69,11 @@ public class AuthController {
 
         String rawToken = extractRefreshCookie(request);
         if (rawToken == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         String clientIp = resolveClientIp(request);
-        String userAgent = request.getHeader("User-Agent");
+        String userAgent = request.getHeader(USER_AGENT_HEADER);
         LoginResult result = authService.refreshToken(rawToken, clientIp, userAgent);
         setRefreshCookie(response, result.rawRefreshToken());
         return ResponseEntity.ok(toAuthResponse(result));
@@ -81,11 +84,11 @@ public class AuthController {
 
         String rawToken = extractRefreshCookie(request);
         if (rawToken == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         String clientIp = resolveClientIp(request);
-        String userAgent = request.getHeader("User-Agent");
+        String userAgent = request.getHeader(USER_AGENT_HEADER);
         LoginResult result = authService.restoreSession(rawToken, clientIp, userAgent);
         return ResponseEntity.ok(toAuthResponse(result));
     }
@@ -130,7 +133,7 @@ public class AuthController {
         Cookie cookie = new Cookie(REFRESH_COOKIE, rawToken);
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
-        cookie.setPath(REFRESH_COOKIE_PATH);
+        cookie.setPath(refreshCookiePath);
         cookie.setAttribute("SameSite", "Strict");
         cookie.setMaxAge((int) (refreshExpiryDays * 24 * 60 * 60));
         response.addCookie(cookie);
@@ -140,7 +143,7 @@ public class AuthController {
         Cookie cookie = new Cookie(REFRESH_COOKIE, "");
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
-        cookie.setPath(REFRESH_COOKIE_PATH);
+        cookie.setPath(refreshCookiePath);
         cookie.setMaxAge(0);
         response.addCookie(cookie);
     }
