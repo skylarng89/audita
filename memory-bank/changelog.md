@@ -26,6 +26,78 @@
 - **CSRF-rule documentation**: `SecurityConfig` now documents why disabling CSRF is acceptable for this stateless bearer-token API, and suppresses noisy Sonar `java:S4502` on the filter-chain method.
 - **Diagnostics handling guidance**: repeated `HttpSecurity cannot be resolved` editor errors in `SecurityConfig` were verified as stale language-server/classpath issues after successful Gradle compile, so no code workaround was reintroduced.
 
+## [0.1.0] — Unreleased (In Development)
+
+### Added (Sprint 12 — Launch Readiness — 2026-05-19)
+
+- **Memory bank reconciliation**: reconciled `context.md`, `tasks.md`, `plan.md`, and `changelog.md` to eliminate status drift. Added Sprint 10 (36 tasks), Sprint 11 (26 tasks), and Sprint 12 (6 open tasks) with accurate completion tracking across all memory-bank files.
+
+### Added (Sprint 11 — RBAC Expansion — 2026-05-12)
+
+- **Multi-role assignment**: `InviteUserRequest`/`UpdateUserRequest` now accept `roleIds` (legacy `roleId` retained for compatibility).
+- **Custom role management**: `POST /api/v1/roles` + `PATCH /api/v1/roles/{id}/permissions` for admin-managed custom roles; system roles remain immutable.
+- **Permission overlap prevention**: service rejects duplicate permission codes and exact permission-set overlaps with existing roles.
+- **Role hierarchy**: `RoleHierarchy` utility ensures highest role remains the primary compatibility role (`users.role_id`).
+- **JWT role + permission claims**: JWT now carries `roles` + `permissions`; `JwtAuthenticationFilter`/`UserPrincipal` map them into Spring Security authorities.
+- **Auto-approver population**: `ChangeRequestService.create()` now auto-adds Approver/Auditor/Admin users when a CR is created; submit-time population is idempotent.
+- **RBAC regression test**: `createAutoAddsApproversAuditorsAndAdmins()` in `ChangeRequestServiceSecurityTest` locks the auto-population behavior.
+
+### Added (Sprint 11 — Session Hardening — 2026-05-12)
+
+- **Cold-start session restore endpoint**: `POST /api/v1/auth/session` for non-rotating auth bootstrap from the existing refresh cookie.
+- **API contract response signaling**: `X-Audita-Api-Contract` header via `ApiContractHeaderFilter` and frontend contract validation helpers.
+- **Focused authorization regression tests**: `SecurityConfigAuthorizationTest` now locks public auth routes, authenticated fallback, and super-admin platform route boundaries.
+- **Token-free cross-tab session sync**: `BroadcastChannel`/`localStorage` session sync events so tabs restore or clear local session state without sharing access tokens between tabs.
+- **Session helper composables**: `authSession.ts`, `apiContract.ts`, `sessionRestore.ts`, `authSessionSync.ts`, `tenantResolution.ts` in `audita-web/composables/`.
+- **Frontend session regression tests**: `tests/auth/session.spec.ts`, `tenant-resolution.spec.ts`, `api-contract.spec.ts`, `session-sync.spec.ts`, `tests/middleware/tenant.spec.ts`.
+
+### Fixed (Sprint 11 — 2026-05-12)
+
+- **Refresh-token logout revocation gap**: refresh-cookie path widened from `/api/v1/auth/refresh` to `/api/v1/auth` so logout can receive and revoke backend refresh state.
+- **Broken half-authenticated redeploy states**: expired or incompatible client auth state now clears deterministically instead of looping through stale refresh/authorization failures.
+- **Filename normalization regex risk**: `ChangeRequestService` now normalizes file stems with a single-pass character loop instead of regex replacement/trimming, eliminating Sonar `java:S5852` ReDoS concerns on user-controlled filenames.
+- **Tenant middleware browser-global lint warning**: replaced `window.location.hostname` with `globalThis.location.hostname` in `audita-web/middleware/tenant.ts`.
+- **Spring configuration metadata drift**: added explicit metadata for `audita.invite.expiry-hours` and `audita.mail.from-name`, and expanded `AuditaProperties` with typed `invite` and `mail` groups so YAML/editor property discovery matches runtime usage.
+
+### Changed (Sprint 11 Follow-Through — 2026-05-12)
+
+- **CSRF-rule documentation**: `SecurityConfig` now documents why disabling CSRF is acceptable for this stateless bearer-token API, and suppresses noisy Sonar `java:S4502` on the filter-chain method.
+- **Diagnostics handling guidance**: repeated `HttpSecurity cannot be resolved` editor errors in `SecurityConfig` were verified as stale language-server/classpath issues after successful Gradle compile, so no code workaround was reintroduced.
+
+### Added (Sprint 10 — UX & WCAG 2.2 Compliance — 2026-05-18)
+
+- **Mobile navigation drawer**: full slide-in `<nav>` drawer with hamburger button, backdrop, `aria-expanded`, Escape close, `aria-current="page"`, and create CTA.
+- **Sidebar icon-only rail**: collapsible rail (`w-14`/`w-56`) with `localStorage` persistence and CSS `--sidebar-w` variable for layout sync.
+- **CR list filter pill**: `"Filters ▾"` pill + animated dropdown panel with active filter count badge and outside-click close.
+- **SLA status column**: "SLA Deadline" column (`hidden xl:table-cell`) with overdue red styling via `isPast()` from date-fns.
+- **Clear filters button**: ghost button visible only when any filter is active; resets all filters + reloads.
+- **Illustrated empty state**: icon + heading + contextual copy (filters-active vs. first-run) with "Create Change Request" CTA.
+- **Skeleton loader**: 5 `animate-pulse` skeleton rows for initial CR list load.
+- **ARIA tablist on CR detail**: inline `role="tablist"` / `role="tab"` / `aria-selected` + Arrow key/Home/End keyboard navigation.
+- **Item count badges on tabs**: "Approvers (3)", "Activity (12)", "Comments (2)" via `crTabs` computed array.
+- **Affected systems tag UI**: pill chips with × remove, Enter/comma to add, backspace-to-remove-last in both `new.vue` and `[id].vue`.
+- **Sticky save bar**: fixed bottom bar with Discard + Save Changes buttons visible when `isEditing`.
+- **Reject confirmation modal**: `<SharedAppModal>` with labelled textarea for rejection reason before committing.
+- **Password show/hide toggle**: eye/eye-slash toggle on sign-in, reset-password, and accept-invite with `aria-pressed`.
+- **Toast progress bar**: `@keyframes toast-drain` progress bar depletes over `toast.duration` ms.
+- **Dark mode toggle**: sun/moon icon button surfaced directly in header right area using `useColorMode()`.
+- **Dead search removed**: non-functional global search bar removed from header; spacer div maintains layout balance.
+- **Skip-to-main-content link**: `.skip-link` class + `<a href="#main-content">` at top of default layout.
+- **Page titles on all pages**: `useHead({ title: '… — Audita' })` on Dashboard, CR pages, Audit Trail, Users, Groups, Custom Fields, Settings, auth pages.
+- **Label/id wiring**: `<label for>` / `<input id>` pairs on CR list filters, auth forms, and settings forms.
+- **Focus trap in AppModal**: `getFocusable()`, Tab/Shift+Tab loop, Escape close, auto-focus first element, `aria-labelledby`, `role="dialog"`.
+- **Scroll-margin-top**: `scroll-margin-top: 4.5rem` on `:focus-visible` to prevent fixed header obscuring focused elements.
+- **Aria-live regions**: `aria-live="polite"` on CR list filter results, toast container, and password strength text; `role="alert"` on error toasts.
+- **Autocomplete tokens**: `autocomplete="new-password"` on password inputs in `accept-invite.vue`.
+
+### Fixed (Sprint 10 — 2026-05-18)
+
+- **Page header layout collapse**: CR list header wraps to `flex-col sm:flex-row` at small breakpoint; CR detail action buttons use `flex-wrap`.
+- **CR detail action button stacking**: top action area uses `flex-wrap` and sticky save bar handles save/cancel at bottom.
+- **Sign-in error banner position**: moved above `<form>` with `role="alert" aria-live="assertive"`.
+- **`<select>` option text**: `NON_LINEAR` option label changed to `"Non-Linear"` in both `new.vue` and `[id].vue`.
+- **Normalized page `h1` sizes**: all pages use consistent `text-3xl` heading.
+
 ### Added (Sprint 7 — File Security, Custom Fields UX, CR Edit Mode & Date Picker Replacement — 2026-05-11)
 
 - **3-layer file upload type enforcement**: `UPLOAD_ALLOWED_MIME_TYPES` / `UPLOAD_MAX_SIZE_BYTES` in `.env`; backend `isAllowedMimeType()`, `isExtensionAllowed()`, `isSignatureValid()` (magic bytes for PDF/PNG/JPEG/DOCX/XLSX) in `ChangeRequestService`; frontend `isFileTypeAllowed()` pre-flight in `[id].vue`. DOCX/XLSX ZIP-format ambiguity disambiguated by extension.

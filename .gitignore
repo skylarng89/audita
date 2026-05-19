@@ -21,3 +21,4 @@ tmp/
 *.env.test
 *.env.production
 mailpit_data/
+.kilo/

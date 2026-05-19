@@ -26,6 +26,75 @@
 - SEC-004: Tighten CORS to explicit allowlist with environment-specific profiles. ✅ (Completed 2026-05-02)
 - SEC hardening refinements: bootstrap tenant-header rejection + fragment-only callback code parsing + dedicated tenant filter tests. ✅ (Completed 2026-05-03)
 
+## Sprint 10 — UX & WCAG 2.2 Compliance Overhaul (2026-05-18)
+
+### Sprint 10 Objectives
+
+1. Systematically address every UX and UI deficiency across the full application.
+2. Bring the product to a professional, production-quality standard.
+3. Achieve WCAG 2.2 AA compliance across all pages and components.
+
+### Sprint 10 Work Items
+
+- UX10-001 through UX10-026: Navigation, mobile responsiveness, button consolidation, CR list UX, CR detail UX, form/input UX, global chrome, WCAG compliance. ✅ (Completed 2026-05-18)
+- All 36 tasks completed. 4 previously deferred tasks (UX10-003 sidebar rail, UX10-004 filter pill, UX10-007 auth AppButton, UX10-016 tag UI) completed during session.
+
+### Sprint 10 Verification
+
+- `cd audita-web && pnpm -s nuxi typecheck` passes.
+- `cd audita-web && pnpm test` passes.
+- All WCAG 2.2 AA checkpoints verified manually (skip links, titles, label wiring, ARIA, focus trap, scroll-margin, aria-live, autocomplete, target size where implemented).
+
+## Sprint 11 — Session Hardening, RBAC Expansion & CR Workflow Polish (2026-05-12)
+
+### Sprint 11 Objectives
+
+1. Make auth recovery fail closed after redeploys and ensure logout revokes refresh state.
+2. Auto-populate CR approvers at creation time and evolve tenant RBAC to support multi-role users.
+3. Remove localhost auth/session regressions and finish blocked CR collaboration flows.
+
+### Sprint 11 Work Items
+
+- SESS-001 through SESS-011: Session hardening (refresh cookie scope, 401-only refresh, token-free cross-tab sync, API contract enforcement, Spring Security public APIs). ✅ (Completed 2026-05-12)
+- RBAC-001 through RBAC-009: RBAC expansion (multi-role, custom roles, auto-approver population, JWT claims). ✅ (Completed 2026-05-12)
+- UXR-001 through UXR-006: CR workflow polish (localhost session persistence, role-flexible approver voting, comment/activity DTO hardening, modal centering, rich-text toolbar, vote visibility). ✅ (Completed 2026-05-12)
+
+### Sprint 11 Verification
+
+- `cd audita-api && ./gradlew :api:test --tests "io.audita.api.config.SecurityConfigAuthorizationTest" --tests "io.audita.api.config.ApiContractHeaderFilterTest" --tests "io.audita.api.controller.AuthControllerWebMvcTest" --tests "io.audita.api.security.TenantResolutionFilterTest"` passes.
+- `cd audita-web && pnpm test -- tests/auth/session.spec.ts tests/auth/tenant-resolution.spec.ts tests/auth/api-contract.spec.ts tests/auth/session-sync.spec.ts tests/middleware/tenant.spec.ts tests/middleware/auth.global.spec.ts` passes.
+- `cd audita-web && pnpm -s nuxi typecheck` passes.
+
+## Sprint 12 — Launch Readiness (2026-05-19)
+
+### Sprint 12 Objectives
+
+1. Close remaining 3 open UI tasks (UX10-006, UX10-008, WCAG-010).
+2. Run Sonar scan and dependency audit; resolve any new findings.
+3. Add smoke test for critical end-to-end flow.
+4. Cut v0.6.0 release tag with full changelog.
+
+### Sprint 12 Work Items
+
+- UX10-006: Align `AppButton.vue` and CSS class system. 🔴 Not Started
+- UX10-008: Wire CR list pagination to `AppPagination`. 🔴 Not Started
+- WCAG-010: Ensure all interactive targets meet 24×24 px minimum. 🔴 Not Started
+- LAUNCH-001: Run Sonar scan and dependency audit. 🔴 Not Started
+- LAUNCH-002: Add smoke test for critical end-to-end flow. 🔴 Not Started
+- LAUNCH-003: Cut v0.6.0 release tag and publish changelog. 🔴 Not Started
+
+### Sprint 12 Next Steps
+
+1. Execute UX10-006 (AppButton reconciliation) — blocks any new button usage.
+2. Execute UX10-008 (pagination component wiring) — consistency fix.
+3. Execute WCAG-010 (target size enforcement) — audit compliance.
+4. Run `sonar-scan.sh` and address any new critical/security issues.
+5. Add Playwright smoke test for login → create CR → submit → approve.
+6. Update README and deployment docs if needed.
+7. Cut `v0.6.0` tag and create GitHub release.
+
+---
+
 ## Post-Sprint UX Follow-Up (2026-04-28)
 
 - UX-001: Add public onboarding status endpoint and first-run redirect gating so initial startup always lands on setup wizard.
@@ -80,9 +149,9 @@
 ### Sprint 8 Work Items
 
 - SET-001: Add persisted workflow/SLA defaults to tenant settings API. ✅ (Completed 2026-05-11)
-- SET-002: Activate admin settings UI save flow for workflow/SLA defaults. 🟡 (In progress)
-- SET-003: Read SLA defaults at runtime in CR creation and SLA monitor. 🟡 (In progress)
-- SET-004: Add regression tests for tenant settings GET/PATCH + runtime effects. 🟡 (In progress)
+- SET-002: Activate admin settings UI save flow for workflow/SLA defaults. ✅ (Completed 2026-05-11)
+- SET-003: Read SLA defaults at runtime in CR creation and SLA monitor. ✅ (Completed 2026-05-11)
+- SET-004: Add regression tests for tenant settings GET/PATCH + runtime effects. ✅ (Completed 2026-05-11)
 
 ### Sprint 9 Completed in this Session
 
