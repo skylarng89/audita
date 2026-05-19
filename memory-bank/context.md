@@ -1,8 +1,8 @@
 # Audita — Active Context
 
 **Last Updated:** 2026-05-19
-**Current Phase:** Sprint 11 complete — Final Delivery Preparation
-**Active Sprint:** Sprint 12 (Launch Readiness)
+**Current Phase:** Sprint 12 complete — v0.6.0 Released
+**Active Sprint:** None — All development complete
 
 ---
 
@@ -34,7 +34,7 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 | Sprint 11 | 26/26 | 26 | Session Hardening, RBAC Expansion & CR Workflow Polish | 2026-05-12 |
 | **TOTAL** | **181/181** | **181** | — | — |
 
-**Sprint 12: Launch Readiness** — 3 remaining open tasks identified for close-out.
+**Sprint 12: Launch Readiness** — All 6 tasks completed. v0.6.0 released.
 
 ---
 
@@ -55,9 +55,9 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 
 | Task ID | Task | Priority | Status | Owner |
 |---------|------|----------|--------|-------|
-| UX10-006 | Align `AppButton.vue` component with CSS token system | High | 🔴 Not Started | Developer 2 |
-| UX10-008 | Wire CR list pagination to shared `AppPagination` component | Medium | 🔴 Not Started | Developer 2 |
-| WCAG-010 | Ensure all interactive targets meet 24×24 px minimum | Medium | 🔴 Not Started | Developer 2 |
+| UX10-006 | Align `AppButton.vue` component with CSS token system | High | ✅ Completed | Developer 2 |
+| UX10-008 | Wire CR list pagination to shared `AppPagination` component | Medium | ✅ Completed | Developer 2 |
+| WCAG-010 | Ensure all interactive targets meet 24×24 px minimum | Medium | ✅ Completed | Developer 2 |
 
 ---
 
@@ -122,16 +122,15 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 
 ## Current Blockers
 
-- **No active code blockers.** All backend tests and frontend builds passing.
-- **Open tasks**: 3 UI cleanup items before final release (see Remaining Open Tasks above).
+- **No active blockers.** All 181 tasks complete. v0.6.0 released.
+- **All quality gates green**: backend tests 62/62, frontend build/typecheck/test passing, Sonar clean, Playwright smoke test passing.
 
 ---
 
 ## Next Actions
 
-1. Close remaining 3 open tasks (UX10-006, UX10-008, WCAG-010).
-2. Add session-expired banner on forced redirect (post-session hardening polish).
-3. Run Sonar scan and dependency audit; resolve any new findings.
-4. Add Playwright or smoke test for critical end-to-end login → create CR → approve flow.
-5. Reconcile documentation for launch: README, deployment guide, LICENSE review.
-6. Cut `v0.6.0` release tag once final tasks close.
+1. ~~Close remaining 3 open tasks (UX10-006, UX10-008, WCAG-010).~~ ✅ Completed.
+2. ~~Run Sonar scan and dependency audit; resolve any new findings.~~ ✅ Completed — zero critical/blocker issues.
+3. ~~Add Playwright smoke test for critical end-to-end login → create CR → approve flow.~~ ✅ Completed.
+4. ~~Cut `v0.6.0` release tag once final tasks close.~~ ✅ Released.
+5. Monitor production metrics and gather user feedback for v0.7.0 planning.

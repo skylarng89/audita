@@ -76,22 +76,24 @@
 
 ### Sprint 12 Work Items
 
-- UX10-006: Align `AppButton.vue` and CSS class system. 🔴 Not Started
-- UX10-008: Wire CR list pagination to `AppPagination`. 🔴 Not Started
-- WCAG-010: Ensure all interactive targets meet 24×24 px minimum. 🔴 Not Started
-- LAUNCH-001: Run Sonar scan and dependency audit. 🔴 Not Started
-- LAUNCH-002: Add smoke test for critical end-to-end flow. 🔴 Not Started
-- LAUNCH-003: Cut v0.6.0 release tag and publish changelog. 🔴 Not Started
+- UX10-006: Align `AppButton.vue` and CSS class system. ✅ Completed
+- UX10-008: Wire CR list pagination to `AppPagination`. ✅ Completed
+- WCAG-010: Ensure all interactive targets meet 24×24 px minimum. ✅ Completed
+- LAUNCH-001: Run Sonar scan and dependency audit. ✅ Completed — zero critical/blocker issues
+- LAUNCH-002: Add smoke test for critical end-to-end flow. ✅ Completed — Playwright login→create CR→submit→approve passing
+- LAUNCH-003: Cut v0.6.0 release tag and publish changelog. ✅ Completed
 
 ### Sprint 12 Next Steps
 
-1. Execute UX10-006 (AppButton reconciliation) — blocks any new button usage.
-2. Execute UX10-008 (pagination component wiring) — consistency fix.
-3. Execute WCAG-010 (target size enforcement) — audit compliance.
-4. Run `sonar-scan.sh` and address any new critical/security issues.
-5. Add Playwright smoke test for login → create CR → submit → approve.
-6. Update README and deployment docs if needed.
-7. Cut `v0.6.0` tag and create GitHub release.
+All Sprint 12 tasks completed. v0.6.0 released.
+
+1. ~~Execute UX10-006 (AppButton reconciliation)~~ ✅ Completed.
+2. ~~Execute UX10-008 (pagination component wiring)~~ ✅ Completed.
+3. ~~Execute WCAG-010 (target size enforcement)~~ ✅ Completed.
+4. ~~Run `sonar-scan.sh`~~ ✅ Passed — zero critical/blocker issues.
+5. ~~Add Playwright smoke test~~ ✅ Passing.
+6. ~~Cut `v0.6.0` tag and create GitHub release~~ ✅ Released.
+7. Monitor production metrics and gather user feedback for v0.7.0 planning.
 
 ---
 

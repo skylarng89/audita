@@ -1,5 +1,17 @@
 # Audita — Changelog
 
+## [0.6.0] — 2026-05-19
+
+### Added (Sprint 12 — Launch Readiness — 2026-05-19)
+
+- **Memory bank reconciliation**: reconciled `context.md`, `tasks.md`, `plan.md`, and `changelog.md` to eliminate status drift. Added Sprint 10 (36 tasks), Sprint 11 (26 tasks), and Sprint 12 (6 tasks) with accurate completion tracking across all memory-bank files.
+- **AppButton reconciliation**: aligned `AppButton.vue` component with CSS token system so variant classes produce identical output whether using component or utility classes.
+- **Pagination component wiring**: replaced inline prev/next buttons on CR list with shared `AppPagination` component for consistent styling and keyboard navigation.
+- **WCAG 2.5.8 target size compliance**: added `min-w-6 min-h-6` (24px) enforcement to all table action links on Users page; verified with aXe.
+- **Sonar scan**: `sonar-scan.sh` passed with zero critical/blocker issues; dependency audit clean.
+- **Playwright smoke test**: added end-to-end test covering login → create CR → submit → approve flow; passing in CI.
+- **v0.6.0 release**: Git tag cut and GitHub release published with full changelog.
+
 ## [0.1.0] — Unreleased (In Development)
 
 ### Changed (Sprint 11 — Session Hardening & Security Config Stabilization — 2026-05-12)
