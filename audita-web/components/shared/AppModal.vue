@@ -99,10 +99,11 @@ onMounted(() => {
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <dialog
+      <div
         v-if="open"
         open
         class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        role="dialog"
         aria-modal="true"
         :aria-labelledby="titleId"
       >
@@ -176,7 +177,7 @@ onMounted(() => {
             </div>
           </div>
         </Transition>
-      </dialog>
+      </div>
     </Transition>
   </Teleport>
 </template>

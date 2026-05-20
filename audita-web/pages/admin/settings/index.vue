@@ -209,6 +209,94 @@
       </div>
     </section>
 
+    <section class="card p-5 shadow-card-hover space-y-4">
+      <h2 class="text-lg font-semibold">Default Approver Sources</h2>
+      <p class="text-sm text-muted">
+        Configure users and groups automatically added as approvers when a
+        change request is created or submitted.
+      </p>
+
+      <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div class="space-y-2">
+          <label class="field-label" for="default-approver-users">Users</label>
+          <input
+            id="default-approver-users"
+            v-model="userSearchQuery"
+            type="text"
+            class="input"
+            placeholder="Search by user name or email"
+            @input="searchUsersForAutoApprovers"
+          />
+          <div
+            v-if="userSearchResults.length"
+            class="max-h-40 overflow-auto rounded-lg border border-border dark:border-border-dark"
+          >
+            <button
+              v-for="candidate in userSearchResults"
+              :key="candidate.id"
+              type="button"
+              class="w-full px-3 py-2 text-left text-sm hover:bg-surface-container-low dark:hover:bg-slate-800 border-b border-border/60 last:border-b-0 dark:border-border-dark/60"
+              @click="addAutoApproverUser(candidate)"
+            >
+              <p class="font-medium">{{ candidate.label }}</p>
+              <p class="text-xs text-muted">{{ candidate.secondary }}</p>
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="userId in settings.autoApproverDefaults.userIds"
+              :key="userId"
+              type="button"
+              class="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary"
+              @click="removeAutoApproverUser(userId)"
+            >
+              {{ selectedAutoApproverUsers[userId]?.label ?? userId }} ×
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="field-label" for="default-approver-groups"
+            >Groups</label
+          >
+          <input
+            id="default-approver-groups"
+            v-model="groupSearchQuery"
+            type="text"
+            class="input"
+            placeholder="Search by group name"
+            @input="searchGroupsForAutoApprovers"
+          />
+          <div
+            v-if="groupSearchResults.length"
+            class="max-h-40 overflow-auto rounded-lg border border-border dark:border-border-dark"
+          >
+            <button
+              v-for="candidate in groupSearchResults"
+              :key="candidate.id"
+              type="button"
+              class="w-full px-3 py-2 text-left text-sm hover:bg-surface-container-low dark:hover:bg-slate-800 border-b border-border/60 last:border-b-0 dark:border-border-dark/60"
+              @click="addAutoApproverGroup(candidate)"
+            >
+              <p class="font-medium">{{ candidate.label }}</p>
+              <p class="text-xs text-muted">{{ candidate.secondary }}</p>
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="groupId in settings.autoApproverDefaults.groupIds"
+              :key="groupId"
+              type="button"
+              class="rounded-full bg-secondary/20 px-3 py-1 text-xs text-on-surface"
+              @click="removeAutoApproverGroup(groupId)"
+            >
+              {{ selectedAutoApproverGroups[groupId]?.label ?? groupId }} ×
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="card p-5 shadow-card-hover">
       <h2 class="text-lg font-semibold">SLA Defaults</h2>
       <p class="text-sm text-muted mt-1">
@@ -474,6 +562,7 @@
 
 <script setup lang="ts">
 import type { CustomFieldDefinition } from "~/types";
+import type { ApproverCandidate } from "~/types";
 import {
   buildSettingsPatchPayload,
   createSettingsSnapshot,
@@ -487,6 +576,7 @@ useHead({ title: "Settings — Audita" });
 
 const api = useApi();
 const { error: toastError } = useToast();
+const { searchApproverCandidates } = useChangeRequests();
 
 interface TenantAdminSettingsResponse {
   profile: {
@@ -517,6 +607,22 @@ interface TenantAdminSettingsResponse {
     criticalHours: number;
     warningBeforeHours: number;
   };
+  autoApproverDefaults: {
+    userIds: string[];
+    groupIds: string[];
+  };
+}
+
+interface UserLookupResponse {
+  id: string;
+  fullName: string;
+  email: string;
+}
+
+interface GroupLookupResponse {
+  id: string;
+  name: string;
+  description: string | null;
 }
 
 const pending = ref(false);
@@ -550,15 +656,56 @@ const settings = reactive({
     criticalHours: 8,
     warningBeforeHours: 1,
   },
+  autoApproverDefaults: {
+    userIds: [] as string[],
+    groupIds: [] as string[],
+  },
 });
+
+const selectedAutoApproverUsers = ref<Record<string, { label: string }>>({});
+const selectedAutoApproverGroups = ref<Record<string, { label: string }>>({});
+const userSearchQuery = ref("");
+const groupSearchQuery = ref("");
+const userSearchResults = ref<ApproverCandidate[]>([]);
+const groupSearchResults = ref<ApproverCandidate[]>([]);
 
 const isDirty = computed(() => {
   return isSettingsDirty(
     settingsSnapshot.value,
     settings.workflowDefaults,
     settings.slaDefaults,
+    settings.autoApproverDefaults,
   );
 });
+
+async function hydrateAutoApproverLabels() {
+  const userPairs = await Promise.all(
+    settings.autoApproverDefaults.userIds.map(async (userId) => {
+      try {
+        const user = await api<UserLookupResponse>(`/api/v1/users/${userId}`);
+        return [userId, { label: `${user.fullName} (${user.email})` }] as const;
+      } catch {
+        return [userId, { label: userId }] as const;
+      }
+    }),
+  );
+
+  const groupPairs = await Promise.all(
+    settings.autoApproverDefaults.groupIds.map(async (groupId) => {
+      try {
+        const group = await api<GroupLookupResponse>(
+          `/api/v1/groups/${groupId}`,
+        );
+        return [groupId, { label: group.name }] as const;
+      } catch {
+        return [groupId, { label: groupId }] as const;
+      }
+    }),
+  );
+
+  selectedAutoApproverUsers.value = Object.fromEntries(userPairs);
+  selectedAutoApproverGroups.value = Object.fromEntries(groupPairs);
+}
 
 async function loadSettings() {
   pending.value = true;
@@ -592,9 +739,15 @@ async function loadSettings() {
     settings.slaDefaults.criticalHours = response.slaDefaults.criticalHours;
     settings.slaDefaults.warningBeforeHours =
       response.slaDefaults.warningBeforeHours;
+    settings.autoApproverDefaults.userIds =
+      response.autoApproverDefaults?.userIds ?? [];
+    settings.autoApproverDefaults.groupIds =
+      response.autoApproverDefaults?.groupIds ?? [];
+    await hydrateAutoApproverLabels();
     settingsSnapshot.value = createSettingsSnapshot(
       settings.workflowDefaults,
       settings.slaDefaults,
+      settings.autoApproverDefaults,
     );
   } catch {
     errorMessage.value = "Unable to load settings right now.";
@@ -623,11 +776,13 @@ async function saveSettings() {
       body: buildSettingsPatchPayload(
         settings.workflowDefaults,
         settings.slaDefaults,
+        settings.autoApproverDefaults,
       ),
     });
     settingsSnapshot.value = createSettingsSnapshot(
       settings.workflowDefaults,
       settings.slaDefaults,
+      settings.autoApproverDefaults,
     );
   } catch {
     errorMessage.value = "Unable to save settings right now.";
@@ -635,6 +790,68 @@ async function saveSettings() {
   } finally {
     savingSettings.value = false;
   }
+}
+
+async function searchUsersForAutoApprovers() {
+  const query = userSearchQuery.value.trim();
+  if (!query) {
+    userSearchResults.value = [];
+    return;
+  }
+
+  const candidates = await searchApproverCandidates(query, 12);
+  userSearchResults.value = candidates.filter(
+    (candidate) => candidate.kind === "USER",
+  );
+}
+
+async function searchGroupsForAutoApprovers() {
+  const query = groupSearchQuery.value.trim();
+  if (!query) {
+    groupSearchResults.value = [];
+    return;
+  }
+
+  const candidates = await searchApproverCandidates(query, 12);
+  groupSearchResults.value = candidates.filter(
+    (candidate) => candidate.kind === "GROUP",
+  );
+}
+
+function addAutoApproverUser(candidate: ApproverCandidate) {
+  if (settings.autoApproverDefaults.userIds.includes(candidate.id)) {
+    return;
+  }
+  settings.autoApproverDefaults.userIds.push(candidate.id);
+  selectedAutoApproverUsers.value[candidate.id] = {
+    label: `${candidate.label} (${candidate.secondary ?? ""})`.trim(),
+  };
+  userSearchQuery.value = "";
+  userSearchResults.value = [];
+}
+
+function addAutoApproverGroup(candidate: ApproverCandidate) {
+  if (settings.autoApproverDefaults.groupIds.includes(candidate.id)) {
+    return;
+  }
+  settings.autoApproverDefaults.groupIds.push(candidate.id);
+  selectedAutoApproverGroups.value[candidate.id] = {
+    label: candidate.label,
+  };
+  groupSearchQuery.value = "";
+  groupSearchResults.value = [];
+}
+
+function removeAutoApproverUser(userId: string) {
+  settings.autoApproverDefaults.userIds =
+    settings.autoApproverDefaults.userIds.filter((id) => id !== userId);
+  delete selectedAutoApproverUsers.value[userId];
+}
+
+function removeAutoApproverGroup(groupId: string) {
+  settings.autoApproverDefaults.groupIds =
+    settings.autoApproverDefaults.groupIds.filter((id) => id !== groupId);
+  delete selectedAutoApproverGroups.value[groupId];
 }
 
 onMounted(loadSettings);

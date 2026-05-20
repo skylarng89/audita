@@ -6,6 +6,7 @@ import io.audita.domain.model.UserStatus;
 import io.audita.infrastructure.persistence.entity.*;
 import io.audita.infrastructure.persistence.repository.*;
 import io.audita.infrastructure.security.JwtService;
+import io.audita.infrastructure.security.RoleHierarchy;
 import io.audita.infrastructure.tenant.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -261,8 +262,18 @@ public class AuthService implements AuthPort {
             String tenantSlug,
             String clientIp,
             String userAgent) {
-        String role = user.getRole() != null ? user.getRole().getName() : "Requester";
-        String accessToken = jwtService.issue(user.getId(), user.getEmail(), role, tenantSlug);
+        List<RoleEntity> assignedRoles = resolveAssignedRoles(user);
+        String role = RoleHierarchy.highestRoleNameOrDefault(assignedRoles, "Requester");
+        List<String> roleNames = assignedRoles.stream().map(RoleEntity::getName).toList();
+        List<String> permissionCodes = assignedRoles.stream()
+                .flatMap(r -> r.getPermissions().stream())
+                .map(permission -> permission.getCode() == null ? "" : permission.getCode())
+                .filter(code -> !code.isBlank())
+                .map(String::toLowerCase)
+                .distinct()
+                .toList();
+        String accessToken = jwtService.issue(user.getId(), user.getEmail(), role, roleNames, permissionCodes,
+                tenantSlug);
 
         String rawRefreshToken = generateSecureToken();
         RefreshTokenEntity refreshToken = new RefreshTokenEntity(
@@ -278,10 +289,28 @@ public class AuthService implements AuthPort {
     }
 
     private LoginResult issueAccessTokenForExistingSession(UserEntity user, String tenantSlug) {
-        String role = user.getRole() != null ? user.getRole().getName() : "Requester";
-        String accessToken = jwtService.issue(user.getId(), user.getEmail(), role, tenantSlug);
+        List<RoleEntity> assignedRoles = resolveAssignedRoles(user);
+        String role = RoleHierarchy.highestRoleNameOrDefault(assignedRoles, "Requester");
+        List<String> roleNames = assignedRoles.stream().map(RoleEntity::getName).toList();
+        List<String> permissionCodes = assignedRoles.stream()
+                .flatMap(r -> r.getPermissions().stream())
+                .map(permission -> permission.getCode() == null ? "" : permission.getCode())
+                .filter(code -> !code.isBlank())
+                .map(String::toLowerCase)
+                .distinct()
+                .toList();
+        String accessToken = jwtService.issue(user.getId(), user.getEmail(), role, roleNames, permissionCodes,
+                tenantSlug);
         return new LoginResult(accessToken, null, user.getId(),
                 user.getEmail(), user.getFullName(), role, tenantSlug);
+    }
+
+    private List<RoleEntity> resolveAssignedRoles(UserEntity user) {
+        LinkedHashSet<RoleEntity> roles = new LinkedHashSet<>(user.getRoles());
+        if (roles.isEmpty() && user.getRole() != null) {
+            roles.add(user.getRole());
+        }
+        return List.copyOf(roles);
     }
 
     private RefreshTokenEntity requireValidRefreshToken(String rawRefreshToken,

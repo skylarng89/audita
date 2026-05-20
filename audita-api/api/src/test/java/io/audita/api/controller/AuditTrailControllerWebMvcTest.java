@@ -50,7 +50,12 @@ class AuditTrailControllerWebMvcTest {
 
         private void authenticate(String role) {
                 UserPrincipal principal = UserPrincipal.ofTenantUser(
-                                UUID.randomUUID(), "admin@acme.com", role, "acme");
+                                UUID.randomUUID(),
+                                "admin@acme.com",
+                                role,
+                                java.util.List.of(role),
+                                java.util.List.of(),
+                                "acme");
                 SecurityContextHolder.getContext().setAuthentication(
                                 new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
         }

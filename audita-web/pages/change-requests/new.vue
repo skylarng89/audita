@@ -243,12 +243,76 @@
         <!-- Description -->
         <div class="md:col-span-2">
           <p class="field-label">Scope and Description</p>
-          <ClientOnly>
-            <EditorContent :editor="editor" class="input mt-1 min-h-44 p-4" />
-          </ClientOnly>
+          <div class="rich-editor-shell">
+            <ClientOnly>
+              <SharedRichTextToolbar :editor="editor" />
+              <EditorContent :editor="editor" class="rich-editor-content" />
+            </ClientOnly>
+          </div>
           <p class="field-hint">
             Define technical scope, constraints, and rollback strategy.
           </p>
+        </div>
+
+        <div class="md:col-span-2">
+          <p class="field-label">Attachments</p>
+          <div
+            class="rounded-lg border border-dashed border-outline-variant/70 bg-surface-container-low p-5 dark:border-slate-600 dark:bg-slate-800/70"
+          >
+            <div
+              class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div>
+                <p
+                  class="text-sm font-medium text-on-surface dark:text-gray-100"
+                >
+                  Add files before creating the draft
+                </p>
+                <p class="text-xs text-muted">
+                  Files upload automatically after the draft is created.
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <input
+                  ref="pendingFileInput"
+                  class="hidden"
+                  type="file"
+                  multiple
+                  accept=".png,.jpg,.jpeg,.docx,.xlsx,.pdf"
+                  @change="onSelectPendingFiles"
+                />
+                <button
+                  type="button"
+                  class="btn-ghost btn-md"
+                  @click="pendingFileInput?.click()"
+                >
+                  Select Files
+                </button>
+              </div>
+            </div>
+            <p v-if="uploadError" class="field-error">{{ uploadError }}</p>
+            <div class="mt-4 space-y-2" v-if="pendingAttachments.length">
+              <div
+                v-for="file in pendingAttachments"
+                :key="`${file.name}-${file.size}-${file.lastModified}`"
+                class="flex items-center justify-between rounded-lg border border-outline-variant/50 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900/50"
+              >
+                <div>
+                  <p class="font-medium text-on-surface dark:text-gray-100">
+                    {{ file.name }}
+                  </p>
+                  <p class="text-xs text-muted">{{ formatSize(file.size) }}</p>
+                </div>
+                <button
+                  type="button"
+                  class="btn-ghost btn-sm"
+                  @click="removePendingAttachment(file)"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -278,7 +342,8 @@ definePageMeta({ middleware: "auth" });
 
 useHead({ title: "Create Change Request — Audita" });
 
-const { create, listCategories } = useChangeRequests();
+const { create, listCategories, uploadAttachment } = useChangeRequests();
+const { error: toastError } = useToast();
 
 const isSaving = ref(false);
 const errorMessage = ref("");
@@ -297,7 +362,7 @@ const form = reactive({
   title: "",
   priority: "" as string,
   riskLevel: "" as string,
-  approvalType: "" as string,
+  approvalType: "NON_LINEAR" as string,
   categories: [] as string[],
   scheduledStartDate: "",
   scheduledStartTime: "",
@@ -305,6 +370,90 @@ const form = reactive({
   scheduledEndTime: "",
   affectedSystems: [] as string[],
 });
+
+const pendingFileInput = ref<HTMLInputElement | null>(null);
+const pendingAttachments = ref<File[]>([]);
+const uploadError = ref("");
+
+const ALLOWED_EXTENSIONS = new Set([
+  "png",
+  "jpg",
+  "jpeg",
+  "docx",
+  "xlsx",
+  "pdf",
+]);
+const ALLOWED_MIME_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+]);
+
+function isFileTypeAllowed(file: File): boolean {
+  const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+  return ALLOWED_EXTENSIONS.has(extension) && ALLOWED_MIME_TYPES.has(file.type);
+}
+
+function addPendingFiles(files: File[]) {
+  const nextFiles: File[] = [];
+  for (const file of files) {
+    if (!isFileTypeAllowed(file)) {
+      uploadError.value =
+        "Only PNG, JPG, DOCX, XLSX, and PDF files are permitted.";
+      continue;
+    }
+
+    const alreadyQueued = pendingAttachments.value.some(
+      (queuedFile) =>
+        queuedFile.name === file.name &&
+        queuedFile.size === file.size &&
+        queuedFile.lastModified === file.lastModified,
+    );
+    if (!alreadyQueued) {
+      nextFiles.push(file);
+    }
+  }
+
+  if (nextFiles.length) {
+    uploadError.value = "";
+    pendingAttachments.value = [...pendingAttachments.value, ...nextFiles];
+  }
+}
+
+function onSelectPendingFiles(event: Event) {
+  const target = event.target as HTMLInputElement;
+  addPendingFiles(Array.from(target.files ?? []));
+  target.value = "";
+}
+
+function removePendingAttachment(fileToRemove: File) {
+  pendingAttachments.value = pendingAttachments.value.filter(
+    (file) =>
+      !(
+        file.name === fileToRemove.name &&
+        file.size === fileToRemove.size &&
+        file.lastModified === fileToRemove.lastModified
+      ),
+  );
+}
+
+async function uploadPendingAttachments(changeRequestId: string) {
+  for (const file of pendingAttachments.value) {
+    await uploadAttachment(changeRequestId, file);
+  }
+}
+
+function formatSize(bytes: number) {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 // ── Affected systems tag input ────────────────────────────────────────────
 const affectedSystemsInputRef = ref<HTMLInputElement | null>(null);
@@ -524,6 +673,16 @@ async function createChangeRequest() {
       affectedSystems: form.affectedSystems,
     };
     const created = await create(payload);
+    if (pendingAttachments.value.length) {
+      try {
+        await uploadPendingAttachments(created.id);
+      } catch (error: any) {
+        toastError(
+          error?.data?.detail ||
+            "Change request created, but one or more attachments could not be uploaded.",
+        );
+      }
+    }
     await navigateTo(`/change-requests/${created.id}`);
   } catch (error: any) {
     errorMessage.value =

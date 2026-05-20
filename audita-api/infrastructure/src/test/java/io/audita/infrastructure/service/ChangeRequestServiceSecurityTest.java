@@ -4,7 +4,9 @@ import io.audita.domain.exception.DomainNotPermittedException;
 import io.audita.domain.model.ApprovalType;
 import io.audita.domain.model.Priority;
 import io.audita.domain.model.RiskLevel;
+import io.audita.domain.model.UserStatus;
 import io.audita.infrastructure.persistence.entity.ChangeRequestEntity;
+import io.audita.infrastructure.persistence.entity.CrApproverEntity;
 import io.audita.infrastructure.persistence.entity.UserEntity;
 import io.audita.infrastructure.persistence.repository.ActivityStreamRepository;
 import io.audita.infrastructure.persistence.repository.AttachmentRepository;
@@ -27,6 +29,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -112,9 +115,15 @@ class ChangeRequestServiceSecurityTest {
         UUID ownerId = UUID.randomUUID();
 
         ChangeRequestEntity changeRequest = buildDraftChangeRequest(ownerId);
+        ReflectionTestUtils.setField(changeRequest, "id", changeRequestId);
         changeRequest.setPriority(Priority.HIGH);
 
         when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
+        when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId)).thenReturn(List.of());
+        when(userRepository.findDistinctByRoles_NameInAndStatusOrderByFullNameAsc(
+                List.of("Approver", "Auditor", "Admin"),
+                UserStatus.ACTIVE))
+                .thenReturn(List.of());
         when(orgSettingRepository.findById("sla.deadline_hours.high"))
                 .thenReturn(Optional.of(new io.audita.infrastructure.persistence.entity.OrgSettingEntity(
                         "sla.deadline_hours.high", "36")));
@@ -128,6 +137,116 @@ class ChangeRequestServiceSecurityTest {
         assertThat(submitted.getSlaDeadline()).isAfterOrEqualTo(before.plusHours(35));
         assertThat(submitted.getSlaDeadline()).isBeforeOrEqualTo(after.plusHours(37));
         verify(changeRequestRepository).save(changeRequest);
+    }
+
+    @Test
+    void submitAutoAddsApproversAuditorsAndAdminsForOwner() {
+        UUID changeRequestId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+
+        ChangeRequestEntity changeRequest = buildDraftChangeRequest(ownerId);
+        ReflectionTestUtils.setField(changeRequest, "id", changeRequestId);
+
+        UserEntity approverUser = new UserEntity("approver@example.com", "Approver User");
+        ReflectionTestUtils.setField(approverUser, "id", UUID.randomUUID());
+        approverUser.setStatus(UserStatus.ACTIVE);
+        approverUser.setRole(new io.audita.infrastructure.persistence.entity.RoleEntity("Approver", ""));
+
+        UserEntity auditorUser = new UserEntity("auditor@example.com", "Auditor User");
+        ReflectionTestUtils.setField(auditorUser, "id", UUID.randomUUID());
+        auditorUser.setStatus(UserStatus.ACTIVE);
+        auditorUser.setRole(new io.audita.infrastructure.persistence.entity.RoleEntity("Auditor", ""));
+
+        UserEntity adminUser = new UserEntity("admin@example.com", "Admin User");
+        ReflectionTestUtils.setField(adminUser, "id", UUID.randomUUID());
+        adminUser.setStatus(UserStatus.ACTIVE);
+        adminUser.setRole(new io.audita.infrastructure.persistence.entity.RoleEntity("Admin", ""));
+
+        when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
+        when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId)).thenReturn(List.of());
+        when(userRepository.findDistinctByRoles_NameInAndStatusOrderByFullNameAsc(
+                List.of("Approver", "Auditor", "Admin"),
+                UserStatus.ACTIVE))
+                .thenReturn(List.of(approverUser, auditorUser, adminUser));
+        when(orgSettingRepository.findById(any())).thenReturn(Optional.empty());
+        when(changeRequestRepository.save(changeRequest)).thenReturn(changeRequest);
+
+        changeRequestService.submit(changeRequestId, ownerId, "REQUESTER");
+
+        verify(crApproverRepository)
+                .saveAll(org.mockito.ArgumentMatchers.argThat((List<CrApproverEntity> approvers) -> {
+                    if (approvers.size() != 3) {
+                        return false;
+                    }
+                    CrApproverEntity first = approvers.get(0);
+                    CrApproverEntity second = approvers.get(1);
+                    CrApproverEntity third = approvers.get(2);
+                    return first.getUser().getEmail().equals("approver@example.com")
+                            && first.isRequired()
+                            && first.getPosition() == 1
+                            && second.getUser().getEmail().equals("auditor@example.com")
+                            && !second.isRequired()
+                            && second.getPosition() == 2
+                            && third.getUser().getEmail().equals("admin@example.com")
+                            && !third.isRequired()
+                            && third.getPosition() == 3;
+                }));
+    }
+
+    @Test
+    void createAutoAddsApproversAuditorsAndAdmins() {
+        UUID ownerId = UUID.randomUUID();
+        UUID changeRequestId = UUID.randomUUID();
+
+        UserEntity owner = new UserEntity("owner@example.com", "Owner User");
+        ReflectionTestUtils.setField(owner, "id", ownerId);
+
+        UserEntity approverUser = new UserEntity("approver@example.com", "Approver User");
+        ReflectionTestUtils.setField(approverUser, "id", UUID.randomUUID());
+        approverUser.setStatus(UserStatus.ACTIVE);
+        approverUser.setRole(new io.audita.infrastructure.persistence.entity.RoleEntity("Approver", ""));
+
+        UserEntity auditorUser = new UserEntity("auditor@example.com", "Auditor User");
+        ReflectionTestUtils.setField(auditorUser, "id", UUID.randomUUID());
+        auditorUser.setStatus(UserStatus.ACTIVE);
+        auditorUser.setRole(new io.audita.infrastructure.persistence.entity.RoleEntity("Auditor", ""));
+
+        UserEntity adminUser = new UserEntity("admin@example.com", "Admin User");
+        ReflectionTestUtils.setField(adminUser, "id", UUID.randomUUID());
+        adminUser.setStatus(UserStatus.ACTIVE);
+        adminUser.setRole(new io.audita.infrastructure.persistence.entity.RoleEntity("Admin", ""));
+
+        ChangeRequestEntity created = new ChangeRequestEntity();
+        ReflectionTestUtils.setField(created, "id", changeRequestId);
+        created.setTitle("Created CR");
+        created.setDescription("desc");
+        created.setPriority(Priority.HIGH);
+        created.setRiskLevel(RiskLevel.HIGH);
+        created.setApprovalType(ApprovalType.NON_LINEAR);
+        created.setCreatedBy(owner);
+
+        when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner));
+        when(changeRequestRepository.save(any(ChangeRequestEntity.class))).thenReturn(created);
+        when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId)).thenReturn(List.of());
+        when(userRepository.findDistinctByRoles_NameInAndStatusOrderByFullNameAsc(
+                List.of("Approver", "Auditor", "Admin"),
+                UserStatus.ACTIVE)).thenReturn(List.of(approverUser, auditorUser, adminUser));
+
+        changeRequestService.create(new ChangeRequestService.CreateRequest(
+                "Created CR",
+                "desc",
+                Priority.HIGH,
+                RiskLevel.HIGH,
+                "Security",
+                ApprovalType.NON_LINEAR,
+                null,
+                null,
+                List.of("db"),
+                ownerId));
+
+        verify(crApproverRepository)
+                .saveAll(org.mockito.ArgumentMatchers
+                        .argThat((List<CrApproverEntity> approvers) -> approvers.size() == 3));
     }
 
     private ChangeRequestEntity buildDraftChangeRequest(UUID ownerId) {

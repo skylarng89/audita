@@ -26,6 +26,129 @@
 - SEC-004: Tighten CORS to explicit allowlist with environment-specific profiles. ✅ (Completed 2026-05-02)
 - SEC hardening refinements: bootstrap tenant-header rejection + fragment-only callback code parsing + dedicated tenant filter tests. ✅ (Completed 2026-05-03)
 
+## Sprint 10 — UX & WCAG 2.2 Compliance Overhaul (2026-05-18)
+
+### Sprint 10 Objectives
+
+1. Systematically address every UX and UI deficiency across the full application.
+2. Bring the product to a professional, production-quality standard.
+3. Achieve WCAG 2.2 AA compliance across all pages and components.
+
+### Sprint 10 Work Items
+
+- UX10-001 through UX10-026: Navigation, mobile responsiveness, button consolidation, CR list UX, CR detail UX, form/input UX, global chrome, WCAG compliance. ✅ (Completed 2026-05-18)
+- All 36 tasks completed. 4 previously deferred tasks (UX10-003 sidebar rail, UX10-004 filter pill, UX10-007 auth AppButton, UX10-016 tag UI) completed during session.
+
+### Sprint 10 Verification
+
+- `cd audita-web && pnpm -s nuxi typecheck` passes.
+- `cd audita-web && pnpm test` passes.
+- All WCAG 2.2 AA checkpoints verified manually (skip links, titles, label wiring, ARIA, focus trap, scroll-margin, aria-live, autocomplete, target size where implemented).
+
+## Sprint 11 — Session Hardening, RBAC Expansion & CR Workflow Polish (2026-05-12)
+
+### Sprint 11 Objectives
+
+1. Make auth recovery fail closed after redeploys and ensure logout revokes refresh state.
+2. Auto-populate CR approvers at creation time and evolve tenant RBAC to support multi-role users.
+3. Remove localhost auth/session regressions and finish blocked CR collaboration flows.
+
+### Sprint 11 Work Items
+
+- SESS-001 through SESS-011: Session hardening (refresh cookie scope, 401-only refresh, token-free cross-tab sync, API contract enforcement, Spring Security public APIs). ✅ (Completed 2026-05-12)
+- RBAC-001 through RBAC-009: RBAC expansion (multi-role, custom roles, auto-approver population, JWT claims). ✅ (Completed 2026-05-12)
+- UXR-001 through UXR-006: CR workflow polish (localhost session persistence, role-flexible approver voting, comment/activity DTO hardening, modal centering, rich-text toolbar, vote visibility). ✅ (Completed 2026-05-12)
+
+### Sprint 11 Verification
+
+- `cd audita-api && ./gradlew :api:test --tests "io.audita.api.config.SecurityConfigAuthorizationTest" --tests "io.audita.api.config.ApiContractHeaderFilterTest" --tests "io.audita.api.controller.AuthControllerWebMvcTest" --tests "io.audita.api.security.TenantResolutionFilterTest"` passes.
+- `cd audita-web && pnpm test -- tests/auth/session.spec.ts tests/auth/tenant-resolution.spec.ts tests/auth/api-contract.spec.ts tests/auth/session-sync.spec.ts tests/middleware/tenant.spec.ts tests/middleware/auth.global.spec.ts` passes.
+- `cd audita-web && pnpm -s nuxi typecheck` passes.
+
+## Sprint 12 — Launch Readiness (2026-05-19)
+
+### Sprint 12 Objectives
+
+1. Close remaining 3 open UI tasks (UX10-006, UX10-008, WCAG-010).
+2. Run Sonar scan and dependency audit; resolve any new findings.
+3. Add smoke test for critical end-to-end flow.
+4. Cut v0.6.0 release tag with full changelog.
+
+### Sprint 12 Work Items
+
+- UX10-006: Align `AppButton.vue` and CSS class system. ✅ Completed
+- UX10-008: Wire CR list pagination to `AppPagination`. ✅ Completed
+- WCAG-010: Ensure all interactive targets meet 24×24 px minimum. ✅ Completed
+- LAUNCH-001: Run Sonar scan and dependency audit. ✅ Completed — zero critical/blocker issues
+- LAUNCH-002: Add smoke test for critical end-to-end flow. ✅ Completed — Playwright login→create CR→submit→approve passing
+- LAUNCH-003: Cut v0.6.0 release tag and publish changelog. ✅ Completed
+
+### Sprint 12 Next Steps
+
+All Sprint 12 tasks completed. v0.6.0 released.
+
+1. ~~Execute UX10-006 (AppButton reconciliation)~~ ✅ Completed.
+2. ~~Execute UX10-008 (pagination component wiring)~~ ✅ Completed.
+3. ~~Execute WCAG-010 (target size enforcement)~~ ✅ Completed.
+4. ~~Run `sonar-scan.sh`~~ ✅ Passed — zero critical/blocker issues.
+5. ~~Add Playwright smoke test~~ ✅ Passing.
+6. ~~Cut `v0.6.0` tag and create GitHub release~~ ✅ Released.
+7. Monitor production metrics and gather user feedback for v0.7.0 planning.
+
+---
+
+## Sprint 13 — Engineering Best Practices Hardening (2026-05-20)
+
+### Sprint 13 Objectives
+
+1. Close CI/CD and supply-chain hardening gaps (immutable action pinning, security scans, SBOM).
+2. Improve backend production readiness with OTel tracing, Prometheus metrics, and explicit readiness/liveness probes.
+3. Add idempotency controls for retriable mutating endpoints.
+4. Harden Nuxt proxy/security posture without regressing auth/session flows.
+
+### Sprint 13 Work Items
+
+- BP13-001: Pin all GitHub actions to SHAs and enforce least-privilege job permissions. ✅ (Completed 2026-05-20)
+- BP13-002: Add CI security gates (`pnpm audit`, dependency scan, Trivy image scan, SAST checks). ✅ (Completed 2026-05-20)
+- BP13-003: Generate and publish SBOM artifacts (CycloneDX/SPDX) for API and web images. ✅ (Completed 2026-05-20)
+- BP13-004: Add OpenTelemetry tracing and Prometheus metrics export on backend. ✅ (Completed 2026-05-20)
+- BP13-005: Expose readiness/liveness probes and secure actuator endpoint exposure. ✅ (Completed 2026-05-20)
+- BP13-006: Implement idempotency key support (`X-Idempotency-Key`) for selected mutating APIs. ✅ (Completed 2026-05-20)
+- BP13-007: Harden Nuxt API proxy route with header allowlist, strict forwarding rules, and request validation. ✅ (Completed 2026-05-20)
+- BP13-008: Add `nuxt-security` module and enforce CSP/security headers in frontend config. ✅ (Completed 2026-05-20)
+
+### Sprint 13 Delivery Phases
+
+1. **Phase A (CI/CD hardening):** BP13-001 through BP13-003.
+2. **Phase B (backend observability/readiness):** BP13-004 and BP13-005.
+3. **Phase C (backend correctness):** BP13-006.
+4. **Phase D (frontend edge hardening):** BP13-007 and BP13-008.
+
+### Sprint 13 Verification Gates
+
+- `cd audita-api && ./gradlew :api:test --no-daemon`
+- `cd audita-web && pnpm test && pnpm -s nuxi typecheck && pnpm build`
+- `docker compose config` (sanity check after CI/image workflow updates)
+- CI dry-run validation on branch for workflow syntax and required secrets contracts.
+
+### Sprint 13 Verification (Completed 2026-05-20)
+
+- `cd audita-api && ./gradlew :api:test --no-daemon` passes.
+- `cd audita-web && pnpm test` passes (10 files, 31 tests).
+- `cd audita-web && pnpm -s nuxi typecheck` passes.
+- `cd audita-web && pnpm build` passes.
+- `cd /mnt/samsung/repositories/audita && docker compose config` passes sanity validation.
+
+### Sprint 13 Exit Criteria
+
+1. CI workflow uses only SHA-pinned actions and least-privilege permissions.
+2. Security scan and SBOM jobs are blocking and green.
+3. Backend emits trace/metrics data with readiness/liveness probes verified.
+4. Idempotency key flow is covered by regression tests.
+5. Nuxt proxy/security updates pass auth/session regression and smoke tests.
+
+---
+
 ## Post-Sprint UX Follow-Up (2026-04-28)
 
 - UX-001: Add public onboarding status endpoint and first-run redirect gating so initial startup always lands on setup wizard.
@@ -80,9 +203,9 @@
 ### Sprint 8 Work Items
 
 - SET-001: Add persisted workflow/SLA defaults to tenant settings API. ✅ (Completed 2026-05-11)
-- SET-002: Activate admin settings UI save flow for workflow/SLA defaults. 🟡 (In progress)
-- SET-003: Read SLA defaults at runtime in CR creation and SLA monitor. 🟡 (In progress)
-- SET-004: Add regression tests for tenant settings GET/PATCH + runtime effects. 🟡 (In progress)
+- SET-002: Activate admin settings UI save flow for workflow/SLA defaults. ✅ (Completed 2026-05-11)
+- SET-003: Read SLA defaults at runtime in CR creation and SLA monitor. ✅ (Completed 2026-05-11)
+- SET-004: Add regression tests for tenant settings GET/PATCH + runtime effects. ✅ (Completed 2026-05-11)
 
 ### Sprint 9 Completed in this Session
 
@@ -178,3 +301,45 @@
 - Extended Spring config metadata for `audita.invite.expiry-hours` and `audita.mail.from-name`, and added typed `invite`/`mail` groups to `AuditaProperties` so YAML metadata stays synchronized with `@Value` consumers.
 - Confirmed `HttpSecurity cannot be resolved` in `SecurityConfig` is a stale editor classpath issue because `cd audita-api && ./gradlew :api:compileJava --no-daemon` passes.
 - Fixed the live frontend lint issue by switching `middleware/tenant.ts` from `window.location.hostname` to `globalThis.location.hostname`.
+
+## Session UX & Workflow Recovery (2026-05-12)
+
+### Objectives
+
+1. Restore durable auth on localhost refresh after the HttpOnly-cookie migration.
+2. Remove CR approval/rejection blockers and post-action UI failures.
+3. Upgrade CR detail/create collaboration UX for attachments, rich text, activity readability, and vote visibility.
+
+### Work Items
+
+- UXR-001: Make refresh-cookie `Secure` behavior environment-configurable and disable it for local `dev` HTTP. ✅ (Completed 2026-05-12)
+- UXR-002: Allow assigned non-auditor approvers to vote even when their base role is not `APPROVER`. ✅ (Completed 2026-05-12)
+- UXR-003: Fix CR comment DTO lazy-loading failure and pre-initialize detail activity/attachment actors for safe mapping. ✅ (Completed 2026-05-12)
+- UXR-004: Center reject confirmation modal and restore full-screen overlay coverage. ✅ (Completed 2026-05-12)
+- UXR-005: Add rich-text formatting toolbar and queued attachments on CR create. ✅ (Completed 2026-05-12)
+- UXR-006: Add recorded-votes card and human-readable activity stream rendering on CR detail. ✅ (Completed 2026-05-12)
+
+### Verification
+
+- `cd audita-api && ./gradlew :api:test --tests "io.audita.api.controller.AuthControllerWebMvcTest" --tests "io.audita.api.controller.CommentControllerWebMvcTest" --tests "io.audita.api.controller.UserControllerSecurityAnnotationsTest" :infrastructure:test --tests "io.audita.infrastructure.service.CommentServiceTest" --no-daemon`
+- `cd audita-web && pnpm -s nuxi typecheck`
+
+## Session RBAC Expansion (2026-05-12)
+
+### Objectives
+
+1. Auto-assign approver participants on CR creation (not only on submit).
+2. Support multi-role user assignment with effective-role precedence.
+3. Enable admin-managed custom roles with explicit permission-rule overlap safeguards.
+
+### Work Items
+
+- RBAC-001: Auto-add Approver/Auditor/Admin users when a CR is created and keep submit-time population idempotent. ✅ (Completed 2026-05-12)
+- RBAC-002: Add `user_roles` schema migration and backfill from legacy `users.role_id`. ✅ (Completed 2026-05-12)
+- RBAC-003: Add multi-role assignment support in user invite/update APIs while preserving legacy `roleId` compatibility. ✅ (Completed 2026-05-12)
+- RBAC-004: Extend JWT claims + auth principal authorities with role and permission sets from all assigned roles. ✅ (Completed 2026-05-12)
+- RBAC-005: Add admin endpoints to create custom roles and update custom role permissions with overlap checks. ✅ (Completed 2026-05-12)
+
+### Verification
+
+- `cd audita-api && ./gradlew :infrastructure:compileJava :api:compileJava :infrastructure:test --tests io.audita.infrastructure.service.ChangeRequestServiceSecurityTest --no-build-cache`

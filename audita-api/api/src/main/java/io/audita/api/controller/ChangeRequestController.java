@@ -1,6 +1,7 @@
 package io.audita.api.controller;
 
 import io.audita.api.dto.request.AddApproverRequest;
+import io.audita.api.dto.request.AddApproverGroupRequest;
 import io.audita.api.dto.request.CreateChangeRequestRequest;
 import io.audita.api.dto.request.RejectChangeRequestRequest;
 import io.audita.api.dto.request.ReorderApproversRequest;
@@ -11,11 +12,14 @@ import io.audita.api.dto.request.UpdateChangeRequestRequest;
 import io.audita.api.dto.response.ChangeRequestCustomFieldResponse;
 import io.audita.api.dto.response.PageResponse;
 import io.audita.api.dto.response.ChangeRequestResponse;
+import io.audita.api.dto.response.ApproverCandidateResponse;
 import io.audita.api.dto.response.CrApproverResponse;
 import io.audita.api.security.UserPrincipal;
+import io.audita.domain.model.ApprovalType;
 import io.audita.domain.model.ChangeRequestStatus;
 import io.audita.domain.model.Priority;
 import io.audita.infrastructure.service.ChangeRequestService;
+import io.audita.infrastructure.service.IdempotencyService;
 import jakarta.validation.Valid;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Pageable;
@@ -37,30 +41,45 @@ import java.util.UUID;
 @RequestMapping("/api/v1/change-requests")
 public class ChangeRequestController {
 
-    private final ChangeRequestService changeRequestService;
+    private static final String OPERATION_CREATE = "cr:create";
+    private static final String OPERATION_SUBMIT_PREFIX = "cr:submit:";
 
-    public ChangeRequestController(ChangeRequestService changeRequestService) {
+    private final ChangeRequestService changeRequestService;
+    private final IdempotencyService idempotencyService;
+
+    public ChangeRequestController(ChangeRequestService changeRequestService,
+                                   IdempotencyService idempotencyService) {
         this.changeRequestService = changeRequestService;
+        this.idempotencyService = idempotencyService;
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ChangeRequestResponse> create(
             @Valid @RequestBody CreateChangeRequestRequest req,
+            @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey,
             @AuthenticationPrincipal UserPrincipal principal) {
 
         UUID createdById = principal.userId();
+        var existingResource = idempotencyService.findResourceId(createdById, OPERATION_CREATE, idempotencyKey);
+        if (existingResource.isPresent()) {
+            ChangeRequestResponse replay = ChangeRequestResponse.from(
+                    changeRequestService.getById(existingResource.get(), createdById));
+            return ResponseEntity.ok(replay);
+        }
+
         var created = changeRequestService.create(new ChangeRequestService.CreateRequest(
                 req.title(),
                 req.description(),
                 req.priority(),
                 req.riskLevel(),
                 req.category(),
-                req.approvalType(),
+                req.approvalType() != null ? req.approvalType() : ApprovalType.NON_LINEAR,
                 req.scheduledStart(),
                 req.scheduledEnd(),
                 req.affectedSystems(),
                 createdById));
+        idempotencyService.recordResource(createdById, OPERATION_CREATE, idempotencyKey, created.getId());
         return new ResponseEntity<>(ChangeRequestResponse.from(created), HttpStatus.CREATED);
     }
 
@@ -87,8 +106,18 @@ public class ChangeRequestController {
     @PostMapping("/{id}/submit")
     @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
     public ChangeRequestResponse submit(@PathVariable UUID id,
+            @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey,
             @AuthenticationPrincipal UserPrincipal principal) {
-        return ChangeRequestResponse.from(changeRequestService.submit(id, principal.userId(), principal.role()));
+        String operation = OPERATION_SUBMIT_PREFIX + id;
+        var existingResource = idempotencyService.findResourceId(principal.userId(), operation, idempotencyKey);
+        if (existingResource.isPresent()) {
+            return ChangeRequestResponse.from(changeRequestService.getById(existingResource.get(), principal.userId()));
+        }
+
+        ChangeRequestResponse submitted = ChangeRequestResponse.from(
+                changeRequestService.submit(id, principal.userId(), principal.role()));
+        idempotencyService.recordResource(principal.userId(), operation, idempotencyKey, id);
+        return submitted;
     }
 
     @PostMapping("/{id}/cancel")
@@ -135,39 +164,73 @@ public class ChangeRequestController {
                 .toList();
     }
 
+    @GetMapping("/approver-candidates")
+    @PreAuthorize("hasAnyRole('REQUESTER', 'APPROVER', 'AUDITOR', 'ADMIN', 'SUPER_ADMIN')")
+    public List<ApproverCandidateResponse> searchApproverCandidates(
+            @RequestParam(required = false) String query,
+            @RequestParam(defaultValue = "10") int limit) {
+        return changeRequestService.searchApproverCandidates(query, limit).stream()
+                .map(ApproverCandidateResponse::from)
+                .toList();
+    }
+
     @PostMapping("/{id}/approvers")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<CrApproverResponse> addApprover(@PathVariable UUID id,
-            @Valid @RequestBody AddApproverRequest req) {
-        var created = changeRequestService.addApprover(id, req.userId(), req.isRequired());
+            @Valid @RequestBody AddApproverRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        var created = changeRequestService.addApprover(
+                id,
+                req.userId(),
+                req.isRequired(),
+                principal.userId(),
+                principal.role());
         return new ResponseEntity<>(CrApproverResponse.from(created), HttpStatus.CREATED);
     }
 
+    @PostMapping("/{id}/approvers/groups")
+    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<List<CrApproverResponse>> addApproverGroup(@PathVariable UUID id,
+            @Valid @RequestBody AddApproverGroupRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        List<CrApproverResponse> created = changeRequestService.addApproverGroup(
+                id,
+                req.groupId(),
+                req.isRequired(),
+                principal.userId(),
+                principal.role()).stream().map(CrApproverResponse::from).toList();
+        return new ResponseEntity<>(created, HttpStatus.CREATED);
+    }
+
     @PatchMapping("/{id}/approvers/reorder")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
     public List<CrApproverResponse> reorderApprovers(@PathVariable UUID id,
-            @Valid @RequestBody ReorderApproversRequest req) {
-        return changeRequestService.reorderApprovers(id, req.approverIds()).stream()
+            @Valid @RequestBody ReorderApproversRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return changeRequestService.reorderApprovers(id, req.approverIds(), principal.userId(), principal.role())
+                .stream()
                 .map(CrApproverResponse::from)
                 .toList();
     }
 
     @DeleteMapping("/{id}/approvers/{approverId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeApprover(@PathVariable UUID id, @PathVariable UUID approverId) {
-        changeRequestService.removeApprover(id, approverId);
+    public void removeApprover(@PathVariable UUID id,
+            @PathVariable UUID approverId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        changeRequestService.removeApprover(id, approverId, principal.userId(), principal.role());
     }
 
     @PostMapping("/{id}/approve")
-    @PreAuthorize("hasAnyRole('APPROVER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("isAuthenticated() and !hasRole('AUDITOR')")
     public ChangeRequestResponse approve(@PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ChangeRequestResponse.from(changeRequestService.approve(id, principal.userId()));
     }
 
     @PostMapping("/{id}/reject")
-    @PreAuthorize("hasAnyRole('APPROVER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("isAuthenticated() and !hasRole('AUDITOR')")
     public ChangeRequestResponse reject(@PathVariable UUID id,
             @Valid @RequestBody RejectChangeRequestRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {

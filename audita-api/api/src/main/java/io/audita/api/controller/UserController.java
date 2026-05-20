@@ -42,23 +42,23 @@ public class UserController {
     @PostMapping("/invite")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<UserResponse> inviteUser(@Valid @RequestBody InviteUserRequest req,
-                                                   @AuthenticationPrincipal UserDetails principal) {
+            @AuthenticationPrincipal UserDetails principal) {
         UUID invitedById = UUID.fromString(principal.getUsername());
-        var user = userService.inviteUser(req.email(), req.fullName(), req.roleId(), invitedById);
+        var user = userService.inviteUser(req.email(), req.fullName(), req.roleId(), req.roleIds(), invitedById);
         return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(user));
     }
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public UserResponse updateUser(@PathVariable UUID id, @Valid @RequestBody UpdateUserRequest req) {
-        return UserResponse.from(userService.updateUser(id, req.fullName(), req.roleId()));
+        return UserResponse.from(userService.updateUser(id, req.fullName(), req.roleId(), req.roleIds()));
     }
 
     @PostMapping("/{id}/deactivate")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deactivateUser(@PathVariable UUID id,
-                               @AuthenticationPrincipal UserDetails principal) {
+            @AuthenticationPrincipal UserDetails principal) {
         UUID requesterId = UUID.fromString(principal.getUsername());
         userService.deactivateUser(id, requesterId);
     }

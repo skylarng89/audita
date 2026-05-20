@@ -16,13 +16,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
  * Validates the Bearer token on every request.
  * On success: populates SecurityContext + TenantContext.
- * On failure: continues the filter chain unauthenticated (Spring Security handles 401).
+ * On failure: continues the filter chain unauthenticated (Spring Security
+ * handles 401).
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -37,8 +41,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain chain) throws ServletException, IOException {
+            HttpServletResponse response,
+            FilterChain chain) throws ServletException, IOException {
         boolean bootstrapRequest = isBootstrapRequest(request);
         String header = request.getHeader("Authorization");
 
@@ -60,6 +64,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         UUID userId = UUID.fromString(claims.getSubject());
         String email = claims.get("email", String.class);
         String role = claims.get("role", String.class);
+        List<String> roles = extractStringListClaim(claims, "roles");
+        List<String> permissions = extractStringListClaim(claims, "permissions");
         String tenantSlug = claims.get("tenantSlug", String.class);
         if (tenantSlug != null && !tenantSlug.isBlank()) {
             tenantSlug = tenantSlug.toLowerCase(Locale.ROOT);
@@ -67,7 +73,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         logBootstrapAuthenticated(bootstrapRequest, request, role, tenantSlug);
 
-        UserPrincipal principal = resolvePrincipal(userId, email, role, tenantSlug);
+        UserPrincipal principal = resolvePrincipal(userId, email, role, roles, permissions, tenantSlug);
 
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                 principal, null, principal.getAuthorities());
@@ -82,7 +88,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return uri.startsWith("/api/platform/v1/bootstrap") || uri.startsWith("/api/platform/v1/setup");
     }
 
-    private UserPrincipal resolvePrincipal(UUID userId, String email, String role, String tenantSlug) {
+    private UserPrincipal resolvePrincipal(
+            UUID userId,
+            String email,
+            String role,
+            List<String> roles,
+            List<String> permissions,
+            String tenantSlug) {
         if ("SUPER_ADMIN".equals(role)) {
             return UserPrincipal.ofSuperAdmin(userId, email);
         }
@@ -96,7 +108,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         TenantContext.setCurrentTenant(tenantSlug);
-        return UserPrincipal.ofTenantUser(userId, email, role, tenantSlug);
+        return UserPrincipal.ofTenantUser(userId, email, role, roles, permissions, tenantSlug);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> extractStringListClaim(Claims claims, String claimName) {
+        Object raw = claims.get(claimName);
+        if (raw instanceof List<?> values) {
+            return values.stream()
+                    .filter(Objects::nonNull)
+                    .map(String::valueOf)
+                    .toList();
+        }
+        return Collections.emptyList();
     }
 
     private void logBootstrapWithoutToken(boolean bootstrapRequest, HttpServletRequest request) {
@@ -122,9 +146,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void logBootstrapAuthenticated(boolean bootstrapRequest,
-                                           HttpServletRequest request,
-                                           String role,
-                                           String tenantSlug) {
+            HttpServletRequest request,
+            String role,
+            String tenantSlug) {
         if (bootstrapRequest && log.isWarnEnabled()) {
             String method = request.getMethod();
             String path = request.getRequestURI();

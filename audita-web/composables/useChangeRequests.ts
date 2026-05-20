@@ -1,5 +1,6 @@
 import type {
   Attachment,
+  ApproverCandidate,
   ChangeRequest,
   ChangeRequestCustomFieldValue,
   CrApprover,
@@ -84,6 +85,31 @@ export function useChangeRequests() {
       method: "POST",
       body,
     });
+  }
+
+  async function addApproverGroup(
+    id: string,
+    body: { groupId: string; isRequired: boolean },
+  ): Promise<CrApprover[]> {
+    return api<CrApprover[]>(`/api/v1/change-requests/${id}/approvers/groups`, {
+      method: "POST",
+      body,
+    });
+  }
+
+  async function searchApproverCandidates(
+    query: string,
+    limit = 10,
+  ): Promise<ApproverCandidate[]> {
+    return api<ApproverCandidate[]>(
+      `/api/v1/change-requests/approver-candidates`,
+      {
+        query: {
+          query,
+          limit,
+        },
+      },
+    );
   }
 
   async function reorderApprovers(
@@ -199,8 +225,10 @@ export function useChangeRequests() {
     reject,
     listApprovers,
     addApprover,
+    addApproverGroup,
     removeApprover,
     reorderApprovers,
+    searchApproverCandidates,
     listCustomFields,
     saveCustomFields,
     listAttachments,

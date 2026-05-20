@@ -9,7 +9,10 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -42,12 +45,22 @@ public class JwtService {
     }
 
     public String issue(UUID userId, String email, String role, String tenantSlug) {
+        return issue(userId, email, role, List.of(role), List.of(), tenantSlug);
+    }
+
+    public String issue(UUID userId,
+            String email,
+            String role,
+            List<String> roles,
+            List<String> permissions,
+            String tenantSlug) {
         Instant now = Instant.now();
-        Map<String, Object> claims = Map.of(
-                "email", email,
-                "role", role,
-                "tenantSlug", tenantSlug != null ? tenantSlug : ""
-        );
+        Map<String, Object> claims = new LinkedHashMap<>();
+        claims.put("email", email);
+        claims.put("role", role);
+        claims.put("roles", roles == null ? List.of(role) : new ArrayList<>(roles));
+        claims.put("permissions", permissions == null ? List.of() : new ArrayList<>(permissions));
+        claims.put("tenantSlug", tenantSlug != null ? tenantSlug : "");
 
         return Jwts.builder()
                 .subject(userId.toString())
@@ -62,8 +75,7 @@ public class JwtService {
         Instant now = Instant.now();
         Map<String, Object> claims = Map.of(
                 "tokenType", STREAM_TOKEN_TYPE,
-                "tenantSlug", tenantSlug != null ? tenantSlug : ""
-        );
+                "tenantSlug", tenantSlug != null ? tenantSlug : "");
 
         return Jwts.builder()
                 .subject(userId.toString())

@@ -1,8 +1,8 @@
 # Audita — Active Context
 
-**Last Updated:** 2026-05-18
-**Current Phase:** Active development — Sprint 10 complete (32/36 tasks)
-**Active Sprint:** Sprint 10
+**Last Updated:** 2026-05-20
+**Current Phase:** Sprint 13 execution complete — Engineering Best Practices Hardening
+**Active Sprint:** Sprint 13 (completed)
 
 ---
 
@@ -16,53 +16,84 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 
 ## Current State
 
-- **Sprint 6 complete (Audit Trail & Admin Configuration).** Global audit trail (paginated query + CSV export), admin custom fields CRUD, `AuditLogService` wired into `ChangeRequestService` for all CR state transitions. 90/90 tests passing. TypeScript typecheck clean.
-- **Sprint 7 complete (2026-05-11).** Three-layer file upload validation (magic bytes + extension + MIME; `.env` allowlist), filename normalization, path traversal guard. Custom fields 400 fix (definition-driven pattern). New `/admin/custom-fields` CRUD page + admin sidebar link. CR detail redesigned: read-only default, DRAFT-gated Edit mode with TipTap, custom fields in edit form, `onBeforeUnmount` cleanup. VueDatePicker fully removed from Create CR and CR Edit pages — replaced with native `<input type="date">` + `<input type="time">` fields with `colorScheme` dark mode styling; `vue-datepicker.client.ts` plugin deleted; `.dp__*` CSS override block removed from `main.css`. TypeScript typecheck: exit 0.
-- **Sprint 8 started (2026-05-11).** Workflow/SLA admin settings activation slice implemented: new `PATCH /api/v1/settings`, `org_settings` persistence entity/repository, expanded settings response, workflow/sla editing enabled in Admin Settings UI, SLA runtime lookups switched from hard-coded values to tenant settings where configured, and controller regression tests added.
-- **Sprint 10 complete (32/36 tasks, 2026-05-18).** Comprehensive UX + WCAG 2.2 overhaul across the entire frontend: mobile navigation drawer, dark mode toggle in header, dead search removed, skip-to-main-content link, page titles on all pages, password show/hide toggles, ARIA tablist on CR detail, focus trap in AppModal, skeleton loaders + empty states on CR list, SLA column, sticky save bar, reject confirm modal, toast progress bar, scroll-margin-top, aria-live regions, label/id wiring on all forms, autocomplete tokens. 4 tasks deferred: sidebar icon-rail (UX10-003), filter pill collapse (UX10-004), AppButton migration on auth pages (UX10-007), affected systems tag UI (UX10-016).
-- **Sprint 11 complete (2026-05-12).** Security-first session resilience is implemented end-to-end: refresh cookies now revoke correctly on logout, frontend refresh is `401`-only, access tokens are no longer persisted in JS-readable storage, cold-start restore uses a non-rotating HttpOnly-cookie-backed `/api/v1/auth/session` endpoint, API contract mismatches force local sign-out, and browser tabs synchronize restore/logout events without sharing tokens.
-- **Security config stabilized (2026-05-12).** Replaced the temporary reflection-based `SecurityConfig` authorization workaround with Spring Security public APIs: `RequestMatcherDelegatingAuthorizationManager`, `AuthorizationFilter`, and `PathPatternRequestMatcher`. Focused authorization regression tests now lock public auth routes, authenticated fallback, and super-admin platform routes.
-- **Post-hardening cleanup completed (2026-05-12).** `ChangeRequestService.normalizeFileName()` no longer uses regexes over user-controlled input; filename stems are now normalized with a single-pass character loop to eliminate Sonar `java:S5852` ReDoS risk. `SecurityConfig` documents why global CSRF disable is acceptable for this bearer-token API and suppresses noisy Sonar `java:S4502` at the method level. Spring source metadata now declares `audita.invite.expiry-hours` and `audita.mail.from-name`, and `AuditaProperties` includes typed `invite` and `mail` groups so YAML/editor metadata stays aligned. Frontend tenant middleware now uses `globalThis.location.hostname`, and repeated `HttpSecurity cannot be resolved` diagnostics in `SecurityConfig` were confirmed stale after successful `:api:compileJava` validation.
-- **Sprint 9 complete (2026-05-11).** Change request list scalability update completed: `/change-requests` now uses bounded server-side pagination with `size=50` and explicit previous/next pagination buttons for predictable navigation at scale.
-- **Docker environment fully operational (2026-05-08).** Resolved three issues: (1) Hibernate dialect deprecation warning removed; (2) mail health indicator disabled so SMTP auth failure doesn't block container health; (3) CI workflow upgraded to pnpm v10 to match local lockfile format.
-- **Sprint 0 complete (19/19 tasks).** Both repositories are scaffolded and runnable via Docker Compose.
-- **Sprint 1 complete (22/22 tasks).** Full authentication stack: JWT + refresh tokens, SSO (Google/Microsoft), domain whitelist, rate limiting, 18 unit tests passing.
-- **Sprint 2 complete (19/19 tasks).** Remaining tasks (USR-007, USR-008, TENANT-005) were completed with controller policy tests and tenant-schema isolation integration coverage.
-- **Sprint 3 complete (21/21 tasks).** Added CR attachments API and frontend upload/list flows; Sprint 3 is fully closed.
-- **Sprint 4 complete (10/10 tasks).** Added comments APIs + mention extraction/persistence, notifications REST + SSE stream, SLA warning/breach scheduler automation, and frontend comments/notification wiring.
-- **Sprint 5 validation expanded.** Added endpoint-level controller tests for comments and notifications, including stream-token issuance and invalid-token SSE access rejection; targeted Gradle run passes.
-- **Comprehensive E2E test coverage complete.** `AllSprintsE2ETest.java` — 44 ordered integration tests covering every implemented endpoint across all 5 sprints. 62/62 tests passing.
-- **Security follow-up complete (SEC-001..SEC-004).** Tenant slug boundary hardening, SSO callback URL transport hardening, CR object-level mutation regression coverage, and strict CORS allowlist enforcement are now implemented and verified.
-- **Security follow-up refinement complete (2026-05-03).** Bootstrap/setup now reject tenant headers, callback code parsing is fragment-only on frontend, and tenant-header hardening has dedicated filter tests.
-- **Tailwind v4 migration complete (2026-05-04).** Frontend now uses `@tailwindcss/vite` (not `@nuxtjs/tailwindcss`), CSS entry is v4-compatible (`@import "tailwindcss"` + `@config`), and custom utility composition was refactored to satisfy v4 `@apply` constraints.
-- **Frontend verification green after migration (2026-05-04).** `pnpm test`, `pnpm -s nuxi typecheck`, and `pnpm build` all pass.
-- **Production entity bugs fixed (cumulative):** `GroupEntity` (phantom `updated_at` column), `PasswordResetTokenEntity` (`tokenHash`/`expiresAt` column name mapping), `RoleEntity`, `UserEntity`, `InviteTokenEntity`, `RefreshTokenEntity` — all now have explicit `@Column(name=...)` to survive the `JpaConfig` naming-strategy bypass.
-- Documentation complete: PRD v1.0, SRS v1.0, USER_FLOW v1.0 (`docs/`). UI designs: 40 screens (`ui-designs/`).
-- `audita-api`: hexagonal structure, JPA/Hibernate multi-tenancy, Flyway migrations, Spring Security scaffold, RFC 7807 exception handler, structured JSON logging (Logstash encoder).
-- `audita-web`: Nuxt 3, Tailwind tokens, all layouts, auth/role/tenant middleware, `plugins/api.ts`, `useAuthStore`, shared component library (AppButton, AppInput, AppBadge, AppCard, AppModal, AppTable, AppPagination).
-- README.md written with Docker Compose and standalone run instructions.
-- Known pattern: empty Gradle module `src/` dirs need `.gitkeep` files — Git ignores empty dirs, Docker `COPY` fails without them.
+### Sprint Completion Status
+
+| Sprint | Completed | Total | Theme | Date |
+|--------|-----------|-------|-------|------|
+| Sprint 0 | 19/19 | 19 | Foundation & Scaffolding | 2026-04-27 |
+| Sprint 1 | 22/22 | 22 | Authentication & Platform Bootstrap | 2026-04-27 |
+| Sprint 2 | 19/19 | 19 | Multi-Tenancy, Users & Groups | 2026-04-27 |
+| Sprint 3 | 21/21 | 21 | Change Request Core | 2026-04-28 |
+| Sprint 4 | 10/10 | 10 | Collaboration, Notifications & SLA | 2026-04-28 |
+| Sprint 5 | 8/8 | 8 | Hardening, Release Readiness & E2E | 2026-04-28 |
+| Sprint 6 | 7/7 | 7 | Audit Trail & Admin Configuration | 2026-05-04 |
+| Sprint 7 | 8/8 | 8 | File Security, Custom Fields UX & CR Edit | 2026-05-11 |
+| Sprint 8 | 4/4 | 4 | Admin Settings Activation & SLA Defaults | 2026-05-11 |
+| Sprint 9 | 1/1 | 1 | CR List Scalability | 2026-05-11 |
+| Sprint 10 | 36/36 | 36 | UX & WCAG 2.2 Compliance Overhaul | 2026-05-18 |
+| Sprint 11 | 26/26 | 26 | Session Hardening, RBAC Expansion & CR Workflow Polish | 2026-05-12 |
+| **TOTAL** | **181/181** | **181** | — | — |
+
+**Sprint 12: Launch Readiness** — All 6 tasks completed. v0.6.0 released.
+
+---
+
+## Sprint Summaries
+
+- **Sprint 0–2 complete.** Scaffold, auth, tenant provisioning, users/groups, roles. 60/60 tasks. All core infrastructure operational.
+- **Sprint 3–4 complete.** Change request lifecycle, approvals, comments, notifications, SLA automation, SSE streaming. 31/31 tasks.
+- **Sprint 5–6 complete.** E2E harness (44 tests), security audit, hardening, release governance (license, CI/CD, tags `v0.1.0`–`v0.5.0`), Tailwind v4 migration, audit trail, admin configuration, mock data removal. 15/15 tasks.
+- **Sprint 7 complete (2026-05-11).** 3-layer file upload validation (magic bytes + extension + MIME), filename normalization, path traversal guard, admin custom fields CRUD page, CR detail read-only/edit mode, native date/time inputs replacing VueDatePicker. 8/8 tasks.
+- **Sprint 8 complete (2026-05-11).** Workflow/SLA admin settings activation: `PATCH /api/v1/settings`, `org_settings` persistence, runtime SLA lookups from tenant settings, controller regression tests, tenant settings port decoupling. 4/4 tasks.
+- **Sprint 9 complete (2026-05-11).** Server-side pagination with `size=50`, explicit previous/next controls. 1/1 tasks.
+- **Sprint 10 complete (2026-05-18).** Comprehensive UX + WCAG 2.2 overhaul: mobile navigation drawer, dark mode toggle, skip-to-content link, page titles on all pages, password show/hide toggles, ARIA tablist on CR detail, focus trap in AppModal, skeleton loaders + empty states, SLA column, sticky save bar, reject confirm modal, toast progress bar, scroll-margin-top, aria-live regions, label/id wiring on all forms, autocomplete tokens, sidebar icon-rail, filter pill collapse, affected systems tag UI. 36/36 tasks.
+- **Sprint 11 complete (2026-05-12).** Session hardening: refresh-cookie revocation, 401-only refresh, HttpOnly cold-start restore, API contract enforcement (`X-Audita-Api-Contract`), cross-tab sync, Spring Security public API authorization. RBAC expansion: multi-role assignment, custom roles with overlap prevention, auto-approver population on CR create, JWT role+permission claims. CR workflow polish: role-flexible approver voting, comment/activity DTO hardening, rich-text toolbar, attachment queue, vote visibility, modal centering. 26/26 tasks.
+
+---
+
+## Sprint 13 Task Status (Engineering Best Practices Hardening)
+
+| Task ID | Task | Priority | Status | Owner |
+|---------|------|----------|--------|-------|
+| BP13-001 | Pin GitHub Actions to immutable SHAs + least-privilege permissions | High | ✅ Completed | Developer 1 |
+| BP13-002 | Add CI security gates (dependency audit, image scan, SAST) | High | ✅ Completed | Developer 1 |
+| BP13-003 | Generate and publish SBOM artifacts | Medium | ✅ Completed | Developer 1 |
+| BP13-004 | Add backend OpenTelemetry + Prometheus metrics | High | ✅ Completed | Developer 1 |
+| BP13-005 | Add readiness/liveness probes and tighten actuator exposure | Medium | ✅ Completed | Developer 1 |
+| BP13-006 | Implement API idempotency key support for retriable mutating endpoints | High | ✅ Completed | Developer 1 |
+| BP13-007 | Harden Nuxt API proxy forwarding and request validation | Medium | ✅ Completed | Developer 2 |
+| BP13-008 | Add `nuxt-security` and enforce frontend CSP/security headers | Medium | ✅ Completed | Developer 2 |
+
+---
+
+## Quality Gates
+
+- **Backend tests**: 62/62 passing (AllSprintsE2ETest + critical flows + security regression + controller tests)
+- **Frontend gates**: `pnpm test`, `pnpm -s nuxi typecheck`, `pnpm build` all passing
+- **Docker**: Full Compose stack operational (PostgreSQL 17, MailHog, API, Web)
+- **Security hardening**: SEC-001 through SEC-004 complete, with refinements
+- **Sonar**: `sonar-scan.sh` ready; last known state: no critical/blocker issues after regex normalization fix
 
 ---
 
 ## Five User Personas
 
-| Role            | Scope         | Key Capability                                                     |
-| --------------- | ------------- | ------------------------------------------------------------------ |
-| **Super Admin** | Platform-wide | Manage tenants, domain whitelists, SSO per org                     |
-| **Admin**       | Org-wide      | Configure workflows, manage users/roles/groups, SLA, custom fields |
-| **Requester**   | Org-wide      | Create and track change requests                                   |
-| **Approver**    | Org-wide      | Review and action change requests                                  |
-| **Auditor**     | Org-wide      | Read-only: view CRs, audit trail                                   |
+| Role | Scope | Key Capability |
+|------|-------|---------------|
+| **Super Admin** | Platform-wide | Manage tenants, domain whitelists, SSO per org |
+| **Admin** | Org-wide | Configure workflows, manage users/roles/groups, SLA, custom fields |
+| **Requester** | Org-wide | Create and track change requests |
+| **Approver** | Org-wide | Review and action change requests |
+| **Auditor** | Org-wide | Read-only: view CRs, audit trail |
 
 ---
 
 ## Application Structure (Two Repositories)
 
-| Repo         | Tech                    | Description                                       |
-| ------------ | ----------------------- | ------------------------------------------------- |
-| `audita-api` | Java 25 + Spring Boot 4 | REST API, business logic, data layer              |
-| `audita-web` | Nuxt 3 + Vue 3          | SSR frontend, component library, state management |
+| Repo | Tech | Description |
+|------|------|-------------|
+| `audita-api` | Java 25 + Spring Boot 4 | REST API, business logic, data layer |
+| `audita-web` | Nuxt 3 + Vue 3 | SSR frontend, component library, state management |
 
 Both served via Docker Compose (dev) or Helm/K8s (production).
 
@@ -83,79 +114,27 @@ Both served via Docker Compose (dev) or Helm/K8s (production).
 
 ## MVP Delivery Strategy
 
-The sprint plan is structured to deliver a **usable, end-to-end MVP** as early as Sprint 4/5, enabling:
+The sprint plan delivered a **usable, end-to-end MVP** by Sprint 5, enabling:
 
 1. Organisations to be provisioned.
 2. Users to be invited and authenticated.
 3. Change requests to be created, submitted, and approved.
 4. Basic notification flow.
 
-Advanced features (SLA, custom fields, audit export, full admin config) follow in subsequent sprints.
+Advanced features (SLA, custom fields, audit export, full admin config, RBAC expansion, session hardening) delivered in Sprints 6–11.
 
 ---
 
-## Active Blockers / Open Questions
+## Current Blockers
 
-- Resolved this session: browser-only bootstrap submit returned 403 while CLI succeeded.
-- Root cause confirmed as CORS rejection (`Invalid CORS request`) on proxied browser requests.
-- Fix landed in Nuxt proxy route by stripping forwarded `Origin`/`Referer`/`Host` before upstream hop.
-- No active blocker currently after fix validation (browser bootstrap now succeeds and redirects to sign-in).
-- No active blocker introduced by Tailwind v4 migration; build/test/typecheck are stable.
-- Remaining editor noise note: if `SecurityConfig.java` still shows `HttpSecurity cannot be resolved`, reload the Java language server or VS Code window; Gradle compile is green and the issue is not reproducible in the build.
-
----
-
-## Sprint 1 Key Patterns & Decisions
-
-- **`TenantResolutionFilter`** lives in `api` module (not `infrastructure`) — only `api` has `spring-boot-starter-webmvc` with servlet API.
-- **`infrastructure` module** has `spring-boot-starter-web` (not webmvc) for `RestClient` used by `SsoService`.
-- **JWT**: 15-min access tokens (jjwt 0.12.6), SHA-256 hashed refresh tokens (7-day rotating), stored HttpOnly cookie at path `/api/v1/auth/refresh`.
-- **AES-256-GCM**: `AesEncryptionService` for SSO client secrets. Key from `audita.encryption.key` (64 hex chars).
-- **Rate limiting**: In-memory `ConcurrentHashMap<String, LinkedList<Instant>>` sliding window. Login: 5/15min/IP+email. Forgot-password: 3/hr/email.
-- **SSO state**: `ConcurrentHashMap` with 10-min TTL, random 32-byte token.
-- **Domain whitelist**: Open tenant if no domains configured; otherwise email domain must match.
-- **BCrypt cost=12** in production; cost=4 in tests via `ReflectionTestUtils`.
+- **No active implementation blockers.** Sprint 13 completed with BP13-001 through BP13-008 finished.
+- **Hardening gap set from best-practices audit is closed for Sprint 13 scope.**
+- **Current baseline remains healthy:** backend tests 62/62, frontend build/typecheck/test passing, Sonar clean, Playwright smoke test passing.
 
 ---
 
 ## Next Actions
 
-1. Execute immediate security hardening actions from `docs/SECURITY_AUDIT_2026-04-28.md` (tenant isolation, SSO token transport, BOLA controls, CORS tightening).
-2. Keep critical e2e suite as a mandatory CI gate and add security regression gates (tenant fuzz/BOLA/SSO token handling).
-3. Continue replacing compatibility shim logic with permanent entity/migration alignment incrementally.
-4. Add regression coverage for the Nuxt proxy bootstrap path (ensure upstream bootstrap POST is not CORS-rejected).
-
----
-
-## Security Review Snapshot (2026-04-28)
-
-- Completed adversarial security review and published findings in `docs/SECURITY_AUDIT_2026-04-28.md`.
-- Highest-risk issues identified:
-  - Tenant schema switching surface relies on unsanitized header-derived slug concatenated into SQL (`search_path`).
-  - SSO callback currently transports access token in URL query string.
-  - Change request mutation paths lack object-level authorization checks for requester-level actors.
-  - CORS is configured with wildcard origin patterns while credentials are enabled.
-- Recommended immediate path: fix those four findings before further feature expansion.
-
----
-
-## Session Updates (2026-04-29)
-
-- Resolved production UX/runtime chain affecting change request creation flow:
-  - submit/create succeeded, but redirect to detail failed with 500 due to lazy `createdBy` initialization.
-  - read-path initialization added in `ChangeRequestService` to stabilize response mapping.
-- Resolved recurring authorization/rendering issues:
-  - role authority normalization in `UserPrincipal` to satisfy Spring `hasRole/hasAnyRole` checks.
-  - frontend token refresh fallback expanded to include 403 responses.
-  - layout shared-component tag alignment fixed missing sidebar/user menu/notification bell rendering.
-- Completed CR UI consistency audit pass:
-  - standardized button sizing behavior for variant buttons.
-  - patched CR list/create/detail actions and tabs for consistent button treatment.
-  - corrected CR description rendering to display editor HTML content.
-- Build and deployment validation completed:
-  - backend compile and frontend production build passed.
-  - container naming conflict resolved during compose redeploy; services returned healthy.
-
-## Current Blockers
-
-- No active blocker currently.
+1. Publish Sprint 13 closure notes with explicit file/change inventory and verification evidence.
+2. Prioritize Sprint 14 backlog from remaining architecture/performance opportunities.
+3. Schedule CI dry-run on feature branch before merge.

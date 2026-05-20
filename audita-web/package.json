@@ -26,7 +26,7 @@
     "@tiptap/pm": "^2.27.2",
     "@tiptap/starter-kit": "^2.27.2",
     "@tiptap/vue-3": "^2.27.2",
-    "date-fns": "^4.1.0",
+    "date-fns": "^4.2.1",
     "flatpickr": "^4.6.13",
     "nuxt": "^3.21.6",
     "pinia": "^2.3.1",
@@ -38,11 +38,11 @@
   "devDependencies": {
     "@nuxt/eslint": "^0.7.6",
     "@pinia/nuxt": "^0.9.0",
-    "@tailwindcss/vite": "^4.2.4",
-    "@types/node": "^22.19.18",
-    "tailwindcss": "^4.2.4",
+    "@tailwindcss/vite": "^4.3.0",
+    "@types/node": "^22.19.19",
+    "tailwindcss": "^4.3.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.5",
+    "vitest": "^4.1.7",
     "vue-tsc": "^2.2.12"
   },
   "pnpm": {

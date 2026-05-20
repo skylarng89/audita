@@ -11,13 +11,13 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 public record CreateChangeRequestRequest(
-        @NotBlank @Size(max = 500) String title,
-        String description,
-        @NotNull Priority priority,
-        @NotNull RiskLevel riskLevel,
-        @Size(max = 255) String category,
-        @NotNull ApprovalType approvalType,
-        OffsetDateTime scheduledStart,
-        OffsetDateTime scheduledEnd,
-        List<String> affectedSystems
-) {}
+                @NotBlank @Size(max = 500) String title,
+                String description,
+                @NotNull Priority priority,
+                @NotNull RiskLevel riskLevel,
+                @Size(max = 255) String category,
+                ApprovalType approvalType,
+                OffsetDateTime scheduledStart,
+                OffsetDateTime scheduledEnd,
+                List<String> affectedSystems) {
+}

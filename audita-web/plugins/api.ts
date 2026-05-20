@@ -10,9 +10,9 @@ import type { AuthResponse } from "~/types";
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig();
   const auth = useAuthStore();
-  const baseURL = import.meta.server
-    ? config.apiInternalBase
-    : config.public.apiBase;
+  // Browser requests should use same-origin paths so HttpOnly auth cookies
+  // are set/sent via the Nuxt proxy on localhost and in deployments.
+  const baseURL = import.meta.server ? config.apiInternalBase : "";
   let contractMismatchHandled = false;
   let refreshPromise: Promise<AuthResponse | null> | null = null;
   let apiClient: ReturnType<typeof $fetch.create>;
@@ -24,6 +24,13 @@ export default defineNuxtPlugin(() => {
       headers?: Headers;
       status: number;
     };
+  }
+
+  function getRequestPath(request: Request | string) {
+    if (typeof request === "string") {
+      return request;
+    }
+    return request.url;
   }
 
   async function forceContractLogout() {
@@ -84,12 +91,7 @@ export default defineNuxtPlugin(() => {
     baseURL,
 
     onRequest({ request, options }) {
-      let requestPath = "";
-      if (typeof request === "string") {
-        requestPath = request;
-      } else if (request instanceof Request) {
-        requestPath = request.url;
-      }
+      const requestPath = getRequestPath(request);
 
       const isBootstrapEndpoint =
         requestPath.includes("/api/platform/v1/bootstrap") ||
@@ -130,12 +132,7 @@ export default defineNuxtPlugin(() => {
         return;
       }
 
-      let requestPath = "";
-      if (typeof request === "string") {
-        requestPath = request;
-      } else if (request instanceof Request) {
-        requestPath = request.url;
-      }
+      const requestPath = getRequestPath(request);
 
       const isRefreshEndpoint = requestPath.includes("/api/v1/auth/refresh");
       const alreadyRetried = Boolean(

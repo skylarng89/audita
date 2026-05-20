@@ -34,19 +34,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 class CommentControllerWebMvcTest {
 
-        MockMvc mockMvc;
-        ObjectMapper objectMapper;
+    MockMvc mockMvc;
+    ObjectMapper objectMapper;
 
-        @Mock CommentService commentService;
+    @Mock
+    CommentService commentService;
 
-        @BeforeEach
-        void setUp() {
-                CommentController controller = new CommentController(commentService);
-                objectMapper = new ObjectMapper();
-                mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
-                                .build();
-        }
+    @BeforeEach
+    void setUp() {
+        CommentController controller = new CommentController(commentService);
+        objectMapper = new ObjectMapper();
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
+                .build();
+    }
 
     @Test
     void list_returns_comment_payload() throws Exception {
@@ -82,8 +83,9 @@ class CommentControllerWebMvcTest {
                 authorId,
                 "author@example.com",
                 "REQUESTER",
-                "tenant-acme"
-        );
+                List.of("REQUESTER"),
+                List.of(),
+                "tenant-acme");
 
         ChangeRequestEntity changeRequest = new ChangeRequestEntity();
         ReflectionTestUtils.setField(changeRequest, "id", changeRequestId);
@@ -97,12 +99,11 @@ class CommentControllerWebMvcTest {
         when(commentService.create(eq(changeRequestId), eq(authorId), eq("new comment"))).thenReturn(created);
 
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())
-        );
+                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
         try {
             mockMvc.perform(post("/api/v1/change-requests/{id}/comments", changeRequestId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(java.util.Map.of("body", "new comment"))))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(java.util.Map.of("body", "new comment"))))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.id").value(commentId.toString()))
                     .andExpect(jsonPath("$.body").value("new comment"));

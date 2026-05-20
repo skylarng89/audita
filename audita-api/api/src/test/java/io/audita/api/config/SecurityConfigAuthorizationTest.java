@@ -55,6 +55,36 @@ class SecurityConfigAuthorizationTest {
         assertThat(result.isGranted()).isTrue();
     }
 
+    @Test
+    void unauthenticated_liveness_probe_is_permitted() {
+        AuthorizationResult result = authorizationManager().authorize(
+                () -> null,
+                request(HttpMethod.GET, "/actuator/health/liveness"));
+
+        assertThat(result).isNotNull();
+        assertThat(result.isGranted()).isTrue();
+    }
+
+    @Test
+    void unauthenticated_readiness_probe_is_permitted() {
+        AuthorizationResult result = authorizationManager().authorize(
+                () -> null,
+                request(HttpMethod.GET, "/actuator/health/readiness"));
+
+        assertThat(result).isNotNull();
+        assertThat(result.isGranted()).isTrue();
+    }
+
+    @Test
+    void unauthenticated_other_actuator_endpoint_is_rejected() {
+        AuthorizationResult result = authorizationManager().authorize(
+                () -> null,
+                request(HttpMethod.GET, "/actuator/env"));
+
+        assertThat(result).isNotNull();
+        assertThat(result.isGranted()).isFalse();
+    }
+
     private RequestMatcherDelegatingAuthorizationManager authorizationManager() {
         SecurityConfig config = new SecurityConfig(
                 mock(JwtAuthenticationFilter.class),

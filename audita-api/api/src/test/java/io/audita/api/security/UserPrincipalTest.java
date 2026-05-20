@@ -11,7 +11,13 @@ class UserPrincipalTest {
     @Test
     void tenant_user_username_returns_user_id_string() {
         UUID userId = UUID.randomUUID();
-        UserPrincipal principal = UserPrincipal.ofTenantUser(userId, "user@example.com", "ADMIN", "tenant_a");
+        UserPrincipal principal = UserPrincipal.ofTenantUser(
+                userId,
+                "user@example.com",
+                "ADMIN",
+                java.util.List.of("ADMIN"),
+                java.util.List.of(),
+                "tenant_a");
 
         assertThat(principal.getUsername()).isEqualTo(userId.toString());
     }
