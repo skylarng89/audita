@@ -496,7 +496,7 @@
 | Task ID  | Task                                                                                       | Priority | Status         | Assigned To | Notes |
 | -------- | ------------------------------------------------------------------------------------------ | -------- | -------------- | ----------- | ----- |
 | BP13-001 | Pin all GitHub Actions to immutable SHAs and reduce workflow permissions per job          | High     | ✅ Completed   | Developer 1 | Updated `.github/workflows/ci-release.yml` with SHA-pinned actions, `permissions: {}` at workflow scope, and per-job `contents` permissions (`read` for test jobs, `write` for release). |
-| BP13-002 | Add CI security gates (dependency audit, image scan, and SAST)                            | High     | 🔴 Not Started | Developer 1 | Add jobs for `pnpm audit`, Gradle dependency scan, Trivy image scan, and CodeQL/Semgrep equivalent checks before release. |
+| BP13-002 | Add CI security gates (dependency audit, image scan, and SAST)                            | High     | ✅ Completed   | Developer 1 | Added `dependency-scan`, `container-image-scan`, and `sast-codeql` jobs in `.github/workflows/ci-release.yml`; release job now blocks on all security gates. |
 | BP13-003 | Generate and publish SBOM artifacts for API and web images                                | Medium   | 🔴 Not Started | Developer 1 | Generate CycloneDX/SPDX SBOM in CI and attach to release artifacts for traceability. |
 | BP13-004 | Add OpenTelemetry tracing and Prometheus metrics export on backend                         | High     | 🔴 Not Started | Developer 1 | Add Micrometer OTel/Prometheus dependencies and config in `audita-api/api/build.gradle.kts` and `application.yml`. |
 | BP13-005 | Add explicit readiness/liveness probes and secure actuator exposure                        | Medium   | 🔴 Not Started | Developer 1 | Expose readiness/liveness probes and keep only required actuator endpoints public. |
@@ -525,21 +525,21 @@
 | Sprint 10 | 36          | 0           | 0           | 36        | 100%       |
 | Sprint 11 | 26          | 0           | 0           | 26        | 100%       |
 | Sprint 12 | 6           | 0           | 0           | 6         | 100%       |
-| Sprint 13 | 8           | 7           | 0           | 1         | 12.5%      |
-| **TOTAL** | **168**     | **7**       | **0**       | **161**   | **95.8%**  |
+| Sprint 13 | 8           | 6           | 0           | 2         | 25%        |
+| **TOTAL** | **168**     | **6**       | **0**       | **162**   | **96.4%**  |
 
 ### Progress by Developer
 
 | Developer   | Assigned Tasks | Not Started | In Progress | Completed | Progress % |
 | ----------- | -------------- | ----------- | ----------- | --------- | ---------- |
-| Developer 1 | 87             | 4           | 0           | 83        | 95.4%      |
+| Developer 1 | 87             | 3           | 0           | 84        | 96.6%      |
 | Developer 2 | 81             | 3           | 0           | 78        | 96.3%      |
 
 ### Progress by Priority
 
 | Priority | Total | Not Started | In Progress | Completed | Progress % |
 | -------- | ----- | ----------- | ----------- | --------- | ---------- |
-| High     | 96    | 3           | 0           | 93        | 96.9%      |
+| High     | 96    | 2           | 0           | 94        | 97.9%      |
 | Medium   | 50    | 4           | 0           | 46        | 92.0%      |
 | Low      | 20    | 0           | 0           | 20        | 100%       |
 
