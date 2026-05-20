@@ -489,6 +489,23 @@
 
 ---
 
+## Sprint 13: Engineering Best Practices Hardening (2026-05-20)
+
+> **Goal:** Close high-impact gaps found in the 2026 best-practices audit across CI/CD, observability, idempotency, and Nuxt edge security.
+
+| Task ID  | Task                                                                                       | Priority | Status         | Assigned To | Notes |
+| -------- | ------------------------------------------------------------------------------------------ | -------- | -------------- | ----------- | ----- |
+| BP13-001 | Pin all GitHub Actions to immutable SHAs and reduce workflow permissions per job          | High     | 🔴 Not Started | Developer 1 | Update `.github/workflows/ci-release.yml` to replace tag-based actions with SHA pins and least-privilege job permissions. |
+| BP13-002 | Add CI security gates (dependency audit, image scan, and SAST)                            | High     | 🔴 Not Started | Developer 1 | Add jobs for `pnpm audit`, Gradle dependency scan, Trivy image scan, and CodeQL/Semgrep equivalent checks before release. |
+| BP13-003 | Generate and publish SBOM artifacts for API and web images                                | Medium   | 🔴 Not Started | Developer 1 | Generate CycloneDX/SPDX SBOM in CI and attach to release artifacts for traceability. |
+| BP13-004 | Add OpenTelemetry tracing and Prometheus metrics export on backend                         | High     | 🔴 Not Started | Developer 1 | Add Micrometer OTel/Prometheus dependencies and config in `audita-api/api/build.gradle.kts` and `application.yml`. |
+| BP13-005 | Add explicit readiness/liveness probes and secure actuator exposure                        | Medium   | 🔴 Not Started | Developer 1 | Expose readiness/liveness probes and keep only required actuator endpoints public. |
+| BP13-006 | Implement idempotency key support for retriable mutating endpoints                         | High     | 🔴 Not Started | Developer 1 | Add `X-Idempotency-Key` handling with persisted dedupe records and TTL for selected POST/PATCH operations. |
+| BP13-007 | Harden Nuxt proxy route with header allowlist and request validation                        | Medium   | 🔴 Not Started | Developer 2 | Update `audita-web/server/routes/api/[...path].ts` to validate method/path/body and reject unsafe forwarded headers. |
+| BP13-008 | Add Nuxt security module and enforce CSP/security headers in frontend runtime config       | Medium   | 🔴 Not Started | Developer 2 | Add `nuxt-security` configuration and validate compatibility with existing auth/session flow. |
+
+---
+
 ## Progress Tracking
 
 ### Overall Progress by Sprint
@@ -505,24 +522,25 @@
 | Sprint 7  | 8           | 0           | 0           | 8         | 100%       |
 | Sprint 8  | 4           | 0           | 0           | 4         | 100%       |
 | Sprint 9  | 1           | 0           | 0           | 1         | 100%       |
- | Sprint 10 | 36          | 0           | 0           | 36        | 100%       |
- | Sprint 11 | 26          | 0           | 0           | 26        | 100%       |
- | Sprint 12 | 6           | 6           | 0           | 0         | 0%         |
- | **TOTAL** | **158**     | **6**       | **0**       | **152**   | **96.2%**  |
+| Sprint 10 | 36          | 0           | 0           | 36        | 100%       |
+| Sprint 11 | 26          | 0           | 0           | 26        | 100%       |
+| Sprint 12 | 6           | 0           | 0           | 6         | 100%       |
+| Sprint 13 | 8           | 8           | 0           | 0         | 0%         |
+| **TOTAL** | **168**     | **8**       | **0**       | **160**   | **95.2%**  |
 
 ### Progress by Developer
 
 | Developer   | Assigned Tasks | Not Started | In Progress | Completed | Progress % |
 | ----------- | -------------- | ----------- | ----------- | --------- | ---------- |
-| Developer 1 | 82             | 2           | 0           | 80        | 97.6%      |
-| Developer 2 | 78             | 6           | 0           | 72        | 92.3%      |
+| Developer 1 | 87             | 5           | 0           | 82        | 94.3%      |
+| Developer 2 | 81             | 3           | 0           | 78        | 96.3%      |
 
 ### Progress by Priority
 
 | Priority | Total | Not Started | In Progress | Completed | Progress % |
 | -------- | ----- | ----------- | ----------- | --------- | ---------- |
-| High     | 92    | 0           | 0           | 92        | 100%       |
-| Medium   | 46    | 0           | 0           | 46        | 100%       |
+| High     | 96    | 4           | 0           | 92        | 95.8%      |
+| Medium   | 50    | 4           | 0           | 46        | 92.0%      |
 | Low      | 20    | 0           | 0           | 20        | 100%       |
 
 ---

@@ -1,8 +1,8 @@
 # Audita — Active Context
 
 **Last Updated:** 2026-05-20
-**Current Phase:** Sprint 12 complete — v0.6.0 Released + Post-Release Fix
-**Active Sprint:** None — All development complete
+**Current Phase:** Sprint 13 planning started — Engineering Best Practices Hardening
+**Active Sprint:** Sprint 13 (in planning / execution queue)
 
 ---
 
@@ -51,13 +51,18 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 
 ---
 
-## Remaining Open Tasks (Sprint 12 — Launch Readiness)
+## Remaining Open Tasks (Sprint 13 — Engineering Best Practices Hardening)
 
 | Task ID | Task | Priority | Status | Owner |
 |---------|------|----------|--------|-------|
-| UX10-006 | Align `AppButton.vue` component with CSS token system | High | ✅ Completed | Developer 2 |
-| UX10-008 | Wire CR list pagination to shared `AppPagination` component | Medium | ✅ Completed | Developer 2 |
-| WCAG-010 | Ensure all interactive targets meet 24×24 px minimum | Medium | ✅ Completed | Developer 2 |
+| BP13-001 | Pin GitHub Actions to immutable SHAs + least-privilege permissions | High | 🔴 Not Started | Developer 1 |
+| BP13-002 | Add CI security gates (dependency audit, image scan, SAST) | High | 🔴 Not Started | Developer 1 |
+| BP13-003 | Generate and publish SBOM artifacts | Medium | 🔴 Not Started | Developer 1 |
+| BP13-004 | Add backend OpenTelemetry + Prometheus metrics | High | 🔴 Not Started | Developer 1 |
+| BP13-005 | Add readiness/liveness probes and tighten actuator exposure | Medium | 🔴 Not Started | Developer 1 |
+| BP13-006 | Implement API idempotency key support for retriable mutating endpoints | High | 🔴 Not Started | Developer 1 |
+| BP13-007 | Harden Nuxt API proxy forwarding and request validation | Medium | 🔴 Not Started | Developer 2 |
+| BP13-008 | Add `nuxt-security` and enforce frontend CSP/security headers | Medium | 🔴 Not Started | Developer 2 |
 
 ---
 
@@ -122,17 +127,16 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 
 ## Current Blockers
 
-- **No active blockers.** All 181 tasks complete. v0.6.0 released.
-- **Post-release fix applied (2026-05-20)**: SmartLifecycle tenant migration runner + defensive SLA monitoring. Prevents race condition where scheduled jobs run before startup migrations complete.
-- **All quality gates green**: backend tests 62/62, frontend build/typecheck/test passing, Sonar clean, Playwright smoke test passing.
+- **No implementation blockers yet.** Sprint 13 is planned and queued for phased execution.
+- **Known gap set from best-practices audit:** CI supply-chain hardening, SBOM generation, backend OTel/Prometheus/readiness, idempotency keys, Nuxt proxy/security module hardening.
+- **Current baseline remains healthy:** backend tests 62/62, frontend build/typecheck/test passing, Sonar clean, Playwright smoke test passing.
 
 ---
 
 ## Next Actions
 
-1. ~~Close remaining 3 open tasks (UX10-006, UX10-008, WCAG-010).~~ ✅ Completed.
-2. ~~Run Sonar scan and dependency audit; resolve any new findings.~~ ✅ Completed — zero critical/blocker issues.
-3. ~~Add Playwright smoke test for critical end-to-end login → create CR → approve flow.~~ ✅ Completed.
-4. ~~Cut `v0.6.0` release tag once final tasks close.~~ ✅ Released.
-5. ~~Monitor production metrics and gather user feedback for v0.7.0 planning.~~ In progress.
-6. **Post-release fix (2026-05-20)**: SmartLifecycle tenant migration runner ensures pending migrations apply before scheduled jobs start. Defensive catch in `SlaMonitoringService` prevents ERROR spam for temporarily missing schema tables.
+1. Execute Sprint 13 Phase A (BP13-001 through BP13-003): CI hardening + security gates + SBOM.
+2. Execute Sprint 13 Phase B (BP13-004 and BP13-005): backend observability + readiness/liveness probes.
+3. Execute Sprint 13 Phase C (BP13-006): idempotency-key support with regression coverage.
+4. Execute Sprint 13 Phase D (BP13-007 and BP13-008): Nuxt proxy/security hardening.
+5. Re-run full quality gates and publish Sprint 13 closure notes in memory bank.

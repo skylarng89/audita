@@ -97,6 +97,50 @@ All Sprint 12 tasks completed. v0.6.0 released.
 
 ---
 
+## Sprint 13 — Engineering Best Practices Hardening (2026-05-20)
+
+### Sprint 13 Objectives
+
+1. Close CI/CD and supply-chain hardening gaps (immutable action pinning, security scans, SBOM).
+2. Improve backend production readiness with OTel tracing, Prometheus metrics, and explicit readiness/liveness probes.
+3. Add idempotency controls for retriable mutating endpoints.
+4. Harden Nuxt proxy/security posture without regressing auth/session flows.
+
+### Sprint 13 Work Items
+
+- BP13-001: Pin all GitHub actions to SHAs and enforce least-privilege job permissions.
+- BP13-002: Add CI security gates (`pnpm audit`, dependency scan, Trivy image scan, SAST checks).
+- BP13-003: Generate and publish SBOM artifacts (CycloneDX/SPDX) for API and web images.
+- BP13-004: Add OpenTelemetry tracing and Prometheus metrics export on backend.
+- BP13-005: Expose readiness/liveness probes and secure actuator endpoint exposure.
+- BP13-006: Implement idempotency key support (`X-Idempotency-Key`) for selected mutating APIs.
+- BP13-007: Harden Nuxt API proxy route with header allowlist, strict forwarding rules, and request validation.
+- BP13-008: Add `nuxt-security` module and enforce CSP/security headers in frontend config.
+
+### Sprint 13 Delivery Phases
+
+1. **Phase A (CI/CD hardening):** BP13-001 through BP13-003.
+2. **Phase B (backend observability/readiness):** BP13-004 and BP13-005.
+3. **Phase C (backend correctness):** BP13-006.
+4. **Phase D (frontend edge hardening):** BP13-007 and BP13-008.
+
+### Sprint 13 Verification Gates
+
+- `cd audita-api && ./gradlew :api:test --no-daemon`
+- `cd audita-web && pnpm test && pnpm -s nuxi typecheck && pnpm build`
+- `docker compose config` (sanity check after CI/image workflow updates)
+- CI dry-run validation on branch for workflow syntax and required secrets contracts.
+
+### Sprint 13 Exit Criteria
+
+1. CI workflow uses only SHA-pinned actions and least-privilege permissions.
+2. Security scan and SBOM jobs are blocking and green.
+3. Backend emits trace/metrics data with readiness/liveness probes verified.
+4. Idempotency key flow is covered by regression tests.
+5. Nuxt proxy/security updates pass auth/session regression and smoke tests.
+
+---
+
 ## Post-Sprint UX Follow-Up (2026-04-28)
 
 - UX-001: Add public onboarding status endpoint and first-run redirect gating so initial startup always lands on setup wizard.
