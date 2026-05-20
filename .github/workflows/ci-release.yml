@@ -165,12 +165,52 @@ jobs:
       - name: Analyze
         uses: github/codeql-action/analyze@78ed0c7291d93e40c51b085850dc669a4c3ab73b # v3
 
+  sbom:
+    name: Generate SBOM Artifacts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Build API image for SBOM
+        run: docker build -t audita-api:sbom -f audita-api/Dockerfile audita-api
+
+      - name: Build web image for SBOM
+        run: docker build -t audita-web:sbom -f audita-web/Dockerfile audita-web
+
+      - name: Generate API SBOM (SPDX JSON)
+        uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # v0.20.6
+        with:
+          image: audita-api:sbom
+          format: spdx-json
+          output-file: sbom-api.spdx.json
+
+      - name: Generate web SBOM (SPDX JSON)
+        uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # v0.20.6
+        with:
+          image: audita-web:sbom
+          format: spdx-json
+          output-file: sbom-web.spdx.json
+
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: sbom-artifacts
+          path: |
+            sbom-api.spdx.json
+            sbom-web.spdx.json
+          if-no-files-found: error
+          retention-days: 30
+
   release:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [api-tests, web-tests, dependency-scan, container-image-scan, sast-codeql]
+    needs: [api-tests, web-tests, dependency-scan, container-image-scan, sast-codeql, sbom]
     name: Release and Publish Docker Images
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       contents: write
     steps:
       - name: Checkout main
@@ -335,11 +375,20 @@ jobs:
             git push origin "$version"
           fi
 
+      - name: Download SBOM artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: sbom-artifacts
+          path: release-artifacts
+
       - name: Publish GitHub release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
         with:
           tag_name: ${{ steps.version.outputs.version }}
           generate_release_notes: true
+          files: |
+            release-artifacts/sbom-api.spdx.json
+            release-artifacts/sbom-web.spdx.json
 
       - name: Write job summary
         run: |
