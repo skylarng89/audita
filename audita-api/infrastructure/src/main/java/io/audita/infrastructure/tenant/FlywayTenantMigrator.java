@@ -10,7 +10,7 @@ import javax.sql.DataSource;
 /**
  * Applies per-tenant Flyway migrations.
  * Called on:
- *  1. Application startup — migrates all existing tenant schemas.
+ *  1. Application startup — migrates all existing tenant schemas via {@link TenantMigrationStartupRunner}.
  *  2. Tenant provisioning — migrates the newly created schema.
  *
  * Migrations are loaded from db/migration/tenant/ on the classpath.
