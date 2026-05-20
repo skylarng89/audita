@@ -94,6 +94,8 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+      probes:
+        enabled: true
   tracing:
     sampling:
       probability: ${OTEL_TRACING_SAMPLING_PROBABILITY:0.1}
@@ -101,6 +103,10 @@ management:
     tracing:
       endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
   health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
     mail:
       enabled: false
 

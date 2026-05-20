@@ -19,6 +19,7 @@ import io.audita.domain.model.ApprovalType;
 import io.audita.domain.model.ChangeRequestStatus;
 import io.audita.domain.model.Priority;
 import io.audita.infrastructure.service.ChangeRequestService;
+import io.audita.infrastructure.service.IdempotencyService;
 import jakarta.validation.Valid;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Pageable;
@@ -40,19 +41,33 @@ import java.util.UUID;
 @RequestMapping("/api/v1/change-requests")
 public class ChangeRequestController {
 
-    private final ChangeRequestService changeRequestService;
+    private static final String OPERATION_CREATE = "cr:create";
+    private static final String OPERATION_SUBMIT_PREFIX = "cr:submit:";
 
-    public ChangeRequestController(ChangeRequestService changeRequestService) {
+    private final ChangeRequestService changeRequestService;
+    private final IdempotencyService idempotencyService;
+
+    public ChangeRequestController(ChangeRequestService changeRequestService,
+                                   IdempotencyService idempotencyService) {
         this.changeRequestService = changeRequestService;
+        this.idempotencyService = idempotencyService;
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ChangeRequestResponse> create(
             @Valid @RequestBody CreateChangeRequestRequest req,
+            @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey,
             @AuthenticationPrincipal UserPrincipal principal) {
 
         UUID createdById = principal.userId();
+        var existingResource = idempotencyService.findResourceId(createdById, OPERATION_CREATE, idempotencyKey);
+        if (existingResource.isPresent()) {
+            ChangeRequestResponse replay = ChangeRequestResponse.from(
+                    changeRequestService.getById(existingResource.get(), createdById));
+            return ResponseEntity.ok(replay);
+        }
+
         var created = changeRequestService.create(new ChangeRequestService.CreateRequest(
                 req.title(),
                 req.description(),
@@ -64,6 +79,7 @@ public class ChangeRequestController {
                 req.scheduledEnd(),
                 req.affectedSystems(),
                 createdById));
+        idempotencyService.recordResource(createdById, OPERATION_CREATE, idempotencyKey, created.getId());
         return new ResponseEntity<>(ChangeRequestResponse.from(created), HttpStatus.CREATED);
     }
 
@@ -90,8 +106,18 @@ public class ChangeRequestController {
     @PostMapping("/{id}/submit")
     @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
     public ChangeRequestResponse submit(@PathVariable UUID id,
+            @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey,
             @AuthenticationPrincipal UserPrincipal principal) {
-        return ChangeRequestResponse.from(changeRequestService.submit(id, principal.userId(), principal.role()));
+        String operation = OPERATION_SUBMIT_PREFIX + id;
+        var existingResource = idempotencyService.findResourceId(principal.userId(), operation, idempotencyKey);
+        if (existingResource.isPresent()) {
+            return ChangeRequestResponse.from(changeRequestService.getById(existingResource.get(), principal.userId()));
+        }
+
+        ChangeRequestResponse submitted = ChangeRequestResponse.from(
+                changeRequestService.submit(id, principal.userId(), principal.role()));
+        idempotencyService.recordResource(principal.userId(), operation, idempotencyKey, id);
+        return submitted;
     }
 
     @PostMapping("/{id}/cancel")
