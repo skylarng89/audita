@@ -20,6 +20,22 @@
   - **Defensive hardening**: Added `InvalidDataAccessResourceUsageException` catch in `SlaMonitoringService.evaluate()` to prevent ERROR spam when a schema table is temporarily missing before a pending migration applies.
   - **Files changed**: `TenantMigrationStartupRunner.java` (SmartLifecycle), `SlaMonitoringService.java` (defensive catch), `FlywayTenantMigrator.java` (Javadoc update).
 
+### Added (Sprint 13 — Engineering Best Practices Hardening — 2026-05-20)
+
+- **CI supply-chain hardening**: pinned all GitHub Actions to immutable SHAs, enforced least-privilege workflow/job permissions, and made release depend on security gates.
+- **Security gates in CI**: added dependency scan, container image scan, SAST checks, and SBOM generation/publication as blocking pipeline stages.
+- **Backend observability upgrade**: enabled OpenTelemetry tracing and Prometheus metrics export with explicit readiness/liveness probes.
+- **API idempotency controls**: added persisted `X-Idempotency-Key` handling for retriable mutating change-request operations with replay behavior.
+- **Nuxt edge hardening**: enforced proxy request validation/header allowlist and added `nuxt-security` CSP/security headers in frontend runtime config.
+
+### Verification (Sprint 13 — 2026-05-20)
+
+- `cd audita-api && ./gradlew :api:test --no-daemon`.
+- `cd audita-web && pnpm test`.
+- `cd audita-web && pnpm -s nuxi typecheck`.
+- `cd audita-web && pnpm build`.
+- `cd /mnt/samsung/repositories/audita && docker compose config`.
+
 ## [0.1.0] — Unreleased (In Development)
 
 ### Changed (Sprint 11 — Session Hardening & Security Config Stabilization — 2026-05-12)

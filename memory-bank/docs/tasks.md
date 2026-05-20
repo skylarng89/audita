@@ -2,7 +2,7 @@
 
 **Project:** Audita — Multi-Tenant ITIL/ITSM Change Management Platform
 **Version:** 0.1.0
-**Last Updated:** 2026-05-19
+**Last Updated:** 2026-05-20
 **Team Size:** 2–3 Developers
 
 ---
@@ -546,6 +546,35 @@
 ---
 
 ## Recent Implementations
+
+### Sprint 13: Engineering Best Practices Hardening (Completed 2026-05-20)
+
+**Overview**: Closed the 2026 best-practices hardening sprint across CI/CD supply-chain controls, backend observability/readiness, idempotency safety, and Nuxt edge security.
+
+**Files Created/Modified**:
+
+- `.github/workflows/ci-release.yml` — pinned all GitHub actions to immutable SHAs, enforced least-privilege permissions, added dependency/image/SAST/SBOM jobs, and blocked release on security gates.
+- `audita-api/api/build.gradle.kts` — added OpenTelemetry and Prometheus dependencies.
+- `audita-api/api/src/main/resources/application.yml` — enabled Prometheus export, tracing config, and explicit readiness/liveness probes.
+- `audita-api/api/src/main/java/io/audita/api/config/SecurityConfig.java` — limited unauthenticated actuator access to health endpoints only.
+- `audita-api/infrastructure/src/main/resources/db/migration/tenant/V7__add_idempotency_keys.sql` — added idempotency key persistence migration.
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/IdempotencyService.java` — implemented key lookup/store/replay flow.
+- `audita-api/api/src/main/java/io/audita/api/controller/ChangeRequestController.java` — wired `X-Idempotency-Key` handling for retriable create/submit flows.
+- `audita-api/api/src/test/java/io/audita/api/controller/ChangeRequestControllerIdempotencyWebMvcTest.java` — added replay/persistence regression tests.
+- `audita-web/server/utils/apiProxy.ts` — introduced proxy method/path/content-type validation and header allowlist.
+- `audita-web/server/routes/api/[...path].ts` — enforced sanitized forwarding and strict request rejection.
+- `audita-web/tests/server/api-proxy.spec.ts` — added proxy hardening regression coverage.
+- `audita-web/nuxt.config.ts` — added `nuxt-security` module with CSP and security headers.
+- `audita-web/package.json` — added `nuxt-security` dependency.
+
+**Key Changes**:
+
+- CI pipeline now fails closed on security posture regressions (dependency scan, container scan, SAST, SBOM generation).
+- Backend now exports traces and metrics with explicit health probe semantics suitable for orchestrated readiness checks.
+- Retriable mutating API paths now support idempotent replay semantics through persisted keys.
+- Nuxt server edge and frontend runtime now enforce stricter request-validation and browser security headers.
+
+**Test Coverage**: `cd audita-api && ./gradlew :api:test --no-daemon`; `cd audita-web && pnpm test`; `cd audita-web && pnpm -s nuxi typecheck`; `cd audita-web && pnpm build`; `cd /mnt/samsung/repositories/audita && docker compose config`.
 
 ### Sprint 11: Session Hardening & RBAC Expansion (Completed 2026-05-12)
 
