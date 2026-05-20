@@ -72,6 +72,11 @@ public class SlaMonitoringService {
                     processWarnings(now);
                     processBreaches(now);
                 });
+            } catch (org.springframework.dao.InvalidDataAccessResourceUsageException ex) {
+                // Defensive: schema may be missing a table that a new migration will add.
+                // Log at WARN so operators see it, but do not spam ERROR for every tick.
+                log.warn("SLA monitoring skipped for tenant {} — schema table missing (migration pending?): {}",
+                        tenantSlug, ex.getMostSpecificCause().getMessage());
             } catch (Exception ex) {
                 log.error("SLA monitoring failed for tenant {}", tenantSlug, ex);
             } finally {
