@@ -502,7 +502,7 @@
 | BP13-005 | Add explicit readiness/liveness probes and secure actuator exposure                        | Medium   | ✅ Completed   | Developer 1 | Enabled health probes in `application.yml` and updated `SecurityConfig` so only `GET /actuator/health` and `GET /actuator/health/**` are public; added authorization tests for liveness/readiness and actuator denial path. |
 | BP13-006 | Implement idempotency key support for retriable mutating endpoints                         | High     | ✅ Completed   | Developer 1 | Added tenant migration `V7__add_idempotency_keys.sql`, `IdempotencyService`, and dedupe checks in CR create/submit endpoints using `X-Idempotency-Key`; added WebMvc replay and first-request persistence tests. |
 | BP13-007 | Harden Nuxt proxy route with header allowlist and request validation                        | Medium   | ✅ Completed   | Developer 2 | Added `server/utils/apiProxy.ts` with method/path/content-type validation + header allowlist; updated proxy route to enforce sanitization and added Vitest coverage in `tests/server/api-proxy.spec.ts`. |
-| BP13-008 | Add Nuxt security module and enforce CSP/security headers in frontend runtime config       | Medium   | 🔴 Not Started | Developer 2 | Add `nuxt-security` configuration and validate compatibility with existing auth/session flow. |
+| BP13-008 | Add Nuxt security module and enforce CSP/security headers in frontend runtime config       | Medium   | ✅ Completed   | Developer 2 | Added `nuxt-security` dependency and configured CSP/security headers in `audita-web/nuxt.config.ts`; verified auth/session compatibility with `pnpm test`, `pnpm -s nuxi typecheck`, and `pnpm build`. |
 
 ---
 
@@ -525,22 +525,22 @@
 | Sprint 10 | 36          | 0           | 0           | 36        | 100%       |
 | Sprint 11 | 26          | 0           | 0           | 26        | 100%       |
 | Sprint 12 | 6           | 0           | 0           | 6         | 100%       |
-| Sprint 13 | 8           | 1           | 0           | 7         | 87.5%      |
-| **TOTAL** | **168**     | **1**       | **0**       | **167**   | **99.4%**  |
+| Sprint 13 | 8           | 0           | 0           | 8         | 100%       |
+| **TOTAL** | **168**     | **0**       | **0**       | **168**   | **100%**   |
 
 ### Progress by Developer
 
 | Developer   | Assigned Tasks | Not Started | In Progress | Completed | Progress % |
 | ----------- | -------------- | ----------- | ----------- | --------- | ---------- |
 | Developer 1 | 87             | 0           | 0           | 87        | 100%       |
-| Developer 2 | 81             | 1           | 0           | 80        | 98.8%      |
+| Developer 2 | 81             | 0           | 0           | 81        | 100%       |
 
 ### Progress by Priority
 
 | Priority | Total | Not Started | In Progress | Completed | Progress % |
 | -------- | ----- | ----------- | ----------- | --------- | ---------- |
 | High     | 96    | 0           | 0           | 96        | 100%       |
-| Medium   | 50    | 1           | 0           | 49        | 98.0%      |
+| Medium   | 50    | 0           | 0           | 50        | 100%       |
 | Low      | 20    | 0           | 0           | 20        | 100%       |
 
 ---

@@ -6,7 +6,42 @@ export default defineNuxtConfig({
   devtools: { enabled: debug },
   ssr: false,
 
-  modules: ["@pinia/nuxt", "@nuxt/eslint"],
+  modules: ["@pinia/nuxt", "@nuxt/eslint", "nuxt-security"],
+
+  security: {
+    csrf: false,
+    nonce: false,
+    headers: {
+      contentSecurityPolicy: {
+        "default-src": ["'self'"],
+        "base-uri": ["'none'"],
+        "form-action": ["'self'"],
+        "frame-ancestors": ["'none'"],
+        "object-src": ["'none'"],
+        "img-src": ["'self'", "'data:'", "blob:", "https:"],
+        "font-src": ["'self'", "'data:'", "https://fonts.gstatic.com"],
+        "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        "script-src": ["'self'", "'unsafe-inline'"],
+        "script-src-attr": ["'none'"],
+        "connect-src": ["'self'", "https:", "wss:", "ws:"],
+        "upgrade-insecure-requests": true,
+      },
+      referrerPolicy: "no-referrer",
+      strictTransportSecurity: {
+        maxAge: 15552000,
+        includeSubdomains: true,
+      },
+      xContentTypeOptions: "nosniff",
+      xFrameOptions: "DENY",
+      xXSSProtection: "0",
+      crossOriginOpenerPolicy: "same-origin",
+      crossOriginResourcePolicy: "same-origin",
+    },
+    allowedMethodsRestricter: {
+      methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      throwError: true,
+    },
+  },
 
   css: ["flatpickr/dist/flatpickr.min.css", "~/assets/css/main.css"],
 

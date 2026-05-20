@@ -1,8 +1,8 @@
 # Audita — Active Context
 
 **Last Updated:** 2026-05-20
-**Current Phase:** Sprint 13 planning started — Engineering Best Practices Hardening
-**Active Sprint:** Sprint 13 (in planning / execution queue)
+**Current Phase:** Sprint 13 execution complete — Engineering Best Practices Hardening
+**Active Sprint:** Sprint 13 (completed)
 
 ---
 
@@ -51,7 +51,7 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 
 ---
 
-## Remaining Open Tasks (Sprint 13 — Engineering Best Practices Hardening)
+## Sprint 13 Task Status (Engineering Best Practices Hardening)
 
 | Task ID | Task | Priority | Status | Owner |
 |---------|------|----------|--------|-------|
@@ -62,7 +62,7 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 | BP13-005 | Add readiness/liveness probes and tighten actuator exposure | Medium | ✅ Completed | Developer 1 |
 | BP13-006 | Implement API idempotency key support for retriable mutating endpoints | High | ✅ Completed | Developer 1 |
 | BP13-007 | Harden Nuxt API proxy forwarding and request validation | Medium | ✅ Completed | Developer 2 |
-| BP13-008 | Add `nuxt-security` and enforce frontend CSP/security headers | Medium | 🔴 Not Started | Developer 2 |
+| BP13-008 | Add `nuxt-security` and enforce frontend CSP/security headers | Medium | ✅ Completed | Developer 2 |
 
 ---
 
@@ -127,16 +127,14 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 
 ## Current Blockers
 
-- **No implementation blockers yet.** Sprint 13 execution started; BP13-001 through BP13-007 completed.
-- **Known gap set from best-practices audit:** CI supply-chain hardening, SBOM generation, backend OTel/Prometheus/readiness, idempotency keys, Nuxt proxy/security module hardening.
+- **No active implementation blockers.** Sprint 13 completed with BP13-001 through BP13-008 finished.
+- **Hardening gap set from best-practices audit is closed for Sprint 13 scope.**
 - **Current baseline remains healthy:** backend tests 62/62, frontend build/typecheck/test passing, Sonar clean, Playwright smoke test passing.
 
 ---
 
 ## Next Actions
 
-1. Execute Sprint 13 Phase D remaining item (BP13-008): Nuxt security module + CSP/security headers.
-2. Re-run backend + frontend quality gates and prepare Sprint 13 closure notes.
-3. Execute Sprint 13 Phase C (BP13-006): idempotency-key support with regression coverage.
-4. Execute Sprint 13 Phase D (BP13-007 and BP13-008): Nuxt proxy/security hardening.
-5. Re-run full quality gates and publish Sprint 13 closure notes in memory bank.
+1. Publish Sprint 13 closure notes with explicit file/change inventory and verification evidence.
+2. Prioritize Sprint 14 backlog from remaining architecture/performance opportunities.
+3. Schedule CI dry-run on feature branch before merge.

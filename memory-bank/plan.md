@@ -115,7 +115,7 @@ All Sprint 12 tasks completed. v0.6.0 released.
 - BP13-005: Expose readiness/liveness probes and secure actuator endpoint exposure. ✅ (Completed 2026-05-20)
 - BP13-006: Implement idempotency key support (`X-Idempotency-Key`) for selected mutating APIs. ✅ (Completed 2026-05-20)
 - BP13-007: Harden Nuxt API proxy route with header allowlist, strict forwarding rules, and request validation. ✅ (Completed 2026-05-20)
-- BP13-008: Add `nuxt-security` module and enforce CSP/security headers in frontend config.
+- BP13-008: Add `nuxt-security` module and enforce CSP/security headers in frontend config. ✅ (Completed 2026-05-20)
 
 ### Sprint 13 Delivery Phases
 
@@ -130,6 +130,14 @@ All Sprint 12 tasks completed. v0.6.0 released.
 - `cd audita-web && pnpm test && pnpm -s nuxi typecheck && pnpm build`
 - `docker compose config` (sanity check after CI/image workflow updates)
 - CI dry-run validation on branch for workflow syntax and required secrets contracts.
+
+### Sprint 13 Verification (Completed 2026-05-20)
+
+- `cd audita-api && ./gradlew :api:test --no-daemon` passes.
+- `cd audita-web && pnpm test` passes (10 files, 31 tests).
+- `cd audita-web && pnpm -s nuxi typecheck` passes.
+- `cd audita-web && pnpm build` passes.
+- `cd /mnt/samsung/repositories/audita && docker compose config` passes sanity validation.
 
 ### Sprint 13 Exit Criteria
 
