@@ -12,6 +12,14 @@
 - **Playwright smoke test**: added end-to-end test covering login → create CR → submit → approve flow; passing in CI.
 - **v0.6.0 release**: Git tag cut and GitHub release published with full changelog.
 
+### Fixed (Post-Release — 2026-05-20)
+
+- **Missing `user_roles` table for existing tenants**: `SlaMonitoringService` crashed with `PSQLException: ERROR: relation "user_roles" does not exist` for tenant `ronin-limited` because `V6__add_user_roles.sql` was never applied to pre-existing tenants.
+  - **Root cause**: `FlywayTenantMigrator.migrate()` was only called during tenant provisioning; no startup component applied pending migrations to existing tenants.
+  - **Fix**: Converted `TenantMigrationStartupRunner` to implement `SmartLifecycle` with phase `Integer.MIN_VALUE + 1000`, ensuring migrations run **before** `@Scheduled` jobs start (phase 0).
+  - **Defensive hardening**: Added `InvalidDataAccessResourceUsageException` catch in `SlaMonitoringService.evaluate()` to prevent ERROR spam when a schema table is temporarily missing before a pending migration applies.
+  - **Files changed**: `TenantMigrationStartupRunner.java` (SmartLifecycle), `SlaMonitoringService.java` (defensive catch), `FlywayTenantMigrator.java` (Javadoc update).
+
 ## [0.1.0] — Unreleased (In Development)
 
 ### Changed (Sprint 11 — Session Hardening & Security Config Stabilization — 2026-05-12)

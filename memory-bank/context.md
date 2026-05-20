@@ -1,7 +1,7 @@
 # Audita — Active Context
 
-**Last Updated:** 2026-05-19
-**Current Phase:** Sprint 12 complete — v0.6.0 Released
+**Last Updated:** 2026-05-20
+**Current Phase:** Sprint 12 complete — v0.6.0 Released + Post-Release Fix
 **Active Sprint:** None — All development complete
 
 ---
@@ -123,6 +123,7 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 ## Current Blockers
 
 - **No active blockers.** All 181 tasks complete. v0.6.0 released.
+- **Post-release fix applied (2026-05-20)**: SmartLifecycle tenant migration runner + defensive SLA monitoring. Prevents race condition where scheduled jobs run before startup migrations complete.
 - **All quality gates green**: backend tests 62/62, frontend build/typecheck/test passing, Sonar clean, Playwright smoke test passing.
 
 ---
@@ -133,4 +134,5 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 2. ~~Run Sonar scan and dependency audit; resolve any new findings.~~ ✅ Completed — zero critical/blocker issues.
 3. ~~Add Playwright smoke test for critical end-to-end login → create CR → approve flow.~~ ✅ Completed.
 4. ~~Cut `v0.6.0` release tag once final tasks close.~~ ✅ Released.
-5. Monitor production metrics and gather user feedback for v0.7.0 planning.
+5. ~~Monitor production metrics and gather user feedback for v0.7.0 planning.~~ In progress.
+6. **Post-release fix (2026-05-20)**: SmartLifecycle tenant migration runner ensures pending migrations apply before scheduled jobs start. Defensive catch in `SlaMonitoringService` prevents ERROR spam for temporarily missing schema tables.
