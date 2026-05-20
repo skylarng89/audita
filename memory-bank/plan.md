@@ -108,7 +108,7 @@ All Sprint 12 tasks completed. v0.6.0 released.
 
 ### Sprint 13 Work Items
 
-- BP13-001: Pin all GitHub actions to SHAs and enforce least-privilege job permissions.
+- BP13-001: Pin all GitHub actions to SHAs and enforce least-privilege job permissions. ✅ (Completed 2026-05-20)
 - BP13-002: Add CI security gates (`pnpm audit`, dependency scan, Trivy image scan, SAST checks).
 - BP13-003: Generate and publish SBOM artifacts (CycloneDX/SPDX) for API and web images.
 - BP13-004: Add OpenTelemetry tracing and Prometheus metrics export on backend.

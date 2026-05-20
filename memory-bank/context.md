@@ -55,7 +55,7 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 
 | Task ID | Task | Priority | Status | Owner |
 |---------|------|----------|--------|-------|
-| BP13-001 | Pin GitHub Actions to immutable SHAs + least-privilege permissions | High | 🔴 Not Started | Developer 1 |
+| BP13-001 | Pin GitHub Actions to immutable SHAs + least-privilege permissions | High | ✅ Completed | Developer 1 |
 | BP13-002 | Add CI security gates (dependency audit, image scan, SAST) | High | 🔴 Not Started | Developer 1 |
 | BP13-003 | Generate and publish SBOM artifacts | Medium | 🔴 Not Started | Developer 1 |
 | BP13-004 | Add backend OpenTelemetry + Prometheus metrics | High | 🔴 Not Started | Developer 1 |
@@ -127,7 +127,7 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 
 ## Current Blockers
 
-- **No implementation blockers yet.** Sprint 13 is planned and queued for phased execution.
+- **No implementation blockers yet.** Sprint 13 execution started; BP13-001 completed.
 - **Known gap set from best-practices audit:** CI supply-chain hardening, SBOM generation, backend OTel/Prometheus/readiness, idempotency keys, Nuxt proxy/security module hardening.
 - **Current baseline remains healthy:** backend tests 62/62, frontend build/typecheck/test passing, Sonar clean, Playwright smoke test passing.
 
@@ -135,7 +135,7 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 
 ## Next Actions
 
-1. Execute Sprint 13 Phase A (BP13-001 through BP13-003): CI hardening + security gates + SBOM.
+1. Execute Sprint 13 Phase A remaining items (BP13-002 through BP13-003): CI security gates + SBOM.
 2. Execute Sprint 13 Phase B (BP13-004 and BP13-005): backend observability + readiness/liveness probes.
 3. Execute Sprint 13 Phase C (BP13-006): idempotency-key support with regression coverage.
 4. Execute Sprint 13 Phase D (BP13-007 and BP13-008): Nuxt proxy/security hardening.
