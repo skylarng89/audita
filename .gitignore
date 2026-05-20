@@ -2,7 +2,7 @@
 .env.local
 *.local
 .DS_Store
-# *.log
+*.log
 *.pid
 *.seed
 *.pid.lock
