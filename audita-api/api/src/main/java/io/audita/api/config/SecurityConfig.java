@@ -80,9 +80,9 @@ public class SecurityConfig {
                                 .requestMatchers(methodMatchers(HttpMethod.GET,
                                                 "/api/platform/v1/bootstrap/status",
                                                 "/api/v1/auth/oauth/**",
-                                                "/api/v1/notifications/stream"))
-                                .permitAll()
-                                .requestMatchers(pathMatchers("/actuator/health"))
+                                                "/api/v1/notifications/stream",
+                                                "/actuator/health",
+                                                "/actuator/health/**"))
                                 .permitAll()
                                 .requestMatchers(pathMatchers("/api/platform/v1/**"))
                                 .hasRole("SUPER_ADMIN")

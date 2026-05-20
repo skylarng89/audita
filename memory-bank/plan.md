@@ -112,7 +112,7 @@ All Sprint 12 tasks completed. v0.6.0 released.
 - BP13-002: Add CI security gates (`pnpm audit`, dependency scan, Trivy image scan, SAST checks). ✅ (Completed 2026-05-20)
 - BP13-003: Generate and publish SBOM artifacts (CycloneDX/SPDX) for API and web images. ✅ (Completed 2026-05-20)
 - BP13-004: Add OpenTelemetry tracing and Prometheus metrics export on backend. ✅ (Completed 2026-05-20)
-- BP13-005: Expose readiness/liveness probes and secure actuator endpoint exposure.
+- BP13-005: Expose readiness/liveness probes and secure actuator endpoint exposure. ✅ (Completed 2026-05-20)
 - BP13-006: Implement idempotency key support (`X-Idempotency-Key`) for selected mutating APIs.
 - BP13-007: Harden Nuxt API proxy route with header allowlist, strict forwarding rules, and request validation.
 - BP13-008: Add `nuxt-security` module and enforce CSP/security headers in frontend config.

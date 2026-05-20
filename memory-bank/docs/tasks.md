@@ -499,7 +499,7 @@
 | BP13-002 | Add CI security gates (dependency audit, image scan, and SAST)                            | High     | ✅ Completed   | Developer 1 | Added `dependency-scan`, `container-image-scan`, and `sast-codeql` jobs in `.github/workflows/ci-release.yml`; release job now blocks on all security gates. |
 | BP13-003 | Generate and publish SBOM artifacts for API and web images                                | Medium   | ✅ Completed   | Developer 1 | Added `sbom` CI job to generate SPDX JSON SBOMs for API/web container images, upload artifacts, and attach them to GitHub release assets. |
 | BP13-004 | Add OpenTelemetry tracing and Prometheus metrics export on backend                         | High     | ✅ Completed   | Developer 1 | Added OTel tracing + Prometheus registry dependencies in `audita-api/api/build.gradle.kts`; configured `management.endpoints.web.exposure.include=health,info,prometheus`, tracing sampling, and OTLP trace endpoint in `application.yml`. |
-| BP13-005 | Add explicit readiness/liveness probes and secure actuator exposure                        | Medium   | 🔴 Not Started | Developer 1 | Expose readiness/liveness probes and keep only required actuator endpoints public. |
+| BP13-005 | Add explicit readiness/liveness probes and secure actuator exposure                        | Medium   | ✅ Completed   | Developer 1 | Enabled health probes in `application.yml` and updated `SecurityConfig` so only `GET /actuator/health` and `GET /actuator/health/**` are public; added authorization tests for liveness/readiness and actuator denial path. |
 | BP13-006 | Implement idempotency key support for retriable mutating endpoints                         | High     | 🔴 Not Started | Developer 1 | Add `X-Idempotency-Key` handling with persisted dedupe records and TTL for selected POST/PATCH operations. |
 | BP13-007 | Harden Nuxt proxy route with header allowlist and request validation                        | Medium   | 🔴 Not Started | Developer 2 | Update `audita-web/server/routes/api/[...path].ts` to validate method/path/body and reject unsafe forwarded headers. |
 | BP13-008 | Add Nuxt security module and enforce CSP/security headers in frontend runtime config       | Medium   | 🔴 Not Started | Developer 2 | Add `nuxt-security` configuration and validate compatibility with existing auth/session flow. |
@@ -525,14 +525,14 @@
 | Sprint 10 | 36          | 0           | 0           | 36        | 100%       |
 | Sprint 11 | 26          | 0           | 0           | 26        | 100%       |
 | Sprint 12 | 6           | 0           | 0           | 6         | 100%       |
-| Sprint 13 | 8           | 4           | 0           | 4         | 50%        |
-| **TOTAL** | **168**     | **4**       | **0**       | **164**   | **97.6%**  |
+| Sprint 13 | 8           | 3           | 0           | 5         | 62.5%      |
+| **TOTAL** | **168**     | **3**       | **0**       | **165**   | **98.2%**  |
 
 ### Progress by Developer
 
 | Developer   | Assigned Tasks | Not Started | In Progress | Completed | Progress % |
 | ----------- | -------------- | ----------- | ----------- | --------- | ---------- |
-| Developer 1 | 87             | 1           | 0           | 86        | 98.9%      |
+| Developer 1 | 87             | 0           | 0           | 87        | 100%       |
 | Developer 2 | 81             | 3           | 0           | 78        | 96.3%      |
 
 ### Progress by Priority
@@ -540,7 +540,7 @@
 | Priority | Total | Not Started | In Progress | Completed | Progress % |
 | -------- | ----- | ----------- | ----------- | --------- | ---------- |
 | High     | 96    | 1           | 0           | 95        | 99.0%      |
-| Medium   | 50    | 3           | 0           | 47        | 94.0%      |
+| Medium   | 50    | 2           | 0           | 48        | 96.0%      |
 | Low      | 20    | 0           | 0           | 20        | 100%       |
 
 ---

@@ -59,7 +59,7 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 | BP13-002 | Add CI security gates (dependency audit, image scan, SAST) | High | ✅ Completed | Developer 1 |
 | BP13-003 | Generate and publish SBOM artifacts | Medium | ✅ Completed | Developer 1 |
 | BP13-004 | Add backend OpenTelemetry + Prometheus metrics | High | ✅ Completed | Developer 1 |
-| BP13-005 | Add readiness/liveness probes and tighten actuator exposure | Medium | 🔴 Not Started | Developer 1 |
+| BP13-005 | Add readiness/liveness probes and tighten actuator exposure | Medium | ✅ Completed | Developer 1 |
 | BP13-006 | Implement API idempotency key support for retriable mutating endpoints | High | 🔴 Not Started | Developer 1 |
 | BP13-007 | Harden Nuxt API proxy forwarding and request validation | Medium | 🔴 Not Started | Developer 2 |
 | BP13-008 | Add `nuxt-security` and enforce frontend CSP/security headers | Medium | 🔴 Not Started | Developer 2 |
@@ -127,7 +127,7 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 
 ## Current Blockers
 
-- **No implementation blockers yet.** Sprint 13 execution started; BP13-001 through BP13-004 completed.
+- **No implementation blockers yet.** Sprint 13 execution started; BP13-001 through BP13-005 completed.
 - **Known gap set from best-practices audit:** CI supply-chain hardening, SBOM generation, backend OTel/Prometheus/readiness, idempotency keys, Nuxt proxy/security module hardening.
 - **Current baseline remains healthy:** backend tests 62/62, frontend build/typecheck/test passing, Sonar clean, Playwright smoke test passing.
 
@@ -135,8 +135,8 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 
 ## Next Actions
 
-1. Execute Sprint 13 Phase B remaining item (BP13-005): readiness/liveness probes and actuator exposure hardening.
-2. Execute Sprint 13 Phase C (BP13-006): idempotency-key support with regression coverage.
+1. Execute Sprint 13 Phase C (BP13-006): idempotency-key support with regression coverage.
+2. Execute Sprint 13 Phase D (BP13-007 and BP13-008): Nuxt proxy/security hardening.
 3. Execute Sprint 13 Phase C (BP13-006): idempotency-key support with regression coverage.
 4. Execute Sprint 13 Phase D (BP13-007 and BP13-008): Nuxt proxy/security hardening.
 5. Re-run full quality gates and publish Sprint 13 closure notes in memory bank.
