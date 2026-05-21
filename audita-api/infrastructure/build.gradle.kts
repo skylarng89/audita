@@ -14,7 +14,7 @@ dependencies {
 
     // Spring Data JPA + Hibernate (auto-configures Hibernate 7)
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    runtimeOnly("org.postgresql:postgresql")
+    runtimeOnly("org.postgresql:postgresql:42.7.11")
 
     // Flyway — Spring Boot 4 requires the starter (not bare flyway-core)
     implementation("org.springframework.boot:spring-boot-starter-flyway")
@@ -30,7 +30,7 @@ dependencies {
     implementation("software.amazon.awssdk:s3")
 
     // OWASP HTML Sanitizer — sanitise TipTap rich-text before persistence
-    implementation("com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20240325.1")
+    implementation("com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20260101.1")
 
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
