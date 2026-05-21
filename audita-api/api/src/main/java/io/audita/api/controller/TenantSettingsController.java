@@ -1,11 +1,10 @@
 package io.audita.api.controller;
 
-import io.audita.api.dto.request.PatchTenantAdminSettingsRequest;
 import io.audita.api.dto.response.TenantAdminSettingsResponse;
 import io.audita.api.security.UserPrincipal;
 import io.audita.application.port.TenantSettingsPort;
 import io.audita.domain.exception.DomainNotPermittedException;
-import jakarta.validation.Valid;
+import io.audita.domain.model.ApprovalType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,7 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -90,16 +91,39 @@ public class TenantSettingsController {
         @PatchMapping
         @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
         public TenantAdminSettingsResponse patchSettings(@AuthenticationPrincipal UserPrincipal principal,
-                        @Valid @RequestBody PatchTenantAdminSettingsRequest request) {
+                        @RequestBody Map<String, Object> body) {
                 String tenantSlug = principal == null ? null : principal.tenantSlug();
                 if (tenantSlug == null || tenantSlug.isBlank()) {
                         throw new DomainNotPermittedException("TENANT_CONTEXT_REQUIRED", "Tenant context is required.");
                 }
 
+                Map<String, Object> profile = requireObject(body, "profile");
+                String name = requireText(profile, "name");
+                String primaryContactEmail = optionalText(profile, "primaryContactEmail");
+                String timezone = requireText(profile, "timezone");
+
+                Map<String, Object> workflowDefaults = requireObject(body, "workflowDefaults");
+                ApprovalType approvalTypeDefault = parseApprovalType(requireText(workflowDefaults, "approvalTypeDefault"));
+                boolean requireDefaultApprovers = requireBoolean(workflowDefaults, "requireDefaultApprovers");
+
+                Map<String, Object> slaDefaults = requireObject(body, "slaDefaults");
+                int lowHours = requireInt(slaDefaults, "lowHours");
+                int mediumHours = requireInt(slaDefaults, "mediumHours");
+                int highHours = requireInt(slaDefaults, "highHours");
+                int criticalHours = requireInt(slaDefaults, "criticalHours");
+                int warningBeforeHours = requireInt(slaDefaults, "warningBeforeHours");
+
+                Map<String, Object> autoApproverDefaults = optionalObject(body, "autoApproverDefaults");
+                List<UUID> autoApproverUserIds = parseUuidList(readStringList(autoApproverDefaults, "userIds"), "userIds");
+                List<UUID> autoApproverGroupIds = parseUuidList(readStringList(autoApproverDefaults, "groupIds"), "groupIds");
+
+                Map<String, Object> auditDefaults = optionalObject(body, "auditDefaults");
+                int exportLinkExpiryHours = optionalInt(auditDefaults, "exportLinkExpiryHours", 24);
+
                 int minDeadline = Math.min(
-                                Math.min(request.slaDefaults().lowHours(), request.slaDefaults().mediumHours()),
-                                Math.min(request.slaDefaults().highHours(), request.slaDefaults().criticalHours()));
-                if (request.slaDefaults().warningBeforeHours() >= minDeadline) {
+                                Math.min(lowHours, mediumHours),
+                                Math.min(highHours, criticalHours));
+                if (warningBeforeHours >= minDeadline) {
                         throw new ResponseStatusException(
                                         HttpStatus.BAD_REQUEST,
                                         "warningBeforeHours must be lower than all SLA deadline hour values.");
@@ -108,32 +132,124 @@ public class TenantSettingsController {
                 tenantSettingsPort.updateWorkflowDefaults(
                                 tenantSlug,
                                 new TenantSettingsPort.WorkflowDefaults(
-                                                request.workflowDefaults().approvalTypeDefault(),
-                                                request.workflowDefaults().requireDefaultApprovers()));
+                                                approvalTypeDefault,
+                                                requireDefaultApprovers));
                 tenantSettingsPort.updateProfile(
                                 tenantSlug,
                                 new TenantSettingsPort.ProfileUpdate(
-                                                request.profile().name().trim(),
-                                                request.profile().primaryContactEmail(),
-                                                request.profile().timezone().trim()));
+                                                name,
+                                                primaryContactEmail,
+                                                timezone));
                 tenantSettingsPort.updateSlaDefaults(
                                 tenantSlug,
                                 new TenantSettingsPort.SlaDefaults(
-                                                request.slaDefaults().lowHours(),
-                                                request.slaDefaults().mediumHours(),
-                                                request.slaDefaults().highHours(),
-                                                request.slaDefaults().criticalHours(),
-                                                request.slaDefaults().warningBeforeHours()));
+                                                lowHours,
+                                                mediumHours,
+                                                highHours,
+                                                criticalHours,
+                                                warningBeforeHours));
                 tenantSettingsPort.updateAutoApproverDefaults(
                                 tenantSlug,
                                 new TenantSettingsPort.AutoApproverDefaults(
-                                                parseUuidList(request.autoApproverDefaults().userIds(), "userIds"),
-                                                parseUuidList(request.autoApproverDefaults().groupIds(), "groupIds")));
+                                                autoApproverUserIds,
+                                                autoApproverGroupIds));
                 tenantSettingsPort.updateAuditDefaults(
                                 tenantSlug,
-                                new TenantSettingsPort.AuditDefaults(request.auditDefaults().exportLinkExpiryHours()));
+                                new TenantSettingsPort.AuditDefaults(exportLinkExpiryHours));
 
                 return getSettings(principal);
+        }
+
+        @SuppressWarnings("unchecked")
+        private Map<String, Object> requireObject(Map<String, Object> source, String fieldName) {
+                Object raw = source.get(fieldName);
+                if (raw instanceof Map<?, ?> rawMap) {
+                        return (Map<String, Object>) rawMap;
+                }
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing or invalid object: " + fieldName);
+        }
+
+        @SuppressWarnings("unchecked")
+        private Map<String, Object> optionalObject(Map<String, Object> source, String fieldName) {
+                Object raw = source.get(fieldName);
+                if (raw == null) {
+                        return Collections.emptyMap();
+                }
+                if (raw instanceof Map<?, ?> rawMap) {
+                        return (Map<String, Object>) rawMap;
+                }
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid object: " + fieldName);
+        }
+
+        private String requireText(Map<String, Object> source, String fieldName) {
+                Object raw = source.get(fieldName);
+                if (raw == null) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing field: " + fieldName);
+                }
+                String value = raw.toString().trim();
+                if (value.isEmpty()) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Field cannot be blank: " + fieldName);
+                }
+                return value;
+        }
+
+        private String optionalText(Map<String, Object> source, String fieldName) {
+                Object raw = source.get(fieldName);
+                if (raw == null) {
+                        return null;
+                }
+                String value = raw.toString().trim();
+                return value.isEmpty() ? null : value;
+        }
+
+        private boolean requireBoolean(Map<String, Object> source, String fieldName) {
+                Object raw = source.get(fieldName);
+                if (raw instanceof Boolean boolValue) {
+                        return boolValue;
+                }
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Field must be boolean: " + fieldName);
+        }
+
+        private int requireInt(Map<String, Object> source, String fieldName) {
+                Object raw = source.get(fieldName);
+                if (raw instanceof Number number) {
+                        return number.intValue();
+                }
+                if (raw instanceof String stringValue) {
+                        try {
+                                return Integer.parseInt(stringValue.trim());
+                        } catch (NumberFormatException ignored) {
+                        }
+                }
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Field must be an integer: " + fieldName);
+        }
+
+        private int optionalInt(Map<String, Object> source, String fieldName, int fallback) {
+                if (!source.containsKey(fieldName)) {
+                        return fallback;
+                }
+                return requireInt(source, fieldName);
+        }
+
+        private ApprovalType parseApprovalType(String approvalType) {
+                try {
+                        return ApprovalType.valueOf(approvalType.trim().toUpperCase());
+                } catch (IllegalArgumentException ex) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                        "Invalid approvalTypeDefault: " + approvalType);
+                }
+        }
+
+        private List<String> readStringList(Map<String, Object> source, String fieldName) {
+                Object raw = source.get(fieldName);
+                if (raw == null) {
+                        return List.of();
+                }
+                if (!(raw instanceof List<?> rawList)) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                        "Field must be an array: autoApproverDefaults." + fieldName);
+                }
+                return rawList.stream().map(item -> item == null ? "" : item.toString()).toList();
         }
 
         private List<UUID> parseUuidList(List<String> ids, String fieldName) {

@@ -122,6 +122,7 @@ class AuthControllerWebMvcTest {
                                                 "acme"));
 
                 mockMvc.perform(post("/api/v1/auth/session")
+                                .header("X-Tenant-Slug", "acme")
                                 .cookie(new Cookie("refreshToken", "refresh-token")))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.accessToken").value("access-token"))
