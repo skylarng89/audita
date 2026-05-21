@@ -335,8 +335,8 @@
 
 <script setup lang="ts">
 import { EditorContent, useEditor } from "@tiptap/vue-3";
-import StarterKit from "@tiptap/starter-kit";
 import FlatPickr from "vue-flatpickr-component";
+import { buildRichTextExtensions } from "~/composables/richText";
 
 definePageMeta({ middleware: "auth" });
 
@@ -350,7 +350,7 @@ const errorMessage = ref("");
 
 const editor = useEditor({
   content: "<p></p>",
-  extensions: [StarterKit],
+  extensions: buildRichTextExtensions("Describe scope, rollout plan, and risk controls..."),
   editorProps: {
     attributes: {
       class: "prose dark:prose-invert max-w-none focus:outline-none",

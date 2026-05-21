@@ -24,6 +24,7 @@ import io.audita.infrastructure.persistence.repository.GroupRepository;
 import io.audita.infrastructure.persistence.repository.GroupMemberRepository;
 import io.audita.infrastructure.persistence.repository.OrgSettingRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
+import io.audita.infrastructure.security.HtmlSanitizer;
 import io.audita.infrastructure.tenant.TenantContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -70,6 +71,7 @@ public class ChangeRequestService {
     private final UserRepository userRepository;
     private final OrgSettingRepository orgSettingRepository;
     private final AuditLogService auditLogService;
+    private final HtmlSanitizer htmlSanitizer;
 
     @Value("${audita.storage.local.base-path:/data/uploads}")
     private String storageBasePath;
@@ -89,7 +91,8 @@ public class ChangeRequestService {
             AttachmentRepository attachmentRepository,
             UserRepository userRepository,
             OrgSettingRepository orgSettingRepository,
-            AuditLogService auditLogService) {
+            AuditLogService auditLogService,
+            HtmlSanitizer htmlSanitizer) {
         this.changeRequestRepository = changeRequestRepository;
         this.crApproverRepository = crApproverRepository;
         this.groupRepository = groupRepository;
@@ -100,6 +103,7 @@ public class ChangeRequestService {
         this.userRepository = userRepository;
         this.orgSettingRepository = orgSettingRepository;
         this.auditLogService = auditLogService;
+        this.htmlSanitizer = htmlSanitizer;
     }
 
     public ChangeRequestEntity create(CreateRequest request) {
@@ -108,7 +112,7 @@ public class ChangeRequestService {
 
         ChangeRequestEntity changeRequest = new ChangeRequestEntity();
         changeRequest.setTitle(request.title());
-        changeRequest.setDescription(request.description());
+        changeRequest.setDescription(sanitizeRichText(request.description()));
         changeRequest.setPriority(request.priority());
         changeRequest.setRiskLevel(request.riskLevel());
         changeRequest.setCategory(request.category());
@@ -139,7 +143,7 @@ public class ChangeRequestService {
             current.setTitle(request.title());
         }
         if (request.description() != null) {
-            current.setDescription(request.description());
+            current.setDescription(sanitizeRichText(request.description()));
         }
         if (request.priority() != null) {
             current.setPriority(request.priority());
@@ -933,6 +937,10 @@ public class ChangeRequestService {
         return affectedSystems.stream()
                 .filter(s -> s != null && !s.isBlank())
                 .toArray(String[]::new);
+    }
+
+    private String sanitizeRichText(String html) {
+        return htmlSanitizer.sanitize(html);
     }
 
     private long resolveSlaHours(Priority priority) {

@@ -277,8 +277,8 @@
           <h2 class="font-semibold mb-2">Description</h2>
           <div
             v-if="changeRequest.description"
-            class="text-sm text-gray-700 dark:text-gray-300 prose dark:prose-invert max-w-none"
-            v-html="changeRequest.description"
+            class="text-sm text-gray-700 dark:text-gray-300 rich-content"
+            v-html="renderedDescription"
           />
           <p v-else class="text-sm text-gray-700 dark:text-gray-300">
             No description.
@@ -669,8 +669,8 @@
             {{ fmt(comment.createdAt) }}
           </p>
           <div
-            class="text-sm mt-2 text-gray-800 dark:text-gray-200"
-            v-html="comment.body"
+            class="text-sm mt-2 text-gray-800 dark:text-gray-200 rich-content"
+            v-html="normalizeRichTextHtml(comment.body)"
           />
         </div>
         <div v-if="!comments.length" class="text-sm text-muted">
@@ -773,8 +773,11 @@ import type {
   CustomFieldDefinition,
 } from "~/types";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
-import StarterKit from "@tiptap/starter-kit";
 import FlatPickr from "vue-flatpickr-component";
+import {
+  buildRichTextExtensions,
+  normalizeRichTextHtml,
+} from "~/composables/richText";
 
 definePageMeta({ middleware: "auth" });
 
@@ -890,6 +893,10 @@ const canSeeApprovalActions = computed(() => {
   }
   return approvers.value.some((approver) => approver.userId === auth.userId);
 });
+
+const renderedDescription = computed(() =>
+  normalizeRichTextHtml(changeRequest.value?.description),
+);
 const canCastVote = computed(() => {
   if (
     !changeRequest.value ||
@@ -1020,7 +1027,9 @@ function onEditAffectedSystemsBackspace() {
 }
 
 const editEditor = useEditor({
-  extensions: [StarterKit],
+  extensions: buildRichTextExtensions(
+    "Describe scope, rollout plan, and risk controls...",
+  ),
   editorProps: {
     attributes: {
       class:

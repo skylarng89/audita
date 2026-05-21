@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Editor } from "@tiptap/vue-3";
+import { normalizeLinkHref } from "~/composables/richText";
 
 const props = defineProps<{
   editor: Editor | null | undefined;
@@ -16,10 +17,55 @@ function canRun(command: () => boolean) {
 function isActive(name: string, attributes?: Record<string, unknown>) {
   return props.editor?.isActive(name, attributes) ?? false;
 }
+
+function setLink() {
+  if (!props.editor) {
+    return;
+  }
+
+  const previousHref = props.editor.getAttributes("link").href as
+    | string
+    | undefined;
+  const input = globalThis.prompt("Enter URL", previousHref ?? "https://");
+  if (input == null) {
+    return;
+  }
+
+  const normalizedHref = normalizeLinkHref(input);
+  if (!normalizedHref) {
+    props.editor.chain().focus().unsetLink().run();
+    return;
+  }
+
+  props.editor
+    .chain()
+    .focus()
+    .extendMarkRange("link")
+    .setLink({
+      href: normalizedHref,
+      rel: "noopener noreferrer nofollow",
+      target: "_blank",
+    })
+    .run();
+}
 </script>
 
 <template>
   <div class="rich-editor-toolbar" role="toolbar" aria-label="Text formatting">
+    <button
+      type="button"
+      class="rich-editor-button"
+      :class="{ 'rich-editor-button-active': isActive('heading', { level: 2 }) }"
+      :disabled="
+        !canRun(
+          () => props.editor?.can().chain().focus().toggleHeading({ level: 2 }).run() ?? false,
+        )
+      "
+      aria-label="Heading"
+      @click="run(() => props.editor?.chain().focus().toggleHeading({ level: 2 }).run() ?? false)"
+    >
+      H2
+    </button>
     <button
       type="button"
       class="rich-editor-button"
@@ -90,6 +136,20 @@ function isActive(name: string, attributes?: Record<string, unknown>) {
     <button
       type="button"
       class="rich-editor-button"
+      :class="{ 'rich-editor-button-active': isActive('blockquote') }"
+      :disabled="
+        !canRun(
+          () => props.editor?.can().chain().focus().toggleBlockquote().run() ?? false,
+        )
+      "
+      aria-label="Block quote"
+      @click="run(() => props.editor?.chain().focus().toggleBlockquote().run() ?? false)"
+    >
+      ""
+    </button>
+    <button
+      type="button"
+      class="rich-editor-button"
       :class="{ 'rich-editor-button-active': isActive('bulletList') }"
       :disabled="
         !canRun(
@@ -127,6 +187,59 @@ function isActive(name: string, attributes?: Record<string, unknown>) {
       "
     >
       OL
+    </button>
+    <button
+      type="button"
+      class="rich-editor-button"
+      :class="{ 'rich-editor-button-active': isActive('codeBlock') }"
+      :disabled="
+        !canRun(
+          () => props.editor?.can().chain().focus().toggleCodeBlock().run() ?? false,
+        )
+      "
+      aria-label="Code block"
+      @click="run(() => props.editor?.chain().focus().toggleCodeBlock().run() ?? false)"
+    >
+      Code
+    </button>
+    <button
+      type="button"
+      class="rich-editor-button"
+      :class="{ 'rich-editor-button-active': isActive('link') }"
+      :disabled="
+        !canRun(() => props.editor?.can().chain().focus().extendMarkRange('link').run() ?? false)
+      "
+      aria-label="Insert or edit link"
+      @click="setLink"
+    >
+      Link
+    </button>
+    <button
+      type="button"
+      class="rich-editor-button"
+      :disabled="!canRun(() => props.editor?.can().chain().focus().unsetLink().run() ?? false)"
+      aria-label="Remove link"
+      @click="run(() => props.editor?.chain().focus().unsetLink().run() ?? false)"
+    >
+      Unlink
+    </button>
+    <button
+      type="button"
+      class="rich-editor-button"
+      :disabled="!canRun(() => props.editor?.can().chain().focus().undo().run() ?? false)"
+      aria-label="Undo"
+      @click="run(() => props.editor?.chain().focus().undo().run() ?? false)"
+    >
+      Undo
+    </button>
+    <button
+      type="button"
+      class="rich-editor-button"
+      :disabled="!canRun(() => props.editor?.can().chain().focus().redo().run() ?? false)"
+      aria-label="Redo"
+      @click="run(() => props.editor?.chain().focus().redo().run() ?? false)"
+    >
+      Redo
     </button>
     <button
       type="button"

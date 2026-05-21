@@ -197,6 +197,49 @@
     @apply bg-transparent;
   }
 
+  .rich-content {
+    @apply text-sm text-on-surface dark:text-gray-100;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .rich-content p {
+    @apply my-2;
+  }
+
+  .rich-content ul {
+    @apply my-2 list-disc pl-5;
+  }
+
+  .rich-content ol {
+    @apply my-2 list-decimal pl-5;
+  }
+
+  .rich-content blockquote {
+    @apply my-2 border-l-4 border-outline-variant pl-4 italic text-on-surface-variant dark:border-slate-600;
+  }
+
+  .rich-content code {
+    @apply rounded bg-surface-container px-1 py-0.5 text-xs dark:bg-slate-700;
+  }
+
+  .rich-content pre {
+    @apply my-2 overflow-x-auto rounded-lg bg-surface-container p-3 text-xs dark:bg-slate-800;
+  }
+
+  .rich-content a {
+    @apply text-primary underline underline-offset-2 hover:text-primary-dark dark:text-blue-300 dark:hover:text-blue-200;
+  }
+
+  .rich-content table {
+    @apply my-3 w-full border-collapse;
+  }
+
+  .rich-content th,
+  .rich-content td {
+    @apply border border-outline-variant/60 px-2 py-1 text-left dark:border-slate-600;
+  }
+
   .rich-editor-content .ProseMirror {
     @apply min-h-44 px-4 py-3 text-sm text-on-surface focus:outline-none dark:text-gray-100;
     white-space: pre-wrap;
