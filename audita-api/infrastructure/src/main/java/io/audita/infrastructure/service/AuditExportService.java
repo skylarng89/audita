@@ -43,7 +43,7 @@ public class AuditExportService {
     @Value("${audita.app.base-url:http://localhost:3000}")
     private String appBaseUrl;
 
-    @Value("${audita.audit.export.storage-path:/data/exports}")
+    @Value("${audita.audit.export.storage-path:/tmp/audita-exports}")
     private String exportStoragePath;
 
     @Value("${audita.audit.export.link-expiry-hours:24}")
