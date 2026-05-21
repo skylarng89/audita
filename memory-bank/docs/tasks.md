@@ -547,6 +547,24 @@
 
 ## Recent Implementations
 
+### Post-Sprint: Container Scan Remediation (Completed 2026-05-21)
+
+**Overview**: Remediated HIGH/CRITICAL dependency findings that blocked `Container Image Vulnerability Scan` on main merge.
+
+**Files Created/Modified**:
+
+- `audita-api/api/build.gradle.kts` — added dependency constraints for Tomcat and Netty vulnerable components.
+- `audita-api/infrastructure/build.gradle.kts` — upgraded PostgreSQL JDBC and OWASP Java HTML Sanitizer to fixed versions.
+
+**Key Changes**:
+
+- Tomcat runtime pinned from `11.0.21` to `11.0.22` (`tomcat-embed-core`, `tomcat-embed-el`, `tomcat-embed-websocket`).
+- Netty vulnerable modules pinned to `4.2.13.Final` (`netty-codec-http`, `netty-codec-http2`, `netty-codec-compression`).
+- PostgreSQL JDBC upgraded `42.7.10 -> 42.7.11`.
+- OWASP Java HTML Sanitizer upgraded `20240325.1 -> 20260101.1`.
+
+**Test Coverage**: `cd audita-api && ./gradlew :api:dependencyInsight --dependency org.apache.tomcat.embed:tomcat-embed-core --configuration runtimeClasspath --no-daemon`; `cd audita-api && ./gradlew :api:dependencyInsight --dependency io.netty:netty-codec-http --configuration runtimeClasspath --no-daemon`; `cd audita-api && ./gradlew :api:dependencyInsight --dependency io.netty:netty-codec-compression --configuration runtimeClasspath --no-daemon`; `cd audita-api && ./gradlew :infrastructure:dependencyInsight --dependency org.postgresql:postgresql --configuration runtimeClasspath --no-daemon`; `cd audita-api && ./gradlew :infrastructure:dependencyInsight --dependency com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer --configuration runtimeClasspath --no-daemon`; `cd audita-api && ./gradlew :api:compileTestJava :infrastructure:compileTestJava :api:test --no-daemon`.
+
 ### Post-Sprint: Audit Export Cleanup Regression Coverage (Completed 2026-05-21)
 
 **Overview**: Added focused regression coverage for audit export cleanup behavior to lock token expiry handling and stale export artifact deletion.

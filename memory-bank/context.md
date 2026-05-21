@@ -1,7 +1,7 @@
 # Audita — Active Context
 
 **Last Updated:** 2026-05-21
-**Current Phase:** Post-Sprint audit export reliability follow-up complete
+**Current Phase:** Post-Sprint security scan remediation complete
 **Active Sprint:** Sprint 13 (completed)
 
 ---
@@ -136,5 +136,5 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 ## Next Actions
 
 1. Prioritize Sprint 14 backlog from remaining architecture/performance opportunities.
-2. Run full backend gate (`./gradlew :api:test --no-daemon`) before merge if more backend changes land.
+2. Re-run GitHub Actions `Container Image Vulnerability Scan` on updated branch to verify clean HIGH/CRITICAL gate.
 3. Schedule CI dry-run on feature branch before merge.

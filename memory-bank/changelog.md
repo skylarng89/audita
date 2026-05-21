@@ -45,6 +45,23 @@
 - `cd audita-api && ./gradlew :infrastructure:test --tests "io.audita.infrastructure.service.AuditExportServiceTest" --no-daemon`.
 - `cd audita-api && ./gradlew :api:compileTestJava :infrastructure:compileTestJava --no-daemon`.
 
+### Fixed (Post-Sprint Security Follow-Up — 2026-05-21)
+
+- **Container image scan blocker**: resolved Trivy-detected HIGH/CRITICAL vulnerabilities in API image dependencies by upgrading/pinning vulnerable components.
+  - `org.apache.tomcat.embed:tomcat-embed-core` `11.0.21 -> 11.0.22` (+ aligned `tomcat-embed-el`, `tomcat-embed-websocket` to `11.0.22`).
+  - `io.netty` vulnerable codec modules pinned to `4.2.13.Final` (`netty-codec-http`, `netty-codec-http2`, `netty-codec-compression`).
+  - `org.postgresql:postgresql` `42.7.10 -> 42.7.11`.
+  - `com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer` `20240325.1 -> 20260101.1`.
+
+### Verification (Post-Sprint Security Follow-Up — 2026-05-21)
+
+- `cd audita-api && ./gradlew :api:dependencyInsight --dependency org.apache.tomcat.embed:tomcat-embed-core --configuration runtimeClasspath --no-daemon`.
+- `cd audita-api && ./gradlew :api:dependencyInsight --dependency io.netty:netty-codec-http --configuration runtimeClasspath --no-daemon`.
+- `cd audita-api && ./gradlew :api:dependencyInsight --dependency io.netty:netty-codec-compression --configuration runtimeClasspath --no-daemon`.
+- `cd audita-api && ./gradlew :infrastructure:dependencyInsight --dependency org.postgresql:postgresql --configuration runtimeClasspath --no-daemon`.
+- `cd audita-api && ./gradlew :infrastructure:dependencyInsight --dependency com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer --configuration runtimeClasspath --no-daemon`.
+- `cd audita-api && ./gradlew :api:compileTestJava :infrastructure:compileTestJava :api:test --no-daemon`.
+
 ## [0.1.0] — Unreleased (In Development)
 
 ### Changed (Sprint 11 — Session Hardening & Security Config Stabilization — 2026-05-12)
