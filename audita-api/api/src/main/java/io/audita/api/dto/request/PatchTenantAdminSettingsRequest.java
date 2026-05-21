@@ -7,7 +7,6 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
-import java.util.UUID;
 
 public record PatchTenantAdminSettingsRequest(
                 @NotNull @Valid OrganizationProfile profile,
@@ -35,8 +34,8 @@ public record PatchTenantAdminSettingsRequest(
         }
 
         public record AutoApproverDefaults(
-                        @NotNull List<UUID> userIds,
-                        @NotNull List<UUID> groupIds) {
+                        @NotNull List<String> userIds,
+                        @NotNull List<String> groupIds) {
         }
 
         public record AuditDefaults(

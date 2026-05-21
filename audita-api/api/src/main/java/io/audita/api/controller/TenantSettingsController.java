@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1/settings")
 public class TenantSettingsController {
@@ -124,12 +127,29 @@ public class TenantSettingsController {
                 tenantSettingsPort.updateAutoApproverDefaults(
                                 tenantSlug,
                                 new TenantSettingsPort.AutoApproverDefaults(
-                                                request.autoApproverDefaults().userIds(),
-                                                request.autoApproverDefaults().groupIds()));
+                                                parseUuidList(request.autoApproverDefaults().userIds(), "userIds"),
+                                                parseUuidList(request.autoApproverDefaults().groupIds(), "groupIds")));
                 tenantSettingsPort.updateAuditDefaults(
                                 tenantSlug,
                                 new TenantSettingsPort.AuditDefaults(request.auditDefaults().exportLinkExpiryHours()));
 
                 return getSettings(principal);
+        }
+
+        private List<UUID> parseUuidList(List<String> ids, String fieldName) {
+                return ids.stream()
+                                .map(id -> id == null ? "" : id.trim())
+                                .filter(id -> !id.isEmpty())
+                                .map(id -> {
+                                        try {
+                                                return UUID.fromString(id);
+                                        } catch (IllegalArgumentException ex) {
+                                                throw new ResponseStatusException(
+                                                                HttpStatus.BAD_REQUEST,
+                                                                "Invalid UUID in autoApproverDefaults." + fieldName + ": " + id);
+                                        }
+                                })
+                                .distinct()
+                                .toList();
         }
 }
