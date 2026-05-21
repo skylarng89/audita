@@ -249,9 +249,10 @@ async function handleSubmit() {
   try {
     await login(form.email, form.password);
   } catch (e: unknown) {
-    const err = e as { data?: { detail?: string } };
-    errors.general =
-      err?.data?.detail ?? "Invalid credentials. Please try again.";
+    errors.general = resolveApiErrorMessage(
+      e,
+      "Invalid credentials. Please try again.",
+    );
   } finally {
     isLoading.value = false;
   }

@@ -678,15 +678,19 @@ async function createChangeRequest() {
         await uploadPendingAttachments(created.id);
       } catch (error: any) {
         toastError(
-          error?.data?.detail ||
+          resolveApiErrorMessage(
+            error,
             "Change request created, but one or more attachments could not be uploaded.",
+          ),
         );
       }
     }
     await navigateTo(`/change-requests/${created.id}`);
   } catch (error: any) {
-    errorMessage.value =
-      error?.data?.detail || "Unable to create change request.";
+    errorMessage.value = resolveApiErrorMessage(
+      error,
+      "Unable to create change request.",
+    );
   } finally {
     isSaving.value = false;
   }

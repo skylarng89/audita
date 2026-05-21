@@ -269,10 +269,10 @@ async function handleSubmit() {
     await resetPassword(token.value, form.password);
     done.value = true;
   } catch (e: unknown) {
-    const err = e as { data?: { detail?: string } };
-    error.value =
-      err?.data?.detail ??
-      "Reset link is invalid or has expired. Please request a new one.";
+    error.value = resolveApiErrorMessage(
+      e,
+      "Reset link is invalid or has expired. Please request a new one.",
+    );
   } finally {
     isLoading.value = false;
   }
