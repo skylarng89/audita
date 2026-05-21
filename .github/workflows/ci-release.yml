@@ -14,10 +14,10 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@v6
 
       - name: Set up Java
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "25"
@@ -34,15 +34,15 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@v6
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@ac6db6d3c1f721f886538a378a2d73e85697340a # v6
+        uses: pnpm/action-setup@v6
         with:
           version: 10
 
       - name: Set up Node
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: pnpm
@@ -67,15 +67,15 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@v6
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@ac6db6d3c1f721f886538a378a2d73e85697340a # v6
+        uses: pnpm/action-setup@v6
         with:
           version: 10
 
       - name: Set up Node
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: pnpm
@@ -90,7 +90,7 @@ jobs:
         run: pnpm audit --audit-level high
 
       - name: Scan backend dependencies with Trivy FS
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: audita-api
@@ -101,7 +101,7 @@ jobs:
           exit-code: "1"
 
       - name: Scan web dependencies with Trivy FS
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: audita-web
@@ -118,7 +118,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@v6 # v6
 
       - name: Build API image for scanning
         run: docker build -t audita-api:scan -f audita-api/Dockerfile audita-api
@@ -127,7 +127,7 @@ jobs:
         run: docker build -t audita-web:scan -f audita-web/Dockerfile audita-web
 
       - name: Scan API image with Trivy
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: image
           image-ref: audita-api:scan
@@ -136,7 +136,7 @@ jobs:
           exit-code: "1"
 
       - name: Scan web image with Trivy
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: image
           image-ref: audita-web:scan
@@ -152,18 +152,18 @@ jobs:
       security-events: write
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@v6
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@78ed0c7291d93e40c51b085850dc669a4c3ab73b # v3
+        uses: github/codeql-action/init@v4
         with:
           languages: java-kotlin,javascript-typescript
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@78ed0c7291d93e40c51b085850dc669a4c3ab73b # v3
+        uses: github/codeql-action/autobuild@v4
 
       - name: Analyze
-        uses: github/codeql-action/analyze@78ed0c7291d93e40c51b085850dc669a4c3ab73b # v3
+        uses: github/codeql-action/analyze@v4
 
   sbom:
     name: Generate SBOM Artifacts
@@ -172,7 +172,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@v6
 
       - name: Build API image for SBOM
         run: docker build -t audita-api:sbom -f audita-api/Dockerfile audita-api
@@ -181,21 +181,21 @@ jobs:
         run: docker build -t audita-web:sbom -f audita-web/Dockerfile audita-web
 
       - name: Generate API SBOM (SPDX JSON)
-        uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # v0.20.6
+        uses: anchore/sbom-action@v0.24.0
         with:
           image: audita-api:sbom
           format: spdx-json
           output-file: sbom-api.spdx.json
 
       - name: Generate web SBOM (SPDX JSON)
-        uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # v0.20.6
+        uses: anchore/sbom-action@v0.24.0
         with:
           image: audita-web:sbom
           format: spdx-json
           output-file: sbom-web.spdx.json
 
       - name: Upload SBOM artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-artifacts
           path: |
@@ -206,7 +206,15 @@ jobs:
 
   release:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [api-tests, web-tests, dependency-scan, container-image-scan, sast-codeql, sbom]
+    needs:
+      [
+        api-tests,
+        web-tests,
+        dependency-scan,
+        container-image-scan,
+        sast-codeql,
+        sbom,
+      ]
     name: Release and Publish Docker Images
     runs-on: ubuntu-latest
     permissions:
@@ -214,41 +222,29 @@ jobs:
       contents: write
     steps:
       - name: Checkout main
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@v6
         with:
           ref: main
           fetch-depth: 0
 
       - name: Set up Java
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "25"
           cache: gradle
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@ac6db6d3c1f721f886538a378a2d73e85697340a # v6
+        uses: pnpm/action-setup@v6
         with:
           version: 10
 
       - name: Set up Node
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: pnpm
           cache-dependency-path: audita-web/pnpm-lock.yaml
-
-      # Tests already run in dedicated api-tests and web-tests jobs via needs dependency
-      # - name: Verify API
-      #   working-directory: audita-api
-      #   run: ./gradlew :api:test --no-daemon
-
-      # - name: Verify web
-      #   working-directory: audita-web
-      #   run: |
-      #     pnpm install --frozen-lockfile
-      #     pnpm test
-      #     pnpm build
 
       - name: Resolve image names
         id: images
@@ -326,16 +322,16 @@ jobs:
           echo "major_minor=${major_minor}" >> "$GITHUB_OUTPUT"
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+        uses: docker/setup-buildx-action@v4
 
       - name: Build and push API image
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7
+        uses: docker/build-push-action@v7
         with:
           context: ./audita-api
           file: ./audita-api/Dockerfile
@@ -347,7 +343,7 @@ jobs:
             ${{ steps.images.outputs.api_image }}:sha-${{ github.sha }}
 
       - name: Build and push web image
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7
+        uses: docker/build-push-action@v7
         with:
           context: ./audita-web
           file: ./audita-web/Dockerfile
@@ -376,13 +372,13 @@ jobs:
           fi
 
       - name: Download SBOM artifacts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@v4
         with:
           name: sbom-artifacts
           path: release-artifacts
 
       - name: Publish GitHub release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.version.outputs.version }}
           generate_release_notes: true
