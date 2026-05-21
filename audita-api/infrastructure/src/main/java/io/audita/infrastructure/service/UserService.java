@@ -6,6 +6,7 @@ import io.audita.infrastructure.persistence.entity.*;
 import io.audita.infrastructure.persistence.repository.*;
 import io.audita.infrastructure.security.RoleHierarchy;
 import io.audita.infrastructure.tenant.TenantContext;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -61,7 +62,12 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public Page<UserEntity> listUsers(Pageable pageable) {
-        return userRepository.findAll(pageable);
+        Page<UserEntity> page = userRepository.findAll(pageable);
+        page.getContent().forEach(user -> {
+            Hibernate.initialize(user.getRole());
+            Hibernate.initialize(user.getRoles());
+        });
+        return page;
     }
 
     @Transactional(readOnly = true)
