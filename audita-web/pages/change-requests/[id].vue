@@ -566,8 +566,7 @@
               class="mt-0.5 text-muted cursor-grab active:cursor-grabbing"
               title="Drag to reorder"
               aria-hidden="true"
-              ::</span
-            >
+              >::</span>
             <p class="text-sm font-semibold">
               {{ a.userFullName }}
               <span class="text-xs text-muted">({{ a.userEmail }})</span>
