@@ -16,6 +16,10 @@ export type AutoApproverDefaults = {
   groupIds: string[];
 };
 
+export type AuditDefaults = {
+  exportLinkExpiryHours: number;
+};
+
 export type OrganizationProfile = {
   name: string;
   primaryContactEmail: string;
@@ -27,6 +31,7 @@ export type SettingsPatchPayload = {
   workflowDefaults: WorkflowDefaults;
   slaDefaults: SlaDefaults;
   autoApproverDefaults: AutoApproverDefaults;
+  auditDefaults: AuditDefaults;
 };
 
 export function createSettingsSnapshot(
@@ -34,11 +39,13 @@ export function createSettingsSnapshot(
   workflowDefaults: WorkflowDefaults,
   slaDefaults: SlaDefaults,
   autoApproverDefaults: AutoApproverDefaults,
+  auditDefaults: AuditDefaults,
 ): string {
   return JSON.stringify({
     profile,
     workflowDefaults,
     slaDefaults,
+    auditDefaults,
     autoApproverDefaults: {
       userIds: [...autoApproverDefaults.userIds].sort(),
       groupIds: [...autoApproverDefaults.groupIds].sort(),
@@ -52,10 +59,17 @@ export function isSettingsDirty(
   workflowDefaults: WorkflowDefaults,
   slaDefaults: SlaDefaults,
   autoApproverDefaults: AutoApproverDefaults,
+  auditDefaults: AuditDefaults,
 ): boolean {
   return (
     snapshot !==
-    createSettingsSnapshot(profile, workflowDefaults, slaDefaults, autoApproverDefaults)
+    createSettingsSnapshot(
+      profile,
+      workflowDefaults,
+      slaDefaults,
+      autoApproverDefaults,
+      auditDefaults,
+    )
   );
 }
 
@@ -78,6 +92,7 @@ export function buildSettingsPatchPayload(
   workflowDefaults: WorkflowDefaults,
   slaDefaults: SlaDefaults,
   autoApproverDefaults: AutoApproverDefaults,
+  auditDefaults: AuditDefaults,
 ): SettingsPatchPayload {
   return {
     profile: {
@@ -99,6 +114,9 @@ export function buildSettingsPatchPayload(
     autoApproverDefaults: {
       userIds: autoApproverDefaults.userIds,
       groupIds: autoApproverDefaults.groupIds,
+    },
+    auditDefaults: {
+      exportLinkExpiryHours: auditDefaults.exportLinkExpiryHours,
     },
   };
 }

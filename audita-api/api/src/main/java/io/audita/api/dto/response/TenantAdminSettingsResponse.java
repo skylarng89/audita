@@ -11,7 +11,8 @@ public record TenantAdminSettingsResponse(
                 SecurityDefaults securityDefaults,
                 WorkflowDefaults workflowDefaults,
                 SlaDefaults slaDefaults,
-                AutoApproverDefaults autoApproverDefaults) {
+                AutoApproverDefaults autoApproverDefaults,
+                AuditDefaults auditDefaults) {
         public record OrganizationProfile(
                         String name,
                         String slug,
@@ -48,5 +49,9 @@ public record TenantAdminSettingsResponse(
         public record AutoApproverDefaults(
                         List<UUID> userIds,
                         List<UUID> groupIds) {
+        }
+
+        public record AuditDefaults(
+                        int exportLinkExpiryHours) {
         }
 }

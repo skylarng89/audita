@@ -2,6 +2,7 @@ package io.audita.api.controller;
 
 import io.audita.api.security.UserPrincipal;
 import io.audita.application.port.AuditTrailPort;
+import io.audita.infrastructure.service.AuditExportService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,9 +39,12 @@ class AuditTrailControllerWebMvcTest {
         @Mock
         AuditTrailPort auditTrailPort;
 
+        @Mock
+        AuditExportService auditExportService;
+
         @BeforeEach
         void setUp() {
-                AuditTrailController controller = new AuditTrailController(auditTrailPort);
+                AuditTrailController controller = new AuditTrailController(auditTrailPort, auditExportService);
                 mockMvc = MockMvcBuilders.standaloneSetup(controller)
                                 .setCustomArgumentResolvers(
                                                 new PageableHandlerMethodArgumentResolver(),

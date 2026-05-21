@@ -360,6 +360,24 @@
       </div>
     </section>
 
+    <section class="card p-5 shadow-card-hover">
+      <h2 class="text-lg font-semibold">Audit Export Defaults</h2>
+      <p class="text-sm text-muted mt-1">
+        Configure how long emailed audit export download links stay valid.
+      </p>
+      <div class="mt-4 max-w-sm">
+        <label class="field-label" for="audit-export-expiry-hours">Export link expiry (hours)</label>
+        <input
+          id="audit-export-expiry-hours"
+          v-model.number="settings.auditDefaults.exportLinkExpiryHours"
+          type="number"
+          min="1"
+          max="168"
+          class="input"
+        />
+      </div>
+    </section>
+
     <!-- Custom Fields -->
     <section class="card p-5 shadow-card-hover">
       <div class="flex items-center justify-between">
@@ -608,6 +626,9 @@ interface TenantAdminSettingsResponse {
     userIds: string[];
     groupIds: string[];
   };
+  auditDefaults: {
+    exportLinkExpiryHours: number;
+  };
 }
 
 interface UserLookupResponse {
@@ -657,6 +678,9 @@ const settings = reactive({
     userIds: [] as string[],
     groupIds: [] as string[],
   },
+  auditDefaults: {
+    exportLinkExpiryHours: 24,
+  },
 });
 
 const selectedAutoApproverUsers = ref<Record<string, { label: string }>>({});
@@ -677,6 +701,7 @@ const isDirty = computed(() => {
     settings.workflowDefaults,
     settings.slaDefaults,
     settings.autoApproverDefaults,
+    settings.auditDefaults,
   );
 });
 
@@ -745,6 +770,8 @@ async function loadSettings() {
       response.autoApproverDefaults?.userIds ?? [];
     settings.autoApproverDefaults.groupIds =
       response.autoApproverDefaults?.groupIds ?? [];
+    settings.auditDefaults.exportLinkExpiryHours =
+      response.auditDefaults?.exportLinkExpiryHours ?? 24;
     await hydrateAutoApproverLabels();
     settingsSnapshot.value = createSettingsSnapshot(
       {
@@ -755,6 +782,7 @@ async function loadSettings() {
       settings.workflowDefaults,
       settings.slaDefaults,
       settings.autoApproverDefaults,
+      settings.auditDefaults,
     );
   } catch {
     errorMessage.value = "Unable to load settings right now.";
@@ -789,6 +817,7 @@ async function saveSettings() {
         settings.workflowDefaults,
         settings.slaDefaults,
         settings.autoApproverDefaults,
+        settings.auditDefaults,
       ),
     });
     settingsSnapshot.value = createSettingsSnapshot(
@@ -800,6 +829,7 @@ async function saveSettings() {
       settings.workflowDefaults,
       settings.slaDefaults,
       settings.autoApproverDefaults,
+      settings.auditDefaults,
     );
   } catch {
     errorMessage.value = "Unable to save settings right now.";

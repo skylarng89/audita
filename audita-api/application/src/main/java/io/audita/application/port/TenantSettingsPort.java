@@ -15,6 +15,8 @@ public interface TenantSettingsPort {
 
     void updateSlaDefaults(String tenantSlug, SlaDefaults slaDefaults);
 
+    void updateAuditDefaults(String tenantSlug, AuditDefaults auditDefaults);
+
     void updateAutoApproverDefaults(String tenantSlug, AutoApproverDefaults autoApproverDefaults);
 
     record TenantProfile(
@@ -49,10 +51,15 @@ public interface TenantSettingsPort {
             List<UUID> groupIds) {
     }
 
+    record AuditDefaults(
+            int exportLinkExpiryHours) {
+    }
+
     record TenantSettings(
             TenantProfile profile,
             WorkflowDefaults workflowDefaults,
             SlaDefaults slaDefaults,
-            AutoApproverDefaults autoApproverDefaults) {
+            AutoApproverDefaults autoApproverDefaults,
+            AuditDefaults auditDefaults) {
     }
 }

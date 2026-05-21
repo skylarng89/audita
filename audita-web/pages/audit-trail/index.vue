@@ -178,6 +178,7 @@ useHead({ title: "Audit Trail — Audita" });
 
 const api = useApi();
 const auth = useAuthStore();
+const { success: toastSuccess, error: toastError } = useToast();
 
 if (!(auth.isAdmin || auth.isAuditor)) {
   await navigateTo("/dashboard");
@@ -322,18 +323,13 @@ async function exportCsv() {
     if (filters.from) query.from = filters.from;
     if (filters.to) query.to = filters.to;
 
-    const params = new URLSearchParams(query).toString();
-    const url = `/api/v1/audit-trail/export.csv${params ? `?${params}` : ""}`;
-
-    const response = await $fetch.raw(url, { responseType: "blob" });
-    const blob = response._data as Blob;
-    const anchor = document.createElement("a");
-    anchor.href = URL.createObjectURL(blob);
-    anchor.download = "audit-trail.csv";
-    anchor.click();
-    URL.revokeObjectURL(anchor.href);
+    await api("/api/v1/audit-trail/exports", {
+      method: "POST",
+      query,
+    });
+    toastSuccess("Audit export started. Download link will be sent to your email.");
   } catch {
-    loadError.value = "Export failed. Please try again.";
+    toastError("Export failed. Please try again.");
   } finally {
     exporting.value = false;
   }

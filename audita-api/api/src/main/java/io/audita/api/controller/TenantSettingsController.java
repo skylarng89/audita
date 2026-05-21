@@ -71,13 +71,17 @@ public class TenantSettingsController {
                                 settings.autoApproverDefaults().userIds(),
                                 settings.autoApproverDefaults().groupIds());
 
+                TenantAdminSettingsResponse.AuditDefaults auditDefaults = new TenantAdminSettingsResponse.AuditDefaults(
+                                settings.auditDefaults().exportLinkExpiryHours());
+
                 return new TenantAdminSettingsResponse(
                                 profile,
                                 featureFlags,
                                 securityDefaults,
                                 workflowDefaults,
                                 slaDefaults,
-                                autoApproverDefaults);
+                                autoApproverDefaults,
+                                auditDefaults);
         }
 
         @PatchMapping
@@ -122,6 +126,9 @@ public class TenantSettingsController {
                                 new TenantSettingsPort.AutoApproverDefaults(
                                                 request.autoApproverDefaults().userIds(),
                                                 request.autoApproverDefaults().groupIds()));
+                tenantSettingsPort.updateAuditDefaults(
+                                tenantSlug,
+                                new TenantSettingsPort.AuditDefaults(request.auditDefaults().exportLinkExpiryHours()));
 
                 return getSettings(principal);
         }

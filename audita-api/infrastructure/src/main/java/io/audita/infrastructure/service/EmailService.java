@@ -12,6 +12,9 @@ import org.thymeleaf.context.Context;
 
 import jakarta.mail.internet.MimeMessage;
 
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+
 /**
  * Dispatches all outbound emails asynchronously.
  * Templates live in resources/templates/email/.
@@ -103,6 +106,20 @@ public class EmailService {
         ctx.setVariable("crTitle", crTitle);
         ctx.setVariable("crLink", appBaseUrl + "/change-requests/" + crId);
         send(toEmail, "SLA Breached: " + crTitle, "email/sla-breach", ctx);
+    }
+
+    @Async
+    public void sendAuditExportReadyEmail(String toEmail,
+                                          String downloadUrl,
+                                          OffsetDateTime expiresAt,
+                                          LocalDate from,
+                                          LocalDate to) {
+        Context ctx = new Context();
+        ctx.setVariable("downloadUrl", downloadUrl);
+        ctx.setVariable("expiresAt", expiresAt);
+        ctx.setVariable("from", from);
+        ctx.setVariable("to", to);
+        send(toEmail, "Your audit export is ready", "email/audit-export-ready", ctx);
     }
 
     private void send(String to, String subject, String template, Context ctx) {

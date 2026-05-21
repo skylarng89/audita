@@ -13,7 +13,8 @@ public record PatchTenantAdminSettingsRequest(
                 @NotNull @Valid OrganizationProfile profile,
                 @NotNull @Valid WorkflowDefaults workflowDefaults,
                 @NotNull @Valid SlaDefaults slaDefaults,
-                @NotNull @Valid AutoApproverDefaults autoApproverDefaults) {
+                @NotNull @Valid AutoApproverDefaults autoApproverDefaults,
+                @NotNull @Valid AuditDefaults auditDefaults) {
         public record OrganizationProfile(
                         @NotNull String name,
                         String primaryContactEmail,
@@ -36,5 +37,9 @@ public record PatchTenantAdminSettingsRequest(
         public record AutoApproverDefaults(
                         @NotNull List<UUID> userIds,
                         @NotNull List<UUID> groupIds) {
+        }
+
+        public record AuditDefaults(
+                        @NotNull @Min(1) @Max(168) Integer exportLinkExpiryHours) {
         }
 }

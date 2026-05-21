@@ -4,6 +4,7 @@ import {
   isSettingsDirty,
   validateSlaDefaults,
   type AutoApproverDefaults,
+  type AuditDefaults,
   type OrganizationProfile,
   type SlaDefaults,
   type WorkflowDefaults,
@@ -35,12 +36,17 @@ describe("admin settings form interaction logic", () => {
     timezone: "UTC",
   };
 
+  const auditDefaults: AuditDefaults = {
+    exportLinkExpiryHours: 24,
+  };
+
   it("marks form as clean when snapshot matches current values", () => {
     const snapshot = createSettingsSnapshot(
       profile,
       workflowDefaults,
       slaDefaults,
       autoApproverDefaults,
+      auditDefaults,
     );
 
     expect(
@@ -50,6 +56,7 @@ describe("admin settings form interaction logic", () => {
         workflowDefaults,
         slaDefaults,
         autoApproverDefaults,
+        auditDefaults,
       ),
     ).toBe(false);
   });
@@ -60,6 +67,7 @@ describe("admin settings form interaction logic", () => {
       workflowDefaults,
       slaDefaults,
       autoApproverDefaults,
+      auditDefaults,
     );
 
     expect(
@@ -69,6 +77,7 @@ describe("admin settings form interaction logic", () => {
         { ...workflowDefaults, approvalTypeDefault: "NON_LINEAR" },
         slaDefaults,
         autoApproverDefaults,
+        auditDefaults,
       ),
     ).toBe(true);
   });
@@ -79,6 +88,7 @@ describe("admin settings form interaction logic", () => {
       workflowDefaults,
       slaDefaults,
       autoApproverDefaults,
+      auditDefaults,
     );
 
     expect(
@@ -88,7 +98,7 @@ describe("admin settings form interaction logic", () => {
           ...autoApproverDefaults.userIds,
           "33333333-3333-3333-3333-333333333333",
         ],
-      }),
+      }, auditDefaults),
     ).toBe(true);
   });
 
@@ -114,12 +124,14 @@ describe("admin settings form interaction logic", () => {
         workflowDefaults,
         slaDefaults,
         autoApproverDefaults,
+        auditDefaults,
       ),
     ).toEqual({
       profile,
       workflowDefaults,
       slaDefaults,
       autoApproverDefaults,
+      auditDefaults,
     });
   });
 });

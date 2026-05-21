@@ -59,6 +59,7 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
     private static final String WORKFLOW_DEFAULT_APPROVER_GROUP_IDS_KEY = "workflow.default_approver_group_ids";
     private static final String ORG_PRIMARY_CONTACT_EMAIL_KEY = "org.primary_contact_email";
     private static final String ORG_TIMEZONE_KEY = "org.timezone";
+    private static final String AUDIT_EXPORT_LINK_EXPIRY_HOURS_KEY = "audit.export_link_expiry_hours";
 
     private final TenantRepository tenantRepository;
     private final OrgSettingRepository orgSettingRepository;
@@ -149,7 +150,8 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
         AutoApproverDefaults autoApproverDefaults = new AutoApproverDefaults(
                 readUuidListSetting(WORKFLOW_DEFAULT_APPROVER_USER_IDS_KEY),
                 readUuidListSetting(WORKFLOW_DEFAULT_APPROVER_GROUP_IDS_KEY));
-        return new TenantSettings(profile, workflowDefaults, slaDefaults, autoApproverDefaults);
+        AuditDefaults auditDefaults = new AuditDefaults(readIntSetting(AUDIT_EXPORT_LINK_EXPIRY_HOURS_KEY, 24));
+        return new TenantSettings(profile, workflowDefaults, slaDefaults, autoApproverDefaults, auditDefaults);
     }
 
     @Override
@@ -185,6 +187,12 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
         getTenantBySlug(tenantSlug);
         saveSetting(WORKFLOW_DEFAULT_APPROVER_USER_IDS_KEY, writeUuidListSetting(autoApproverDefaults.userIds()));
         saveSetting(WORKFLOW_DEFAULT_APPROVER_GROUP_IDS_KEY, writeUuidListSetting(autoApproverDefaults.groupIds()));
+    }
+
+    @Override
+    public void updateAuditDefaults(String tenantSlug, AuditDefaults auditDefaults) {
+        getTenantBySlug(tenantSlug);
+        saveSetting(AUDIT_EXPORT_LINK_EXPIRY_HOURS_KEY, Integer.toString(auditDefaults.exportLinkExpiryHours()));
     }
 
     private TenantEntity loadTenantOrThrow(UUID id) {
