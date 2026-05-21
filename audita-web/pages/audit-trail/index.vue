@@ -338,20 +338,7 @@ async function exportCsv() {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatTs(ts: string): string {
-  if (!ts) return "—";
-  try {
-    return new Intl.DateTimeFormat("en-GB", {
-      year: "numeric",
-      month: "short",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      timeZoneName: "short",
-    }).format(new Date(ts));
-  } catch {
-    return ts;
-  }
+  return formatDateTimeInTenantTimezone(ts);
 }
 
 function actionLabel(action: string): string {

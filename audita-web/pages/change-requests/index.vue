@@ -398,7 +398,7 @@
 
 <script setup lang="ts">
 import type { ChangeRequest, Page } from "~/types";
-import { format, parseISO, isPast } from "date-fns";
+import { isPast, parseISO } from "date-fns";
 
 definePageMeta({ middleware: "auth" });
 
@@ -464,7 +464,7 @@ function clearFilters() {
 }
 
 function formatDate(iso: string) {
-  return format(parseISO(iso), "MMM d, yyyy");
+  return formatDateInTenantTimezone(iso);
 }
 
 function isSlaOverdue(iso: string) {

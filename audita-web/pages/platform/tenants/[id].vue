@@ -300,6 +300,6 @@ async function activateTenant() {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", { dateStyle: "medium" });
+  return formatDateInTenantTimezone(iso);
 }
 </script>
