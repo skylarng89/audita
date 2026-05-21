@@ -241,9 +241,10 @@ async function handleSubmit() {
     // Final fallback: redirect if onboarding completed via race.
     if (await redirectIfOnboardingComplete()) return;
 
-    error.value =
-      err?.data?.detail ??
-      "Setup failed. The platform may already be initialised.";
+    error.value = resolveApiErrorMessage(
+      err,
+      "Setup failed. The platform may already be initialised.",
+    );
   } finally {
     isLoading.value = false;
   }

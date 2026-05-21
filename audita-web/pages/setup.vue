@@ -296,11 +296,7 @@ async function handleSubmit() {
     // Auto-login the new admin
     await login(form.email, form.password);
   } catch (e: unknown) {
-    const err = e as { data?: { detail?: string; message?: string } };
-    error.value =
-      err.data?.detail ??
-      err.data?.message ??
-      "Setup failed. Please try again.";
+    error.value = resolveApiErrorMessage(e, "Setup failed. Please try again.");
   } finally {
     isLoading.value = false;
   }

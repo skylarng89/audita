@@ -493,6 +493,8 @@
         <h2 class="font-semibold">Approvers</h2>
         <button
           class="btn-ghost btn-md"
+          :disabled="!canManageApprovers"
+          :title="approverManagementDisabledReason"
           @click="showAddApprover = !showAddApprover"
         >
           Add Approver
@@ -548,11 +550,23 @@
 
       <div class="space-y-2">
         <div
-          v-for="a in approvers"
+          v-for="a in sortedApprovers"
           :key="a.id"
-          class="border border-border dark:border-border-dark rounded-lg p-3 flex items-center justify-between"
+          class="border border-border dark:border-border-dark rounded-lg p-3 flex items-center justify-between gap-3"
+          :class="draggingApproverId === a.id ? 'opacity-60' : ''"
+          :draggable="canManageApprovers"
+          @dragstart="onApproverDragStart(a.id)"
+          @dragend="onApproverDragEnd"
+          @dragover.prevent
+          @drop.prevent="onApproverDrop(a.id)"
         >
-          <div>
+          <div class="flex items-start gap-3">
+            <span
+              v-if="canManageApprovers"
+              class="mt-0.5 text-muted cursor-grab active:cursor-grabbing"
+              title="Drag to reorder"
+              aria-hidden="true"
+              >::</span>
             <p class="text-sm font-semibold">
               {{ a.userFullName }}
               <span class="text-xs text-muted">({{ a.userEmail }})</span>
@@ -565,13 +579,24 @@
           <div class="flex gap-2">
             <button
               class="btn-ghost btn-md"
+              :title="`Move ${a.userFullName} up`"
               @click="moveUp(a.id)"
-              :disabled="a.position === 1"
+              :disabled="!canManageApprovers || a.position === 1"
             >
-              Up
+              ↑
             </button>
             <button
               class="btn-ghost btn-md"
+              :title="`Move ${a.userFullName} down`"
+              @click="moveDown(a.id)"
+              :disabled="!canManageApprovers || a.position === sortedApprovers.length"
+            >
+              ↓
+            </button>
+            <button
+              class="btn-ghost btn-md"
+              :disabled="!canManageApprovers"
+              :title="approverManagementDisabledReason"
               @click="removeApproverAction(a.id)"
             >
               Remove
@@ -824,6 +849,33 @@ const canCancel = computed(() => {
     changeRequest.value.status === "PENDING_APPROVAL"
   );
 });
+const canManageApprovers = computed(() => {
+  if (!changeRequest.value) {
+    return false;
+  }
+  if (changeRequest.value.status !== "DRAFT") {
+    return false;
+  }
+  if (changeRequest.value.approvalLocked) {
+    return false;
+  }
+  return isCreator.value || auth.isSuperAdmin || auth.role === "Admin";
+});
+const approverManagementDisabledReason = computed(() => {
+  if (canManageApprovers.value) {
+    return undefined;
+  }
+  if (!changeRequest.value) {
+    return "Approver management is unavailable while loading this change request.";
+  }
+  if (changeRequest.value.status !== "DRAFT") {
+    return "Approvers can only be changed while the change request is in Draft.";
+  }
+  if (changeRequest.value.approvalLocked) {
+    return "Approvers are locked and cannot be changed.";
+  }
+  return "Only the requester or an admin can manage approvers.";
+});
 const canSeeApprovalActions = computed(() => {
   if (
     !changeRequest.value ||
@@ -920,6 +972,7 @@ const fileInput = ref<HTMLInputElement | null>(null);
 
 const showReject = ref(false);
 const rejectReason = ref("");
+const draggingApproverId = ref<string | null>(null);
 
 // ── Edit mode ───────────────────────────────────────────────────────────────
 const isEditing = ref(false);
@@ -1084,10 +1137,7 @@ async function saveEditAction() {
     await saveCustomFieldsAction();
     isEditing.value = false;
   } catch (err: unknown) {
-    toastError(
-      (err as { data?: { detail?: string } })?.data?.detail ??
-        "Failed to save changes.",
-    );
+    toastError(resolveApiErrorMessage(err, "Failed to save changes."));
   } finally {
     isSaving.value = false;
   }
@@ -1206,7 +1256,7 @@ function activityFields(event: ActivityEntry) {
 }
 
 function extractErrorMessage(error: unknown, fallback: string) {
-  return (error as { data?: { detail?: string } })?.data?.detail ?? fallback;
+  return resolveApiErrorMessage(error, fallback);
 }
 
 async function saveCustomFieldsAction() {
@@ -1270,9 +1320,7 @@ async function uploadSelected(file: File | null) {
     attachments.value = await listAttachments(id.value);
     activity.value = await listActivity(id.value);
   } catch (err: unknown) {
-    const message =
-      (err as { data?: { detail?: string } })?.data?.detail ??
-      "Upload failed. Please try again.";
+    const message = resolveApiErrorMessage(err, "Upload failed. Please try again.");
     uploadError.value = message;
     toastError(message);
   } finally {
@@ -1366,24 +1414,33 @@ async function addApproverAction() {
     return;
   }
 
-  if (selectedApproverCandidate.value.kind === "USER") {
-    await addApprover(id.value, {
-      userId: selectedApproverCandidate.value.id,
-      isRequired: newApproverRequired.value,
-    });
-  } else {
-    await addApproverGroup(id.value, {
-      groupId: selectedApproverCandidate.value.id,
-      isRequired: newApproverRequired.value,
-    });
+  if (!canManageApprovers.value) {
+    toastError(approverManagementDisabledReason.value ?? "Approvers cannot be changed right now.");
+    return;
   }
 
-  approvers.value = await listApprovers(id.value);
-  activity.value = await listActivity(id.value);
-  showAddApprover.value = false;
-  approverSearchQuery.value = "";
-  approverSearchResults.value = [];
-  selectedApproverCandidate.value = null;
+  try {
+    if (selectedApproverCandidate.value.kind === "USER") {
+      await addApprover(id.value, {
+        userId: selectedApproverCandidate.value.id,
+        isRequired: newApproverRequired.value,
+      });
+    } else {
+      await addApproverGroup(id.value, {
+        groupId: selectedApproverCandidate.value.id,
+        isRequired: newApproverRequired.value,
+      });
+    }
+
+    approvers.value = await listApprovers(id.value);
+    activity.value = await listActivity(id.value);
+    showAddApprover.value = false;
+    approverSearchQuery.value = "";
+    approverSearchResults.value = [];
+    selectedApproverCandidate.value = null;
+  } catch (error: unknown) {
+    toastError(extractErrorMessage(error, "Unable to add approver."));
+  }
 }
 
 async function searchApproverCandidatesAction() {
@@ -1407,12 +1464,24 @@ function selectApproverCandidate(candidate: ApproverCandidate) {
 }
 
 async function removeApproverAction(approverId: string) {
-  await removeApprover(id.value, approverId);
-  approvers.value = await listApprovers(id.value);
-  activity.value = await listActivity(id.value);
+  if (!canManageApprovers.value) {
+    toastError(approverManagementDisabledReason.value ?? "Approvers cannot be changed right now.");
+    return;
+  }
+  try {
+    await removeApprover(id.value, approverId);
+    approvers.value = await listApprovers(id.value);
+    activity.value = await listActivity(id.value);
+  } catch (error: unknown) {
+    toastError(extractErrorMessage(error, "Unable to remove approver."));
+  }
 }
 
 async function moveUp(approverId: string) {
+  if (!canManageApprovers.value) {
+    toastError(approverManagementDisabledReason.value ?? "Approvers cannot be changed right now.");
+    return;
+  }
   const order = [...approvers.value]
     .sort((a, b) => a.position - b.position)
     .map((a) => a.id);
@@ -1423,8 +1492,69 @@ async function moveUp(approverId: string) {
   const previous = order[index - 1];
   order[index - 1] = approverId;
   order[index] = previous;
-  approvers.value = await reorderApprovers(id.value, order);
-  activity.value = await listActivity(id.value);
+  await applyApproverOrder(order);
+}
+
+async function moveDown(approverId: string) {
+  if (!canManageApprovers.value) {
+    toastError(approverManagementDisabledReason.value ?? "Approvers cannot be changed right now.");
+    return;
+  }
+  const order = [...approvers.value]
+    .sort((a, b) => a.position - b.position)
+    .map((a) => a.id);
+  const index = order.indexOf(approverId);
+  if (index < 0 || index >= order.length - 1) {
+    return;
+  }
+  const next = order[index + 1];
+  order[index + 1] = approverId;
+  order[index] = next;
+  await applyApproverOrder(order);
+}
+
+function onApproverDragStart(approverId: string) {
+  if (!canManageApprovers.value) {
+    return;
+  }
+  draggingApproverId.value = approverId;
+}
+
+function onApproverDragEnd() {
+  draggingApproverId.value = null;
+}
+
+async function onApproverDrop(targetApproverId: string) {
+  if (!canManageApprovers.value || !draggingApproverId.value) {
+    return;
+  }
+
+  const sourceApproverId = draggingApproverId.value;
+  draggingApproverId.value = null;
+  if (sourceApproverId === targetApproverId) {
+    return;
+  }
+
+  const order = sortedApprovers.value.map((approver) => approver.id);
+  const sourceIndex = order.indexOf(sourceApproverId);
+  const targetIndex = order.indexOf(targetApproverId);
+  if (sourceIndex < 0 || targetIndex < 0) {
+    return;
+  }
+
+  order.splice(sourceIndex, 1);
+  order.splice(targetIndex, 0, sourceApproverId);
+  await applyApproverOrder(order);
+}
+
+async function applyApproverOrder(order: string[]) {
+  try {
+    approvers.value = await reorderApprovers(id.value, order);
+    activity.value = await listActivity(id.value);
+  } catch (error: unknown) {
+    toastError(extractErrorMessage(error, "Unable to reorder approvers."));
+    approvers.value = await listApprovers(id.value);
+  }
 }
 
 async function postCommentAction() {

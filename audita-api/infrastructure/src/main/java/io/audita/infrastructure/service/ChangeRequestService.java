@@ -1,6 +1,7 @@
 package io.audita.infrastructure.service;
 
 import io.audita.domain.exception.DomainNotPermittedException;
+import io.audita.domain.exception.InvalidRequestException;
 import io.audita.domain.exception.InvalidStateTransitionException;
 import io.audita.domain.model.ApprovalType;
 import io.audita.domain.model.ApproverStatus;
@@ -260,7 +261,7 @@ public class ChangeRequestService {
         ChangeRequestEntity changeRequest = getById(changeRequestId);
         assertCanMutate(changeRequest, actorUserId, actorRole);
         if (changeRequest.isApprovalLocked()) {
-            throw new InvalidStateTransitionException("Approvers are locked and cannot be changed.");
+            throw new InvalidStateTransitionException("APPROVERS_LOCKED", "Approvers are locked and cannot be changed.");
         }
 
         UserEntity user = userRepository.findById(userId)
@@ -286,7 +287,7 @@ public class ChangeRequestService {
         ChangeRequestEntity changeRequest = getById(changeRequestId);
         assertCanMutate(changeRequest, actorUserId, actorRole);
         if (changeRequest.isApprovalLocked()) {
-            throw new InvalidStateTransitionException("Approvers are locked and cannot be changed.");
+            throw new InvalidStateTransitionException("APPROVERS_LOCKED", "Approvers are locked and cannot be changed.");
         }
 
         if (!groupRepository.existsById(groupId)) {
@@ -327,7 +328,7 @@ public class ChangeRequestService {
         ChangeRequestEntity changeRequest = getById(changeRequestId);
         assertCanMutate(changeRequest, actorUserId, actorRole);
         if (changeRequest.isApprovalLocked()) {
-            throw new InvalidStateTransitionException("Approvers are locked and cannot be changed.");
+            throw new InvalidStateTransitionException("APPROVERS_LOCKED", "Approvers are locked and cannot be changed.");
         }
 
         CrApproverEntity approver = crApproverRepository.findById(approverId)
@@ -354,7 +355,7 @@ public class ChangeRequestService {
 
         List<CrApproverEntity> existing = crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId);
         if (existing.size() != approverIds.size()) {
-            throw new DomainNotPermittedException("INVALID_ORDER",
+            throw new InvalidRequestException("INVALID_ORDER",
                     "Approver order payload does not match approver set.");
         }
 
@@ -363,7 +364,7 @@ public class ChangeRequestService {
             CrApproverEntity approver = existing.stream()
                     .filter(a -> a.getId().equals(approverId))
                     .findFirst()
-                    .orElseThrow(() -> new DomainNotPermittedException("INVALID_ORDER",
+                    .orElseThrow(() -> new InvalidRequestException("INVALID_ORDER",
                             "Approver order contains unknown IDs."));
             approver.setPosition(i + 1);
         }

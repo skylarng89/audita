@@ -38,6 +38,18 @@ public class GlobalExceptionHandler {
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         detail.setTitle("Invalid State Transition");
         detail.setType(URI.create("https://audita.io/errors/invalid-state"));
+        if (ex.getErrorCode() != null) {
+            detail.setProperty("errorCode", ex.getErrorCode());
+        }
+        return detail;
+    }
+
+    @ExceptionHandler(InvalidRequestException.class)
+    public ProblemDetail handleInvalidRequest(InvalidRequestException ex) {
+        ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        detail.setTitle("Invalid Request");
+        detail.setType(URI.create("https://audita.io/errors/invalid-request"));
+        detail.setProperty("errorCode", ex.getErrorCode());
         return detail;
     }
 

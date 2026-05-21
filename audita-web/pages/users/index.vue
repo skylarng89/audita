@@ -254,13 +254,13 @@ const { data, pending, refresh } = await useAsyncData<UserPayload>(
         `/api/v1/users?page=${page.value - 1}&size=${pageSize}`,
       )) as UserPayload;
     } catch (err: unknown) {
-      const apiErr = err as { status?: number; data?: { message?: string } };
+      const apiErr = err as { status?: number };
       if (apiErr.status === 403) {
         loadError.value = "You do not have permission to view users.";
       } else if (apiErr.status === 401) {
         loadError.value = "Your session expired. Please sign in again.";
       } else {
-        loadError.value = apiErr.data?.message ?? "Failed to load users.";
+        loadError.value = resolveApiErrorMessage(err, "Failed to load users.");
       }
       return { content: [], totalElements: 0 };
     }
@@ -339,8 +339,7 @@ async function inviteUser() {
     inviteForm.roleId = "";
     refresh();
   } catch (err: unknown) {
-    const apiErr = err as { data?: { message?: string } };
-    inviteError.value = apiErr.data?.message ?? "Failed to send invite.";
+    inviteError.value = resolveApiErrorMessage(err, "Failed to send invite.");
   } finally {
     inviting.value = false;
   }
@@ -364,8 +363,8 @@ async function deactivate(id: string) {
     await api(`/api/v1/users/${id}/deactivate`, { method: "POST" });
     toastSuccess("User deactivated.");
     refresh();
-  } catch {
-    toastError("Failed to deactivate user.");
+  } catch (error: unknown) {
+    toastError(resolveApiErrorMessage(error, "Failed to deactivate user."));
   }
 }
 
@@ -374,8 +373,8 @@ async function reactivate(id: string) {
     await api(`/api/v1/users/${id}/reactivate`, { method: "POST" });
     toastSuccess("User reactivated.");
     refresh();
-  } catch {
-    toastError("Failed to reactivate user.");
+  } catch (error: unknown) {
+    toastError(resolveApiErrorMessage(error, "Failed to reactivate user."));
   }
 }
 
@@ -384,8 +383,8 @@ async function resendInvite(id: string) {
     await api(`/api/v1/users/${id}/invite`, { method: "POST" });
     toastSuccess("Invite resent.");
     refresh();
-  } catch {
-    toastError("Failed to resend invite.");
+  } catch (error: unknown) {
+    toastError(resolveApiErrorMessage(error, "Failed to resend invite."));
   }
 }
 
@@ -394,8 +393,8 @@ async function cancelInvite(id: string) {
     await api(`/api/v1/users/${id}/invite`, { method: "DELETE" });
     toastSuccess("Invite cancelled.");
     refresh();
-  } catch {
-    toastError("Failed to cancel invite.");
+  } catch (error: unknown) {
+    toastError(resolveApiErrorMessage(error, "Failed to cancel invite."));
   }
 }
 </script>

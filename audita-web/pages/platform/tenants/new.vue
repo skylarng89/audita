@@ -133,13 +133,7 @@ async function handleSubmit() {
     toastSuccess(`Organisation "${form.name}" provisioned. Invite email sent.`);
     router.push("/platform/tenants");
   } catch (e: unknown) {
-    const err = e as {
-      data?: { message?: string; detail?: string; title?: string };
-    };
-    error.value =
-      err.data?.detail ??
-      err.data?.message ??
-      "Provisioning failed. Please try again.";
+    error.value = resolveApiErrorMessage(e, "Provisioning failed. Please try again.");
   } finally {
     loading.value = false;
   }

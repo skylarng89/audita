@@ -4,6 +4,16 @@ dependencies {
     implementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.6"))
     annotationProcessor(platform("org.springframework.boot:spring-boot-dependencies:4.0.6"))
 
+    constraints {
+        implementation("org.apache.tomcat.embed:tomcat-embed-core:11.0.22")
+        implementation("org.apache.tomcat.embed:tomcat-embed-el:11.0.22")
+        implementation("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.22")
+
+        implementation("io.netty:netty-codec-compression:4.2.13.Final")
+        implementation("io.netty:netty-codec-http:4.2.13.Final")
+        implementation("io.netty:netty-codec-http2:4.2.13.Final")
+    }
+
     implementation(project(":domain"))
     implementation(project(":application"))
     implementation(project(":infrastructure"))
