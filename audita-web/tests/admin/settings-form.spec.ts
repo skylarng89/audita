@@ -4,6 +4,7 @@ import {
   isSettingsDirty,
   validateSlaDefaults,
   type AutoApproverDefaults,
+  type OrganizationProfile,
   type SlaDefaults,
   type WorkflowDefaults,
 } from "~/composables/adminSettingsForm";
@@ -28,8 +29,15 @@ describe("admin settings form interaction logic", () => {
     groupIds: ["22222222-2222-2222-2222-222222222222"],
   };
 
+  const profile: OrganizationProfile = {
+    name: "Ronin Limited",
+    primaryContactEmail: "admin@ronin.test",
+    timezone: "UTC",
+  };
+
   it("marks form as clean when snapshot matches current values", () => {
     const snapshot = createSettingsSnapshot(
+      profile,
       workflowDefaults,
       slaDefaults,
       autoApproverDefaults,
@@ -38,6 +46,7 @@ describe("admin settings form interaction logic", () => {
     expect(
       isSettingsDirty(
         snapshot,
+        profile,
         workflowDefaults,
         slaDefaults,
         autoApproverDefaults,
@@ -47,6 +56,7 @@ describe("admin settings form interaction logic", () => {
 
   it("marks form as dirty when workflow value changes", () => {
     const snapshot = createSettingsSnapshot(
+      profile,
       workflowDefaults,
       slaDefaults,
       autoApproverDefaults,
@@ -55,6 +65,7 @@ describe("admin settings form interaction logic", () => {
     expect(
       isSettingsDirty(
         snapshot,
+        profile,
         { ...workflowDefaults, approvalTypeDefault: "NON_LINEAR" },
         slaDefaults,
         autoApproverDefaults,
@@ -64,13 +75,14 @@ describe("admin settings form interaction logic", () => {
 
   it("marks form as dirty when auto-approver defaults change", () => {
     const snapshot = createSettingsSnapshot(
+      profile,
       workflowDefaults,
       slaDefaults,
       autoApproverDefaults,
     );
 
     expect(
-      isSettingsDirty(snapshot, workflowDefaults, slaDefaults, {
+      isSettingsDirty(snapshot, profile, workflowDefaults, slaDefaults, {
         ...autoApproverDefaults,
         userIds: [
           ...autoApproverDefaults.userIds,
@@ -98,11 +110,13 @@ describe("admin settings form interaction logic", () => {
   it("builds stable patch payload from current settings", () => {
     expect(
       buildSettingsPatchPayload(
+        profile,
         workflowDefaults,
         slaDefaults,
         autoApproverDefaults,
       ),
     ).toEqual({
+      profile,
       workflowDefaults,
       slaDefaults,
       autoApproverDefaults,

@@ -16,18 +16,27 @@ export type AutoApproverDefaults = {
   groupIds: string[];
 };
 
+export type OrganizationProfile = {
+  name: string;
+  primaryContactEmail: string;
+  timezone: string;
+};
+
 export type SettingsPatchPayload = {
+  profile: OrganizationProfile;
   workflowDefaults: WorkflowDefaults;
   slaDefaults: SlaDefaults;
   autoApproverDefaults: AutoApproverDefaults;
 };
 
 export function createSettingsSnapshot(
+  profile: OrganizationProfile,
   workflowDefaults: WorkflowDefaults,
   slaDefaults: SlaDefaults,
   autoApproverDefaults: AutoApproverDefaults,
 ): string {
   return JSON.stringify({
+    profile,
     workflowDefaults,
     slaDefaults,
     autoApproverDefaults: {
@@ -39,13 +48,14 @@ export function createSettingsSnapshot(
 
 export function isSettingsDirty(
   snapshot: string,
+  profile: OrganizationProfile,
   workflowDefaults: WorkflowDefaults,
   slaDefaults: SlaDefaults,
   autoApproverDefaults: AutoApproverDefaults,
 ): boolean {
   return (
     snapshot !==
-    createSettingsSnapshot(workflowDefaults, slaDefaults, autoApproverDefaults)
+    createSettingsSnapshot(profile, workflowDefaults, slaDefaults, autoApproverDefaults)
   );
 }
 
@@ -64,11 +74,17 @@ export function validateSlaDefaults(slaDefaults: SlaDefaults): string | null {
 }
 
 export function buildSettingsPatchPayload(
+  profile: OrganizationProfile,
   workflowDefaults: WorkflowDefaults,
   slaDefaults: SlaDefaults,
   autoApproverDefaults: AutoApproverDefaults,
 ): SettingsPatchPayload {
   return {
+    profile: {
+      name: profile.name,
+      primaryContactEmail: profile.primaryContactEmail,
+      timezone: profile.timezone,
+    },
     workflowDefaults: {
       approvalTypeDefault: workflowDefaults.approvalTypeDefault,
       requireDefaultApprovers: workflowDefaults.requireDefaultApprovers,
