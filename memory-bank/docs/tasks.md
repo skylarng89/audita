@@ -2,7 +2,7 @@
 
 **Project:** Audita — Multi-Tenant ITIL/ITSM Change Management Platform
 **Version:** 0.1.0
-**Last Updated:** 2026-05-20
+**Last Updated:** 2026-05-21
 **Team Size:** 2–3 Developers
 
 ---
@@ -546,6 +546,21 @@
 ---
 
 ## Recent Implementations
+
+### Post-Sprint: Audit Export Cleanup Regression Coverage (Completed 2026-05-21)
+
+**Overview**: Added focused regression coverage for audit export cleanup behavior to lock token expiry handling and stale export artifact deletion.
+
+**Files Created/Modified**:
+
+- `audita-api/infrastructure/src/test/java/io/audita/infrastructure/service/AuditExportServiceTest.java` — added cleanup regression test covering READY token expiry and stale EXPIRED row/file deletion.
+
+**Key Changes**:
+
+- `cleanupForCurrentTenant(now, retentionHours)` is now regression-locked to expire overdue download tokens and clear token value.
+- Cleanup path is regression-locked to delete stale export files from disk and remove stale export rows.
+
+**Test Coverage**: `cd audita-api && ./gradlew :infrastructure:test --tests "io.audita.infrastructure.service.AuditExportServiceTest" --no-daemon`; `cd audita-api && ./gradlew :api:compileTestJava :infrastructure:compileTestJava --no-daemon`.
 
 ### Sprint 13: Engineering Best Practices Hardening (Completed 2026-05-20)
 

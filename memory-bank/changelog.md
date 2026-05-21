@@ -36,6 +36,15 @@
 - `cd audita-web && pnpm build`.
 - `cd /mnt/samsung/repositories/audita && docker compose config`.
 
+### Added (Post-Sprint Reliability Follow-Up — 2026-05-21)
+
+- **Audit export cleanup regression test**: added `AuditExportServiceTest` to lock cleanup behavior for expired download tokens and stale export artifact removal (row + file deletion).
+
+### Verification (Post-Sprint Reliability Follow-Up — 2026-05-21)
+
+- `cd audita-api && ./gradlew :infrastructure:test --tests "io.audita.infrastructure.service.AuditExportServiceTest" --no-daemon`.
+- `cd audita-api && ./gradlew :api:compileTestJava :infrastructure:compileTestJava --no-daemon`.
+
 ## [0.1.0] — Unreleased (In Development)
 
 ### Changed (Sprint 11 — Session Hardening & Security Config Stabilization — 2026-05-12)

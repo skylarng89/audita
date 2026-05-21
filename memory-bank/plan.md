@@ -147,6 +147,11 @@ All Sprint 12 tasks completed. v0.6.0 released.
 4. Idempotency key flow is covered by regression tests.
 5. Nuxt proxy/security updates pass auth/session regression and smoke tests.
 
+## Post-Sprint Audit Export Reliability Follow-Up (2026-05-21)
+
+- REL-AUD-001: Add focused infrastructure regression coverage for audit export cleanup token-expiry and stale artifact deletion. ✅ (Completed 2026-05-21)
+- Verification: `cd audita-api && ./gradlew :infrastructure:test --tests "io.audita.infrastructure.service.AuditExportServiceTest" --no-daemon` and `cd audita-api && ./gradlew :api:compileTestJava :infrastructure:compileTestJava --no-daemon` both pass.
+
 ---
 
 ## Post-Sprint UX Follow-Up (2026-04-28)
