@@ -100,6 +100,11 @@ public class AuditExportService {
         return request;
     }
 
+    public void cleanupForCurrentTenant(OffsetDateTime now, int retentionHours) {
+        expireTokens(now);
+        deleteStaleExports(now.minusHours(Math.max(retentionHours, 1)));
+    }
+
     @Async
     protected void generateAsync(UUID exportRequestId, String tenantSlug, int expiryHours) {
         TenantContext.setCurrentTenant(tenantSlug);
@@ -183,6 +188,38 @@ public class AuditExportService {
             return "\"" + value.replace("\"", "\"\"") + "\"";
         }
         return value;
+    }
+
+    private void expireTokens(OffsetDateTime now) {
+        List<AuditExportRequestEntity> expired = auditExportRequestRepository
+                .findByStatusAndTokenExpiresAtBefore(AuditExportRequestEntity.Status.READY, now);
+        for (AuditExportRequestEntity request : expired) {
+            request.setStatus(AuditExportRequestEntity.Status.EXPIRED);
+            request.setDownloadToken(null);
+            auditExportRequestRepository.save(request);
+        }
+    }
+
+    private void deleteStaleExports(OffsetDateTime cutoff) {
+        List<AuditExportRequestEntity> stale = auditExportRequestRepository
+                .findByStatusInAndCompletedAtBefore(
+                        List.of(AuditExportRequestEntity.Status.EXPIRED, AuditExportRequestEntity.Status.FAILED),
+                        cutoff);
+        for (AuditExportRequestEntity request : stale) {
+            deleteExportFile(request.getFileStoragePath());
+            auditExportRequestRepository.delete(request);
+        }
+    }
+
+    private void deleteExportFile(String storagePath) {
+        if (storagePath == null || storagePath.isBlank()) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(Path.of(storagePath).toAbsolutePath().normalize());
+        } catch (IOException error) {
+            log.warn("Failed deleting stale audit export file path={}", storagePath, error);
+        }
     }
 
     private int resolveLinkExpiryHours(Integer override) {
