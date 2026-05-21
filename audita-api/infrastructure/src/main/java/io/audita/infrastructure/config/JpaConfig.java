@@ -50,7 +50,6 @@ public class JpaConfig {
         props.put("hibernate.multiTenancy", "SCHEMA");
         props.put("hibernate.multi_tenant_connection_provider", connectionProvider);
         props.put("hibernate.tenant_identifier_resolver", tenantResolver);
-        props.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
         props.put("hibernate.format_sql", "false");
         props.put("hibernate.show_sql", "false");
         // DDL is managed by Flyway — never by Hibernate

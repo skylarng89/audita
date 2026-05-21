@@ -74,6 +74,9 @@ public class AuthController {
         if (rawToken == null) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
+        if (!hasTenantHeader(request)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
 
         String clientIp = resolveClientIp(request);
         String userAgent = request.getHeader(USER_AGENT_HEADER);
@@ -89,6 +92,9 @@ public class AuthController {
         if (rawToken == null) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
+        if (!hasTenantHeader(request)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
 
         String clientIp = resolveClientIp(request);
         String userAgent = request.getHeader(USER_AGENT_HEADER);
@@ -100,6 +106,10 @@ public class AuthController {
     public ResponseEntity<Void> logout(
             HttpServletRequest request,
             HttpServletResponse response) {
+        if (extractRefreshCookie(request) != null && !hasTenantHeader(request)) {
+            clearRefreshCookie(response);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
 
         authService.logout(extractRefreshCookie(request));
         clearRefreshCookie(response);
@@ -159,6 +169,11 @@ public class AuthController {
                 .map(Cookie::getValue)
                 .findFirst()
                 .orElse(null);
+    }
+
+    private boolean hasTenantHeader(HttpServletRequest request) {
+        String tenantSlug = request.getHeader("X-Tenant-Slug");
+        return tenantSlug != null && !tenantSlug.isBlank();
     }
 
     private AuthResponse toAuthResponse(LoginResult result) {

@@ -11,6 +11,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import java.net.URI;
 import java.util.Map;
@@ -130,6 +131,17 @@ public class GlobalExceptionHandler {
         detail.setTitle("Validation Error");
         detail.setType(URI.create("https://audita.io/errors/validation"));
         detail.setProperty("errors", errors);
+        return detail;
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleUnreadableRequest(HttpMessageNotReadableException ex) {
+        String causeMessage = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
+        ProblemDetail detail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            causeMessage == null || causeMessage.isBlank() ? "Failed to read request" : causeMessage);
+        detail.setTitle("Bad Request");
+        detail.setType(URI.create("https://audita.io/errors/bad-request"));
         return detail;
     }
 
