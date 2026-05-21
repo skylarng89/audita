@@ -84,7 +84,7 @@ spring.cache:
   type: caffeine
   cache-names: onboardingStatus
   caffeine:
-    spec: maximumSize=10,expireAfterWrite=1h
+    spec: maximumSize=10,expireAfterWrite=1h,recordStats
 
 # ── Actuator ────────────────────────────────────────────────────────────────────
 management:
@@ -173,6 +173,10 @@ logging:
     root: INFO
     "[io.audita]": INFO
     "[org.flywaydb]": INFO
+    "[org.hibernate.orm.deprecation]": ERROR
+    "[org.hibernate.orm.connections.pooling]": WARN
+    "[org.hibernate.orm.query]": ERROR
+    "[io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics]": ERROR
   pattern:
     console: "%d{ISO8601} %-5level [%thread] %logger{36} - %msg%n"
 
