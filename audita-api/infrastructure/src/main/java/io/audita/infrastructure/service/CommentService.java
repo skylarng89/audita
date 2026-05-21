@@ -109,6 +109,8 @@ public class CommentService {
         }
 
         author.getEmail();
+        author.getFullName();
+        author.getRoles().size();
         if (author.getRole() != null) {
             author.getRole().getId();
             author.getRole().getName();
