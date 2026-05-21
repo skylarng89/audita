@@ -27,6 +27,7 @@ public interface AuditTrailPort {
     record AuditLogEntry(
             UUID id,
             UUID actorId,
+            String actorFullName,
             String actorEmail,
             String actionType,
             String entityType,

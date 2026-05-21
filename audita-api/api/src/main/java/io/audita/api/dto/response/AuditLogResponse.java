@@ -9,6 +9,7 @@ import java.util.UUID;
 public record AuditLogResponse(
         UUID id,
         UUID actorId,
+        String actorFullName,
         String actorEmail,
         String actionType,
         String entityType,
@@ -21,6 +22,7 @@ public record AuditLogResponse(
         return new AuditLogResponse(
                 entry.id(),
                 entry.actorId(),
+                entry.actorFullName(),
                 entry.actorEmail(),
                 entry.actionType(),
                 entry.entityType(),

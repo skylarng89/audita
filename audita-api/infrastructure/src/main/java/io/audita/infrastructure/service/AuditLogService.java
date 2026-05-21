@@ -2,7 +2,9 @@ package io.audita.infrastructure.service;
 
 import io.audita.application.port.AuditTrailPort;
 import io.audita.infrastructure.persistence.entity.AuditLogEntity;
+import io.audita.infrastructure.persistence.entity.UserEntity;
 import io.audita.infrastructure.persistence.repository.AuditLogRepository;
+import io.audita.infrastructure.persistence.repository.UserRepository;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,9 +16,12 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Handles writing and querying the global immutable audit log.
@@ -27,9 +32,11 @@ import java.util.UUID;
 public class AuditLogService implements AuditTrailPort {
 
     private final AuditLogRepository auditLogRepository;
+    private final UserRepository userRepository;
 
-    public AuditLogService(AuditLogRepository auditLogRepository) {
+    public AuditLogService(AuditLogRepository auditLogRepository, UserRepository userRepository) {
         this.auditLogRepository = auditLogRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -61,8 +68,9 @@ public class AuditLogService implements AuditTrailPort {
                                      LocalDate to,
                                      Pageable pageable) {
         Specification<AuditLogEntity> spec = buildSpec(actorEmail, actionType, entityType, from, to);
-        return auditLogRepository.findAll(spec, pageable)
-                .map(this::toEntry);
+        Page<AuditLogEntity> page = auditLogRepository.findAll(spec, pageable);
+        Map<UUID, String> actorNamesById = resolveActorNames(page.getContent());
+        return page.map(entity -> toEntry(entity, actorNamesById));
     }
 
     @Override
@@ -73,8 +81,10 @@ public class AuditLogService implements AuditTrailPort {
                                       LocalDate from,
                                       LocalDate to) {
         Specification<AuditLogEntity> spec = buildSpec(actorEmail, actionType, entityType, from, to);
-        return auditLogRepository.findAll(spec).stream()
-                .map(this::toEntry)
+        List<AuditLogEntity> entities = auditLogRepository.findAll(spec);
+        Map<UUID, String> actorNamesById = resolveActorNames(entities);
+        return entities.stream()
+                .map(entity -> toEntry(entity, actorNamesById))
                 .toList();
     }
 
@@ -111,10 +121,24 @@ public class AuditLogService implements AuditTrailPort {
         };
     }
 
-    private AuditLogEntry toEntry(AuditLogEntity e) {
+    private Map<UUID, String> resolveActorNames(List<AuditLogEntity> entries) {
+        Set<UUID> actorIds = entries.stream()
+                .map(AuditLogEntity::getActorId)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (actorIds.isEmpty()) {
+            return Map.of();
+        }
+        return userRepository.findByIdInAndStatusOrderByFullNameAsc(new java.util.ArrayList<>(actorIds), io.audita.domain.model.UserStatus.ACTIVE)
+                .stream()
+                .collect(Collectors.toMap(UserEntity::getId, UserEntity::getFullName, (left, _) -> left));
+    }
+
+    private AuditLogEntry toEntry(AuditLogEntity e, Map<UUID, String> actorNamesById) {
         return new AuditLogEntry(
                 e.getId(),
                 e.getActorId(),
+                actorNamesById.get(e.getActorId()),
                 e.getActorEmail(),
                 e.getActionType(),
                 e.getEntityType(),

@@ -24,7 +24,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/audit-trail")
-@PreAuthorize("hasAnyRole('ADMIN', 'AUDITOR', 'SUPER_ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'AUDITOR')")
 public class AuditTrailController {
 
     private static final DateTimeFormatter CSV_TS_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
@@ -42,10 +42,13 @@ public class AuditTrailController {
             @RequestParam(required = false) String entityType,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+            @PageableDefault(size = 50, sort = "createdAt") Pageable pageable) {
+
+        LocalDate effectiveTo = to == null ? LocalDate.now() : to;
+        LocalDate effectiveFrom = from == null ? effectiveTo.minusDays(30) : from;
 
         return PageResponse.from(
-                auditTrailPort.query(actorEmail, actionType, entityType, from, to, pageable),
+                auditTrailPort.query(actorEmail, actionType, entityType, effectiveFrom, effectiveTo, pageable),
                 AuditLogResponse::from);
     }
 
@@ -58,15 +61,19 @@ public class AuditTrailController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to)
             throws IOException {
 
-        List<AuditTrailPort.AuditLogEntry> entries = auditTrailPort.export(actorEmail, actionType, entityType, from,
-                to);
+        LocalDate effectiveTo = to == null ? LocalDate.now() : to;
+        LocalDate effectiveFrom = from == null ? effectiveTo.minusDays(30) : from;
+
+        List<AuditTrailPort.AuditLogEntry> entries = auditTrailPort.export(actorEmail, actionType, entityType,
+                effectiveFrom, effectiveTo);
 
         String csv;
         try (StringWriter sw = new StringWriter()) {
-            sw.write("id,actorEmail,actionType,entityType,entityId,ipAddress,createdAt\n");
+            sw.write("id,actorFullName,actorEmail,actionType,entityType,entityId,ipAddress,createdAt\n");
             for (AuditTrailPort.AuditLogEntry e : entries) {
                 sw.write(String.join(",",
                         safe(e.id() != null ? e.id().toString() : ""),
+                        safe(e.actorFullName()),
                         safe(e.actorEmail()),
                         safe(e.actionType()),
                         safe(e.entityType()),
