@@ -95,7 +95,7 @@ function onPageChange(newPage: number) {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", { dateStyle: "medium" });
+  return formatDateInTenantTimezone(iso);
 }
 
 const columns = [

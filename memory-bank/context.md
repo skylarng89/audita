@@ -1,7 +1,7 @@
 # Audita — Active Context
 
 **Last Updated:** 2026-05-21
-**Current Phase:** Post-Sprint security scan remediation complete
+**Current Phase:** Post-Sprint reliability + timezone UX follow-up complete
 **Active Sprint:** Sprint 13 (completed)
 
 ---
@@ -127,9 +127,9 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 
 ## Current Blockers
 
-- **No active implementation blockers.** Sprint 13 completed with BP13-001 through BP13-008 finished.
-- **Hardening gap set from best-practices audit is closed for Sprint 13 scope.**
-- **Current baseline remains healthy:** backend tests 62/62, frontend build/typecheck/test passing, Sonar clean, Playwright smoke test passing.
+- **No active implementation blockers.** Sprint 13 completed with BP13-001 through BP13-008 finished; post-sprint REL-AUD-001, REL-SEC-001, and REL-UX-001 follow-ups completed.
+- **Hardening and reliability gap set for current release scope is closed.**
+- **Current baseline remains healthy:** backend targeted tests passing; frontend `typecheck`, `test`, and `build` passing (12 files, 39 tests).
 
 ---
 
@@ -137,4 +137,4 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 
 1. Prioritize Sprint 14 backlog from remaining architecture/performance opportunities.
 2. Re-run GitHub Actions `Container Image Vulnerability Scan` on updated branch to verify clean HIGH/CRITICAL gate.
-3. Schedule CI dry-run on feature branch before merge.
+3. Run CI dry-run on feature branch to validate end-to-end release gates before merge.

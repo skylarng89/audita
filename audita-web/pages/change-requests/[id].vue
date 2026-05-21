@@ -772,7 +772,6 @@ import type {
   CrApprover,
   CustomFieldDefinition,
 } from "~/types";
-import { format, parseISO } from "date-fns";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
 import FlatPickr from "vue-flatpickr-component";
@@ -1183,7 +1182,7 @@ async function loadAll() {
 }
 
 function fmt(value: string | null) {
-  return value ? format(parseISO(value), "MMM d, yyyy HH:mm") : "—";
+  return formatDateTimeInTenantTimezone(value);
 }
 
 function formatEnumLabel(value: string | null | undefined) {

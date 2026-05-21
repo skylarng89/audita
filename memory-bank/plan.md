@@ -157,6 +157,11 @@ All Sprint 12 tasks completed. v0.6.0 released.
 - REL-SEC-001: Upgrade vulnerable runtime dependencies flagged by Trivy image scan (Tomcat, Netty, PostgreSQL JDBC, OWASP HTML Sanitizer). ✅ (Completed 2026-05-21)
 - Verification: dependency insights confirm fixed versions (`tomcat-embed-core 11.0.22`, `netty-codec-http 4.2.13.Final`, `netty-codec-compression 4.2.13.Final`, `postgresql 42.7.11`, `owasp-java-html-sanitizer 20260101.1`) and `./gradlew :api:compileTestJava :infrastructure:compileTestJava :api:test --no-daemon` passes.
 
+## Post-Sprint Tenant Timezone Rollout (2026-05-21)
+
+- REL-UX-001: Implement tenant-scoped timezone UX (IANA dropdown) and apply timezone-aware formatting across user-facing date displays. ✅ (Completed 2026-05-21)
+- Verification: `cd audita-web && pnpm -s nuxi typecheck`, `cd audita-web && pnpm test`, and `cd audita-web && pnpm build` all pass (12 files, 39 tests including `tests/auth/timezone.spec.ts`).
+
 ---
 
 ## Post-Sprint UX Follow-Up (2026-04-28)

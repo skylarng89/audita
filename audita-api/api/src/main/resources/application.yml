@@ -154,6 +154,9 @@ audita:
     from-name: ${DEFAULT_SMTP_FROM_NAME}
   invite:
     expiry-hours: ${INVITE_EXPIRY_HOURS}
+  audit:
+    export:
+      storage-path: ${AUDIT_EXPORT_STORAGE_PATH:${STORAGE_LOCAL_BASE_PATH:/tmp/audita-uploads}/exports}
   storage:
     backend: ${STORAGE_BACKEND}
     local:

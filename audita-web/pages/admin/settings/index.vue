@@ -64,12 +64,19 @@
           </div>
           <div>
             <label class="field-label" for="org-timezone">Time Zone</label>
-            <input
+            <select
               id="org-timezone"
-              type="text"
               class="input"
               v-model="settings.timezone"
-            />
+            >
+              <option
+                v-for="timezone in timezoneOptions"
+                :key="timezone"
+                :value="timezone"
+              >
+                {{ timezone }}
+              </option>
+            </select>
           </div>
         </div>
 
@@ -647,6 +654,7 @@ const pending = ref(false);
 const errorMessage = ref("");
 const savingSettings = ref(false);
 const settingsSnapshot = ref("");
+const timezoneOptions = getIanaTimezones();
 
 const settings = reactive({
   name: "",
@@ -747,7 +755,8 @@ async function loadSettings() {
     settings.name = response.profile.name;
     settings.slug = response.profile.slug;
     settings.email = response.profile.primaryContactEmail ?? "";
-    settings.timezone = response.profile.timezone || "UTC";
+    settings.timezone = normalizeTimezone(response.profile.timezone || "UTC");
+    setTenantTimezone(settings.timezone);
     settings.featureFlags = response.featureFlags;
     settings.securityDefaults.sessionTimeoutLabel = response.securityDefaults
       .sessionTimeoutMinutes
@@ -808,13 +817,15 @@ async function saveSettings() {
   savingSettings.value = true;
   errorMessage.value = "";
   try {
+    const normalizedTimezone = normalizeTimezone(settings.timezone);
+    settings.timezone = normalizedTimezone;
     await api<TenantAdminSettingsResponse>("/api/v1/settings", {
       method: "PATCH",
       body: buildSettingsPatchPayload(
         {
           name: settings.name.trim(),
           primaryContactEmail: settings.email.trim(),
-          timezone: settings.timezone.trim() || "UTC",
+          timezone: normalizedTimezone,
         },
         settings.workflowDefaults,
         settings.slaDefaults,
@@ -822,6 +833,7 @@ async function saveSettings() {
         settings.auditDefaults,
       ),
     });
+    setTenantTimezone(normalizedTimezone);
     settingsSnapshot.value = createSettingsSnapshot(
       {
         name: settings.name,

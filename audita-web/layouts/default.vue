@@ -456,6 +456,7 @@ onMounted(() => {
   ).matches;
   isDark.value = stored ? stored === "dark" : prefersDark;
   document.documentElement.classList.toggle("dark", isDark.value);
+  void loadTenantTimezoneFromSettings();
   globalThis.addEventListener("keydown", onEsc);
 });
 
