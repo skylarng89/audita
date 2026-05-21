@@ -47,9 +47,15 @@ export async function restoreSessionFromCookie(
   return authResponse;
 }
 
-export async function clearServerSession() {
+export async function clearServerSession(tenantSlug?: string | null) {
+  const headers = new Headers();
+  if (tenantSlug && tenantSlug.trim()) {
+    headers.set("X-Tenant-Slug", tenantSlug.trim());
+  }
+
   await fetch("/api/v1/auth/logout", {
     credentials: "same-origin",
+    headers,
     method: "POST",
   });
 }

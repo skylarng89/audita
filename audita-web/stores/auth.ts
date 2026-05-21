@@ -150,7 +150,14 @@ export const useAuthStore = defineStore("auth", {
     // Called by the API plugin on 401 responses
     async logout(options: AuthMutationOptions = {}) {
       try {
-        await $fetch("/api/v1/auth/logout", { method: "POST" });
+        const headers: Record<string, string> = {};
+        if (this.tenantSlug) {
+          headers["X-Tenant-Slug"] = this.tenantSlug;
+        }
+        await $fetch("/api/v1/auth/logout", {
+          method: "POST",
+          headers,
+        });
       } catch (error) {
         console.error("Logout API failed", error);
       }

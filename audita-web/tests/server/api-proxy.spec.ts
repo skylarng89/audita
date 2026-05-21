@@ -9,6 +9,7 @@ describe("api proxy hardening", () => {
   it("allows only safe proxy headers", () => {
     const sanitized = sanitizeProxyHeaders({
       authorization: "Bearer token",
+      "content-length": "123",
       cookie: "refreshToken=abc",
       "x-tenant-slug": "tenant-acme",
       "x-idempotency-key": "req-12345678",
@@ -19,6 +20,7 @@ describe("api proxy hardening", () => {
     });
 
     expect(sanitized.authorization).toBe("Bearer token");
+    expect(sanitized["content-length"]).toBe("123");
     expect(sanitized.cookie).toBe("refreshToken=abc");
     expect(sanitized["x-tenant-slug"]).toBe("tenant-acme");
     expect(sanitized["x-idempotency-key"]).toBe("req-12345678");

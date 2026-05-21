@@ -40,7 +40,7 @@ export default defineNuxtPlugin(() => {
 
     contractMismatchHandled = true;
     try {
-      await clearServerSession();
+      await clearServerSession(auth.tenantSlug);
     } catch {}
     auth.clearAuth({ broadcast: true });
     await navigateTo("/auth/sign-in");

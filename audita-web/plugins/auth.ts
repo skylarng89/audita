@@ -35,7 +35,7 @@ export default defineNuxtPlugin(async () => {
     );
   } catch {
     try {
-      await clearServerSession();
+      await clearServerSession(auth.tenantSlug);
     } catch {}
     auth.clearAuth();
     if (tenantSlug) {

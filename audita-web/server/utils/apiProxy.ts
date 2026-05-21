@@ -13,6 +13,7 @@ const ALLOWED_HEADERS = new Set([
   "accept",
   "authorization",
   "content-type",
+  "content-length",
   "cookie",
   "x-audita-api-contract",
   "x-idempotency-key",

@@ -13,6 +13,7 @@ export default defineNuxtPlugin(() => {
   const api = useApi();
 
   let eventSource: EventSource | null = null;
+  let intentionalDisconnect = false;
 
   function buildStreamUrl(streamToken: string) {
     // EventSource is a native browser API — it cannot go through the Nuxt $fetch
@@ -27,6 +28,8 @@ export default defineNuxtPlugin(() => {
   function connect() {
     if (!auth.isAuthenticated || eventSource?.readyState === EventSource.OPEN)
       return;
+
+    intentionalDisconnect = false;
 
     api<{ streamToken: string }>("/api/v1/notifications/stream-token", {
       method: "POST",
@@ -61,6 +64,9 @@ export default defineNuxtPlugin(() => {
           notifStore.setConnected(false);
           eventSource?.close();
           eventSource = null;
+          if (intentionalDisconnect) {
+            return;
+          }
           // Reconnect after 5 seconds if still authenticated
           setTimeout(() => {
             if (auth.isAuthenticated) connect();
@@ -73,9 +79,22 @@ export default defineNuxtPlugin(() => {
   }
 
   function disconnect() {
+    intentionalDisconnect = true;
     eventSource?.close();
     eventSource = null;
     notifStore.setConnected(false);
+  }
+
+  if (import.meta.client) {
+    globalThis.addEventListener("beforeunload", disconnect);
+    globalThis.addEventListener("pagehide", disconnect);
+    globalThis.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") {
+        disconnect();
+      } else if (auth.isAuthenticated) {
+        connect();
+      }
+    });
   }
 
   // Connect when auth state changes to authenticated
