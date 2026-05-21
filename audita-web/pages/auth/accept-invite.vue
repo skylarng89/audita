@@ -284,8 +284,11 @@ async function handleSubmit() {
   try {
     await acceptInvite(token, form.password, tenantSlug);
     done.value = true;
-  } catch {
-    error.value = "This invite link is invalid or has expired.";
+  } catch (errorResponse: unknown) {
+    error.value = resolveApiErrorMessage(
+      errorResponse,
+      "This invite link is invalid or has expired.",
+    );
   } finally {
     isLoading.value = false;
   }

@@ -199,8 +199,8 @@ async function createGroup() {
     createForm.name = "";
     createForm.description = "";
     refresh();
-  } catch {
-    toastError("Failed to create group.");
+  } catch (error: unknown) {
+    toastError(resolveApiErrorMessage(error, "Failed to create group."));
   }
 }
 
@@ -209,8 +209,8 @@ async function deleteGroup(id: string) {
     await api(`/api/v1/groups/${id}`, { method: "DELETE" });
     toastSuccess("Group deleted.");
     refresh();
-  } catch {
-    toastError("Failed to delete group.");
+  } catch (error: unknown) {
+    toastError(resolveApiErrorMessage(error, "Failed to delete group."));
   }
 }
 
@@ -236,8 +236,8 @@ async function addMember() {
     });
     addMemberId.value = "";
     openDetail(detailGroup.value);
-  } catch {
-    toastError("Failed to add member.");
+  } catch (error: unknown) {
+    toastError(resolveApiErrorMessage(error, "Failed to add member."));
   }
 }
 
@@ -248,8 +248,8 @@ async function removeMember(userId: string) {
       method: "DELETE",
     });
     openDetail(detailGroup.value);
-  } catch {
-    toastError("Failed to remove member.");
+  } catch (error: unknown) {
+    toastError(resolveApiErrorMessage(error, "Failed to remove member."));
   }
 }
 

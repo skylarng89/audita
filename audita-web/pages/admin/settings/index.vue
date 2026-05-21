@@ -784,9 +784,11 @@ async function loadSettings() {
       settings.autoApproverDefaults,
       settings.auditDefaults,
     );
-  } catch {
+  } catch (error: unknown) {
     errorMessage.value = "Unable to load settings right now.";
-    toastError("Failed to load organization settings.");
+    toastError(
+      resolveApiErrorMessage(error, "Failed to load organization settings."),
+    );
   } finally {
     pending.value = false;
   }
@@ -831,9 +833,11 @@ async function saveSettings() {
       settings.autoApproverDefaults,
       settings.auditDefaults,
     );
-  } catch {
+  } catch (error: unknown) {
     errorMessage.value = "Unable to save settings right now.";
-    toastError("Failed to save organization settings.");
+    toastError(
+      resolveApiErrorMessage(error, "Failed to save organization settings."),
+    );
   } finally {
     savingSettings.value = false;
   }

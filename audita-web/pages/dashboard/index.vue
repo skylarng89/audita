@@ -283,8 +283,8 @@ async function load() {
 
     pendingCRs.value = pendingPage.content;
     recentActivity.value = notifications;
-  } catch {
-    toastError("Failed to load dashboard data.");
+  } catch (error: unknown) {
+    toastError(resolveApiErrorMessage(error, "Failed to load dashboard data."));
   }
 }
 

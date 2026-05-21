@@ -254,8 +254,7 @@ async function inviteUser() {
     showInviteModal.value = false;
     refresh();
   } catch (e: unknown) {
-    const err = e as { data?: { message?: string } };
-    inviteError.value = err.data?.message ?? "Failed to send invite.";
+    inviteError.value = resolveApiErrorMessage(e, "Failed to send invite.");
   } finally {
     inviting.value = false;
   }
@@ -271,8 +270,8 @@ async function updateUser() {
     toastSuccess("User updated.");
     editUser.value = null;
     refresh();
-  } catch {
-    toastError("Failed to update user.");
+  } catch (error: unknown) {
+    toastError(resolveApiErrorMessage(error, "Failed to update user."));
   }
 }
 
@@ -293,8 +292,8 @@ async function resendInvite(id: string) {
     await api(`/api/v1/users/${id}/invite`, { method: "POST" });
     toastSuccess("Invite resent.");
     refresh();
-  } catch {
-    toastError("Failed to resend invite.");
+  } catch (error: unknown) {
+    toastError(resolveApiErrorMessage(error, "Failed to resend invite."));
   }
 }
 
@@ -303,8 +302,8 @@ async function cancelInvite(id: string) {
     await api(`/api/v1/users/${id}/invite`, { method: "DELETE" });
     toastSuccess("Invite cancelled.");
     refresh();
-  } catch {
-    toastError("Failed to cancel invite.");
+  } catch (error: unknown) {
+    toastError(resolveApiErrorMessage(error, "Failed to cancel invite."));
   }
 }
 

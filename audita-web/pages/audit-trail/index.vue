@@ -328,8 +328,8 @@ async function exportCsv() {
       query,
     });
     toastSuccess("Audit export started. Download link will be sent to your email.");
-  } catch {
-    toastError("Export failed. Please try again.");
+  } catch (error: unknown) {
+    toastError(resolveApiErrorMessage(error, "Export failed. Please try again."));
   } finally {
     exporting.value = false;
   }

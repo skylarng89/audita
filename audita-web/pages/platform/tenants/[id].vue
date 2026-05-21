@@ -245,8 +245,8 @@ async function addDomain() {
     });
     newDomain.value = "";
     refreshDomains();
-  } catch {
-    toastError("Failed to add domain.");
+  } catch (error: unknown) {
+    toastError(resolveApiErrorMessage(error, "Failed to add domain."));
   }
 }
 
@@ -256,8 +256,8 @@ async function removeDomain(domainId: string) {
       method: "DELETE",
     });
     refreshDomains();
-  } catch {
-    toastError("Failed to remove domain.");
+  } catch (error: unknown) {
+    toastError(resolveApiErrorMessage(error, "Failed to remove domain."));
   }
 }
 
@@ -278,8 +278,8 @@ async function saveSso(provider: string) {
       },
     });
     toastSuccess(`${provider} SSO configuration saved.`);
-  } catch {
-    toastError("Failed to save SSO configuration.");
+  } catch (error: unknown) {
+    toastError(resolveApiErrorMessage(error, "Failed to save SSO configuration."));
   }
 }
 
