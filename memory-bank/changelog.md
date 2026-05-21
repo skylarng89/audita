@@ -62,6 +62,18 @@
 - `cd audita-api && ./gradlew :infrastructure:dependencyInsight --dependency com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer --configuration runtimeClasspath --no-daemon`.
 - `cd audita-api && ./gradlew :api:compileTestJava :infrastructure:compileTestJava :api:test --no-daemon`.
 
+### Added (Post-Sprint Tenant Timezone UX Follow-Up — 2026-05-21)
+
+- **Tenant timezone controls**: replaced admin timezone free-text input with IANA timezone dropdown and normalization (`UTC` fallback) in settings.
+- **Global timezone formatting**: added shared timezone composable and applied tenant timezone formatting in CR list/detail, audit trail, and platform tenant pages.
+- **Timezone regression coverage**: added `tests/auth/timezone.spec.ts` for timezone list, normalization, and date/date-time formatting helper behavior.
+
+### Verification (Post-Sprint Tenant Timezone UX Follow-Up — 2026-05-21)
+
+- `cd audita-web && pnpm -s nuxi typecheck`.
+- `cd audita-web && pnpm test`.
+- `cd audita-web && pnpm build`.
+
 ## [0.1.0] — Unreleased (In Development)
 
 ### Changed (Sprint 11 — Session Hardening & Security Config Stabilization — 2026-05-12)
