@@ -44,8 +44,8 @@ public class TenantSettingsController {
                 TenantAdminSettingsResponse.OrganizationProfile profile = new TenantAdminSettingsResponse.OrganizationProfile(
                                 tenant.name(),
                                 tenant.slug(),
-                                null,
-                                "UTC",
+                                tenant.primaryContactEmail(),
+                                tenant.timezone(),
                                 tenant.status());
 
                 TenantAdminSettingsResponse.FeatureFlags featureFlags = new TenantAdminSettingsResponse.FeatureFlags(
@@ -103,6 +103,12 @@ public class TenantSettingsController {
                                 new TenantSettingsPort.WorkflowDefaults(
                                                 request.workflowDefaults().approvalTypeDefault(),
                                                 request.workflowDefaults().requireDefaultApprovers()));
+                tenantSettingsPort.updateProfile(
+                                tenantSlug,
+                                new TenantSettingsPort.ProfileUpdate(
+                                                request.profile().name().trim(),
+                                                request.profile().primaryContactEmail(),
+                                                request.profile().timezone().trim()));
                 tenantSettingsPort.updateSlaDefaults(
                                 tenantSlug,
                                 new TenantSettingsPort.SlaDefaults(

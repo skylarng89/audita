@@ -10,9 +10,16 @@ import java.util.List;
 import java.util.UUID;
 
 public record PatchTenantAdminSettingsRequest(
+                @NotNull @Valid OrganizationProfile profile,
                 @NotNull @Valid WorkflowDefaults workflowDefaults,
                 @NotNull @Valid SlaDefaults slaDefaults,
                 @NotNull @Valid AutoApproverDefaults autoApproverDefaults) {
+        public record OrganizationProfile(
+                        @NotNull String name,
+                        String primaryContactEmail,
+                        @NotNull String timezone) {
+        }
+
         public record WorkflowDefaults(
                         @NotNull ApprovalType approvalTypeDefault,
                         @NotNull Boolean requireDefaultApprovers) {

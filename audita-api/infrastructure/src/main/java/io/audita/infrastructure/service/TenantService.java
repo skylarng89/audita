@@ -57,6 +57,8 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
     private static final String SLA_WARNING_BEFORE_HOURS_KEY = "sla.warning_before_hours";
     private static final String WORKFLOW_DEFAULT_APPROVER_USER_IDS_KEY = "workflow.default_approver_user_ids";
     private static final String WORKFLOW_DEFAULT_APPROVER_GROUP_IDS_KEY = "workflow.default_approver_group_ids";
+    private static final String ORG_PRIMARY_CONTACT_EMAIL_KEY = "org.primary_contact_email";
+    private static final String ORG_TIMEZONE_KEY = "org.timezone";
 
     private final TenantRepository tenantRepository;
     private final OrgSettingRepository orgSettingRepository;
@@ -129,7 +131,12 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
     @Override
     public TenantSettings getTenantSettings(String tenantSlug) {
         TenantEntity tenant = getTenantBySlug(tenantSlug);
-        TenantProfile profile = new TenantProfile(tenant.getName(), tenant.getSlug(), tenant.getStatus().name());
+        TenantProfile profile = new TenantProfile(
+                tenant.getName(),
+                tenant.getSlug(),
+                readStringSetting(ORG_PRIMARY_CONTACT_EMAIL_KEY, null),
+                readStringSetting(ORG_TIMEZONE_KEY, "UTC"),
+                tenant.getStatus().name());
         WorkflowDefaults workflowDefaults = new WorkflowDefaults(
                 readApprovalTypeSetting(WORKFLOW_APPROVAL_TYPE_KEY, ApprovalType.LINEAR),
                 readBooleanSetting(WORKFLOW_REQUIRE_DEFAULT_APPROVERS_KEY, true));
@@ -143,6 +150,16 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
                 readUuidListSetting(WORKFLOW_DEFAULT_APPROVER_USER_IDS_KEY),
                 readUuidListSetting(WORKFLOW_DEFAULT_APPROVER_GROUP_IDS_KEY));
         return new TenantSettings(profile, workflowDefaults, slaDefaults, autoApproverDefaults);
+    }
+
+    @Override
+    public void updateProfile(String tenantSlug, ProfileUpdate profile) {
+        TenantEntity tenant = getTenantBySlug(tenantSlug);
+        tenant.setName(profile.name());
+        tenantRepository.save(tenant);
+        saveSetting(ORG_PRIMARY_CONTACT_EMAIL_KEY,
+                profile.primaryContactEmail() == null ? "" : profile.primaryContactEmail().trim());
+        saveSetting(ORG_TIMEZONE_KEY, profile.timezone());
     }
 
     @Override
@@ -429,6 +446,14 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
                 .map(UUID::fromString)
                 .distinct()
                 .toList();
+    }
+
+    private String readStringSetting(String key, String fallback) {
+        return orgSettingRepository.findById(key)
+                .map(OrgSettingEntity::getValue)
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .orElse(fallback);
     }
 
     private String writeUuidListSetting(List<UUID> values) {
