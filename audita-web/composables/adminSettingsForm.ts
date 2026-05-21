@@ -16,20 +16,36 @@ export type AutoApproverDefaults = {
   groupIds: string[];
 };
 
+export type AuditDefaults = {
+  exportLinkExpiryHours: number;
+};
+
+export type OrganizationProfile = {
+  name: string;
+  primaryContactEmail: string;
+  timezone: string;
+};
+
 export type SettingsPatchPayload = {
+  profile: OrganizationProfile;
   workflowDefaults: WorkflowDefaults;
   slaDefaults: SlaDefaults;
   autoApproverDefaults: AutoApproverDefaults;
+  auditDefaults: AuditDefaults;
 };
 
 export function createSettingsSnapshot(
+  profile: OrganizationProfile,
   workflowDefaults: WorkflowDefaults,
   slaDefaults: SlaDefaults,
   autoApproverDefaults: AutoApproverDefaults,
+  auditDefaults: AuditDefaults,
 ): string {
   return JSON.stringify({
+    profile,
     workflowDefaults,
     slaDefaults,
+    auditDefaults,
     autoApproverDefaults: {
       userIds: [...autoApproverDefaults.userIds].sort(),
       groupIds: [...autoApproverDefaults.groupIds].sort(),
@@ -39,13 +55,21 @@ export function createSettingsSnapshot(
 
 export function isSettingsDirty(
   snapshot: string,
+  profile: OrganizationProfile,
   workflowDefaults: WorkflowDefaults,
   slaDefaults: SlaDefaults,
   autoApproverDefaults: AutoApproverDefaults,
+  auditDefaults: AuditDefaults,
 ): boolean {
   return (
     snapshot !==
-    createSettingsSnapshot(workflowDefaults, slaDefaults, autoApproverDefaults)
+    createSettingsSnapshot(
+      profile,
+      workflowDefaults,
+      slaDefaults,
+      autoApproverDefaults,
+      auditDefaults,
+    )
   );
 }
 
@@ -64,11 +88,18 @@ export function validateSlaDefaults(slaDefaults: SlaDefaults): string | null {
 }
 
 export function buildSettingsPatchPayload(
+  profile: OrganizationProfile,
   workflowDefaults: WorkflowDefaults,
   slaDefaults: SlaDefaults,
   autoApproverDefaults: AutoApproverDefaults,
+  auditDefaults: AuditDefaults,
 ): SettingsPatchPayload {
   return {
+    profile: {
+      name: profile.name,
+      primaryContactEmail: profile.primaryContactEmail,
+      timezone: profile.timezone,
+    },
     workflowDefaults: {
       approvalTypeDefault: workflowDefaults.approvalTypeDefault,
       requireDefaultApprovers: workflowDefaults.requireDefaultApprovers,
@@ -83,6 +114,9 @@ export function buildSettingsPatchPayload(
     autoApproverDefaults: {
       userIds: autoApproverDefaults.userIds,
       groupIds: autoApproverDefaults.groupIds,
+    },
+    auditDefaults: {
+      exportLinkExpiryHours: auditDefaults.exportLinkExpiryHours,
     },
   };
 }

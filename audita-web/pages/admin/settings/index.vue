@@ -38,8 +38,7 @@
               id="org-name"
               type="text"
               class="input"
-              :value="settings.name"
-              disabled
+              v-model="settings.name"
             />
           </div>
           <div>
@@ -60,8 +59,7 @@
               id="org-email"
               type="email"
               class="input"
-              :value="settings.email"
-              disabled
+              v-model="settings.email"
             />
           </div>
           <div>
@@ -70,8 +68,7 @@
               id="org-timezone"
               type="text"
               class="input"
-              :value="settings.timezone"
-              disabled
+              v-model="settings.timezone"
             />
           </div>
         </div>
@@ -363,6 +360,24 @@
       </div>
     </section>
 
+    <section class="card p-5 shadow-card-hover">
+      <h2 class="text-lg font-semibold">Audit Export Defaults</h2>
+      <p class="text-sm text-muted mt-1">
+        Configure how long emailed audit export download links stay valid.
+      </p>
+      <div class="mt-4 max-w-sm">
+        <label class="field-label" for="audit-export-expiry-hours">Export link expiry (hours)</label>
+        <input
+          id="audit-export-expiry-hours"
+          v-model.number="settings.auditDefaults.exportLinkExpiryHours"
+          type="number"
+          min="1"
+          max="168"
+          class="input"
+        />
+      </div>
+    </section>
+
     <!-- Custom Fields -->
     <section class="card p-5 shadow-card-hover">
       <div class="flex items-center justify-between">
@@ -611,6 +626,9 @@ interface TenantAdminSettingsResponse {
     userIds: string[];
     groupIds: string[];
   };
+  auditDefaults: {
+    exportLinkExpiryHours: number;
+  };
 }
 
 interface UserLookupResponse {
@@ -633,7 +651,7 @@ const settingsSnapshot = ref("");
 const settings = reactive({
   name: "",
   slug: "",
-  email: "Not configured",
+  email: "",
   timezone: "UTC",
   featureFlags: {
     policyBreachDigests: false,
@@ -660,6 +678,9 @@ const settings = reactive({
     userIds: [] as string[],
     groupIds: [] as string[],
   },
+  auditDefaults: {
+    exportLinkExpiryHours: 24,
+  },
 });
 
 const selectedAutoApproverUsers = ref<Record<string, { label: string }>>({});
@@ -672,9 +693,15 @@ const groupSearchResults = ref<ApproverCandidate[]>([]);
 const isDirty = computed(() => {
   return isSettingsDirty(
     settingsSnapshot.value,
+    {
+      name: settings.name,
+      primaryContactEmail: settings.email,
+      timezone: settings.timezone,
+    },
     settings.workflowDefaults,
     settings.slaDefaults,
     settings.autoApproverDefaults,
+    settings.auditDefaults,
   );
 });
 
@@ -719,7 +746,7 @@ async function loadSettings() {
     );
     settings.name = response.profile.name;
     settings.slug = response.profile.slug;
-    settings.email = response.profile.primaryContactEmail ?? "Not configured";
+    settings.email = response.profile.primaryContactEmail ?? "";
     settings.timezone = response.profile.timezone || "UTC";
     settings.featureFlags = response.featureFlags;
     settings.securityDefaults.sessionTimeoutLabel = response.securityDefaults
@@ -743,11 +770,19 @@ async function loadSettings() {
       response.autoApproverDefaults?.userIds ?? [];
     settings.autoApproverDefaults.groupIds =
       response.autoApproverDefaults?.groupIds ?? [];
+    settings.auditDefaults.exportLinkExpiryHours =
+      response.auditDefaults?.exportLinkExpiryHours ?? 24;
     await hydrateAutoApproverLabels();
     settingsSnapshot.value = createSettingsSnapshot(
+      {
+        name: settings.name,
+        primaryContactEmail: settings.email,
+        timezone: settings.timezone,
+      },
       settings.workflowDefaults,
       settings.slaDefaults,
       settings.autoApproverDefaults,
+      settings.auditDefaults,
     );
   } catch {
     errorMessage.value = "Unable to load settings right now.";
@@ -774,15 +809,27 @@ async function saveSettings() {
     await api<TenantAdminSettingsResponse>("/api/v1/settings", {
       method: "PATCH",
       body: buildSettingsPatchPayload(
+        {
+          name: settings.name.trim(),
+          primaryContactEmail: settings.email.trim(),
+          timezone: settings.timezone.trim() || "UTC",
+        },
         settings.workflowDefaults,
         settings.slaDefaults,
         settings.autoApproverDefaults,
+        settings.auditDefaults,
       ),
     });
     settingsSnapshot.value = createSettingsSnapshot(
+      {
+        name: settings.name,
+        primaryContactEmail: settings.email,
+        timezone: settings.timezone,
+      },
       settings.workflowDefaults,
       settings.slaDefaults,
       settings.autoApproverDefaults,
+      settings.auditDefaults,
     );
   } catch {
     errorMessage.value = "Unable to save settings right now.";

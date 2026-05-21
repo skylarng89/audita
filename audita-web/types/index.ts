@@ -153,6 +153,8 @@ export interface Page<T> {
 
 export interface AuditLogEntry {
   id: string;
+  actorId: string | null;
+  actorFullName: string | null;
   actorEmail: string | null;
   actionType: string;
   entityType: string | null;

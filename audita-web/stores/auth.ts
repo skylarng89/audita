@@ -82,7 +82,8 @@ export const useAuthStore = defineStore("auth", {
     isSuperAdmin: (s) => s.role === "SUPER_ADMIN",
     isAdmin: (s) => s.role === "Admin",
     isAuditor: (s) => s.role === "Auditor",
-    canApprove: (s) => s.role === "Admin" || s.role === "Approver",
+    canApprove: (s) =>
+      s.role === "Admin" || s.role === "Approver" || s.role === "Requester",
     canCreateCR: (s) => s.role === "Admin" || s.role === "Requester",
   },
 

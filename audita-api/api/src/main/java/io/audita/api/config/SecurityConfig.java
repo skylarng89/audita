@@ -77,10 +77,11 @@ public class SecurityConfig {
                                                 "/api/platform/v1/bootstrap",
                                                 "/api/platform/v1/setup"))
                                 .permitAll()
-                                .requestMatchers(methodMatchers(HttpMethod.GET,
+                .requestMatchers(methodMatchers(HttpMethod.GET,
                                                 "/api/platform/v1/bootstrap/status",
                                                 "/api/v1/auth/oauth/**",
                                                 "/api/v1/notifications/stream",
+                                                "/api/v1/audit-trail/exports/download/**",
                                                 "/actuator/health",
                                                 "/actuator/health/**"))
                                 .permitAll()

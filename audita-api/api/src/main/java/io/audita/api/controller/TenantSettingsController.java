@@ -44,8 +44,8 @@ public class TenantSettingsController {
                 TenantAdminSettingsResponse.OrganizationProfile profile = new TenantAdminSettingsResponse.OrganizationProfile(
                                 tenant.name(),
                                 tenant.slug(),
-                                null,
-                                "UTC",
+                                tenant.primaryContactEmail(),
+                                tenant.timezone(),
                                 tenant.status());
 
                 TenantAdminSettingsResponse.FeatureFlags featureFlags = new TenantAdminSettingsResponse.FeatureFlags(
@@ -71,13 +71,17 @@ public class TenantSettingsController {
                                 settings.autoApproverDefaults().userIds(),
                                 settings.autoApproverDefaults().groupIds());
 
+                TenantAdminSettingsResponse.AuditDefaults auditDefaults = new TenantAdminSettingsResponse.AuditDefaults(
+                                settings.auditDefaults().exportLinkExpiryHours());
+
                 return new TenantAdminSettingsResponse(
                                 profile,
                                 featureFlags,
                                 securityDefaults,
                                 workflowDefaults,
                                 slaDefaults,
-                                autoApproverDefaults);
+                                autoApproverDefaults,
+                                auditDefaults);
         }
 
         @PatchMapping
@@ -103,6 +107,12 @@ public class TenantSettingsController {
                                 new TenantSettingsPort.WorkflowDefaults(
                                                 request.workflowDefaults().approvalTypeDefault(),
                                                 request.workflowDefaults().requireDefaultApprovers()));
+                tenantSettingsPort.updateProfile(
+                                tenantSlug,
+                                new TenantSettingsPort.ProfileUpdate(
+                                                request.profile().name().trim(),
+                                                request.profile().primaryContactEmail(),
+                                                request.profile().timezone().trim()));
                 tenantSettingsPort.updateSlaDefaults(
                                 tenantSlug,
                                 new TenantSettingsPort.SlaDefaults(
@@ -116,6 +126,9 @@ public class TenantSettingsController {
                                 new TenantSettingsPort.AutoApproverDefaults(
                                                 request.autoApproverDefaults().userIds(),
                                                 request.autoApproverDefaults().groupIds()));
+                tenantSettingsPort.updateAuditDefaults(
+                                tenantSlug,
+                                new TenantSettingsPort.AuditDefaults(request.auditDefaults().exportLinkExpiryHours()));
 
                 return getSettings(principal);
         }

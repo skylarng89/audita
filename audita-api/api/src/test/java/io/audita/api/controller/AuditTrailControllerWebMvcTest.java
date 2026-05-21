@@ -2,6 +2,7 @@ package io.audita.api.controller;
 
 import io.audita.api.security.UserPrincipal;
 import io.audita.application.port.AuditTrailPort;
+import io.audita.infrastructure.service.AuditExportService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,9 +39,12 @@ class AuditTrailControllerWebMvcTest {
         @Mock
         AuditTrailPort auditTrailPort;
 
+        @Mock
+        AuditExportService auditExportService;
+
         @BeforeEach
         void setUp() {
-                AuditTrailController controller = new AuditTrailController(auditTrailPort);
+                AuditTrailController controller = new AuditTrailController(auditTrailPort, auditExportService);
                 mockMvc = MockMvcBuilders.standaloneSetup(controller)
                                 .setCustomArgumentResolvers(
                                                 new PageableHandlerMethodArgumentResolver(),
@@ -67,12 +71,12 @@ class AuditTrailControllerWebMvcTest {
                 UUID entryId = UUID.randomUUID();
                 UUID crId = UUID.randomUUID();
                 AuditTrailPort.AuditLogEntry entry = new AuditTrailPort.AuditLogEntry(
-                                entryId, UUID.randomUUID(), "admin@acme.com", "CR_SUBMITTED",
+                                entryId, UUID.randomUUID(), "Alice Admin", "admin@acme.com", "CR_SUBMITTED",
                                 "change_request", crId, null, "127.0.0.1",
                                 OffsetDateTime.now());
-                when(auditTrailPort.query(isNull(), isNull(), isNull(), isNull(), isNull(), any()))
+                when(auditTrailPort.query(isNull(), isNull(), isNull(), any(), any(), any()))
                                 .thenReturn(new PageImpl<>(List.of(entry),
-                                                PageRequest.of(0, 20, Sort.by("createdAt")), 1));
+                                                PageRequest.of(0, 50, Sort.by("createdAt")), 1));
 
                 mockMvc.perform(get("/api/v1/audit-trail"))
                                 .andExpect(status().isOk())
@@ -86,7 +90,7 @@ class AuditTrailControllerWebMvcTest {
         void query_filters_by_action_type() throws Exception {
                 authenticate("AUDITOR");
 
-                when(auditTrailPort.query(isNull(), eq("CR_APPROVED"), isNull(), isNull(), isNull(), any()))
+                when(auditTrailPort.query(isNull(), eq("CR_APPROVED"), isNull(), any(), any(), any()))
                                 .thenReturn(new PageImpl<>(List.of()));
 
                 mockMvc.perform(get("/api/v1/audit-trail").param("actionType", "CR_APPROVED"))
@@ -99,9 +103,9 @@ class AuditTrailControllerWebMvcTest {
                 authenticate("ADMIN");
 
                 AuditTrailPort.AuditLogEntry entry = new AuditTrailPort.AuditLogEntry(
-                                UUID.randomUUID(), UUID.randomUUID(), "admin@acme.com", "CR_CREATED",
+                                UUID.randomUUID(), UUID.randomUUID(), "Alice Admin", "admin@acme.com", "CR_CREATED",
                                 "change_request", UUID.randomUUID(), null, null, OffsetDateTime.now());
-                when(auditTrailPort.export(isNull(), isNull(), isNull(), isNull(), isNull()))
+                when(auditTrailPort.export(isNull(), isNull(), isNull(), any(), any()))
                                 .thenReturn(List.of(entry));
 
                 mockMvc.perform(get("/api/v1/audit-trail/export.csv"))
@@ -116,9 +120,9 @@ class AuditTrailControllerWebMvcTest {
                 authenticate("ADMIN");
 
                 AuditTrailPort.AuditLogEntry entry = new AuditTrailPort.AuditLogEntry(
-                                UUID.randomUUID(), UUID.randomUUID(), "admin,comma@acme.com", "CR_CREATED",
+                                UUID.randomUUID(), UUID.randomUUID(), "Alice Admin", "admin,comma@acme.com", "CR_CREATED",
                                 "change_request", UUID.randomUUID(), null, null, OffsetDateTime.now());
-                when(auditTrailPort.export(isNull(), isNull(), isNull(), isNull(), isNull()))
+                when(auditTrailPort.export(isNull(), isNull(), isNull(), any(), any()))
                                 .thenReturn(List.of(entry));
 
                 mockMvc.perform(get("/api/v1/audit-trail/export.csv"))

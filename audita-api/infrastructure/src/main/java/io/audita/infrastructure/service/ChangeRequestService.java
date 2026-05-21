@@ -422,6 +422,7 @@ public class ChangeRequestService {
                 .orElseThrow(() -> new DomainNotPermittedException("NOT_APPROVER",
                         "You are not an approver on this change request."));
         UserEntity actor = approver.getUser();
+        assertCreatorSelfApprovalRule(changeRequest, actorUserId, actor);
 
         if (changeRequest.getApprovalType() == ApprovalType.LINEAR) {
             CrApproverEntity next = nextPendingApprover(changeRequestId);
@@ -454,6 +455,7 @@ public class ChangeRequestService {
                 .orElseThrow(() -> new DomainNotPermittedException("NOT_APPROVER",
                         "You are not an approver on this change request."));
         UserEntity actor = approver.getUser();
+        assertCreatorSelfApprovalRule(changeRequest, actorUserId, actor);
 
         if (changeRequest.getApprovalType() == ApprovalType.LINEAR) {
             CrApproverEntity next = nextPendingApprover(changeRequestId);
@@ -782,6 +784,30 @@ public class ChangeRequestService {
         if (createdBy == null || !createdBy.getId().equals(actorUserId)) {
             throw new DomainNotPermittedException("FORBIDDEN", "You are not allowed to modify this change request.");
         }
+    }
+
+    private void assertCreatorSelfApprovalRule(ChangeRequestEntity changeRequest, UUID actorUserId, UserEntity actor) {
+        UserEntity createdBy = changeRequest.getCreatedBy();
+        if (createdBy == null || !createdBy.getId().equals(actorUserId)) {
+            return;
+        }
+        if (isElevatedActor(actor)) {
+            return;
+        }
+        throw new DomainNotPermittedException("REQUESTER_SELF_APPROVAL_FORBIDDEN",
+                "The request creator cannot approve or reject their own change request.");
+    }
+
+    private boolean isElevatedActor(UserEntity actor) {
+        if (actor == null) {
+            return false;
+        }
+        if (actor.getRole() != null && ELEVATED_ROLES.contains(actor.getRole().getName().toUpperCase())) {
+            return true;
+        }
+        return actor.getRoles().stream()
+                .map(role -> role.getName() == null ? "" : role.getName().toUpperCase())
+                .anyMatch(ELEVATED_ROLES::contains);
     }
 
     private boolean isAllowedMimeType(String mimeType) {

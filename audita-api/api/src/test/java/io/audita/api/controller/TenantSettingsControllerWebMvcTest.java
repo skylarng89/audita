@@ -48,10 +48,11 @@ class TenantSettingsControllerWebMvcTest {
         UserPrincipal principal = authenticate();
         when(tenantSettingsPort.getTenantSettings("acme")).thenReturn(
                 new TenantSettingsPort.TenantSettings(
-                        new TenantSettingsPort.TenantProfile("Acme Corp", "acme", "ACTIVE"),
+                        new TenantSettingsPort.TenantProfile("Acme Corp", "acme", "admin@acme.com", "UTC", "ACTIVE"),
                         new TenantSettingsPort.WorkflowDefaults(ApprovalType.LINEAR, true),
                         new TenantSettingsPort.SlaDefaults(72, 48, 24, 8, 1),
-                        new TenantSettingsPort.AutoApproverDefaults(java.util.List.of(), java.util.List.of())));
+                        new TenantSettingsPort.AutoApproverDefaults(java.util.List.of(), java.util.List.of()),
+                        new TenantSettingsPort.AuditDefaults(24)));
 
         try {
             mockMvc.perform(get("/api/v1/settings"))
@@ -71,13 +72,19 @@ class TenantSettingsControllerWebMvcTest {
         authenticate();
         when(tenantSettingsPort.getTenantSettings("acme")).thenReturn(
                 new TenantSettingsPort.TenantSettings(
-                        new TenantSettingsPort.TenantProfile("Acme Corp", "acme", "ACTIVE"),
+                        new TenantSettingsPort.TenantProfile("Acme Corp", "acme", "admin@acme.com", "UTC", "ACTIVE"),
                         new TenantSettingsPort.WorkflowDefaults(ApprovalType.NON_LINEAR, false),
                         new TenantSettingsPort.SlaDefaults(96, 72, 36, 12, 3),
-                        new TenantSettingsPort.AutoApproverDefaults(java.util.List.of(), java.util.List.of())));
+                        new TenantSettingsPort.AutoApproverDefaults(java.util.List.of(), java.util.List.of()),
+                        new TenantSettingsPort.AuditDefaults(24)));
 
         String body = """
                 {
+                  "profile": {
+                    "name": "Acme Corp",
+                    "primaryContactEmail": "admin@acme.com",
+                    "timezone": "UTC"
+                  },
                   "workflowDefaults": {
                     "approvalTypeDefault": "NON_LINEAR",
                     "requireDefaultApprovers": false
@@ -85,6 +92,9 @@ class TenantSettingsControllerWebMvcTest {
                   "autoApproverDefaults": {
                     "userIds": [],
                     "groupIds": []
+                  },
+                  "auditDefaults": {
+                    "exportLinkExpiryHours": 24
                   },
                   "slaDefaults": {
                     "lowHours": 96,
@@ -108,7 +118,9 @@ class TenantSettingsControllerWebMvcTest {
         }
 
         verify(tenantSettingsPort).updateWorkflowDefaults(eq("acme"), any(TenantSettingsPort.WorkflowDefaults.class));
+        verify(tenantSettingsPort).updateProfile(eq("acme"), any(TenantSettingsPort.ProfileUpdate.class));
         verify(tenantSettingsPort).updateSlaDefaults(eq("acme"), any(TenantSettingsPort.SlaDefaults.class));
+        verify(tenantSettingsPort).updateAuditDefaults(eq("acme"), any(TenantSettingsPort.AuditDefaults.class));
     }
 
     @Test
@@ -117,6 +129,11 @@ class TenantSettingsControllerWebMvcTest {
 
         String body = """
                 {
+                  "profile": {
+                    "name": "Acme Corp",
+                    "primaryContactEmail": "admin@acme.com",
+                    "timezone": "UTC"
+                  },
                   "workflowDefaults": {
                     "approvalTypeDefault": "LINEAR",
                     "requireDefaultApprovers": true
@@ -124,6 +141,9 @@ class TenantSettingsControllerWebMvcTest {
                   "autoApproverDefaults": {
                     "userIds": [],
                     "groupIds": []
+                  },
+                  "auditDefaults": {
+                    "exportLinkExpiryHours": 24
                   },
                   "slaDefaults": {
                     "lowHours": 72,

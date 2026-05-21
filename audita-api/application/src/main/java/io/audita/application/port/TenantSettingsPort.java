@@ -9,16 +9,28 @@ public interface TenantSettingsPort {
 
     TenantSettings getTenantSettings(String tenantSlug);
 
+    void updateProfile(String tenantSlug, ProfileUpdate profile);
+
     void updateWorkflowDefaults(String tenantSlug, WorkflowDefaults workflowDefaults);
 
     void updateSlaDefaults(String tenantSlug, SlaDefaults slaDefaults);
+
+    void updateAuditDefaults(String tenantSlug, AuditDefaults auditDefaults);
 
     void updateAutoApproverDefaults(String tenantSlug, AutoApproverDefaults autoApproverDefaults);
 
     record TenantProfile(
             String name,
             String slug,
+            String primaryContactEmail,
+            String timezone,
             String status) {
+    }
+
+    record ProfileUpdate(
+            String name,
+            String primaryContactEmail,
+            String timezone) {
     }
 
     record WorkflowDefaults(
@@ -39,10 +51,15 @@ public interface TenantSettingsPort {
             List<UUID> groupIds) {
     }
 
+    record AuditDefaults(
+            int exportLinkExpiryHours) {
+    }
+
     record TenantSettings(
             TenantProfile profile,
             WorkflowDefaults workflowDefaults,
             SlaDefaults slaDefaults,
-            AutoApproverDefaults autoApproverDefaults) {
+            AutoApproverDefaults autoApproverDefaults,
+            AuditDefaults auditDefaults) {
     }
 }

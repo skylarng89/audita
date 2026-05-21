@@ -14,6 +14,7 @@
         </p>
       </div>
       <button
+        v-if="canExport"
         type="button"
         class="btn-secondary btn-sm"
         :disabled="exporting"
@@ -30,6 +31,18 @@
     <section class="card p-5 shadow-card-hover">
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <div>
+          <label class="field-label" for="audit-range">Date Range</label>
+          <select id="audit-range" v-model="filters.rangePreset" class="input">
+            <option value="7d">Last 7 days</option>
+            <option value="14d">Last 2 weeks</option>
+            <option value="30d">Last 1 month</option>
+            <option value="90d">Last 3 months</option>
+            <option value="180d">Last 6 months</option>
+            <option value="365d">Last 12 months</option>
+            <option value="custom">Custom range</option>
+          </select>
+        </div>
+        <div>
           <label class="field-label" for="audit-action-type">Action Type</label>
           <select
             id="audit-action-type"
@@ -38,7 +51,7 @@
           >
             <option value="">All Actions</option>
             <option v-for="at in ACTION_TYPES" :key="at" :value="at">
-              {{ at }}
+              {{ actionLabel(at) }}
             </option>
           </select>
         </div>
@@ -56,13 +69,13 @@
           </select>
         </div>
         <div>
-          <label class="field-label" for="audit-actor">Actor Email</label>
+           <label class="field-label" for="audit-actor">Actor</label>
           <input
             id="audit-actor"
             v-model="filters.actorEmail"
             type="text"
             class="input"
-            placeholder="Search by email"
+            placeholder="Search by name or email"
             @input="onFilterInput"
           />
         </div>
@@ -73,11 +86,18 @@
             v-model="filters.from"
             type="date"
             class="input"
+            :disabled="filters.rangePreset !== 'custom'"
           />
         </div>
         <div>
           <label class="field-label" for="audit-to">To</label>
-          <input id="audit-to" v-model="filters.to" type="date" class="input" />
+          <input
+            id="audit-to"
+            v-model="filters.to"
+            type="date"
+            class="input"
+            :disabled="filters.rangePreset !== 'custom'"
+          />
         </div>
       </div>
     </section>
@@ -98,20 +118,19 @@
         </template>
         <template #cell-actionType="{ value }">
           <AppBadge :variant="actionVariant(value as string)">{{
-            value
+            actionLabel(value as string)
           }}</AppBadge>
         </template>
         <template #cell-entityType="{ value }">
-          <span class="text-xs capitalize">{{ value ?? "—" }}</span>
+          <span class="text-xs">{{ entityLabel(value as string | null) }}</span>
         </template>
-        <template #cell-actorEmail="{ value }">
-          <span class="text-sm">{{ value ?? "System" }}</span>
+        <template #cell-actor="{ row }">
+          <span class="text-sm">{{ actorLabel(row as Record<string, unknown>) }}</span>
         </template>
-        <template #cell-entityId="{ value }">
-          <span
-            class="text-xs font-mono text-muted truncate block max-w-[160px]"
-            >{{ value ?? "—" }}</span
-          >
+        <template #cell-actions="{ row }">
+          <button class="btn-ghost btn-sm" @click="openDetails(row as unknown as AuditLogEntry)">
+            Details
+          </button>
         </template>
       </SharedAppTable>
     </section>
@@ -128,6 +147,25 @@
     <p v-if="loadError" class="text-sm text-danger" role="alert">
       {{ loadError }}
     </p>
+
+    <SharedAppModal v-model:open="showDetails" title="Audit Entry Details" size="lg">
+      <div v-if="selectedAudit" class="space-y-3 text-sm">
+        <p><span class="font-medium">Timestamp:</span> {{ formatTs(selectedAudit.createdAt) }}</p>
+        <p><span class="font-medium">Actor:</span> {{ selectedAudit.actorFullName ?? "System" }}</p>
+        <p><span class="font-medium">Actor Email:</span> {{ selectedAudit.actorEmail ?? "—" }}</p>
+        <p><span class="font-medium">Action:</span> {{ actionLabel(selectedAudit.actionType) }}</p>
+        <p><span class="font-medium">Entity Type:</span> {{ entityLabel(selectedAudit.entityType) }}</p>
+        <p><span class="font-medium">Entity ID:</span> <span class="font-mono text-xs">{{ selectedAudit.entityId ?? "—" }}</span></p>
+        <p><span class="font-medium">IP Address:</span> {{ selectedAudit.ipAddress ?? "—" }}</p>
+        <div>
+          <p class="font-medium mb-1">Payload</p>
+          <pre class="rounded-md bg-surface-container-low p-3 text-xs overflow-auto">{{ formattedPayload }}</pre>
+        </div>
+      </div>
+      <template #footer>
+        <button class="btn-primary btn-sm" @click="showDetails = false">Close</button>
+      </template>
+    </SharedAppModal>
   </div>
 </template>
 
@@ -139,6 +177,12 @@ definePageMeta({ layout: "default" });
 useHead({ title: "Audit Trail — Audita" });
 
 const api = useApi();
+const auth = useAuthStore();
+const { success: toastSuccess, error: toastError } = useToast();
+
+if (!(auth.isAdmin || auth.isAuditor)) {
+  await navigateTo("/dashboard");
+}
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -160,28 +204,33 @@ const ACTION_TYPES = [
 
 const columns = [
   { key: "createdAt", label: "Timestamp" },
-  { key: "actorEmail", label: "Actor" },
+  { key: "actor", label: "Actor" },
   { key: "actionType", label: "Action" },
   { key: "entityType", label: "Entity Type" },
-  { key: "entityId", label: "Entity ID" },
+  { key: "actions", label: "" },
 ];
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
 const page = ref(1);
-const pageSize = 20;
+const pageSize = 50;
 const totalElements = ref(0);
 const loadError = ref("");
 const exporting = ref(false);
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 const filters = reactive({
+  rangePreset: "30d",
   actionType: "",
   entityType: "",
   actorEmail: "",
   from: "",
   to: "",
 });
+
+const showDetails = ref(false);
+const selectedAudit = ref<AuditLogEntry | null>(null);
+const canExport = computed(() => auth.isAdmin || auth.isAuditor);
 
 // ── Data fetching ─────────────────────────────────────────────────────────────
 
@@ -232,6 +281,19 @@ watch(data, (val) => {
   if (val) totalElements.value = val.totalElements;
 });
 
+watch(
+  () => filters.rangePreset,
+  () => {
+    applyRangePreset();
+    page.value = 1;
+    refresh();
+  },
+);
+
+onMounted(() => {
+  applyRangePreset();
+});
+
 // ── Handlers ──────────────────────────────────────────────────────────────────
 
 function onFilterInput() {
@@ -246,6 +308,11 @@ function onPageChange(newPage: number) {
   page.value = newPage;
 }
 
+function openDetails(entry: AuditLogEntry) {
+  selectedAudit.value = entry;
+  showDetails.value = true;
+}
+
 async function exportCsv() {
   exporting.value = true;
   try {
@@ -256,18 +323,13 @@ async function exportCsv() {
     if (filters.from) query.from = filters.from;
     if (filters.to) query.to = filters.to;
 
-    const params = new URLSearchParams(query).toString();
-    const url = `/api/v1/audit-trail/export.csv${params ? `?${params}` : ""}`;
-
-    const response = await $fetch.raw(url, { responseType: "blob" });
-    const blob = response._data as Blob;
-    const anchor = document.createElement("a");
-    anchor.href = URL.createObjectURL(blob);
-    anchor.download = "audit-trail.csv";
-    anchor.click();
-    URL.revokeObjectURL(anchor.href);
+    await api("/api/v1/audit-trail/exports", {
+      method: "POST",
+      query,
+    });
+    toastSuccess("Audit export started. Download link will be sent to your email.");
   } catch {
-    loadError.value = "Export failed. Please try again.";
+    toastError("Export failed. Please try again.");
   } finally {
     exporting.value = false;
   }
@@ -291,6 +353,73 @@ function formatTs(ts: string): string {
     return ts;
   }
 }
+
+function actionLabel(action: string): string {
+  const labels: Record<string, string> = {
+    CR_CREATED: "Request Created",
+    CR_UPDATED: "Request Updated",
+    CR_SUBMITTED: "Request Submitted",
+    CR_APPROVED: "Request Approved",
+    CR_REJECTED: "Request Rejected",
+    CR_CANCELLED: "Request Cancelled",
+    CR_APPROVER_ADDED: "Approver Added",
+    CR_APPROVER_REMOVED: "Approver Removed",
+    CR_APPROVERS_REORDERED: "Approvers Reordered",
+    CR_ATTACHMENT_UPLOADED: "Attachment Uploaded",
+    CR_CUSTOM_FIELDS_UPDATED: "Custom Fields Updated",
+    CR_COMMENT_ADDED: "Comment Added",
+    SLA_WARNING: "SLA Warning",
+    SLA_BREACH: "SLA Breach",
+  };
+  return labels[action] ?? action;
+}
+
+function entityLabel(entityType: string | null): string {
+  const labels: Record<string, string> = {
+    change_request: "Change Request",
+    user: "User",
+    group: "Group",
+    notification: "Notification",
+    settings: "Settings",
+  };
+  if (!entityType) {
+    return "-";
+  }
+  return labels[entityType] ?? formatToken(entityType);
+}
+
+function actorLabel(row: Record<string, unknown>): string {
+  const fullName = row.actorFullName as string | null;
+  const email = row.actorEmail as string | null;
+  return fullName || email || "System";
+}
+
+function formatToken(value: string): string {
+  return value
+    .split(/[_.\s-]+/)
+    .map((token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function applyRangePreset() {
+  if (filters.rangePreset === "custom") {
+    return;
+  }
+  const now = new Date();
+  const to = now.toISOString().slice(0, 10);
+  const days = Number(filters.rangePreset.replace("d", ""));
+  const fromDate = new Date(now);
+  fromDate.setDate(fromDate.getDate() - days);
+  filters.from = fromDate.toISOString().slice(0, 10);
+  filters.to = to;
+}
+
+const formattedPayload = computed(() => {
+  if (!selectedAudit.value?.payload) {
+    return "{}";
+  }
+  return JSON.stringify(selectedAudit.value.payload, null, 2);
+});
 
 function actionVariant(
   action: string,
