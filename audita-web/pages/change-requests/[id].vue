@@ -373,7 +373,7 @@
           </button>
           <button
             class="btn-ghost btn-md"
-            :disabled="changeRequest.status === 'CANCELLED'"
+            :disabled="!canCancel"
             @click="cancelCr"
           >
             Cancel
@@ -382,6 +382,7 @@
             v-if="canSeeApprovalActions"
             class="btn-ghost btn-md"
             :disabled="!canCastVote"
+            :title="approvalDisabledReason"
             @click="approveCr"
           >
             Approve
@@ -390,6 +391,7 @@
             v-if="canSeeApprovalActions"
             class="btn-ghost btn-md"
             :disabled="!canCastVote"
+            :title="approvalDisabledReason"
             @click="showReject = true"
           >
             Reject
@@ -807,6 +809,21 @@ const sortedApprovers = computed(() =>
 const recordedVotes = computed(() =>
   sortedApprovers.value.filter((approver) => approver.status !== "PENDING"),
 );
+const isCreator = computed(
+  () => !!changeRequest.value && changeRequest.value.createdBy === auth.userId,
+);
+const creatorCanSelfApprove = computed(
+  () => auth.isSuperAdmin || auth.role === "Admin",
+);
+const canCancel = computed(() => {
+  if (!changeRequest.value) {
+    return false;
+  }
+  return (
+    changeRequest.value.status === "DRAFT" ||
+    changeRequest.value.status === "PENDING_APPROVAL"
+  );
+});
 const canSeeApprovalActions = computed(() => {
   if (
     !changeRequest.value ||
@@ -832,6 +849,9 @@ const canCastVote = computed(() => {
   if (auth.role === "Auditor") {
     return false;
   }
+  if (isCreator.value && !creatorCanSelfApprove.value) {
+    return false;
+  }
   if (auth.isSuperAdmin || auth.role === "Admin") {
     return true;
   }
@@ -851,6 +871,15 @@ const canCastVote = computed(() => {
     sortedApprovers.value.find((approver) => approver.status === "PENDING")
       ?.id === selfApprover.id
   );
+});
+const approvalDisabledReason = computed(() => {
+  if (canCastVote.value) {
+    return undefined;
+  }
+  if (isCreator.value && !creatorCanSelfApprove.value) {
+    return "Request creators cannot approve or reject their own change request.";
+  }
+  return "You cannot take approval action in the current workflow state.";
 });
 
 // ── Tab list with counts ────────────────────────────────────────────────────
@@ -1359,12 +1388,17 @@ async function addApproverAction() {
 
 async function searchApproverCandidatesAction() {
   const q = approverSearchQuery.value.trim();
-  if (!q) {
-    approverSearchResults.value = [];
-    return;
-  }
   approverSearchResults.value = await searchApproverCandidates(q, 12);
 }
+
+watch(showAddApprover, async (isOpen) => {
+  if (!isOpen) {
+    return;
+  }
+  if (!approverSearchResults.value.length) {
+    await searchApproverCandidatesAction();
+  }
+});
 
 function selectApproverCandidate(candidate: ApproverCandidate) {
   selectedApproverCandidate.value = candidate;

@@ -38,8 +38,7 @@
               id="org-name"
               type="text"
               class="input"
-              :value="settings.name"
-              disabled
+              v-model="settings.name"
             />
           </div>
           <div>
@@ -60,8 +59,7 @@
               id="org-email"
               type="email"
               class="input"
-              :value="settings.email"
-              disabled
+              v-model="settings.email"
             />
           </div>
           <div>
@@ -70,8 +68,7 @@
               id="org-timezone"
               type="text"
               class="input"
-              :value="settings.timezone"
-              disabled
+              v-model="settings.timezone"
             />
           </div>
         </div>
@@ -633,7 +630,7 @@ const settingsSnapshot = ref("");
 const settings = reactive({
   name: "",
   slug: "",
-  email: "Not configured",
+  email: "",
   timezone: "UTC",
   featureFlags: {
     policyBreachDigests: false,
@@ -672,6 +669,11 @@ const groupSearchResults = ref<ApproverCandidate[]>([]);
 const isDirty = computed(() => {
   return isSettingsDirty(
     settingsSnapshot.value,
+    {
+      name: settings.name,
+      primaryContactEmail: settings.email,
+      timezone: settings.timezone,
+    },
     settings.workflowDefaults,
     settings.slaDefaults,
     settings.autoApproverDefaults,
@@ -719,7 +721,7 @@ async function loadSettings() {
     );
     settings.name = response.profile.name;
     settings.slug = response.profile.slug;
-    settings.email = response.profile.primaryContactEmail ?? "Not configured";
+    settings.email = response.profile.primaryContactEmail ?? "";
     settings.timezone = response.profile.timezone || "UTC";
     settings.featureFlags = response.featureFlags;
     settings.securityDefaults.sessionTimeoutLabel = response.securityDefaults
@@ -745,6 +747,11 @@ async function loadSettings() {
       response.autoApproverDefaults?.groupIds ?? [];
     await hydrateAutoApproverLabels();
     settingsSnapshot.value = createSettingsSnapshot(
+      {
+        name: settings.name,
+        primaryContactEmail: settings.email,
+        timezone: settings.timezone,
+      },
       settings.workflowDefaults,
       settings.slaDefaults,
       settings.autoApproverDefaults,
@@ -774,12 +781,22 @@ async function saveSettings() {
     await api<TenantAdminSettingsResponse>("/api/v1/settings", {
       method: "PATCH",
       body: buildSettingsPatchPayload(
+        {
+          name: settings.name.trim(),
+          primaryContactEmail: settings.email.trim(),
+          timezone: settings.timezone.trim() || "UTC",
+        },
         settings.workflowDefaults,
         settings.slaDefaults,
         settings.autoApproverDefaults,
       ),
     });
     settingsSnapshot.value = createSettingsSnapshot(
+      {
+        name: settings.name,
+        primaryContactEmail: settings.email,
+        timezone: settings.timezone,
+      },
       settings.workflowDefaults,
       settings.slaDefaults,
       settings.autoApproverDefaults,

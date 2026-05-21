@@ -111,6 +111,7 @@
       </NuxtLink>
 
       <NuxtLink
+        v-if="auth.isAdmin || auth.isAuditor"
         to="/audit-trail"
         :class="sidebarCollapsed ? 'sidebar-link-rail' : 'sidebar-link'"
         :active-class="

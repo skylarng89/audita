@@ -33,12 +33,12 @@
         <img
           src="/brand/audita-lockup-light.svg"
           alt="Audita"
-          class="h-5 w-auto dark:hidden"
+          class="h-7 w-auto dark:hidden"
         />
         <img
           src="/brand/audita-lockup-dark.svg"
           alt="Audita"
-          class="h-5 w-auto hidden dark:block"
+          class="h-7 w-auto hidden dark:block"
         />
       </div>
 
@@ -47,12 +47,12 @@
         <img
           src="/brand/audita-lockup-light.svg"
           alt="Audita"
-          class="h-6 w-auto dark:hidden"
+          class="h-10 w-auto dark:hidden"
         />
         <img
           src="/brand/audita-lockup-dark.svg"
           alt="Audita"
-          class="h-6 w-auto hidden dark:block"
+          class="h-10 w-auto hidden dark:block"
         />
       </NuxtLink>
 
@@ -290,6 +290,7 @@
               Groups
             </NuxtLink>
             <NuxtLink
+              v-if="auth.isAdmin || auth.isAuditor"
               to="/audit-trail"
               class="sidebar-link"
               active-class="sidebar-link-active"
