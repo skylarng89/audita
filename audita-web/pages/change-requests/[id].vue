@@ -1892,7 +1892,7 @@ async function postCommentAction() {
 function createMentionPopup(props: any) {
   const container = document.createElement("div");
   container.style.cssText =
-    "background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:4px;max-height:200px;overflow-y:auto;";
+    "background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:4px;max-height:240px;overflow-y:auto;width:320px;";
 
   let currentCommand = props.command;
   let currentItems = props.items || [];
@@ -1913,9 +1913,9 @@ function createMentionPopup(props: any) {
       const row = document.createElement("div");
       row.setAttribute("data-index", String(i));
       row.style.cssText =
-        "display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:4px;cursor:pointer;" +
+        "display:flex;flex-direction:column;padding:6px 12px;border-radius:4px;cursor:pointer;" +
         (i === idx
-          ? "background:#e8edf5;color:#1d3a8a;"
+          ? "background:#e8edf5;"
           : "color:#111827;");
       row.addEventListener("mouseenter", () => {
         if (selectedIndex !== i) {
@@ -1923,10 +1923,14 @@ function createMentionPopup(props: any) {
         }
       });
       const nameSpan = document.createElement("span");
-      nameSpan.style.cssText = "font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
+      nameSpan.style.cssText =
+        "font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" +
+        (i === idx ? "color:#1d3a8a;" : "color:#111827;");
       nameSpan.textContent = item.label;
       const emailSpan = document.createElement("span");
-      emailSpan.style.cssText = "font-size:11px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-left:auto;";
+      emailSpan.style.cssText =
+        "font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" +
+        (i === idx ? "color:#4a6fa5;" : "color:#6b7280;");
       emailSpan.textContent = item.email;
       row.appendChild(nameSpan);
       row.appendChild(emailSpan);
@@ -1947,7 +1951,7 @@ function createMentionPopup(props: any) {
     interactive: true,
     trigger: "manual",
     placement: "bottom-start",
-    maxWidth: "280px",
+    maxWidth: "320px",
   })[0];
 
   renderItems(props.items || [], props.selectedIndex || 0);
