@@ -894,6 +894,7 @@ import type {
 } from "~/types";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import Mention from "@tiptap/extension-mention";
+import tippy from "tippy.js";
 import FlatPickr from "vue-flatpickr-component";
 import {
   buildRichTextExtensions,
@@ -1889,13 +1890,9 @@ async function postCommentAction() {
 }
 
 function createMentionPopup(props: any) {
-  const popup = document.createElement("div");
-  popup.setAttribute("data-mention-popup", "");
-  popup.style.cssText =
-    "position:fixed;z-index:9999;min-width:256px;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:4px;font-size:14px;";
-
-  const listEl = document.createElement("div");
-  popup.appendChild(listEl);
+  const container = document.createElement("div");
+  container.style.cssText =
+    "background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:4px;max-height:200px;overflow-y:auto;";
 
   let currentCommand = props.command;
   let currentItems = props.items || [];
@@ -1904,16 +1901,17 @@ function createMentionPopup(props: any) {
   function renderItems(items: any[], idx: number) {
     currentItems = items;
     selectedIndex = idx;
-    listEl.innerHTML = "";
+    container.innerHTML = "";
     if (!items.length) {
       const empty = document.createElement("div");
       empty.style.cssText = "padding:8px 12px;color:#6b7280;font-size:12px;";
       empty.textContent = "Searching…";
-      listEl.appendChild(empty);
+      container.appendChild(empty);
       return;
     }
     items.forEach((item, i) => {
       const row = document.createElement("div");
+      row.setAttribute("data-index", String(i));
       row.style.cssText =
         "display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:4px;cursor:pointer;" +
         (i === idx
@@ -1936,27 +1934,32 @@ function createMentionPopup(props: any) {
         e.preventDefault();
         currentCommand(item);
       });
-      listEl.appendChild(row);
+      container.appendChild(row);
     });
   }
 
-  function position(rect: DOMRect | null) {
-    if (!rect) return;
-    const x = rect.left + window.scrollX;
-    const y = rect.bottom + window.scrollY + 4;
-    popup.style.left = `${Math.min(x, window.innerWidth - 272)}px`;
-    popup.style.top = `${Math.min(y, window.innerHeight - 210 + window.scrollY)}px`;
-  }
+  const tip = tippy("body", {
+    getReferenceClientRect: () =>
+      (props.clientRect?.() as DOMRect) || new DOMRect(0, 0, 0, 0),
+    appendTo: () => document.body,
+    content: container,
+    showOnCreate: true,
+    interactive: true,
+    trigger: "manual",
+    placement: "bottom-start",
+    maxWidth: "280px",
+  })[0];
 
-  document.body.appendChild(popup);
   renderItems(props.items || [], props.selectedIndex || 0);
-  position(props.clientRect);
 
   return {
     update: (updatedProps: any) => {
       currentCommand = updatedProps.command;
+      tip.setProps({
+        getReferenceClientRect: () =>
+          (updatedProps.clientRect?.() as DOMRect) || new DOMRect(0, 0, 0, 0),
+      });
       renderItems(updatedProps.items || [], updatedProps.selectedIndex || 0);
-      position(updatedProps.clientRect);
     },
     onKeyDown: (updatedProps: any) => {
       const items = updatedProps.items || [];
@@ -1981,7 +1984,7 @@ function createMentionPopup(props: any) {
       return false;
     },
     destroy: () => {
-      popup.remove();
+      tip.destroy();
     },
   };
 }
