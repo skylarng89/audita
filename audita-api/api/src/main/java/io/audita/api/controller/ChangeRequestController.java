@@ -222,6 +222,17 @@ public class ChangeRequestController {
         changeRequestService.removeApprover(id, approverId, principal.userId(), principal.role());
     }
 
+    @PatchMapping("/{id}/approvers/{approverId}/requirement")
+    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    public CrApproverResponse updateApproverRequirement(@PathVariable UUID id,
+            @PathVariable UUID approverId,
+            @RequestParam boolean isRequired,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        var updated = changeRequestService.updateApproverRequirement(id, approverId, isRequired,
+                principal.userId(), principal.role());
+        return CrApproverResponse.from(updated);
+    }
+
     @PostMapping("/{id}/approve")
     @PreAuthorize("isAuthenticated() and !hasRole('AUDITOR')")
     public ChangeRequestResponse approve(@PathVariable UUID id,

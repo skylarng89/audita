@@ -89,6 +89,7 @@ public class CommentService {
                     user.getFullName(),
                     changeRequest.getTitle(),
                     changeRequest.getId().toString(),
+                    comment.getId().toString(),
                     author.getFullName());
         }
 

@@ -11,6 +11,7 @@ public record CrApproverResponse(
         UUID userId,
         String userEmail,
         String userFullName,
+        String userRole,
         boolean isRequired,
         int position,
         ApproverStatus status,
@@ -19,11 +20,16 @@ public record CrApproverResponse(
         boolean isAdHoc
 ) {
     public static CrApproverResponse from(CrApproverEntity entity) {
+        String roleName = entity.getUser().getRoles().stream()
+                .map(io.audita.infrastructure.persistence.entity.RoleEntity::getName)
+                .findFirst()
+                .orElse(null);
         return new CrApproverResponse(
                 entity.getId(),
                 entity.getUser().getId(),
                 entity.getUser().getEmail(),
                 entity.getUser().getFullName(),
+                roleName,
                 entity.isRequired(),
                 entity.getPosition(),
                 entity.getStatus(),

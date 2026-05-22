@@ -22,5 +22,5 @@
     "connectionId": "skylarng89",
     "projectKey": "skylarng89_audita"
   },
-  "java.jdt.ls.vmargs": "-XX:+UseZGC -XX:+ZGenerational -Xms256m -Xmx16g -XX:+ExitOnOutOfMemoryError"
+  "java.jdt.ls.vmargs": "-XX:+UseZGC -XX:+ZGenerational -Xms256m -Xmx4g -XX:+ExitOnOutOfMemoryError"
 }

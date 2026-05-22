@@ -74,6 +74,68 @@
 - `cd audita-web && pnpm test`.
 - `cd audita-web && pnpm build`.
 
+### Fixed (Settings Save & Auth Session — 2026-05-22)
+
+- **Settings `400 Bad Request` cascade**: fixed three-layer root cause — `autoApproverDefaults` UUID parse failure → Nuxt proxy stripping `content-length` → strict record DTO deserialization.
+  - `PatchTenantAdminSettingsRequest.java`: changed `List<UUID>` to `List<String>` with explicit parse validation.
+  - `apiProxy.ts`: added `content-length` to allowed proxy headers.
+  - `TenantSettingsController.patchSettings()`: switched to tolerant `Map<String, Object>` parsing with explicit field validators.
+- **Auth session/logout `500` errors on redeploy**: `AuthController` now requires `X-Tenant-Slug` header for `/session`, `/refresh`, `/logout` when refresh cookie present; returns `401` instead of crashing.
+- **Missing `refresh_tokens` table in drifted schemas**: added `V10__repair_refresh_tokens_table.sql` idempotent repair migration.
+- **Frontend tenant header propagation**: `clearServerSession`, `authStore.logout`, `plugins/auth.ts`, `plugins/api.ts` now propagate tenant header consistently.
+
+### Fixed (Log Noise Elimination — 2026-05-22)
+
+- **`HHH90000025` dialect warning**: removed explicit `hibernate.dialect` from `JpaConfig.java`.
+- **`CaffeineCacheMetrics` warning**: added `recordStats` to Caffeine cache spec in `application.yml`.
+- **`HHH90003004` pagination+fetch warning**: removed `@EntityGraph` collection fetch from `UserRepository.findAll(Pageable)`; eager-initialize roles in `UserService.listUsers()`.
+- **SSE lifecycle noise**: improved `sse.client.ts` with intentional disconnect flag + `beforeunload`/`pagehide`/`visibilitychange` handling.
+- **Targeted logger levels**: suppressed noisy Hibernate/Micrometer categories in `application.yml`.
+
+### Added (Rich-Text Editor Upgrade — 2026-05-22)
+
+- **Shared TipTap extension config**: `composables/richText.ts` — `StarterKit`, `Link`, `Placeholder` + link normalization helpers.
+- **Expanded `RichTextToolbar`**: headings, blockquote, code block, lists, link/unlink, undo/redo, clear formatting.
+- **`.rich-content` CSS**: explicit paragraph/list/code/blockquote/table/link spacing for read-only render fidelity.
+- **Backend HTML sanitizer**: `HtmlSanitizer.java` normalizes anchor attributes (`target="_blank"`, `rel="noopener noreferrer nofollow"`) before OWASP policy sanitization.
+- **Three-layer link enforcement**: TipTap mark config (authoring) → backend sanitizer (persistence) → `normalizeRichTextHtml` (rendering).
+- **Rich-text test suites**: `HtmlSanitizerTest.java` + `tests/auth/rich-text.spec.ts`.
+
+### Added (Approver UX Redesign — 2026-05-22)
+
+- **Multi-select approver panel**: replaced confusing single-select flow with pre-populated user list, checkbox multi-select, per-user Required/Optional toggle, real-time selected chips preview, and batch save.
+- **Duplicate prevention**: already-added approvers filtered from candidate list.
+- **Batch save**: sequential `addApprover`/`addApproverGroup` calls for each selected candidate with loading state and count display.
+
+### Verification (Post-Sprint Hardening — 2026-05-22)
+
+- `cd audita-web && pnpm -s nuxi typecheck`.
+- `cd audita-web && pnpm test` (41 tests, 13 files).
+- `cd audita-web && pnpm build`.
+
+### Added (Approver UX Polish — 2026-05-22)
+
+- **Default Optional**: new approvers default to Optional instead of Required; toggle to Required is one click.
+- **Per-approver Required/Optional toggle on saved list**: each approver row has a color-coded toggle button (primary = Required, muted = Optional) that calls `PATCH /{id}/approvers/{approverId}/requirement` immediately.
+- **Creator exclusion**: CR creator filtered from candidate list — cannot add themselves as approver.
+- **Dirty tracking + save prompt**: snapshot-based change detection shows "Approver changes applied → Done" banner after any toggle, reorder, or remove.
+- **Reorder animations**: `<TransitionGroup name="approver-list">` with CSS transitions — slide-in/out on add/remove, smooth FLIP-style move animation on reorder, scale+opacity fade on drag.
+
+### Fixed (Activity Stream Readability — 2026-05-22)
+
+- **"Count 4" → "Reordered 4 approvers."**: `activitySummary` now handles `CR_APPROVERS_REORDERED` with human-readable summary; `activityFields` filters out `count` key so it doesn't render as a raw field.
+
+### Fixed (CI Trivy Scan — 2026-05-22)
+
+- **CVE-2026-33671 (picomatch ReDoS)**: added `.trivyignore` entry. This vulnerability is in the Node.js base image's bundled npm (`usr/local/lib/node_modules/npm/...`), not our dependencies. Not exploitable — picomatch is only used internally by npm during package installation, never exposed to user input. Tracked for resolution when upgrading to a newer Node.js base image.
+
+### Verification (Approver UX Polish — 2026-05-22)
+
+- `cd audita-web && pnpm -s nuxi typecheck`.
+- `cd audita-web && pnpm test` (41 tests, 13 files).
+- `cd audita-web && pnpm build`.
+- `cd audita-api && ./gradlew :api:compileJava :infrastructure:compileJava --no-daemon`.
+
 ## [0.1.0] — Unreleased (In Development)
 
 ### Changed (Sprint 11 — Session Hardening & Security Config Stabilization — 2026-05-12)

@@ -28,6 +28,7 @@
           </p>
         </div>
         <button
+          v-if="auth.canCreateCR"
           class="btn-primary btn-md shadow-lg shadow-primary/20"
           @click="navigateTo('/change-requests/new')"
         >
@@ -404,6 +405,7 @@ definePageMeta({ middleware: "auth" });
 
 useHead({ title: "Change Requests — Audita" });
 
+const auth = useAuthStore();
 const { list } = useChangeRequests();
 const PAGE_SIZE = 50;
 

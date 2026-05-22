@@ -293,3 +293,50 @@
 **Validation:**
 
 - Frontend verification gates passed after migration: `pnpm test`, `pnpm -s nuxi typecheck`, and `pnpm build`.
+
+---
+
+## ADR-015: Use `.trivyignore` for Non-Exploitable Base Image Vulnerabilities
+
+**Date:** 2026-05-22
+**Status:** Accepted
+
+**Decision:** Use `.trivyignore` to suppress Trivy-detected vulnerabilities in the Node.js base image that are not exploitable in our application context, rather than upgrading the base image or restructuring the build.
+
+**Reasoning:**
+
+- CVE-2026-33671 (picomatch ReDoS) was detected in `usr/local/lib/node_modules/npm/node_modules/picomatch/package.json` — this is part of the Node.js base image's bundled npm, not our application dependencies.
+- picomatch is only used internally by npm during package installation (file globbing), never exposed to user input or runtime application code.
+- Upgrading the Node.js base image to get a patched npm would require testing the entire build pipeline and could introduce other compatibility issues.
+- `.trivyignore` with documented rationale is the standard Trivy mechanism for acknowledging non-exploitable findings.
+
+**Trade-offs:**
+
+- Requires periodic review of ignored CVEs to ensure they remain non-exploitable.
+- Should be revisited when upgrading the Node.js base image in a future release.
+
+**Rule for new entries:** Only ignore CVEs where: (1) the vulnerable package is in the base image or build tooling, not application dependencies, AND (2) the attack vector is not reachable from our application code. Document the rationale in the `.trivyignore` comment.
+
+---
+
+## ADR-016: Approvers Default to Optional with Post-Save Toggle
+
+**Date:** 2026-05-22
+**Status:** Accepted
+
+**Decision:** New approvers default to Optional (not Required). Each saved approver has an inline Required/Optional toggle button that calls `PATCH /{id}/approvers/{approverId}/requirement` immediately.
+
+**Reasoning:**
+
+- User feedback indicated that requiring explicit opt-in for Required status is more intuitive than requiring explicit opt-out.
+- Post-save toggle allows flexibility — approvers can be promoted to Required after initial assignment without removing and re-adding.
+- Dirty tracking with snapshot-based change detection provides clear feedback when changes are made.
+
+**Trade-offs:**
+
+- Requires an additional backend endpoint (`updateApproverRequirement`) instead of bundling requirement changes with other approver mutations.
+- Each toggle is an immediate API call (no batch save for requirement changes) — acceptable for the expected low frequency of this operation.
+
+**Validation:**
+- Frontend verification gates passed: `pnpm test`, `pnpm -s nuxi typecheck`, `pnpm build`.
+- Backend compile passed: `./gradlew :api:compileJava :infrastructure:compileJava --no-daemon`.

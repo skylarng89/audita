@@ -260,4 +260,37 @@ public class UserService {
                 .orElseThrow(() -> new DomainNotPermittedException("INVALID_ROLE_ASSIGNMENT",
                         "Could not determine effective role for the user."));
     }
+
+    @Transactional(readOnly = true)
+    public List<MentionCandidate> searchUsers(String query, int limit) {
+        String trimmed = query == null ? "" : query.trim();
+        int cappedLimit = Math.max(1, Math.min(limit, 25));
+
+        List<UserEntity> matches;
+        if (trimmed.isEmpty()) {
+            matches = userRepository.findByStatus(UserStatus.ACTIVE,
+                    org.springframework.data.domain.PageRequest.of(0, cappedLimit)).getContent();
+        } else {
+            matches = userRepository
+                    .findByStatusAndFullNameContainingIgnoreCaseOrStatusAndEmailContainingIgnoreCaseOrderByFullNameAsc(
+                            UserStatus.ACTIVE, trimmed, UserStatus.ACTIVE, trimmed)
+                    .stream()
+                    .limit(cappedLimit)
+                    .toList();
+        }
+
+        return matches.stream()
+                .map(user -> new MentionCandidate(
+                        user.getId(),
+                        user.getFullName(),
+                        user.getEmail(),
+                        user.getRoles().stream()
+                                .map(RoleEntity::getName)
+                                .findFirst()
+                                .orElse(null)))
+                .toList();
+    }
+
+    public record MentionCandidate(UUID id, String fullName, String email, String role) {
+    }
 }

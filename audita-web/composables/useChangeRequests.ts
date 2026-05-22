@@ -131,6 +131,20 @@ export function useChangeRequests() {
     });
   }
 
+  async function updateApproverRequirement(
+    id: string,
+    approverId: string,
+    isRequired: boolean,
+  ): Promise<CrApprover> {
+    return api<CrApprover>(
+      `/api/v1/change-requests/${id}/approvers/${approverId}/requirement`,
+      {
+        method: "PATCH",
+        query: { isRequired },
+      },
+    );
+  }
+
   async function listCustomFields(
     id: string,
   ): Promise<ChangeRequestCustomFieldValue[]> {
@@ -227,6 +241,7 @@ export function useChangeRequests() {
     addApprover,
     addApproverGroup,
     removeApprover,
+    updateApproverRequirement,
     reorderApprovers,
     searchApproverCandidates,
     listCustomFields,

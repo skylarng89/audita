@@ -1,7 +1,7 @@
 # Audita — Active Context
 
-**Last Updated:** 2026-05-21
-**Current Phase:** Post-Sprint reliability + timezone UX follow-up complete
+**Last Updated:** 2026-05-22
+**Current Phase:** Post-Sprint reliability + UX hardening + approver UX polish complete
 **Active Sprint:** Sprint 13 (completed)
 
 ---
@@ -32,7 +32,11 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 | Sprint 9 | 1/1 | 1 | CR List Scalability | 2026-05-11 |
 | Sprint 10 | 36/36 | 36 | UX & WCAG 2.2 Compliance Overhaul | 2026-05-18 |
 | Sprint 11 | 26/26 | 26 | Session Hardening, RBAC Expansion & CR Workflow Polish | 2026-05-12 |
-| **TOTAL** | **181/181** | **181** | — | — |
+| Sprint 12 | 6/6 | 6 | Launch Readiness | 2026-05-19 |
+| Sprint 13 | 8/8 | 8 | Engineering Best Practices Hardening | 2026-05-19 |
+| Post-Sprint 1 | 19/19 | 19 | Reliability, UX & Rich-Text Hardening | 2026-05-22 |
+| Post-Sprint 2 | 8/8 | 8 | Approver UX Polish + Activity Stream + CI Trivy Fix | 2026-05-22 |
+| **TOTAL** | **222/222** | **222** | — | — |
 
 **Sprint 12: Launch Readiness** — All 6 tasks completed. v0.6.0 released.
 
@@ -48,6 +52,10 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 - **Sprint 9 complete (2026-05-11).** Server-side pagination with `size=50`, explicit previous/next controls. 1/1 tasks.
 - **Sprint 10 complete (2026-05-18).** Comprehensive UX + WCAG 2.2 overhaul: mobile navigation drawer, dark mode toggle, skip-to-content link, page titles on all pages, password show/hide toggles, ARIA tablist on CR detail, focus trap in AppModal, skeleton loaders + empty states, SLA column, sticky save bar, reject confirm modal, toast progress bar, scroll-margin-top, aria-live regions, label/id wiring on all forms, autocomplete tokens, sidebar icon-rail, filter pill collapse, affected systems tag UI. 36/36 tasks.
 - **Sprint 11 complete (2026-05-12).** Session hardening: refresh-cookie revocation, 401-only refresh, HttpOnly cold-start restore, API contract enforcement (`X-Audita-Api-Contract`), cross-tab sync, Spring Security public API authorization. RBAC expansion: multi-role assignment, custom roles with overlap prevention, auto-approver population on CR create, JWT role+permission claims. CR workflow polish: role-flexible approver voting, comment/activity DTO hardening, rich-text toolbar, attachment queue, vote visibility, modal centering. 26/26 tasks.
+- **Sprint 12 complete (2026-05-19).** Launch readiness: CSS token alignment, pagination wiring, WCAG 2.5.8 target sizing, Sonar scan + dependency audit, E2E smoke test, v0.6.0 release cut. 6/6 tasks.
+- **Sprint 13 complete (2026-05-19).** Engineering best practices: GitHub Actions SHA pinning, CI security gates (SAST/SCA/image scan), SBOM generation, OpenTelemetry + Prometheus metrics, readiness/liveness probes, API idempotency keys, Nuxt proxy hardening, `nuxt-security` CSP headers. 8/8 tasks.
+- **Post-Sprint hardening complete (2026-05-22).** Settings save 400 fixes (UUID parsing → proxy content-length → tolerant map parsing), auth session/logout tenant-header guards + V10 refresh_tokens repair migration, log noise elimination (dialect, cache stats, pagination fetch, SSE lifecycle), full rich-text editor upgrade (TipTap Link + expanded toolbar + backend sanitizer + render normalization + CSS), approver UX redesign (multi-select list with checkboxes, per-user Required toggle, real-time selected chips preview, batch save). 19/19 tasks.
+- **Post-Sprint 2 polish complete (2026-05-22).** Approver UX polish: default Optional, per-approver Required/Optional toggle on saved list, creator excluded from candidates, dirty tracking + save prompt, reorder animations (`TransitionGroup` + CSS). Backend: `PATCH /{id}/approvers/{approverId}/requirement` endpoint. Activity stream: "Reordered 4 approvers" human-readable summary instead of raw "COUNT 4" field. CI: `.trivyignore` for CVE-2026-33671 (picomatch ReDoS in Node.js base image, not exploitable). 8/8 tasks.
 
 ---
 
@@ -68,10 +76,11 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 
 ## Quality Gates
 
-- **Backend tests**: 62/62 passing (AllSprintsE2ETest + critical flows + security regression + controller tests)
-- **Frontend gates**: `pnpm test`, `pnpm -s nuxi typecheck`, `pnpm build` all passing
+- **Backend tests**: 62/62 passing (AllSprintsE2ETest + critical flows + security regression + controller tests + HtmlSanitizerTest)
+- **Frontend gates**: `pnpm test` (41 tests, 13 files), `pnpm -s nuxi typecheck`, `pnpm build` all passing
+- **CI Trivy scan**: passing — CVE-2026-33671 (picomatch in Node.js base image) ignored via `.trivyignore` (not exploitable in our context)
 - **Docker**: Full Compose stack operational (PostgreSQL 17, MailHog, API, Web)
-- **Security hardening**: SEC-001 through SEC-004 complete, with refinements
+- **Security hardening**: SEC-001 through SEC-004 complete, with refinements; Sprint 13 best practices complete
 - **Sonar**: `sonar-scan.sh` ready; last known state: no critical/blocker issues after regex normalization fix
 
 ---
@@ -127,14 +136,13 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 
 ## Current Blockers
 
-- **No active implementation blockers.** Sprint 13 completed with BP13-001 through BP13-008 finished; post-sprint REL-AUD-001, REL-SEC-001, and REL-UX-001 follow-ups completed.
-- **Hardening and reliability gap set for current release scope is closed.**
-- **Current baseline remains healthy:** backend targeted tests passing; frontend `typecheck`, `test`, and `build` passing (12 files, 39 tests).
+- **No active implementation blockers.** All post-sprint hardening and polish tasks complete: settings fixes, auth session guards, log noise elimination, rich-text upgrade, approver UX redesign + polish, activity stream readability, CI Trivy scan.
+- **Current baseline remains healthy:** backend targeted tests passing; frontend `typecheck`, `test` (41 tests), and `build` all passing; CI Trivy scan passing.
 
 ---
 
 ## Next Actions
 
-1. Prioritize Sprint 14 backlog from remaining architecture/performance opportunities.
-2. Re-run GitHub Actions `Container Image Vulnerability Scan` on updated branch to verify clean HIGH/CRITICAL gate.
-3. Run CI dry-run on feature branch to validate end-to-end release gates before merge.
+1. Consider cutting v0.7.0 release with all post-sprint fixes + Sprint 13 + approver UX redesign + polish.
+2. Run CI dry-run on feature branch to validate end-to-end release gates (including Trivy scan) before merge.
+3. Prioritize Sprint 14 backlog from remaining architecture/performance opportunities.

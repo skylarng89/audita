@@ -5,7 +5,7 @@ export function useAuth() {
   const auth = useAuthStore();
   const api = useApi();
 
-  async function login(email: string, password: string, tenantSlug?: string) {
+  async function login(email: string, password: string, redirectTarget?: string | null, tenantSlug?: string) {
     const headers: Record<string, string> = {};
     if (tenantSlug) headers["X-Tenant-Slug"] = tenantSlug;
 
@@ -17,8 +17,9 @@ export function useAuth() {
 
     auth.setAuth(response, { broadcast: true });
 
-    // Role-based redirect
-    if (response.role === "SUPER_ADMIN") {
+    if (redirectTarget) {
+      await navigateTo(redirectTarget);
+    } else if (response.role === "SUPER_ADMIN") {
       await navigateTo("/platform");
     } else {
       await navigateTo("/dashboard");

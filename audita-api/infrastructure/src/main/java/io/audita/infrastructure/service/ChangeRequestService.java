@@ -280,7 +280,8 @@ public class ChangeRequestService {
         CrApproverEntity created = crApproverRepository.save(approver);
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVER_ADDED",
                 Map.of(PAYLOAD_APPROVER_ID, created.getId().toString(), "userId", userId.toString()));
-        return created;
+        return crApproverRepository.findWithUserAndRolesById(created.getId())
+                .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "Approver not found."));
     }
 
     public List<CrApproverEntity> addApproverGroup(UUID changeRequestId,
@@ -325,7 +326,10 @@ public class ChangeRequestService {
         List<CrApproverEntity> saved = crApproverRepository.saveAll(additions);
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVER_GROUP_ADDED",
                 Map.of("groupId", groupId.toString(), PAYLOAD_COUNT, saved.size()));
-        return saved;
+        Set<UUID> savedIds = saved.stream().map(CrApproverEntity::getId).collect(java.util.stream.Collectors.toSet());
+        return crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId).stream()
+                .filter(a -> savedIds.contains(a.getId()))
+                .toList();
     }
 
     public void removeApprover(UUID changeRequestId, UUID approverId, UUID actorUserId, String actorRole) {
@@ -381,6 +385,31 @@ public class ChangeRequestService {
         return saved;
     }
 
+    public CrApproverEntity updateApproverRequirement(UUID changeRequestId,
+            UUID approverId,
+            boolean isRequired,
+            UUID actorUserId,
+            String actorRole) {
+        ChangeRequestEntity changeRequest = getById(changeRequestId);
+        assertCanMutate(changeRequest, actorUserId, actorRole);
+        if (changeRequest.isApprovalLocked()) {
+            throw new InvalidStateTransitionException("APPROVERS_LOCKED", "Approvers are locked and cannot be changed.");
+        }
+
+        CrApproverEntity approver = crApproverRepository.findWithUserAndRolesById(approverId)
+                .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "Approver not found."));
+        if (!approver.getChangeRequest().getId().equals(changeRequestId)) {
+            throw new DomainNotPermittedException(ERROR_NOT_FOUND, "Approver not found on this change request.");
+        }
+
+        approver.setRequired(isRequired);
+        crApproverRepository.save(approver);
+        logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVER_REQUIREMENT_CHANGED",
+                Map.of(PAYLOAD_APPROVER_ID, approverId.toString(), "isRequired", isRequired));
+        return crApproverRepository.findWithUserAndRolesById(approverId)
+                .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "Approver not found."));
+    }
+
     @Transactional(readOnly = true)
     public List<ApproverCandidate> searchApproverCandidates(String query, int limit) {
         String trimmed = query == null ? "" : query.trim();
@@ -406,16 +435,24 @@ public class ChangeRequestService {
         }
 
         List<ApproverCandidate> candidates = new java.util.ArrayList<>();
-        userMatches.forEach(user -> candidates.add(new ApproverCandidate(
-                user.getId(),
-                "USER",
-                user.getFullName(),
-                user.getEmail())));
+        userMatches.forEach(user -> {
+            String roleName = user.getRoles().stream()
+                    .map(io.audita.infrastructure.persistence.entity.RoleEntity::getName)
+                    .findFirst()
+                    .orElse(null);
+            candidates.add(new ApproverCandidate(
+                    user.getId(),
+                    "USER",
+                    user.getFullName(),
+                    user.getEmail(),
+                    roleName));
+        });
         groupMatches.forEach(group -> candidates.add(new ApproverCandidate(
                 group.getId(),
                 "GROUP",
                 group.getName(),
-                group.getDescription())));
+                group.getDescription(),
+                null)));
         return candidates;
     }
 
@@ -748,7 +785,7 @@ public class ChangeRequestService {
                 .toList();
     }
 
-    public record ApproverCandidate(UUID id, String kind, String label, String secondary) {
+    public record ApproverCandidate(UUID id, String kind, String label, String secondary, String role) {
     }
 
     private void logActivity(ChangeRequestEntity changeRequest,

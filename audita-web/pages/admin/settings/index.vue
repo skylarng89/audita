@@ -592,7 +592,7 @@ import {
   validateSlaDefaults,
 } from "~/composables/adminSettingsForm";
 
-definePageMeta({ layout: "default" });
+definePageMeta({ middleware: ["auth", "admin-only"] });
 
 useHead({ title: "Settings — Audita" });
 

@@ -18,7 +18,7 @@
         <CrStatusBadge :status="changeRequest.status" />
         <CrPriorityBadge :priority="changeRequest.priority" />
         <button
-          v-if="changeRequest.status === 'DRAFT' && !isEditing"
+          v-if="canEditCR && !isEditing"
           class="btn-ghost btn-md"
           @click="enterEditMode"
         >
@@ -501,59 +501,133 @@
         </button>
       </div>
 
-      <div v-if="showAddApprover" class="space-y-3">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+      <div v-if="showAddApprover" class="space-y-4">
+        <div class="relative">
           <input
             v-model="approverSearchQuery"
-            class="input md:col-span-2"
-            placeholder="Search by user name, email, or group name"
-            @input="searchApproverCandidatesAction"
+            class="input w-full"
+            placeholder="Filter users by name or email…"
+            @input="filterApproverCandidates"
           />
-          <label class="flex items-center gap-2 text-sm"
-            ><input v-model="newApproverRequired" type="checkbox" />
-            Required</label
-          >
         </div>
 
         <div
-          v-if="approverSearchResults.length"
-          class="max-h-44 overflow-auto rounded-lg border border-border dark:border-border-dark"
+          class="max-h-52 overflow-auto rounded-lg border border-border dark:border-border-dark divide-y divide-border/60 dark:divide-border-dark/60"
         >
-          <button
-            v-for="candidate in approverSearchResults"
+          <label
+            v-for="candidate in filteredCandidates"
             :key="`${candidate.kind}-${candidate.id}`"
-            type="button"
-            class="w-full px-3 py-2 text-left text-sm hover:bg-surface-container-low dark:hover:bg-slate-800 border-b border-border/60 last:border-b-0 dark:border-border-dark/60"
-            @click="selectApproverCandidate(candidate)"
+            class="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface-container-low dark:hover:bg-slate-800 cursor-pointer"
           >
-            <p class="font-medium">{{ candidate.label }}</p>
-            <p class="text-xs text-muted">
-              {{ candidate.kind }} • {{ candidate.secondary || "No details" }}
-            </p>
-          </button>
+            <input
+              type="checkbox"
+              class="h-4 w-4 accent-primary shrink-0"
+              :checked="!!pendingSelection[candidate.id]"
+              @change="toggleCandidate(candidate, $event)"
+            />
+            <div class="flex-1 min-w-0">
+              <p class="font-medium truncate">{{ candidate.label }}</p>
+              <p class="text-xs text-muted">
+                {{ candidate.kind }}{{ candidate.secondary ? ` • ${candidate.secondary}` : "" }}
+              </p>
+            </div>
+            <button
+              v-if="pendingSelection[candidate.id] && pendingSelection[candidate.id].role !== 'Auditor'"
+              type="button"
+              class="text-xs px-2 py-1 rounded-md shrink-0 transition-colors"
+              :class="
+                pendingSelection[candidate.id].isRequired
+                  ? 'bg-primary/15 text-primary'
+                  : 'bg-surface-container-high text-muted'
+              "
+              @click.stop="toggleRequiredFor(candidate)"
+            >
+              {{ pendingSelection[candidate.id].isRequired ? "Required" : "Optional" }}
+            </button>
+            <span
+              v-else-if="pendingSelection[candidate.id]?.role === 'Auditor'"
+              class="text-xs px-2 py-1 rounded-md shrink-0 bg-surface-container-high text-muted"
+            >
+              Always Optional
+            </span>
+          </label>
+          <div
+            v-if="!filteredCandidates.length"
+            class="px-3 py-6 text-center text-sm text-muted"
+          >
+            No matching users found.
+          </div>
         </div>
 
-        <p v-if="selectedApproverCandidate" class="text-sm text-muted">
-          Selected: {{ selectedApproverCandidate.label }} ({{
-            selectedApproverCandidate.kind
-          }})
-        </p>
-
-        <button
-          class="btn-primary btn-md"
-          :disabled="!selectedApproverCandidate"
-          @click="addApproverAction"
+        <div
+          v-if="selectedCandidateIds.length"
+          class="rounded-lg border border-primary/30 bg-primary/5 dark:bg-primary/10 p-3"
         >
-          Save
-        </button>
+          <p class="text-xs font-medium text-primary mb-2">
+            {{ selectedCandidateIds.length }} selected
+          </p>
+          <div class="flex flex-wrap gap-1.5">
+            <span
+              v-for="cid in selectedCandidateIds"
+              :key="cid"
+              class="inline-flex items-center gap-1.5 rounded-md bg-white dark:bg-slate-800 border border-primary/20 text-xs px-2 py-1 shadow-sm"
+            >
+              <span class="font-medium">{{ pendingSelection[cid]?.label }}</span>
+              <span
+                v-if="pendingSelection[cid]?.role === 'Auditor'"
+                class="text-[10px] px-1 rounded bg-surface-container-high text-muted"
+              >
+                Auditor
+              </span>
+              <span
+                v-else
+                class="text-[10px] px-1 rounded"
+                :class="
+                  pendingSelection[cid]?.isRequired
+                    ? 'bg-primary/15 text-primary'
+                    : 'bg-surface-container-high text-muted'
+                "
+              >
+                {{ pendingSelection[cid]?.isRequired ? "Req" : "Opt" }}
+              </span>
+              <button
+                type="button"
+                class="text-muted hover:text-danger leading-none ml-0.5"
+                @click="removePendingSelection(cid)"
+              >
+                ×
+              </button>
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            class="btn-primary btn-md"
+            :disabled="!selectedCandidateIds.length || isSavingApprovers"
+            @click="batchAddApprovers"
+          >
+            {{ isSavingApprovers ? "Adding…" : `Add ${selectedCandidateIds.length} Approver${selectedCandidateIds.length === 1 ? "" : "s"}` }}
+          </button>
+          <button
+            class="btn-ghost btn-md"
+            @click="cancelAddApprover"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
 
-      <div class="space-y-2">
+      <TransitionGroup
+        name="approver-list"
+        tag="div"
+        class="space-y-2"
+      >
         <div
           v-for="a in sortedApprovers"
           :key="a.id"
-          class="border border-border dark:border-border-dark rounded-lg p-3 flex items-center justify-between gap-3"
-          :class="draggingApproverId === a.id ? 'opacity-60' : ''"
+          class="border border-border dark:border-border-dark rounded-lg p-3 flex items-center justify-between gap-3 transition-all duration-300 ease-out"
+          :class="draggingApproverId === a.id ? 'opacity-60 scale-[0.98]' : ''"
           :draggable="canManageApprovers"
           @dragstart="onApproverDragStart(a.id)"
           @dragend="onApproverDragEnd"
@@ -563,7 +637,7 @@
           <div class="flex items-start gap-3">
             <span
               v-if="canManageApprovers"
-              class="mt-0.5 text-muted cursor-grab active:cursor-grabbing"
+              class="mt-0.5 text-muted cursor-grab active:cursor-grabbing transition-colors hover:text-on-surface"
               title="Drag to reorder"
               aria-hidden="true"
               >::</span>
@@ -572,11 +646,29 @@
               <span class="text-xs text-muted">({{ a.userEmail }})</span>
             </p>
             <p class="text-xs text-muted">
-              Position {{ a.position }} • {{ a.status }} •
-              {{ a.isRequired ? "Required" : "Optional" }}
+              Position {{ a.position }} • {{ a.status }}
             </p>
           </div>
-          <div class="flex gap-2">
+          <div class="flex items-center gap-2">
+            <button
+              v-if="canManageApprovers && a.userRole !== 'Auditor'"
+              type="button"
+              class="text-xs px-2 py-1 rounded-md shrink-0 transition-colors"
+              :class="
+                a.isRequired
+                  ? 'bg-primary/15 text-primary hover:bg-primary/25'
+                  : 'bg-surface-container-high text-muted hover:bg-surface-container'
+              "
+              @click="toggleApproverRequirementAction(a.id, a.isRequired)"
+            >
+              {{ a.isRequired ? "Required" : "Optional" }}
+            </button>
+            <span
+              v-else-if="a.userRole === 'Auditor'"
+              class="text-xs px-2 py-1 rounded-md shrink-0 bg-surface-container-high text-muted"
+            >
+              Always Optional
+            </span>
             <button
               class="btn-ghost btn-md"
               :title="`Move ${a.userFullName} up`"
@@ -603,7 +695,31 @@
             </button>
           </div>
         </div>
-      </div>
+      </TransitionGroup>
+
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="translate-y-2 opacity-0"
+        enter-to-class="translate-y-0 opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="translate-y-0 opacity-100"
+        leave-to-class="translate-y-2 opacity-0"
+      >
+        <div
+          v-if="hasApproverChanges && canManageApprovers"
+          class="mt-4 rounded-lg border border-primary/30 bg-primary/5 dark:bg-primary/10 p-3 flex items-center justify-between gap-3"
+        >
+          <p class="text-sm text-primary font-medium">
+            Approver changes applied
+          </p>
+          <button
+            class="btn-ghost btn-sm"
+            @click="snapshotApproverState()"
+          >
+            Done
+          </button>
+        </div>
+      </Transition>
     </section>
 
     <section v-else-if="tab === 'activity'" class="card p-5">
@@ -662,7 +778,9 @@
         <div
           v-for="comment in comments"
           :key="comment.id"
+          :id="`comment-${comment.id}`"
           class="border border-border dark:border-border-dark rounded-lg p-3"
+          :class="{ 'ring-2 ring-primary/50 bg-primary/5': highlightedCommentId === comment.id }"
         >
           <p class="text-xs text-muted">
             {{ comment.author?.fullName ?? "Unknown" }} •
@@ -679,12 +797,14 @@
       </div>
 
       <div class="space-y-2">
-        <textarea
-          v-model="newComment"
-          class="input"
-          rows="4"
-          placeholder="Add a comment. Mention users with @user@example.com"
-        />
+        <div class="border border-border dark:border-border-dark rounded-lg overflow-hidden">
+          <SharedRichTextToolbar :editor="commentEditor" />
+          <EditorContent
+            :editor="commentEditor"
+            class="rich-editor-content min-h-[120px] p-3"
+            placeholder="Add a comment. Type @ to mention someone…"
+          />
+        </div>
         <div class="flex justify-end">
           <button class="btn-primary btn-md" @click="postCommentAction">
             Post Comment
@@ -773,6 +893,7 @@ import type {
   CustomFieldDefinition,
 } from "~/types";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
+import Mention from "@tiptap/extension-mention";
 import FlatPickr from "vue-flatpickr-component";
 import {
   buildRichTextExtensions,
@@ -808,6 +929,7 @@ const {
   addApprover,
   addApproverGroup,
   removeApprover,
+  updateApproverRequirement,
   reorderApprovers,
   searchApproverCandidates,
   listCustomFields,
@@ -828,7 +950,61 @@ const attachments = ref<Attachment[]>([]);
 const activity = ref<ActivityEntry[]>([]);
 const comments = ref<Comment[]>([]);
 const tab = ref<string>("details");
-const newComment = ref("");
+const highlightedCommentId = ref<string | null>(null);
+
+async function searchMentionUsers(query: string) {
+  try {
+    const results = await api<Array<{ id: string; fullName: string; email: string }>>(
+      "/api/v1/users/search",
+      { query: { q: query, limit: 10 } },
+    );
+    return results.map((u) => ({
+      id: u.id,
+      label: u.fullName,
+      email: u.email,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+const commentEditor = useEditor({
+  extensions: [
+    ...buildRichTextExtensions("Add a comment. Type @ to mention someone…"),
+    Mention.configure({
+      HTMLAttributes: { class: "mention" },
+      suggestion: {
+        char: "@",
+        items: async ({ query }: { query: string }) => {
+          const users = await searchMentionUsers(query);
+          return users.map((u) => ({
+            id: u.id,
+            label: u.label,
+            email: u.email,
+          }));
+        },
+        render: () => {
+          let popup: { destroy: () => void } | null = null;
+          return {
+            onStart: (props: any) => {
+              popup = createMentionPopup(props);
+            },
+            onUpdate: (props: any) => {
+              popup?.update(props);
+            },
+            onKeyDown: (props: any) => {
+              return popup?.onKeyDown(props) ?? false;
+            },
+            onExit: () => {
+              popup?.destroy();
+            },
+          };
+        },
+      },
+    }),
+  ],
+  immediatelyRender: false,
+});
 
 const sortedApprovers = computed(() =>
   [...approvers.value].sort((left, right) => left.position - right.position),
@@ -839,6 +1015,12 @@ const recordedVotes = computed(() =>
 const isCreator = computed(
   () => !!changeRequest.value && changeRequest.value.createdBy === auth.userId,
 );
+const canEditCR = computed(() => {
+  if (!changeRequest.value) return false;
+  if (changeRequest.value.status !== "DRAFT") return false;
+  if (auth.role === "Auditor") return false;
+  return isCreator.value || auth.isSuperAdmin || auth.role === "Admin";
+});
 const creatorCanSelfApprove = computed(
   () => auth.isSuperAdmin || auth.role === "Admin",
 );
@@ -972,8 +1154,70 @@ function onTabKeyDown(e: KeyboardEvent, key: string) {
 const showAddApprover = ref(false);
 const approverSearchQuery = ref("");
 const approverSearchResults = ref<ApproverCandidate[]>([]);
-const selectedApproverCandidate = ref<ApproverCandidate | null>(null);
-const newApproverRequired = ref(true);
+const approverCandidates = ref<ApproverCandidate[]>([]);
+const isSavingApprovers = ref(false);
+
+interface ApproverSnapshot {
+  [id: string]: { isRequired: boolean; position: number };
+}
+
+const originalApproverState = ref<ApproverSnapshot>({});
+const approverDirty = ref(false);
+
+function snapshotApproverState() {
+  const snap: ApproverSnapshot = {};
+  for (const a of approvers.value) {
+    snap[a.id] = { isRequired: a.isRequired, position: a.position };
+  }
+  originalApproverState.value = snap;
+  approverDirty.value = false;
+}
+
+function markApproverDirty() {
+  approverDirty.value = true;
+}
+
+const hasApproverChanges = computed(() => approverDirty.value);
+
+interface PendingApprover {
+  id: string;
+  kind: "USER" | "GROUP";
+  label: string;
+  isRequired: boolean;
+  role: string | null;
+}
+
+const pendingSelection = ref<Record<string, PendingApprover>>({});
+
+const existingApproverIds = computed(() => {
+  const ids = new Set<string>();
+  for (const a of approvers.value) {
+    if (a.userId) ids.add(a.userId);
+  }
+  return ids;
+});
+
+const availableCandidates = computed(() =>
+  approverCandidates.value.filter(
+    (c) =>
+      c.kind === "GROUP" ||
+      (!existingApproverIds.value.has(c.id) && c.id !== auth.userId),
+  ),
+);
+
+const filteredCandidates = computed(() => {
+  const q = approverSearchQuery.value.trim().toLowerCase();
+  if (!q) return availableCandidates.value;
+  return availableCandidates.value.filter(
+    (c) =>
+      c.label.toLowerCase().includes(q) ||
+      (c.secondary && c.secondary.toLowerCase().includes(q)),
+  );
+});
+
+const selectedCandidateIds = computed(() =>
+  Object.keys(pendingSelection.value),
+);
 const fileInput = ref<HTMLInputElement | null>(null);
 
 const showReject = ref(false);
@@ -1172,6 +1416,7 @@ async function loadAll() {
     ]);
     changeRequest.value = cr;
     approvers.value = approverList;
+    snapshotApproverState();
     customFields.value = savedFields;
     fieldDefinitions.value = definitions;
     attachments.value = attachmentList;
@@ -1238,6 +1483,12 @@ function activitySummary(event: ActivityEntry) {
   if (typeof reason === "string" && reason.trim()) {
     return reason.trim();
   }
+  if (event.actionType === "CR_APPROVERS_REORDERED") {
+    const count = event.payload?.count;
+    if (typeof count === "number") {
+      return `Reordered ${count} approver${count === 1 ? "" : "s"}.`;
+    }
+  }
   const mentions = event.payload?.mentions;
   if (typeof mentions === "number" && mentions > 0) {
     return `${mentions} mention${mentions === 1 ? "" : "s"} included in this comment.`;
@@ -1254,6 +1505,7 @@ function activityFields(event: ActivityEntry) {
       ([key, value]) =>
         !key.endsWith("Id") &&
         key !== "reason" &&
+        key !== "count" &&
         value !== null &&
         value !== undefined,
     )
@@ -1417,58 +1669,91 @@ async function rejectCr() {
   }
 }
 
-async function addApproverAction() {
-  if (!selectedApproverCandidate.value) {
+async function batchAddApprovers() {
+  const selections = Object.values(pendingSelection.value);
+  if (!selections.length || !canManageApprovers.value) {
     return;
   }
 
-  if (!canManageApprovers.value) {
-    toastError(approverManagementDisabledReason.value ?? "Approvers cannot be changed right now.");
-    return;
-  }
-
+  isSavingApprovers.value = true;
   try {
-    if (selectedApproverCandidate.value.kind === "USER") {
-      await addApprover(id.value, {
-        userId: selectedApproverCandidate.value.id,
-        isRequired: newApproverRequired.value,
-      });
-    } else {
-      await addApproverGroup(id.value, {
-        groupId: selectedApproverCandidate.value.id,
-        isRequired: newApproverRequired.value,
-      });
+    for (const sel of selections) {
+      if (sel.kind === "USER") {
+        await addApprover(id.value, {
+          userId: sel.id,
+          isRequired: sel.isRequired,
+        });
+      } else {
+        await addApproverGroup(id.value, {
+          groupId: sel.id,
+          isRequired: sel.isRequired,
+        });
+      }
     }
 
     approvers.value = await listApprovers(id.value);
+    snapshotApproverState();
     activity.value = await listActivity(id.value);
-    showAddApprover.value = false;
-    approverSearchQuery.value = "";
-    approverSearchResults.value = [];
-    selectedApproverCandidate.value = null;
+    resetAddApproverPanel();
   } catch (error: unknown) {
-    toastError(extractErrorMessage(error, "Unable to add approver."));
+    toastError(extractErrorMessage(error, "Unable to add approvers."));
+  } finally {
+    isSavingApprovers.value = false;
   }
 }
 
-async function searchApproverCandidatesAction() {
-  const q = approverSearchQuery.value.trim();
-  approverSearchResults.value = await searchApproverCandidates(q, 12);
+function resetAddApproverPanel() {
+  showAddApprover.value = false;
+  approverSearchQuery.value = "";
+  pendingSelection.value = {};
 }
 
-watch(showAddApprover, async (isOpen) => {
-  if (!isOpen) {
-    return;
-  }
-  if (!approverSearchResults.value.length) {
-    await searchApproverCandidatesAction();
-  }
-});
+function cancelAddApprover() {
+  resetAddApproverPanel();
+}
 
-function selectApproverCandidate(candidate: ApproverCandidate) {
-  selectedApproverCandidate.value = candidate;
-  approverSearchQuery.value = candidate.label;
-  approverSearchResults.value = [];
+async function loadApproverCandidates() {
+  if (!approverCandidates.value.length) {
+    approverCandidates.value = await searchApproverCandidates("", 50);
+  }
+}
+
+function filterApproverCandidates() {
+  // filteredCandidates computed handles filtering; just trigger reactivity
+}
+
+function toggleCandidate(candidate: ApproverCandidate, event: Event) {
+  const checked = (event.target as HTMLInputElement).checked;
+  if (checked) {
+    const isAuditor = candidate.role === "Auditor";
+    pendingSelection.value[candidate.id] = {
+      id: candidate.id,
+      kind: candidate.kind,
+      label: candidate.label,
+      isRequired: isAuditor ? false : false,
+      role: candidate.role,
+    };
+  } else {
+    const copy = { ...pendingSelection.value };
+    delete copy[candidate.id];
+    pendingSelection.value = copy;
+  }
+}
+
+function toggleRequiredFor(candidate: ApproverCandidate) {
+  const existing = pendingSelection.value[candidate.id];
+  if (existing) {
+    pendingSelection.value = {
+      ...pendingSelection.value,
+      [candidate.id]: { ...existing, isRequired: !existing.isRequired },
+    };
+  }
+}
+
+function removePendingSelection(candidateId: string) {
+  const copy = { ...pendingSelection.value };
+  delete copy[candidateId];
+  pendingSelection.value = copy;
 }
 
 async function removeApproverAction(approverId: string) {
@@ -1479,9 +1764,29 @@ async function removeApproverAction(approverId: string) {
   try {
     await removeApprover(id.value, approverId);
     approvers.value = await listApprovers(id.value);
+    snapshotApproverState();
     activity.value = await listActivity(id.value);
   } catch (error: unknown) {
     toastError(extractErrorMessage(error, "Unable to remove approver."));
+  }
+}
+
+async function toggleApproverRequirementAction(approverId: string, currentRequired: boolean) {
+  if (!canManageApprovers.value) {
+    toastError(approverManagementDisabledReason.value ?? "Approvers cannot be changed right now.");
+    return;
+  }
+  const newVal = !currentRequired;
+  try {
+    const updated = await updateApproverRequirement(id.value, approverId, newVal);
+    const idx = approvers.value.findIndex((a) => a.id === approverId);
+    if (idx >= 0) {
+      approvers.value[idx] = updated;
+    }
+    markApproverDirty();
+    activity.value = await listActivity(id.value);
+  } catch (error: unknown) {
+    toastError(extractErrorMessage(error, "Unable to update approver requirement."));
   }
 }
 
@@ -1558,6 +1863,7 @@ async function onApproverDrop(targetApproverId: string) {
 async function applyApproverOrder(order: string[]) {
   try {
     approvers.value = await reorderApprovers(id.value, order);
+    snapshotApproverState();
     activity.value = await listActivity(id.value);
   } catch (error: unknown) {
     toastError(extractErrorMessage(error, "Unable to reorder approvers."));
@@ -1566,13 +1872,15 @@ async function applyApproverOrder(order: string[]) {
 }
 
 async function postCommentAction() {
-  const body = newComment.value.trim();
-  if (!body) {
+  if (!commentEditor.value) return;
+  const body = commentEditor.value.getHTML().trim();
+  const textContent = commentEditor.value.getText().trim();
+  if (!textContent) {
     return;
   }
   try {
     await postComment(id.value, body);
-    newComment.value = "";
+    commentEditor.value.commands.clearContent();
     comments.value = await listComments(id.value);
     activity.value = await listActivity(id.value);
   } catch (error: unknown) {
@@ -1580,12 +1888,184 @@ async function postCommentAction() {
   }
 }
 
+function createMentionPopup(props: any) {
+  const popup = document.createElement("div");
+  popup.setAttribute("data-mention-popup", "");
+  popup.style.cssText =
+    "position:fixed;z-index:9999;min-width:256px;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:4px;font-size:14px;";
+
+  const listEl = document.createElement("div");
+  popup.appendChild(listEl);
+
+  let currentCommand = props.command;
+  let currentItems = props.items || [];
+  let selectedIndex = props.selectedIndex || 0;
+
+  function renderItems(items: any[], idx: number) {
+    currentItems = items;
+    selectedIndex = idx;
+    listEl.innerHTML = "";
+    if (!items.length) {
+      const empty = document.createElement("div");
+      empty.style.cssText = "padding:8px 12px;color:#6b7280;font-size:12px;";
+      empty.textContent = "Searching…";
+      listEl.appendChild(empty);
+      return;
+    }
+    items.forEach((item, i) => {
+      const row = document.createElement("div");
+      row.style.cssText =
+        "display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:4px;cursor:pointer;" +
+        (i === idx
+          ? "background:#e8edf5;color:#1d3a8a;"
+          : "color:#111827;");
+      row.addEventListener("mouseenter", () => {
+        if (selectedIndex !== i) {
+          renderItems(currentItems, i);
+        }
+      });
+      const nameSpan = document.createElement("span");
+      nameSpan.style.cssText = "font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
+      nameSpan.textContent = item.label;
+      const emailSpan = document.createElement("span");
+      emailSpan.style.cssText = "font-size:11px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-left:auto;";
+      emailSpan.textContent = item.email;
+      row.appendChild(nameSpan);
+      row.appendChild(emailSpan);
+      row.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        currentCommand(item);
+      });
+      listEl.appendChild(row);
+    });
+  }
+
+  function position(rect: DOMRect | null) {
+    if (!rect) return;
+    const x = rect.left + window.scrollX;
+    const y = rect.bottom + window.scrollY + 4;
+    popup.style.left = `${Math.min(x, window.innerWidth - 272)}px`;
+    popup.style.top = `${Math.min(y, window.innerHeight - 210 + window.scrollY)}px`;
+  }
+
+  document.body.appendChild(popup);
+  renderItems(props.items || [], props.selectedIndex || 0);
+  position(props.clientRect);
+
+  return {
+    update: (updatedProps: any) => {
+      currentCommand = updatedProps.command;
+      renderItems(updatedProps.items || [], updatedProps.selectedIndex || 0);
+      position(updatedProps.clientRect);
+    },
+    onKeyDown: (updatedProps: any) => {
+      const items = updatedProps.items || [];
+      if (!items.length) return false;
+      if (updatedProps.event.key === "ArrowUp") {
+        updatedProps.event.preventDefault();
+        const idx = (selectedIndex + items.length - 1) % items.length;
+        renderItems(items, idx);
+        return true;
+      }
+      if (updatedProps.event.key === "ArrowDown" || updatedProps.event.key === "Tab") {
+        updatedProps.event.preventDefault();
+        const idx = (selectedIndex + 1) % items.length;
+        renderItems(items, idx);
+        return true;
+      }
+      if (updatedProps.event.key === "Enter") {
+        updatedProps.event.preventDefault();
+        currentCommand(items[selectedIndex]);
+        return true;
+      }
+      return false;
+    },
+    destroy: () => {
+      popup.remove();
+    },
+  };
+}
+
 onMounted(() => {
   loadAll();
+
+  const commentId = route.query.commentId as string | undefined;
+  if (commentId) {
+    scrollToCommentAfterLoad(commentId);
+  }
 });
+
+function scrollToCommentAfterLoad(commentId: string) {
+  const maxAttempts = 20;
+  let attempts = 0;
+  const timer = setInterval(() => {
+    attempts++;
+    const el = document.getElementById(`comment-${commentId}`);
+    if (el) {
+      clearInterval(timer);
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      highlightedCommentId.value = commentId;
+      setTimeout(() => {
+        if (highlightedCommentId.value === commentId) {
+          highlightedCommentId.value = null;
+        }
+      }, 4000);
+      return;
+    }
+    if (attempts >= maxAttempts) {
+      clearInterval(timer);
+    }
+  }, 200);
+}
 
 watch(
   () => [editForm.scheduledStartDate, editForm.scheduledStartTime],
   () => onEditStartChange(),
 );
+
+watch(showAddApprover, async (isOpen) => {
+  if (!isOpen) {
+    return;
+  }
+  await loadApproverCandidates();
+});
 </script>
+
+<style scoped>
+:deep(.mention) {
+  background: rgba(29, 58, 138, 0.1);
+  color: #1d3a8a;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  font-weight: 500;
+  cursor: default;
+}
+
+.dark :deep(.mention) {
+  background: rgba(96, 165, 250, 0.15);
+  color: #60a5fa;
+}
+
+.approver-list-move {
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.approver-list-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.approver-list-leave-active {
+  transition: all 0.2s ease-in;
+  position: absolute;
+}
+
+.approver-list-enter-from {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.approver-list-leave-to {
+  opacity: 0;
+  transform: translateX(20px);
+}
+</style>

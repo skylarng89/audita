@@ -8,12 +8,14 @@ public record ApproverCandidateResponse(
         UUID id,
         String kind,
         String label,
-        String secondary) {
+        String secondary,
+        String role) {
     public static ApproverCandidateResponse from(ChangeRequestService.ApproverCandidate candidate) {
         return new ApproverCandidateResponse(
                 candidate.id(),
                 candidate.kind(),
                 candidate.label(),
-                candidate.secondary());
+                candidate.secondary(),
+                candidate.role());
     }
 }
