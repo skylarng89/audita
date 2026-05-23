@@ -23,9 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -130,10 +128,11 @@ public class AuditTrailController {
                 effectiveFrom,
                 effectiveTo,
                 linkExpiryHours);
-        return ResponseEntity.accepted().body(Map.of(
+        Map<String, Object> response = Map.of(
                 "requestId", requestId,
                 "status", "PENDING",
-                "message", "Export queued and will be sent to your email."));
+                "message", "Export queued and will be sent to your email.");
+        return ResponseEntity.accepted().body(response);
     }
 
     @GetMapping("/exports/download/{token}")

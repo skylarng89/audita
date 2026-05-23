@@ -24,7 +24,7 @@ public interface AuditTrailPort {
                                LocalDate from,
                                LocalDate to);
 
-    record AuditLogEntry(
+    public record AuditLogEntry(
             UUID id,
             UUID actorId,
             String actorFullName,
