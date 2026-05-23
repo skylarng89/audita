@@ -1,5 +1,34 @@
 # Audita — Changelog
 
+## [0.6.2] — 2026-05-23
+
+### Changed (Post-Sprint Approver Workflow Flexibility — 2026-05-23)
+
+- **Default approver behavior**: configured default users/groups are now always auto-added on CR create/submit when configured; behavior no longer depends on `workflow.require_default_approvers` gate.
+- **Pending-approval approver management**: requester/admin can add, remove, reorder, and change requirement flags while CR is `PENDING_APPROVAL` (not only `DRAFT`).
+- **Vote safety rule**: approvers with non-pending vote (`APPROVED`/`REJECTED`) cannot be removed (`APPROVER_DECISION_LOCKED`).
+- **Audit trail parity for approver mutations**: approver add/group-add/remove/reorder/requirement-change actions now emit explicit audit log entries in addition to activity stream events.
+
+### Fixed (Admin Settings UX Clarity — 2026-05-23)
+
+- Replaced ambiguous workflow checkbox wording with explicit message that configured default approver users/groups are always auto-added.
+
+### Added (Activity Stream Readability + Regression Tests — 2026-05-23)
+
+- Added human-readable activity summaries for:
+  - `CR_APPROVER_ADDED`
+  - `CR_APPROVER_GROUP_ADDED`
+  - `CR_APPROVER_REMOVED`
+  - `CR_APPROVER_REQUIREMENT_CHANGED`
+  - `CR_APPROVERS_REORDERED`
+- Extracted summary logic into reusable frontend helper (`activitySummary.ts`) and added dedicated unit tests.
+
+### Verification (Post-Sprint Approver Workflow Flexibility — 2026-05-23)
+
+- `cd audita-api && ./gradlew :infrastructure:test --tests "io.audita.infrastructure.service.ChangeRequestServiceSecurityTest" --no-daemon`.
+- `cd audita-web && pnpm -s nuxi typecheck`.
+- `cd audita-web && pnpm test` (14 files, 47 tests).
+
 ## [0.6.1] — 2026-05-23
 
 ### Fixed (Post-Sprint Container Hardening — 2026-05-23)

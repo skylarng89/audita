@@ -460,3 +460,28 @@ All Sprint 12 tasks completed. v0.6.0 released.
 - `docker compose -f docker-compose.local.yml ps`
 - `docker compose -f docker-compose.local.yml logs --no-color --tail=200 api`
 - `curl -sS -o /tmp/audita-health.json -w "%{http_code}" http://localhost:7080/actuator/health`
+
+## Post-Sprint 5 — Approver Mutation Expansion + Activity Summary Tests (2026-05-23)
+
+### Objectives
+
+1. Allow approver add/remove/reorder/requirement updates while CR is `PENDING_APPROVAL`.
+2. Enforce vote safety: voted approvers cannot be removed.
+3. Ensure activity stream and audit trail fully capture approver mutation actions.
+4. Add frontend unit coverage for human-readable activity summaries.
+
+### Work Items
+
+- APV-001: Remove approval-lock gate for approver management operations and allow open-state (`DRAFT`, `PENDING_APPROVAL`) mutation. ✅
+- APV-002: Add voted-approver removal guard (`APPROVER_DECISION_LOCKED`). ✅
+- APV-003: Add audit log events for approver add/group-add/remove/reorder/requirement-change. ✅
+- APV-004: Update CR detail UI to allow approver management in `PENDING_APPROVAL`. ✅
+- APV-005: Disable remove action for voted approvers with explicit tooltip reason. ✅
+- APV-006: Clarify admin settings UX: configured default approvers are always auto-added. ✅
+- APV-007: Extract activity summary helper + add dedicated unit tests. ✅
+
+### Verification
+
+- `cd audita-api && ./gradlew :infrastructure:test --tests "io.audita.infrastructure.service.ChangeRequestServiceSecurityTest" --no-daemon`
+- `cd audita-web && pnpm -s nuxi typecheck`
+- `cd audita-web && pnpm test`

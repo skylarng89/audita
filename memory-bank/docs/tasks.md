@@ -1664,3 +1664,47 @@
 - `docker compose -f docker-compose.local.yml up -d --build` passes.
 - `docker compose -f docker-compose.local.yml ps` shows `api` and `web` up.
 - `curl http://localhost:7080/actuator/health` returns `200`.
+
+---
+
+## Post-Sprint 5: Approver Workflow Flexibility + Activity Summary Coverage (2026-05-23)
+
+> **Goal:** Enable approver list mutation while CR is open (`DRAFT`/`PENDING_APPROVAL`) with vote-safety constraints and complete activity/audit visibility.
+
+| Task ID | Task | Priority | Status | Assigned To | Notes |
+| ------- | ---- | -------- | ------ | ----------- | ----- |
+| APV-001 | Allow approver add/remove/reorder in `PENDING_APPROVAL` | High | ✅ Completed | Developer 1 | Removed approval-lock gate for approver mutation path; open-state check used instead |
+| APV-002 | Prevent removal of approvers who already voted | High | ✅ Completed | Developer 1 | Backend guard throws `APPROVER_DECISION_LOCKED` when target status is not `PENDING` |
+| APV-003 | Emit audit events for approver mutation actions | High | ✅ Completed | Developer 1 | Added audit logs for add/group-add/remove/reorder/requirement-change |
+| APV-004 | Update CR detail UI approver controls for open-state mutation | High | ✅ Completed | Developer 2 | `canManageApprovers` now supports `PENDING_APPROVAL`; reorder remains enabled |
+| APV-005 | Disable remove button for voted approvers with reason | Medium | ✅ Completed | Developer 2 | Row-level remove disable + tooltip “Approvers who already voted cannot be removed.” |
+| APV-006 | Align admin settings copy with always-auto-add default approvers | Medium | ✅ Completed | Developer 2 | Removed misleading checkbox UX and replaced with explanatory text |
+| APV-007 | Add activity summary helper and regression tests | Medium | ✅ Completed | Developer 2 | Added `composables/activitySummary.ts` + `tests/change-requests/activity-summary.spec.ts` |
+
+### Recent Implementations
+
+### Approver Mutation Expansion + Activity Summary Tests (Completed 2026-05-23)
+
+**Overview**: Expanded approver management to open workflow states, introduced vote-safe removal constraints, completed audit trail parity for approver mutations, and added test-backed activity summary rendering.
+
+**Files Created/Modified**:
+
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — open-state approver mutation rules, voted-removal guard, and audit logging for approver actions.
+- `audita-api/infrastructure/src/test/java/io/audita/infrastructure/service/ChangeRequestServiceSecurityTest.java` — pending-approval mutation and voted-removal guard regressions.
+- `audita-web/pages/change-requests/[id].vue` — approver management in `PENDING_APPROVAL`, row-level remove gating, activity summary helper usage.
+- `audita-web/composables/activitySummary.ts` — extracted human-readable activity summary logic.
+- `audita-web/tests/change-requests/activity-summary.spec.ts` — summary regression tests.
+- `audita-web/pages/admin/settings/index.vue` — clarified default approver behavior copy and forced consistent save/load behavior.
+
+**Key Changes**:
+
+- Approver list can be updated during `PENDING_APPROVAL`.
+- Voted approvers are immutable for removal operations.
+- Activity stream and audit trail now both reflect approver mutations with consistent action types.
+- Activity summary rendering is unit-tested and no longer page-inline only.
+
+**Test Coverage**:
+
+- `cd audita-api && ./gradlew :infrastructure:test --tests "io.audita.infrastructure.service.ChangeRequestServiceSecurityTest" --no-daemon` passes.
+- `cd audita-web && pnpm -s nuxi typecheck` passes.
+- `cd audita-web && pnpm test` passes (14 files, 47 tests).

@@ -1,7 +1,7 @@
 # Audita — Active Context
 
 **Last Updated:** 2026-05-23
-**Current Phase:** Post-Sprint container hardening + DHI runtime compatibility verification complete
+**Current Phase:** Post-Sprint approver workflow mutation expansion + activity summary coverage complete
 **Active Sprint:** Sprint 13 (completed)
 
 ---
@@ -38,7 +38,8 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 | Post-Sprint 2 | 8/8 | 8 | Approver UX Polish + Activity Stream + CI Trivy Fix | 2026-05-22 |
 | Post-Sprint 3 | 9/9 | 9 | Mention UX + Comment Deep-Link + Nuxt API XSS Validator Scope Fix | 2026-05-22 |
 | Post-Sprint 4 | 6/6 | 6 | DHI Hardened Runtime + Docker Build Reliability | 2026-05-23 |
-| **TOTAL** | **237/237** | **237** | — | — |
+| Post-Sprint 5 | 7/7 | 7 | Approver Workflow Flexibility + Activity Summary Test Coverage | 2026-05-23 |
+| **TOTAL** | **244/244** | **244** | — | — |
 
 **Sprint 12: Launch Readiness** — All 6 tasks completed. v0.6.0 released.
 
@@ -139,13 +140,13 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 
 ## Current Blockers
 
-- **No active implementation blockers.** DHI runtime/container issues are resolved: hardened API runtime runs without shell/package-manager assumptions, healthchecks no longer depend on curl, and local compose stack builds/starts cleanly.
-- **Current baseline remains healthy:** local compose stack (`api`, `web`) is up, API actuator health returns `200`, startup logs confirm successful boot and tenant migration path completion, and focused regressions for visibility + approver-submit/closure semantics pass.
+- **No active implementation blockers.** Approver management flow now supports add/remove/reorder in `PENDING_APPROVAL` with vote-safety guard (voted approvers cannot be removed), and default approvers are always auto-added when configured.
+- **Current baseline remains healthy:** backend approver security suite passes, frontend `typecheck` passes, and frontend tests pass (`47` tests across `14` files).
 
 ---
 
 ## Next Actions
 
-1. Run targeted RBAC/approval regression checks in running stack (requester visibility + optional-only approver closure + submit-without-approver guard).
-2. Execute CI dry-run on feature branch to validate hardened Docker path and release gates end-to-end.
-3. Prepare v0.7.0 release candidate notes including Post-Sprint 4 container hardening outcomes.
+1. Execute CI dry-run on feature branch to validate full approver-mutation path (activity + audit trail events included).
+2. Add/verify integration coverage for pending-approval approver mutation endpoints via API-level tests.
+3. Prepare v0.7.0 release candidate notes including Post-Sprint 4+5 outcomes.
