@@ -4,7 +4,6 @@ import io.audita.api.dto.request.InviteUserRequest;
 import io.audita.api.dto.response.PageResponse;
 import io.audita.api.dto.request.UpdateUserRequest;
 import io.audita.api.dto.response.UserResponse;
-import io.audita.domain.model.UserStatus;
 import io.audita.infrastructure.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;

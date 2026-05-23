@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD060 -->
+
 # Audita - Developer Task List
 
 **Project:** Audita - Multi-Tenant ITIL/ITSM Change Management Platform
