@@ -416,3 +416,29 @@
 - `docker compose -f docker-compose.local.yml build api` succeeds with hardened image.
 - `docker compose -f docker-compose.local.yml up -d --build` brings up `api` and `web`.
 - API actuator endpoint returns HTTP 200 at `http://localhost:7080/actuator/health`.
+
+---
+
+## ADR-020: Approver Mutations Allowed in `PENDING_APPROVAL` with Vote-Safe Removal
+
+**Date:** 2026-05-23
+**Status:** Accepted
+
+**Decision:** Allow approver list mutations (add/remove/reorder/requirement update) while CR is open (`DRAFT` or `PENDING_APPROVAL`), but prohibit removal of any approver who has already voted (`APPROVED` or `REJECTED`).
+
+**Reasoning:**
+
+- Operationally, change workflows need flexibility to adjust approver routing after submission without cancelling and recreating CRs.
+- Preserving vote integrity is mandatory: once an approver has cast a decision, removing that approver would invalidate historical approval semantics.
+- Existing activity events already model approver mutations; extending this to `PENDING_APPROVAL` is low-risk when combined with strict voted-removal guard.
+
+**Trade-offs:**
+
+- Workflow becomes more dynamic, increasing responsibility for clear activity/audit observability.
+- Reordering during pending approvals can affect human expectation of sequence in linear flows, but this is acceptable with explicit event logging.
+
+**Validation:**
+
+- Backend regression tests pass for pending-approval removal allow/deny paths, including `APPROVER_DECISION_LOCKED`.
+- Frontend UI enforces row-level remove disable for voted approvers with explicit reason text.
+- Audit trail now records approver add/group-add/remove/reorder/requirement-change actions.
