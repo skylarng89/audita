@@ -1,16 +1,19 @@
 allowBuilds:
-  '@parcel/watcher': true
+  "@parcel/watcher": true
   esbuild: true
   unrs-resolver: true
   vue-demi: true
 minimumReleaseAgeExclude:
-  - '@vitest/expect@4.1.7'
-  - '@vitest/mocker@4.1.7'
-  - '@vitest/pretty-format@4.1.7'
-  - '@vitest/runner@4.1.7'
-  - '@vitest/snapshot@4.1.7'
-  - '@vitest/spy@4.1.7'
-  - '@vitest/utils@4.1.7'
+  - "@vitest/expect@4.1.7"
+  - "@vitest/mocker@4.1.7"
+  - "@vitest/pretty-format@4.1.7"
+  - "@vitest/runner@4.1.7"
+  - "@vitest/snapshot@4.1.7"
+  - "@vitest/spy@4.1.7"
+  - "@vitest/utils@4.1.7"
   - vitest@4.1.7
   - semver@7.8.1
   - terser@5.48.0
+  - "comment-parser@1.4.7"
+  - "date-fns@4.3.0"
+  - "tinyexec@1.2.2"
