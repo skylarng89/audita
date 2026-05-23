@@ -8,6 +8,14 @@ export default defineNuxtConfig({
 
   modules: ["@pinia/nuxt", "@nuxt/eslint", "nuxt-security"],
 
+  routeRules: {
+    "/api/**": {
+      security: {
+        xssValidator: false,
+      },
+    },
+  },
+
   security: {
     csrf: false,
     nonce: false,

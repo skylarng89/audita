@@ -338,7 +338,7 @@ import { EditorContent, useEditor } from "@tiptap/vue-3";
 import FlatPickr from "vue-flatpickr-component";
 import { buildRichTextExtensions } from "~/composables/richText";
 
-definePageMeta({ middleware: "auth" });
+definePageMeta({ middleware: ["auth", "can-create-cr"] });
 
 useHead({ title: "Create Change Request — Audita" });
 

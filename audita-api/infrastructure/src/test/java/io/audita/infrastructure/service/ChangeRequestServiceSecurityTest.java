@@ -1,7 +1,10 @@
 package io.audita.infrastructure.service;
 
 import io.audita.domain.exception.DomainNotPermittedException;
+import io.audita.domain.exception.InvalidStateTransitionException;
 import io.audita.domain.model.ApprovalType;
+import io.audita.domain.model.ApproverStatus;
+import io.audita.domain.model.ChangeRequestStatus;
 import io.audita.domain.model.Priority;
 import io.audita.domain.model.RiskLevel;
 import io.audita.domain.model.UserStatus;
@@ -15,11 +18,16 @@ import io.audita.infrastructure.persistence.repository.ChangeRequestRepository;
 import io.audita.infrastructure.persistence.repository.CrApproverRepository;
 import io.audita.infrastructure.persistence.repository.OrgSettingRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
+import io.audita.infrastructure.security.HtmlSanitizer;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.OffsetDateTime;
@@ -30,9 +38,12 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class ChangeRequestServiceSecurityTest {
@@ -53,9 +64,38 @@ class ChangeRequestServiceSecurityTest {
     OrgSettingRepository orgSettingRepository;
     @Mock
     AuditLogService auditLogService;
+    @Mock
+    HtmlSanitizer htmlSanitizer;
 
     @InjectMocks
     ChangeRequestService changeRequestService;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(htmlSanitizer.sanitize(any())).thenAnswer(invocation -> invocation.getArgument(0));
+    }
+
+    @Test
+    void listGrantsGlobalVisibilityForAuditor() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(changeRequestRepository.findAllFiltered(any(), any(), any(), any(), any(), eq(true), any(), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        changeRequestService.list(null, null, null, null, UUID.randomUUID(), "AUDITOR", pageable);
+
+        verify(changeRequestRepository).findAllFiltered(any(), any(), any(), any(), any(), eq(true), any(), eq(pageable));
+    }
+
+    @Test
+    void listRestrictsVisibilityForRequester() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(changeRequestRepository.findAllFiltered(any(), any(), any(), any(), any(), eq(false), any(), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        changeRequestService.list(null, null, null, null, UUID.randomUUID(), "REQUESTER", pageable);
+
+        verify(changeRequestRepository).findAllFiltered(any(), any(), any(), any(), any(), eq(false), any(), eq(pageable));
+    }
 
     @Test
     void updateDeniesRequesterWhoDoesNotOwnChangeRequest() {
@@ -110,6 +150,24 @@ class ChangeRequestServiceSecurityTest {
     }
 
     @Test
+    void submitRequiresAtLeastOneApprover() {
+        UUID changeRequestId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+
+        ChangeRequestEntity changeRequest = buildDraftChangeRequest(ownerId);
+        ReflectionTestUtils.setField(changeRequest, "id", changeRequestId);
+        when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
+        when(crApproverRepository.countByChangeRequestId(changeRequestId)).thenReturn(0);
+
+        InvalidStateTransitionException ex = assertThrows(
+                InvalidStateTransitionException.class,
+                () -> changeRequestService.submit(changeRequestId, ownerId, "REQUESTER"));
+
+        assertThat(ex.getErrorCode()).isEqualTo("APPROVERS_REQUIRED");
+        verifyNoInteractions(activityStreamRepository);
+    }
+
+    @Test
     void submitUsesConfiguredSlaHoursForOwner() {
         UUID changeRequestId = UUID.randomUUID();
         UUID ownerId = UUID.randomUUID();
@@ -119,11 +177,13 @@ class ChangeRequestServiceSecurityTest {
         changeRequest.setPriority(Priority.HIGH);
 
         when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
-        when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId)).thenReturn(List.of());
-        when(userRepository.findDistinctByRoles_NameInAndStatusOrderByFullNameAsc(
-                List.of("Approver", "Auditor", "Admin"),
-                UserStatus.ACTIVE))
-                .thenReturn(List.of());
+        when(orgSettingRepository.findById("workflow.default_approver_user_ids"))
+                .thenReturn(Optional.of(new io.audita.infrastructure.persistence.entity.OrgSettingEntity(
+                        "workflow.default_approver_user_ids", "")));
+        when(orgSettingRepository.findById("workflow.default_approver_group_ids"))
+                .thenReturn(Optional.of(new io.audita.infrastructure.persistence.entity.OrgSettingEntity(
+                        "workflow.default_approver_group_ids", "")));
+        when(crApproverRepository.countByChangeRequestId(changeRequestId)).thenReturn(1);
         when(orgSettingRepository.findById("sla.deadline_hours.high"))
                 .thenReturn(Optional.of(new io.audita.infrastructure.persistence.entity.OrgSettingEntity(
                         "sla.deadline_hours.high", "36")));
@@ -148,48 +208,35 @@ class ChangeRequestServiceSecurityTest {
         ReflectionTestUtils.setField(changeRequest, "id", changeRequestId);
 
         UserEntity approverUser = new UserEntity("approver@example.com", "Approver User");
-        ReflectionTestUtils.setField(approverUser, "id", UUID.randomUUID());
+        UUID configuredUserId = UUID.randomUUID();
+        ReflectionTestUtils.setField(approverUser, "id", configuredUserId);
         approverUser.setStatus(UserStatus.ACTIVE);
         approverUser.setRole(new io.audita.infrastructure.persistence.entity.RoleEntity("Approver", ""));
 
-        UserEntity auditorUser = new UserEntity("auditor@example.com", "Auditor User");
-        ReflectionTestUtils.setField(auditorUser, "id", UUID.randomUUID());
-        auditorUser.setStatus(UserStatus.ACTIVE);
-        auditorUser.setRole(new io.audita.infrastructure.persistence.entity.RoleEntity("Auditor", ""));
-
-        UserEntity adminUser = new UserEntity("admin@example.com", "Admin User");
-        ReflectionTestUtils.setField(adminUser, "id", UUID.randomUUID());
-        adminUser.setStatus(UserStatus.ACTIVE);
-        adminUser.setRole(new io.audita.infrastructure.persistence.entity.RoleEntity("Admin", ""));
-
         when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
         when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId)).thenReturn(List.of());
-        when(userRepository.findDistinctByRoles_NameInAndStatusOrderByFullNameAsc(
-                List.of("Approver", "Auditor", "Admin"),
-                UserStatus.ACTIVE))
-                .thenReturn(List.of(approverUser, auditorUser, adminUser));
-        when(orgSettingRepository.findById(any())).thenReturn(Optional.empty());
+        when(userRepository.findByIdInAndStatusOrderByFullNameAsc(List.of(configuredUserId), UserStatus.ACTIVE))
+                .thenReturn(List.of(approverUser));
+        when(orgSettingRepository.findById("workflow.default_approver_user_ids"))
+                .thenReturn(Optional.of(new io.audita.infrastructure.persistence.entity.OrgSettingEntity(
+                        "workflow.default_approver_user_ids", configuredUserId.toString())));
+        when(orgSettingRepository.findById("workflow.default_approver_group_ids"))
+                .thenReturn(Optional.of(new io.audita.infrastructure.persistence.entity.OrgSettingEntity(
+                        "workflow.default_approver_group_ids", "")));
+        when(crApproverRepository.countByChangeRequestId(changeRequestId)).thenReturn(1);
         when(changeRequestRepository.save(changeRequest)).thenReturn(changeRequest);
 
         changeRequestService.submit(changeRequestId, ownerId, "REQUESTER");
 
         verify(crApproverRepository)
                 .saveAll(org.mockito.ArgumentMatchers.argThat((List<CrApproverEntity> approvers) -> {
-                    if (approvers.size() != 3) {
+                    if (approvers.size() != 1) {
                         return false;
                     }
                     CrApproverEntity first = approvers.get(0);
-                    CrApproverEntity second = approvers.get(1);
-                    CrApproverEntity third = approvers.get(2);
                     return first.getUser().getEmail().equals("approver@example.com")
                             && first.isRequired()
-                            && first.getPosition() == 1
-                            && second.getUser().getEmail().equals("auditor@example.com")
-                            && !second.isRequired()
-                            && second.getPosition() == 2
-                            && third.getUser().getEmail().equals("admin@example.com")
-                            && !third.isRequired()
-                            && third.getPosition() == 3;
+                            && first.getPosition() == 1;
                 }));
     }
 
@@ -202,19 +249,10 @@ class ChangeRequestServiceSecurityTest {
         ReflectionTestUtils.setField(owner, "id", ownerId);
 
         UserEntity approverUser = new UserEntity("approver@example.com", "Approver User");
-        ReflectionTestUtils.setField(approverUser, "id", UUID.randomUUID());
+        UUID configuredUserId = UUID.randomUUID();
+        ReflectionTestUtils.setField(approverUser, "id", configuredUserId);
         approverUser.setStatus(UserStatus.ACTIVE);
         approverUser.setRole(new io.audita.infrastructure.persistence.entity.RoleEntity("Approver", ""));
-
-        UserEntity auditorUser = new UserEntity("auditor@example.com", "Auditor User");
-        ReflectionTestUtils.setField(auditorUser, "id", UUID.randomUUID());
-        auditorUser.setStatus(UserStatus.ACTIVE);
-        auditorUser.setRole(new io.audita.infrastructure.persistence.entity.RoleEntity("Auditor", ""));
-
-        UserEntity adminUser = new UserEntity("admin@example.com", "Admin User");
-        ReflectionTestUtils.setField(adminUser, "id", UUID.randomUUID());
-        adminUser.setStatus(UserStatus.ACTIVE);
-        adminUser.setRole(new io.audita.infrastructure.persistence.entity.RoleEntity("Admin", ""));
 
         ChangeRequestEntity created = new ChangeRequestEntity();
         ReflectionTestUtils.setField(created, "id", changeRequestId);
@@ -228,9 +266,14 @@ class ChangeRequestServiceSecurityTest {
         when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner));
         when(changeRequestRepository.save(any(ChangeRequestEntity.class))).thenReturn(created);
         when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId)).thenReturn(List.of());
-        when(userRepository.findDistinctByRoles_NameInAndStatusOrderByFullNameAsc(
-                List.of("Approver", "Auditor", "Admin"),
-                UserStatus.ACTIVE)).thenReturn(List.of(approverUser, auditorUser, adminUser));
+        when(userRepository.findByIdInAndStatusOrderByFullNameAsc(List.of(configuredUserId), UserStatus.ACTIVE))
+                .thenReturn(List.of(approverUser));
+        when(orgSettingRepository.findById("workflow.default_approver_user_ids"))
+                .thenReturn(Optional.of(new io.audita.infrastructure.persistence.entity.OrgSettingEntity(
+                        "workflow.default_approver_user_ids", configuredUserId.toString())));
+        when(orgSettingRepository.findById("workflow.default_approver_group_ids"))
+                .thenReturn(Optional.of(new io.audita.infrastructure.persistence.entity.OrgSettingEntity(
+                        "workflow.default_approver_group_ids", "")));
 
         changeRequestService.create(new ChangeRequestService.CreateRequest(
                 "Created CR",
@@ -246,7 +289,120 @@ class ChangeRequestServiceSecurityTest {
 
         verify(crApproverRepository)
                 .saveAll(org.mockito.ArgumentMatchers
-                        .argThat((List<CrApproverEntity> approvers) -> approvers.size() == 3));
+                        .argThat((List<CrApproverEntity> approvers) -> approvers.size() == 1));
+    }
+
+    @Test
+    void createAutoAddsConfiguredApproversEvenWhenRequireDefaultApproversDisabled() {
+        UUID ownerId = UUID.randomUUID();
+        UUID changeRequestId = UUID.randomUUID();
+        UUID configuredUserId = UUID.randomUUID();
+
+        UserEntity owner = new UserEntity("owner@example.com", "Owner User");
+        ReflectionTestUtils.setField(owner, "id", ownerId);
+
+        UserEntity approverUser = new UserEntity("approver@example.com", "Approver User");
+        ReflectionTestUtils.setField(approverUser, "id", configuredUserId);
+        approverUser.setStatus(UserStatus.ACTIVE);
+
+        ChangeRequestEntity created = new ChangeRequestEntity();
+        ReflectionTestUtils.setField(created, "id", changeRequestId);
+        created.setTitle("Created CR");
+        created.setDescription("desc");
+        created.setPriority(Priority.HIGH);
+        created.setRiskLevel(RiskLevel.HIGH);
+        created.setApprovalType(ApprovalType.NON_LINEAR);
+        created.setCreatedBy(owner);
+
+        when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner));
+        when(changeRequestRepository.save(any(ChangeRequestEntity.class))).thenReturn(created);
+        when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId)).thenReturn(List.of());
+        when(userRepository.findByIdInAndStatusOrderByFullNameAsc(List.of(configuredUserId), UserStatus.ACTIVE))
+                .thenReturn(List.of(approverUser));
+        when(orgSettingRepository.findById("workflow.default_approver_user_ids"))
+                .thenReturn(Optional.of(new io.audita.infrastructure.persistence.entity.OrgSettingEntity(
+                        "workflow.default_approver_user_ids", configuredUserId.toString())));
+        when(orgSettingRepository.findById("workflow.default_approver_group_ids"))
+                .thenReturn(Optional.of(new io.audita.infrastructure.persistence.entity.OrgSettingEntity(
+                        "workflow.default_approver_group_ids", "")));
+
+        changeRequestService.create(new ChangeRequestService.CreateRequest(
+                "Created CR",
+                "desc",
+                Priority.HIGH,
+                RiskLevel.HIGH,
+                "Security",
+                ApprovalType.NON_LINEAR,
+                null,
+                null,
+                List.of("db"),
+                ownerId));
+
+        verify(crApproverRepository)
+                .saveAll(org.mockito.ArgumentMatchers.argThat((List<CrApproverEntity> approvers) -> {
+                    if (approvers.size() != 1) {
+                        return false;
+                    }
+                    CrApproverEntity first = approvers.get(0);
+                    return first.getUser().getId().equals(configuredUserId)
+                            && first.isRequired()
+                            && first.getPosition() == 1;
+                }));
+    }
+
+    @Test
+    void removeApproverAllowsPendingApprovalWhenTargetHasNotVoted() {
+        UUID changeRequestId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        UUID approverId = UUID.randomUUID();
+
+        ChangeRequestEntity changeRequest = buildDraftChangeRequest(ownerId);
+        changeRequest.setStatus(ChangeRequestStatus.PENDING_APPROVAL);
+        changeRequest.setApprovalLocked(true);
+        ReflectionTestUtils.setField(changeRequest, "id", changeRequestId);
+
+        UserEntity pendingUser = new UserEntity("pending@example.com", "Pending User");
+        ReflectionTestUtils.setField(pendingUser, "id", UUID.randomUUID());
+        CrApproverEntity approver = new CrApproverEntity(changeRequest, pendingUser, true, 1, true);
+        ReflectionTestUtils.setField(approver, "id", approverId);
+        approver.setStatus(ApproverStatus.PENDING);
+
+        when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
+        when(crApproverRepository.findById(approverId)).thenReturn(Optional.of(approver));
+        when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId)).thenReturn(List.of());
+
+        changeRequestService.removeApprover(changeRequestId, approverId, ownerId, "REQUESTER");
+
+        verify(crApproverRepository).delete(approver);
+        verify(crApproverRepository).saveAll(any());
+    }
+
+    @Test
+    void removeApproverRejectsWhenApproverAlreadyVoted() {
+        UUID changeRequestId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        UUID approverId = UUID.randomUUID();
+
+        ChangeRequestEntity changeRequest = buildDraftChangeRequest(ownerId);
+        changeRequest.setStatus(ChangeRequestStatus.PENDING_APPROVAL);
+        changeRequest.setApprovalLocked(true);
+        ReflectionTestUtils.setField(changeRequest, "id", changeRequestId);
+
+        UserEntity decidedUser = new UserEntity("decided@example.com", "Decided User");
+        ReflectionTestUtils.setField(decidedUser, "id", UUID.randomUUID());
+        CrApproverEntity approver = new CrApproverEntity(changeRequest, decidedUser, true, 1, true);
+        ReflectionTestUtils.setField(approver, "id", approverId);
+        approver.setStatus(ApproverStatus.APPROVED);
+
+        when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
+        when(crApproverRepository.findById(approverId)).thenReturn(Optional.of(approver));
+
+        InvalidStateTransitionException ex = assertThrows(
+                InvalidStateTransitionException.class,
+                () -> changeRequestService.removeApprover(changeRequestId, approverId, ownerId, "REQUESTER"));
+
+        assertThat(ex.getErrorCode()).isEqualTo("APPROVER_DECISION_LOCKED");
+        verify(crApproverRepository, never()).delete(any());
     }
 
     private ChangeRequestEntity buildDraftChangeRequest(UUID ownerId) {

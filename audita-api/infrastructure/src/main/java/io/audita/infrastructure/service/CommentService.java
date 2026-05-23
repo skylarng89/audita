@@ -11,6 +11,7 @@ import io.audita.infrastructure.persistence.repository.ChangeRequestRepository;
 import io.audita.infrastructure.persistence.repository.CommentMentionRepository;
 import io.audita.infrastructure.persistence.repository.CommentRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
+import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
 import org.owasp.html.Sanitizers;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,14 @@ public class CommentService {
     private final ActivityStreamRepository activityStreamRepository;
     private final NotificationService notificationService;
     private final EmailService emailService;
-    private final PolicyFactory htmlPolicy = Sanitizers.FORMATTING.and(Sanitizers.BLOCKS).and(Sanitizers.LINKS);
+    private final PolicyFactory htmlPolicy = Sanitizers.FORMATTING
+            .and(Sanitizers.BLOCKS)
+            .and(Sanitizers.LINKS)
+            .and(new HtmlPolicyBuilder()
+                    .allowElements("span")
+                    .allowAttributes("class", "data-type", "data-id", "data-label", "data-mention-suggestion-char")
+                    .onElements("span")
+                    .toFactory());
 
     public CommentService(ChangeRequestRepository changeRequestRepository,
             CommentRepository commentRepository,
@@ -89,6 +97,7 @@ public class CommentService {
                     user.getFullName(),
                     changeRequest.getTitle(),
                     changeRequest.getId().toString(),
+                    comment.getId().toString(),
                     author.getFullName());
         }
 

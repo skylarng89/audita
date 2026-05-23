@@ -147,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: "default" });
+definePageMeta({ middleware: ["auth", "admin-only"] });
 
 const api = useApi();
 const { success: toastSuccess, error: toastError } = useToast();

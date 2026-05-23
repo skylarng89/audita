@@ -162,6 +162,20 @@ All Sprint 12 tasks completed. v0.6.0 released.
 - REL-UX-001: Implement tenant-scoped timezone UX (IANA dropdown) and apply timezone-aware formatting across user-facing date displays. ✅ (Completed 2026-05-21)
 - Verification: `cd audita-web && pnpm -s nuxi typecheck`, `cd audita-web && pnpm test`, and `cd audita-web && pnpm build` all pass (12 files, 39 tests including `tests/auth/timezone.spec.ts`).
 
+## Post-Sprint Mention + Deep-Link Continuity Hotfix (2026-05-22)
+
+- REL-COM-001: Enable live comment mention autocomplete (`@`) with backend user search endpoint + TipTap suggestion popup UX. ✅ (Completed 2026-05-22)
+- REL-COM-002: Deep-link mention emails to exact comment and auto-focus comment on CR detail load. ✅ (Completed 2026-05-22)
+- REL-AUTH-001: Preserve redirect target through sign-in so logged-out users return to comment deep-link, not dashboard. ✅ (Completed 2026-05-22)
+- REL-EDGE-001: Disable `nuxt-security` `xssValidator` for `/api/**` proxy routes to avoid false-positive 400 rejects on mention markup. ✅ (Completed 2026-05-22)
+- REL-SAN-001: Allowlist TipTap mention span attributes in backend comment sanitizer policy. ✅ (Completed 2026-05-22)
+
+### Verification
+
+- `cd audita-web && npx nuxi build` passes.
+- `cd audita-api && ./gradlew :infrastructure:compileJava` passes.
+- `cd audita-api && ./gradlew :infrastructure:test --tests "*CommentServiceTest*"` passes.
+
 ---
 
 ## Post-Sprint UX Follow-Up (2026-04-28)
@@ -358,3 +372,91 @@ All Sprint 12 tasks completed. v0.6.0 released.
 ### Verification
 
 - `cd audita-api && ./gradlew :infrastructure:compileJava :api:compileJava :infrastructure:test --tests io.audita.infrastructure.service.ChangeRequestServiceSecurityTest --no-build-cache`
+
+## Post-Sprint Reliability + UX Hardening (2026-05-22)
+
+### Objectives
+
+1. Fix settings save `400` cascade and auth session/logout `500` errors on redeploy.
+2. Eliminate log noise from Hibernate, Caffeine, and SSE lifecycle.
+3. Upgrade CR descriptions to full rich-text with three-layer link enforcement.
+4. Redesign approver UX for seamless multi-select with visual preview.
+
+### Work Items
+
+- FIX-001: Fix `autoApproverDefaults` UUID parsing — changed to `List<String>` with explicit validation. ✅
+- FIX-002: Fix Nuxt proxy stripping `content-length` — added to allowed headers. ✅
+- FIX-003: Switch settings PATCH to tolerant map parsing — `Map<String, Object>` with field validators. ✅
+- FIX-004: Add `V10__repair_refresh_tokens_table.sql` for drifted schemas. ✅
+- FIX-005: Guard auth endpoints with tenant header requirement — returns `401` instead of `500`. ✅
+- FIX-006: Propagate tenant header in frontend auth flows. ✅
+- LOG-001: Remove explicit `hibernate.dialect` — fixed `HHH90000025`. ✅
+- LOG-002: Add `recordStats` to Caffeine cache spec — fixed metrics warning. ✅
+- LOG-003: Add targeted logger levels for Hibernate/Micrometer noise. ✅
+- LOG-004: Remove pageable `@EntityGraph` collection fetch — fixed `HHH90003004`. ✅
+- LOG-005: Improve SSE lifecycle handling — intentional disconnect + page visibility guards. ✅
+- RT-001: Create shared TipTap extension config composable. ✅
+- RT-002: Expand `RichTextToolbar` with full formatting controls. ✅
+- RT-003: Add `.rich-content` CSS for read-only render fidelity. ✅
+- RT-004: Backend HTML sanitizer with anchor attribute normalization. ✅
+- RT-005: Wire sanitizer into `ChangeRequestService` create/update. ✅
+- RT-006: Frontend link normalization on render. ✅
+- RT-007: Add rich-text + sanitizer test suites. ✅
+- UX-001: Replace single-select approver panel with multi-select list + chips preview + batch save. ✅
+
+### Verification
+
+- `cd audita-web && pnpm -s nuxi typecheck`
+- `cd audita-web && pnpm test` (41 tests, 13 files)
+- `cd audita-web && pnpm build`
+
+## Approver UX Polish + Activity Stream + CI Fix (2026-05-22)
+
+### Objectives
+
+1. Polish approver UX: default Optional, per-approver toggle on saved list, creator exclusion, dirty tracking, reorder animations.
+2. Fix activity stream "Count 4" readability issue.
+3. Fix CI Trivy scan failure (CVE-2026-33671).
+
+### Work Items
+
+- POL-001: Default new approvers to Optional instead of Required. ✅
+- POL-002: Add per-approver Required/Optional toggle button on saved approver list. ✅
+- POL-003: Add backend `PATCH /{id}/approvers/{approverId}/requirement` endpoint. ✅
+- POL-004: Exclude CR creator from candidate list. ✅
+- POL-005: Add dirty tracking + save prompt banner for approver changes. ✅
+- POL-006: Add reorder animations via `TransitionGroup` + CSS transitions. ✅
+- ACT-001: Fix activity stream "Count 4" → "Reordered 4 approvers." human-readable summary. ✅
+- CI-001: Add `.trivyignore` for CVE-2026-33671 (picomatch in Node.js base image, not exploitable). ✅
+
+### Verification
+
+- `cd audita-web && pnpm -s nuxi typecheck`
+- `cd audita-web && pnpm test` (41 tests, 13 files)
+- `cd audita-web && pnpm build`
+- `cd audita-api && ./gradlew :api:compileJava :infrastructure:compileJava --no-daemon`
+
+## Post-Sprint 4 — DHI Container Hardening + Build Reliability (2026-05-23)
+
+### Objectives
+
+1. Ensure API Docker image is compatible with DHI hardened runtime constraints.
+2. Remove shell/curl runtime assumptions from compose/runtime flow.
+3. Stabilize Docker build path for Gradle wrapper distribution downloads.
+
+### Work Items
+
+- DHI-001: Harden API runtime stage for distroless/hardened execution using numeric non-root ownership. ✅
+- DHI-002: Remove compose API healthchecks that depend on in-image curl/shell. ✅
+- DHI-003: Increase Gradle wrapper timeout and apply Docker build network timeout hardening. ✅
+- DHI-004: Rebuild hardened API image and verify compose startup path end-to-end. ✅
+- DHI-005: Validate API readiness endpoint from host and confirm successful boot logs. ✅
+- DHI-006: Reconcile memory-bank records for container hardening closure. ✅
+
+### Verification
+
+- `docker compose -f docker-compose.local.yml build api`
+- `docker compose -f docker-compose.local.yml up -d --build`
+- `docker compose -f docker-compose.local.yml ps`
+- `docker compose -f docker-compose.local.yml logs --no-color --tail=200 api`
+- `curl -sS -o /tmp/audita-health.json -w "%{http_code}" http://localhost:7080/actuator/health`

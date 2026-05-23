@@ -10,7 +10,10 @@ import java.util.UUID;
 
 public interface CrApproverRepository extends JpaRepository<CrApproverEntity, UUID> {
 
-    @EntityGraph(attributePaths = "user")
+    @EntityGraph(attributePaths = {"user", "user.roles"})
+    Optional<CrApproverEntity> findWithUserAndRolesById(UUID id);
+
+    @EntityGraph(attributePaths = {"user", "user.roles"})
     List<CrApproverEntity> findByChangeRequestIdOrderByPositionAsc(UUID changeRequestId);
 
     Optional<CrApproverEntity> findByChangeRequestIdAndUserId(UUID changeRequestId, UUID userId);

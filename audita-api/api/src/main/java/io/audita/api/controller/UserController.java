@@ -4,6 +4,7 @@ import io.audita.api.dto.request.InviteUserRequest;
 import io.audita.api.dto.response.PageResponse;
 import io.audita.api.dto.request.UpdateUserRequest;
 import io.audita.api.dto.response.UserResponse;
+import io.audita.domain.model.UserStatus;
 import io.audita.infrastructure.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +16,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -81,5 +84,19 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancelInvite(@PathVariable UUID id) {
         userService.cancelInvite(id);
+    }
+
+    @GetMapping("/search")
+    @PreAuthorize("isAuthenticated()")
+    public List<Map<String, Object>> searchUsers(
+            @RequestParam(required = false, defaultValue = "") String q,
+            @RequestParam(defaultValue = "10") int limit) {
+        return userService.searchUsers(q, limit).stream()
+                .map(c -> Map.<String, Object>of(
+                        "id", c.id().toString(),
+                        "fullName", c.fullName(),
+                        "email", c.email(),
+                        "role", c.role() != null ? c.role() : ""))
+                .toList();
     }
 }

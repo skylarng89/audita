@@ -188,7 +188,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: "default" });
+definePageMeta({ middleware: ["auth", "admin-only"] });
 
 const api = useApi();
 const auth = useAuthStore();

@@ -2,7 +2,7 @@
 
 **Project:** Audita — Multi-Tenant ITIL/ITSM Change Management Platform
 **Version:** 0.1.0
-**Last Updated:** 2026-05-21
+**Last Updated:** 2026-05-23
 **Team Size:** 2–3 Developers
 
 ---
@@ -1450,3 +1450,217 @@
 - SSE stream (`GET /notifications/stream`) intentionally not connected in tests — long-lived connection blocks indefinitely; token issuance verified instead
 
 **Test Coverage**: 62/62 tests passing (0 failures). Covers Sprint 1–5 full API surface.
+
+---
+
+## Post-Sprint: Reliability, UX & Rich-Text Hardening (2026-05-21 → 2026-05-22)
+
+> **Goal:** Fix production issues, eliminate log noise, upgrade CR descriptions to full rich-text, redesign approver UX for seamless multi-select.
+
+### Settings Save & Auth Session Fixes
+
+| Task ID | Task | Priority | Status | Assigned To | Notes |
+| ------- | ---- | -------- | ------ | ----------- | ----- |
+| FIX-001 | Fix settings 400 — `autoApproverDefaults` UUID parsing | High | ✅ Completed | Developer 2 | Changed to `List<String>` in `PatchTenantAdminSettingsRequest.java` + explicit parse validation |
+| FIX-002 | Fix Nuxt proxy stripping `content-length` header | High | ✅ Completed | Developer 2 | Added `content-length` to allowed proxy headers in `audita-web/server/utils/apiProxy.ts` |
+| FIX-003 | Switch settings PATCH to tolerant map parsing | High | ✅ Completed | Developer 2 | `TenantSettingsController.patchSettings()` uses `Map<String, Object>` with explicit field validators |
+| FIX-004 | Add `V10__repair_refresh_tokens_table.sql` migration | High | ✅ Completed | Developer 1 | Idempotent repair for drifted tenant schemas where Flyway reported V9 but table missing |
+| FIX-005 | Guard auth endpoints with tenant header requirement | High | ✅ Completed | Developer 1 | `AuthController` requires `X-Tenant-Slug` for `/session`, `/refresh`, `/logout` when refresh cookie present |
+| FIX-006 | Propagate tenant header in frontend auth flows | High | ✅ Completed | Developer 2 | `clearServerSession`, `authStore.logout`, `plugins/auth.ts`, `plugins/api.ts` now propagate tenant header |
+
+### Log Noise Elimination
+
+| Task ID | Task | Priority | Status | Assigned To | Notes |
+| ------- | ---- | -------- | ------ | ----------- | ----- |
+| LOG-001 | Remove explicit `hibernate.dialect` from `JpaConfig.java` | Medium | ✅ Completed | Developer 1 | Fixed `HHH90000025` dialect warning |
+| LOG-002 | Add `recordStats` to Caffeine cache spec | Medium | ✅ Completed | Developer 1 | Fixed `CaffeineCacheMetrics` warning |
+| LOG-003 | Add targeted logger levels for Hibernate/Micrometer noise | Low | ✅ Completed | Developer 1 | Suppressed noisy categories in `application.yml` |
+| LOG-004 | Remove pageable `@EntityGraph` collection fetch from `UserRepository` | Medium | ✅ Completed | Developer 1 | Fixed `HHH90003004` pagination+fetch warning; eager-init roles in service layer |
+| LOG-005 | Improve SSE lifecycle handling | Medium | ✅ Completed | Developer 2 | Added intentional disconnect flag + `beforeunload`/`pagehide`/`visibilitychange` in `sse.client.ts` |
+
+### Rich-Text Editor Upgrade
+
+| Task ID | Task | Priority | Status | Assigned To | Notes |
+| ------- | ---- | -------- | ------ | ----------- | ----- |
+| RT-001 | Create shared TipTap extension config composable | High | ✅ Completed | Developer 2 | `audita-web/composables/richText.ts` — `StarterKit`, `Link`, `Placeholder` + normalization helpers |
+| RT-002 | Expand `RichTextToolbar` with full formatting controls | High | ✅ Completed | Developer 2 | Headings, blockquote, code block, lists, link/unlink, undo/redo, clear formatting |
+| RT-003 | Add `.rich-content` CSS for read-only render fidelity | High | ✅ Completed | Developer 2 | Explicit paragraph/list/code/blockquote/table/link spacing in `audita-web/assets/css/main.css` |
+| RT-004 | Backend HTML sanitizer with anchor attribute normalization | High | ✅ Completed | Developer 1 | `HtmlSanitizer.java` normalizes `target="_blank"` + `rel="noopener noreferrer nofollow"` before OWASP policy |
+| RT-005 | Wire sanitizer into `ChangeRequestService` create/update | High | ✅ Completed | Developer 1 | Description sanitized on create/update via injected `HtmlSanitizer` |
+| RT-006 | Frontend link normalization on render | High | ✅ Completed | Developer 2 | `normalizeRichTextHtml()` enforces link attributes at render time in description and comments |
+| RT-007 | Add rich-text + sanitizer test suites | Medium | ✅ Completed | Developer 2 | `audita-web/tests/auth/rich-text.spec.ts` + `HtmlSanitizerTest.java` |
+
+### Approver UX Redesign
+
+| Task ID | Task | Priority | Status | Assigned To | Notes |
+| ------- | ---- | -------- | ------ | ----------- | ----- |
+| UX-001 | Replace single-select approver panel with multi-select list | High | ✅ Completed | Developer 2 | Pre-populated user list, checkbox multi-select, per-user Required toggle, real-time selected chips preview, batch save |
+
+### Recent Implementations
+
+### Approver UX Redesign (Completed 2026-05-22)
+
+**Overview**: Replaced confusing single-select approver flow with seamless multi-select UX. Users now see a full list of candidates immediately, can select multiple users with checkboxes, toggle Required/Optional per user inline, see a real-time preview of selected users as chips, and batch-save all selections at once.
+
+**Files Created/Modified**:
+
+- `audita-web/pages/change-requests/[id].vue` — Replaced approver panel template (lines 504-549) with multi-select list, checkbox selection, per-user Required toggle button, selected chips preview area, and batch save/cancel buttons. Added `pendingSelection` state, `filteredCandidates` computed, `availableCandidates` computed (excludes already-added approvers), `batchAddApprovers()`, `toggleCandidate()`, `toggleRequiredFor()`, `removePendingSelection()`, `cancelAddApprover()`, `loadApproverCandidates()`.
+- `audita-web/pnpm-workspace.yaml` — Added `semver@7.8.1` and `terser@5.48.0` to `minimumReleaseAgeExclude` to unblock CI dependency checks.
+
+**Key Changes**:
+
+- User list loads immediately on panel open (empty query → full list up to 50 candidates).
+- Already-added approvers are filtered out from the candidate list to prevent duplicates.
+- Each candidate row has: checkbox + name/email + Required/Optional toggle button (color-coded).
+- Selected users appear as chips in a dedicated preview area with name, Req/Opt badge, and remove button.
+- Save button shows count: "Add 3 Approvers" — disabled until at least one selection.
+- Batch save calls `addApprover`/`addApproverGroup` sequentially for each selected candidate.
+- Cancel resets panel state without saving.
+
+**Test Coverage**: Frontend gates all green — typecheck ✅, 41 tests passing ✅, build ✅.
+
+---
+
+## Post-Sprint 2: Approver UX Polish + Activity Stream + CI Fix (2026-05-22)
+
+> **Goal:** Polish approver UX based on user feedback, fix activity stream readability, resolve CI Trivy scan failure.
+
+### Approver UX Polish
+
+| Task ID | Task | Priority | Status | Assigned To | Notes |
+| ------- | ---- | -------- | ------ | ----------- | ----- |
+| POL-001 | Default new approvers to Optional | High | ✅ Completed | Developer 2 | `toggleCandidate` sets `isRequired: false` |
+| POL-002 | Per-approver Required/Optional toggle on saved list | High | ✅ Completed | Developer 2 | Color-coded toggle button on each approver row, calls PATCH endpoint |
+| POL-003 | Backend `updateApproverRequirement` endpoint | High | ✅ Completed | Developer 1 | `PATCH /{id}/approvers/{approverId}/requirement?isRequired=true/false` |
+| POL-004 | Exclude CR creator from candidate list | High | ✅ Completed | Developer 2 | `availableCandidates` filters out `auth.userId` |
+| POL-005 | Dirty tracking + save prompt for approver changes | High | ✅ Completed | Developer 2 | Snapshot-based change detection + "Approver changes applied → Done" banner |
+| POL-006 | Reorder animations/transitions | Medium | ✅ Completed | Developer 2 | `TransitionGroup` + CSS transitions (slide, FLIP move, scale+opacity fade) |
+
+### Activity Stream Fix
+
+| Task ID | Task | Priority | Status | Assigned To | Notes |
+| ------- | ---- | -------- | ------ | ----------- | ----- |
+| ACT-001 | Fix "Count 4" readability in activity stream | Medium | ✅ Completed | Developer 2 | `activitySummary` handles `CR_APPROVERS_REORDERED` → "Reordered 4 approvers."; `activityFields` filters out `count` key |
+
+### CI Trivy Fix
+
+| Task ID | Task | Priority | Status | Assigned To | Notes |
+| ------- | ---- | -------- | ------ | ----------- | ----- |
+| CI-001 | Fix Trivy scan failure (CVE-2026-33671) | High | ✅ Completed | Developer 1 | Added `.trivyignore` — picomatch ReDoS in Node.js base image, not exploitable |
+
+### Recent Implementations
+
+### Approver UX Polish (Completed 2026-05-22)
+
+**Overview**: Polished approver UX based on user feedback. Approvers now default to Optional, each saved approver has a Required/Optional toggle button, CR creator is excluded from candidates, dirty tracking shows a confirmation banner after changes, and reorder operations have smooth animations.
+
+**Files Created/Modified**:
+
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — Added `updateApproverRequirement()` method with validation and activity logging.
+- `audita-api/api/src/main/java/io/audita/api/controller/ChangeRequestController.java` — Added `PATCH /{id}/approvers/{approverId}/requirement` endpoint.
+- `audita-web/composables/useChangeRequests.ts` — Added `updateApproverRequirement()` composable function.
+- `audita-web/pages/change-requests/[id].vue` — Replaced approver list with `TransitionGroup`, added per-approver toggle button, creator exclusion in `availableCandidates`, dirty tracking with `snapshotApproverState()`/`markApproverDirty()`, reorder animations via CSS.
+- `.trivyignore` — Added CVE-2026-33671 ignore entry with rationale.
+
+**Key Changes**:
+
+- New approvers default to Optional (was Required).
+- Each saved approver row has a toggle button: primary color = Required, muted = Optional.
+- CR creator filtered from candidate list — cannot add themselves.
+- Snapshot-based dirty tracking: baseline captured on load/save, any change triggers "Approver changes applied → Done" banner.
+- `TransitionGroup` with CSS: slide-in/out on add/remove, FLIP-style move animation on reorder, scale+opacity fade on drag.
+- Activity stream: `CR_APPROVERS_REORDERED` now shows "Reordered 4 approvers." instead of raw "COUNT 4" field.
+- CI Trivy: CVE-2026-33671 (picomatch ReDoS in Node.js base image) ignored via `.trivyignore` — not exploitable in our context.
+
+**Test Coverage**: Frontend gates all green — typecheck ✅, 41 tests passing ✅, build ✅. Backend compile ✅.
+
+---
+
+## Post-Sprint 3: Mention UX + Comment Deep-Link + Edge Validator Scope (2026-05-22)
+
+> **Goal:** Complete comment mention UX and eliminate mention-post regression by aligning Nuxt edge validation with backend sanitization responsibilities.
+
+| Task ID | Task | Priority | Status | Assigned To | Notes |
+| ------- | ---- | -------- | ------ | ----------- | ----- |
+| COM-001 | Add TipTap mention autocomplete popup in comment editor | High | ✅ Completed | Developer 2 | TipTap `Mention` extension + keyboard navigation + wider suggestion popup + stacked name/email display |
+| COM-002 | Add backend mention candidate search endpoint | High | ✅ Completed | Developer 1 | `GET /api/v1/users/search?q=&limit=` for authenticated users |
+| COM-003 | Deep-link mention email to specific comment | High | ✅ Completed | Developer 1 | `sendMentionEmail` now includes `commentId` query target |
+| COM-004 | Auto-scroll/highlight comment from deep-link query | Medium | ✅ Completed | Developer 2 | CR detail page scrolls to `#comment-<id>` and temporary highlights |
+| AUTH-023 | Preserve redirect target through auth middleware/sign-in | High | ✅ Completed | Developer 2 | unauthenticated route redirect includes `?redirect=...`, login resumes target path |
+| EDGE-001 | Disable Nuxt xssValidator for `/api/**` proxy routes | High | ✅ Completed | Developer 2 | routeRules override prevents false-positive 400 before API receives request |
+| SAN-001 | Allowlist mention span attributes in comment sanitizer | High | ✅ Completed | Developer 1 | `CommentService` OWASP policy now allows mention metadata on `span` |
+| QA-001 | Update comment mention tests for new email method signature | Medium | ✅ Completed | Developer 1 | `CommentServiceTest` matcher update for `commentId` argument |
+| QA-002 | Verify targeted build/test gates for hotfix | High | ✅ Completed | Developer 1 | web build + infrastructure compile + `CommentServiceTest` passing |
+
+### Recent Implementations
+
+### Mention UX + Deep-Link Continuity Hotfix (Completed 2026-05-22)
+
+**Overview**: Implemented full comment mention UX flow with live `@` suggestions, deep-link navigation to specific comments from mention emails, and auth redirect continuity for logged-out users. Eliminated edge-side 400 regressions by scoping Nuxt XSS validator away from proxied API paths and preserving backend sanitizer as source of truth.
+
+**Files Created/Modified**:
+
+- `audita-web/pages/change-requests/[id].vue` — TipTap mention popup UX, comment anchor/highlight scrolling, editor-based comment submit
+- `audita-web/nuxt.config.ts` — routeRules override to disable `xssValidator` on `/api/**`
+- `audita-web/middleware/auth.ts` — preserve redirect target query
+- `audita-web/pages/auth/sign-in.vue` — consume redirect target
+- `audita-web/composables/useAuth.ts` — redirect-aware login flow
+- `audita-api/api/src/main/java/io/audita/api/controller/UserController.java` — mention candidate search endpoint
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/UserService.java` — `searchUsers()` mention candidate query
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/EmailService.java` — mention email deep-link with `commentId`
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/CommentService.java` — mention sanitizer allowlist + mention email call signature
+- `audita-api/infrastructure/src/test/java/io/audita/infrastructure/service/CommentServiceTest.java` — updated mention-email verification
+
+**Key Changes**:
+
+- Mention dropdown widened for long names and redesigned to show name on first line + email on second line.
+- Mention links now target exact comment; CR detail scroll/highlight reduces navigation friction.
+- Unauthenticated deep-link visits now survive sign-in and land on intended comment path.
+- Nuxt proxy no longer rejects mention payloads before backend processing.
+
+**Test Coverage**:
+
+- `cd audita-web && npx nuxi build` passes.
+- `cd audita-api && ./gradlew :infrastructure:compileJava` passes.
+- `cd audita-api && ./gradlew :infrastructure:test --tests "*CommentServiceTest*"` passes.
+
+---
+
+## Post-Sprint 4: DHI Runtime Hardening + Docker Build Reliability (2026-05-23)
+
+> **Goal:** Ensure API/web containers run reliably with DHI hardened images and remove runtime assumptions that fail on minimal images.
+
+| Task ID | Task | Priority | Status | Assigned To | Notes |
+| ------- | ---- | -------- | ------ | ----------- | ----- |
+| DHI-001 | Remove API runtime shell/package-manager assumptions | High | ✅ Completed | Developer 1 | Hardened runtime model avoids `/bin/sh` and runtime apt operations |
+| DHI-002 | Use deterministic non-root runtime ownership in API image | High | ✅ Completed | Developer 1 | Runtime copy uses `--chown=65532:65532` |
+| DHI-003 | Remove API healthchecks requiring curl in compose files | High | ✅ Completed | Developer 1 | Updated `docker-compose.yml` and `docker-compose.local.yml` |
+| DHI-004 | Increase Gradle wrapper timeout for Docker builds | Medium | ✅ Completed | Developer 1 | `gradle-wrapper.properties` set to `networkTimeout=60000` |
+| DHI-005 | Validate hardened compose stack startup and API readiness | High | ✅ Completed | Developer 1 | `up -d --build` + `ps` + actuator health `200` |
+| DHI-006 | Reconcile memory-bank records for container hardening closure | Medium | ✅ Completed | Developer 1 | Updated `context.md`, `plan.md`, `decisions.md`, `changelog.md`, session log |
+
+### Recent Implementations
+
+### DHI Runtime Hardening + Docker Reliability (Completed 2026-05-23)
+
+**Overview**: Finalized hardened container runtime compatibility and verified local compose stack starts cleanly with API health endpoint responding successfully.
+
+**Files Created/Modified**:
+
+- `audita-api/Dockerfile` — hardened runtime-safe non-root copy/ownership and Docker build resilience updates.
+- `audita-api/gradle/wrapper/gradle-wrapper.properties` — increased wrapper network timeout.
+- `docker-compose.local.yml` — removed API curl-based healthcheck.
+- `docker-compose.yml` — removed API curl-based healthcheck.
+
+**Key Changes**:
+
+- Hardened runtime no longer depends on shell/curl/package manager availability.
+- Compose startup no longer fails from incompatible in-container healthcheck tooling assumptions.
+- Docker build path for API is resilient to transient Gradle wrapper distribution download delays.
+
+**Test Coverage**:
+
+- `docker compose -f docker-compose.local.yml build api` passes.
+- `docker compose -f docker-compose.local.yml up -d --build` passes.
+- `docker compose -f docker-compose.local.yml ps` shows `api` and `web` up.
+- `curl http://localhost:7080/actuator/health` returns `200`.

@@ -23,13 +23,18 @@ public interface ChangeRequestRepository extends JpaRepository<ChangeRequestEnti
                  "AND (:category IS NULL OR LOWER(cr.category) = LOWER(CAST(:category AS String))) " +
                  "AND (:createdById IS NULL OR cr.createdBy.id = :createdById) " +
                  // Draft CRs are private — only the creator can see their own drafts.
-                 "AND (cr.status <> :draftStatus OR cr.createdBy.id = :viewerId)")
+                 "AND (cr.status <> :draftStatus OR cr.createdBy.id = :viewerId) " +
+                 // Admin/Auditor/Super Admin can view all. Other users can only view own CRs or CRs where they are approvers.
+                 "AND (:viewerHasGlobalAccess = TRUE OR cr.createdBy.id = :viewerId OR EXISTS (" +
+                 "  SELECT 1 FROM CrApproverEntity ca WHERE ca.changeRequest = cr AND ca.user.id = :viewerId" +
+                 "))")
        Page<ChangeRequestEntity> findAllFiltered(
                      @Param("status") ChangeRequestStatus status,
                      @Param("priority") Priority priority,
                      @Param("category") String category,
                      @Param("createdById") UUID createdById,
                      @Param("viewerId") UUID viewerId,
+                     @Param("viewerHasGlobalAccess") boolean viewerHasGlobalAccess,
                      @Param("draftStatus") ChangeRequestStatus draftStatus,
                      Pageable pageable);
 

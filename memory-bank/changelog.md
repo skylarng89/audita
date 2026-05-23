@@ -1,5 +1,23 @@
 # Audita — Changelog
 
+## [0.6.1] — 2026-05-23
+
+### Fixed (Post-Sprint Container Hardening — 2026-05-23)
+
+- **DHI hardened runtime compatibility**: removed API runtime assumptions about shell/package tools and switched to hardened-safe non-root runtime semantics.
+  - API runtime now uses numeric non-root ownership (`COPY --chown=65532:65532`) and avoids shell-dependent runtime setup.
+  - Removed compose healthchecks that depended on `curl`/shell inside hardened API image.
+- **Gradle wrapper network resilience in Docker build**: increased wrapper timeout (`networkTimeout=60000`) and hardened build-stage Gradle network timeout behavior to prevent transient distribution download failures.
+- **Compose stack verification**: local hardened stack now builds and starts cleanly (`api`, `web`), with API actuator health returning `200` and startup logs confirming successful boot.
+
+### Verification (Post-Sprint Container Hardening — 2026-05-23)
+
+- `docker compose -f docker-compose.local.yml build api`.
+- `docker compose -f docker-compose.local.yml up -d --build`.
+- `docker compose -f docker-compose.local.yml ps`.
+- `docker compose -f docker-compose.local.yml logs --tail=200 api`.
+- `curl -sS -o /tmp/audita-health.json -w "%{http_code}" http://localhost:7080/actuator/health`.
+
 ## [0.6.0] — 2026-05-19
 
 ### Added (Sprint 12 — Launch Readiness — 2026-05-19)
@@ -73,6 +91,83 @@
 - `cd audita-web && pnpm -s nuxi typecheck`.
 - `cd audita-web && pnpm test`.
 - `cd audita-web && pnpm build`.
+
+### Fixed (Settings Save & Auth Session — 2026-05-22)
+
+- **Settings `400 Bad Request` cascade**: fixed three-layer root cause — `autoApproverDefaults` UUID parse failure → Nuxt proxy stripping `content-length` → strict record DTO deserialization.
+  - `PatchTenantAdminSettingsRequest.java`: changed `List<UUID>` to `List<String>` with explicit parse validation.
+  - `apiProxy.ts`: added `content-length` to allowed proxy headers.
+  - `TenantSettingsController.patchSettings()`: switched to tolerant `Map<String, Object>` parsing with explicit field validators.
+- **Auth session/logout `500` errors on redeploy**: `AuthController` now requires `X-Tenant-Slug` header for `/session`, `/refresh`, `/logout` when refresh cookie present; returns `401` instead of crashing.
+- **Missing `refresh_tokens` table in drifted schemas**: added `V10__repair_refresh_tokens_table.sql` idempotent repair migration.
+- **Frontend tenant header propagation**: `clearServerSession`, `authStore.logout`, `plugins/auth.ts`, `plugins/api.ts` now propagate tenant header consistently.
+
+### Fixed (Log Noise Elimination — 2026-05-22)
+
+- **`HHH90000025` dialect warning**: removed explicit `hibernate.dialect` from `JpaConfig.java`.
+- **`CaffeineCacheMetrics` warning**: added `recordStats` to Caffeine cache spec in `application.yml`.
+- **`HHH90003004` pagination+fetch warning**: removed `@EntityGraph` collection fetch from `UserRepository.findAll(Pageable)`; eager-initialize roles in `UserService.listUsers()`.
+- **SSE lifecycle noise**: improved `sse.client.ts` with intentional disconnect flag + `beforeunload`/`pagehide`/`visibilitychange` handling.
+- **Targeted logger levels**: suppressed noisy Hibernate/Micrometer categories in `application.yml`.
+
+### Added (Rich-Text Editor Upgrade — 2026-05-22)
+
+- **Shared TipTap extension config**: `composables/richText.ts` — `StarterKit`, `Link`, `Placeholder` + link normalization helpers.
+- **Expanded `RichTextToolbar`**: headings, blockquote, code block, lists, link/unlink, undo/redo, clear formatting.
+- **`.rich-content` CSS**: explicit paragraph/list/code/blockquote/table/link spacing for read-only render fidelity.
+- **Backend HTML sanitizer**: `HtmlSanitizer.java` normalizes anchor attributes (`target="_blank"`, `rel="noopener noreferrer nofollow"`) before OWASP policy sanitization.
+- **Three-layer link enforcement**: TipTap mark config (authoring) → backend sanitizer (persistence) → `normalizeRichTextHtml` (rendering).
+- **Rich-text test suites**: `HtmlSanitizerTest.java` + `tests/auth/rich-text.spec.ts`.
+
+### Added (Approver UX Redesign — 2026-05-22)
+
+- **Multi-select approver panel**: replaced confusing single-select flow with pre-populated user list, checkbox multi-select, per-user Required/Optional toggle, real-time selected chips preview, and batch save.
+- **Duplicate prevention**: already-added approvers filtered from candidate list.
+- **Batch save**: sequential `addApprover`/`addApproverGroup` calls for each selected candidate with loading state and count display.
+
+### Verification (Post-Sprint Hardening — 2026-05-22)
+
+- `cd audita-web && pnpm -s nuxi typecheck`.
+- `cd audita-web && pnpm test` (41 tests, 13 files).
+- `cd audita-web && pnpm build`.
+
+### Added (Approver UX Polish — 2026-05-22)
+
+- **Default Optional**: new approvers default to Optional instead of Required; toggle to Required is one click.
+- **Per-approver Required/Optional toggle on saved list**: each approver row has a color-coded toggle button (primary = Required, muted = Optional) that calls `PATCH /{id}/approvers/{approverId}/requirement` immediately.
+- **Creator exclusion**: CR creator filtered from candidate list — cannot add themselves as approver.
+- **Dirty tracking + save prompt**: snapshot-based change detection shows "Approver changes applied → Done" banner after any toggle, reorder, or remove.
+- **Reorder animations**: `<TransitionGroup name="approver-list">` with CSS transitions — slide-in/out on add/remove, smooth FLIP-style move animation on reorder, scale+opacity fade on drag.
+
+### Fixed (Activity Stream Readability — 2026-05-22)
+
+- **"Count 4" → "Reordered 4 approvers."**: `activitySummary` now handles `CR_APPROVERS_REORDERED` with human-readable summary; `activityFields` filters out `count` key so it doesn't render as a raw field.
+
+### Fixed (CI Trivy Scan — 2026-05-22)
+
+- **CVE-2026-33671 (picomatch ReDoS)**: added `.trivyignore` entry. This vulnerability is in the Node.js base image's bundled npm (`usr/local/lib/node_modules/npm/...`), not our dependencies. Not exploitable — picomatch is only used internally by npm during package installation, never exposed to user input. Tracked for resolution when upgrading to a newer Node.js base image.
+
+### Verification (Approver UX Polish — 2026-05-22)
+
+- `cd audita-web && pnpm -s nuxi typecheck`.
+- `cd audita-web && pnpm test` (41 tests, 13 files).
+- `cd audita-web && pnpm build`.
+- `cd audita-api && ./gradlew :api:compileJava :infrastructure:compileJava --no-daemon`.
+
+### Fixed (Comment Mentions + Deep-Link Auth Continuity — 2026-05-22)
+
+- **Comment mention POST false-positive 400 at Nuxt edge**: mention payloads containing `<span class="mention" ...>` were rejected by `nuxt-security` `xssValidator` before proxying to API.
+  - Added route-scoped security override in `nuxt.config.ts`: disable `xssValidator` for `/api/**` proxy routes while keeping backend sanitization authoritative.
+- **Comment sanitizer compatibility with mention markup**: `CommentService` sanitizer policy now explicitly allowlists mention span attributes (`class`, `data-type`, `data-id`, `data-label`, `data-mention-suggestion-char`).
+- **Mention UX**: TipTap comment editor now supports live `@` autocomplete popup with backend user search and keyboard navigation.
+- **Mention email deep-link**: mention email now links to exact comment via `?commentId=<id>`; CR detail auto-scrolls and highlights target comment.
+- **Logged-out deep-link continuity**: auth middleware preserves `redirect` target on sign-in and login flow resumes intended URL after authentication.
+
+### Verification (Comment Mentions + Deep-Link Auth Continuity — 2026-05-22)
+
+- `cd audita-web && npx nuxi build`.
+- `cd audita-api && ./gradlew :infrastructure:compileJava`.
+- `cd audita-api && ./gradlew :infrastructure:test --tests "*CommentServiceTest*"`.
 
 ## [0.1.0] — Unreleased (In Development)
 

@@ -215,7 +215,7 @@
 <script setup lang="ts">
 import type { CustomFieldDefinition } from "~/types";
 
-definePageMeta({ middleware: ["auth", "role"] });
+definePageMeta({ middleware: ["auth", "admin-only"] });
 
 useHead({ title: "Custom Fields — Audita" });
 

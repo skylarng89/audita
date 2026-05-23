@@ -68,6 +68,7 @@ export interface CrApprover {
   userId: string;
   userEmail: string;
   userFullName: string;
+  userRole: string | null;
   isRequired: boolean;
   position: number;
   status: ApproverStatus;
@@ -81,6 +82,7 @@ export interface ApproverCandidate {
   kind: "USER" | "GROUP";
   label: string;
   secondary: string | null;
+  role: string | null;
 }
 
 export interface ChangeRequestCustomFieldValue {

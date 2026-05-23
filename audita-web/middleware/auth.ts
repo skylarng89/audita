@@ -3,7 +3,6 @@ import { useAuthStore } from "~/stores/auth";
 export default defineNuxtRouteMiddleware((to) => {
   const auth = useAuthStore();
 
-  // Allow public routes without a session
   const publicRoutes = [
     "/auth/sign-in",
     "/auth/forgot-password",
@@ -16,6 +15,9 @@ export default defineNuxtRouteMiddleware((to) => {
   }
 
   if (!auth.isAuthenticated) {
-    return navigateTo("/auth/sign-in");
+    return navigateTo({
+      path: "/auth/sign-in",
+      query: { redirect: to.fullPath },
+    });
   }
 });

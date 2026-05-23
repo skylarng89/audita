@@ -89,11 +89,11 @@ public class EmailService {
 
     @Async
     public void sendMentionEmail(String toEmail, String recipientName,
-                                 String crTitle, String crId, String commenterName) {
+                                 String crTitle, String crId, String commentId, String commenterName) {
         Context ctx = new Context();
         ctx.setVariable("recipientName", recipientName);
         ctx.setVariable("crTitle", crTitle);
-        ctx.setVariable("crLink", appBaseUrl + "/change-requests/" + crId);
+        ctx.setVariable("crLink", appBaseUrl + "/change-requests/" + crId + "?commentId=" + commentId);
         ctx.setVariable("commenterName", commenterName);
         send(toEmail, commenterName + " mentioned you in: " + crTitle, "email/mention", ctx);
     }

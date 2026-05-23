@@ -1,0 +1,8 @@
+# Trivy vulnerability ignore list
+# Format: CVE-ID [optional comment]
+
+# CVE-2026-33671: picomatch ReDoS in bundled npm (Node.js base image)
+# Not exploitable in our context — picomatch is only used by npm's internal
+# file-globbing during package installation, not exposed to user input.
+# Fixed in Node.js 24.x base images; tracked for next base image upgrade.
+CVE-2026-33671

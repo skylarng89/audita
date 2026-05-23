@@ -247,7 +247,8 @@ async function handleSubmit() {
 
   isLoading.value = true;
   try {
-    await login(form.email, form.password);
+    const redirectTarget = (route.query.redirect as string) || null;
+    await login(form.email, form.password, redirectTarget);
   } catch (e: unknown) {
     errors.general = resolveApiErrorMessage(
       e,

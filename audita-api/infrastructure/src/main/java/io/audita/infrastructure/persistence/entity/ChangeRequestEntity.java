@@ -112,7 +112,10 @@ public class ChangeRequestEntity {
                 .toList();
 
         if (required.isEmpty()) {
-            return;
+            required = approvers;
+            if (required.isEmpty()) {
+                return;
+            }
         }
 
         boolean allRequiredApproved = required.stream()
