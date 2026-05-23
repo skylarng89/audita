@@ -77,24 +77,5 @@ public class TenantController {
         tenantService.removeDomain(domainId);
     }
 
-    // ── SSO Config ─────────────────────────────────────────────────────────────
-
-    @GetMapping("/{id}/sso")
-    public List<SsoConfigResponse> listSsoConfigs(@PathVariable UUID id) {
-        return tenantService.listSsoConfigs(id).stream().map(SsoConfigResponse::from).toList();
-    }
-
-    @PutMapping("/{id}/sso")
-    public SsoConfigResponse upsertSsoConfig(@PathVariable UUID id,
-                                              @Valid @RequestBody UpsertSsoConfigRequest req) {
-        var config = tenantService.upsertSsoConfig(
-                id, req.provider(), req.clientId(), req.clientSecret(), req.msTenantId());
-        return SsoConfigResponse.from(config);
-    }
-
-    @DeleteMapping("/{id}/sso/{configId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteSsoConfig(@PathVariable UUID id, @PathVariable UUID configId) {
-        tenantService.deleteSsoConfig(configId);
-    }
+    // SSO intentionally removed (not implemented yet)
 }

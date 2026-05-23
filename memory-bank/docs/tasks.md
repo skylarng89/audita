@@ -35,7 +35,7 @@
 | AUTH-001 | Implement bootstrap super-admin flow | High | ✅ Completed | Developer 1 | Platform first-run bootstrap endpoint and UI |
 | AUTH-002 | Implement login, refresh, and logout flows | High | ✅ Completed | Developer 1 | JWT + refresh-cookie lifecycle shipped |
 | AUTH-003 | Implement forgot/reset password with rate limiting | High | ✅ Completed | Developer 1 | Recovery flow hardened with token safeguards |
-| AUTH-004 | Implement Google and Microsoft OIDC SSO | High | ✅ Completed | Developer 1 | SSO init/callback + JIT provisioning |
+| AUTH-004 | Implement Google and Microsoft OIDC SSO | High | 🔴 Not Started | Developer 1 | SSO removed from app; provider research + re-planning required |
 | AUTH-005 | Build auth pages and auth store integration | High | ✅ Completed | Developer 2 | Sign-in/forgot/reset/accept-invite flows complete |
 | AUTH-006 | Add auth regression coverage across critical paths | High | ✅ Completed | Developer 1 | Controller/service tests for auth core |
 
@@ -228,6 +228,29 @@
 | BP13-006 | Implement API idempotency-key support for retriable mutations | High | ✅ Completed | Developer 1 | `X-Idempotency-Key` persisted/replayed |
 | BP13-007 | Harden Nuxt API proxy forwarding and validation | Medium | ✅ Completed | Developer 2 | Header allowlist and validation added |
 | BP13-008 | Enforce frontend CSP and security headers via `nuxt-security` | Medium | ✅ Completed | Developer 2 | Runtime security headers enforced |
+
+## Sprint 14: SSO Research & Provider Selection (Planning)
+
+### SSO Scope & Options
+
+| Task ID | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| SSO-001 | Inventory existing SSO/OIDC codepaths and endpoints | High | 🟡 In Progress | Developer 1 | Confirm removal scope + remaining references |
+| SSO-002 | Research Google OIDC + required scopes/claims for JIT | High | 🔴 Not Started | Developer 1 | Validate least-privilege approach |
+| SSO-003 | Research Microsoft Entra ID OIDC (single-tenant vs multi-tenant) | High | 🔴 Not Started | Developer 2 | Capture tenant/issuer URL patterns |
+| SSO-004 | Research generic OpenID Connect support (generic IdP) | High | 🔴 Not Started | Developer 1 | Assess JWKS validation + claim mapping strategy |
+| SSO-005 | Research Okta OIDC integration effort and config model | Medium | 🔴 Not Started | Developer 2 | Identify required admin/app settings |
+| SSO-006 | Evaluate SSO option ordering to avoid app bloat | High | 🔴 Not Started | Developer 1 | Choose smallest useful provider set for v1 |
+
+### Auth Flow & Domain Mapping (Assumptions)
+
+| Task ID | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| SSO-007 | Decide account model: SSO users must exist (no invite-first) | High | 🔴 Not Started | Developer 1 | Align with B requirement |
+| SSO-008 | Define tenant resolution from IdP claims/org identifiers | High | 🔴 Not Started | Developer 2 | Use IdP-provided fields for tenant selection (A) |
+| SSO-009 | Draft provider-agnostic JIT/JWT linking rules by email | High | 🔴 Not Started | Developer 1 | Email match as primary key |
+| SSO-010 | Define security controls: state/CSRF, JWKS validation, secret handling | High | 🔴 Not Started | Developer 2 | Re-apply encryption + remove token leakage risks |
+| SSO-011 | Produce minimal implementation plan per chosen providers | High | 🔴 Not Started | Developer 1 | Include config UIs and backend endpoints list |
 
 ## Post-Sprint 1: Reliability, UX & Rich-Text Hardening
 

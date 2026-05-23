@@ -123,65 +123,7 @@
       </div>
     </div>
 
-    <!-- SSO Configuration -->
-    <div v-if="activeTab === 'sso'" class="space-y-4">
-      <div
-        v-for="provider in ['GOOGLE', 'MICROSOFT']"
-        :key="provider"
-        class="card p-5 shadow-card-hover"
-      >
-        <h3 class="font-semibold mb-3">
-          {{
-            provider === "GOOGLE" ? "Google Workspace" : "Microsoft Entra ID"
-          }}
-        </h3>
-        <div class="space-y-3">
-          <div>
-            <label
-              class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1"
-              >Client ID</label
-            >
-            <input
-              v-model="ssoForms[provider].clientId"
-              type="text"
-              class="input"
-              :placeholder="
-                provider === 'GOOGLE'
-                  ? '123456789.apps.googleusercontent.com'
-                  : 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
-              "
-            />
-          </div>
-          <div>
-            <label
-              class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1"
-              >Client Secret</label
-            >
-            <input
-              v-model="ssoForms[provider].clientSecret"
-              type="password"
-              class="input"
-              placeholder="••••••••••••"
-            />
-          </div>
-          <div v-if="provider === 'MICROSOFT'">
-            <label
-              class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1"
-              >Tenant ID</label
-            >
-            <input
-              v-model="ssoForms[provider].msTenantId"
-              type="text"
-              class="input"
-              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-            />
-          </div>
-          <button @click="saveSso(provider)" class="btn-primary btn-sm">
-            Save SSO Config
-          </button>
-        </div>
-      </div>
-    </div>
+    <!-- SSO intentionally removed (not implemented yet) -->
   </div>
 </template>
 
@@ -210,7 +152,6 @@ const activeTab = ref("overview");
 const tabs = [
   { key: "overview", label: "Overview" },
   { key: "domains", label: "Domain Whitelist" },
-  { key: "sso", label: "SSO Configuration" },
 ];
 
 const { data: tenant, refresh: refreshTenant } = await useAsyncData<Tenant>(
@@ -229,12 +170,6 @@ const domains = computed(() => domainData.value ?? []);
 
 const newDomain = ref("");
 
-const ssoForms = reactive<
-  Record<string, { clientId: string; clientSecret: string; msTenantId: string }>
->({
-  GOOGLE: { clientId: "", clientSecret: "", msTenantId: "" },
-  MICROSOFT: { clientId: "", clientSecret: "", msTenantId: "" },
-});
 
 async function addDomain() {
   if (!newDomain.value.trim()) return;
@@ -258,28 +193,6 @@ async function removeDomain(domainId: string) {
     refreshDomains();
   } catch (error: unknown) {
     toastError(resolveApiErrorMessage(error, "Failed to remove domain."));
-  }
-}
-
-async function saveSso(provider: string) {
-  const form = ssoForms[provider];
-  if (!form.clientId || !form.clientSecret) {
-    toastError("Client ID and Client Secret are required.");
-    return;
-  }
-  try {
-    await api(`/api/platform/v1/tenants/${tenantId}/sso`, {
-      method: "PUT",
-      body: {
-        provider,
-        clientId: form.clientId,
-        clientSecret: form.clientSecret,
-        msTenantId: form.msTenantId || null,
-      },
-    });
-    toastSuccess(`${provider} SSO configuration saved.`);
-  } catch (error: unknown) {
-    toastError(resolveApiErrorMessage(error, "Failed to save SSO configuration."));
   }
 }
 

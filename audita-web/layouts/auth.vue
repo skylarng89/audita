@@ -55,7 +55,7 @@
           class="relative z-10 flex items-center gap-3 text-white/50 text-xs uppercase tracking-widest"
         >
           <div class="w-8 h-px bg-white/30" />
-          <slot name="hero-footer">Super Admin Access</slot>
+          <slot name="hero-footer">Portal Access</slot>
         </div>
       </div>
 
