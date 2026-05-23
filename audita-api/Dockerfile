@@ -1,39 +1,45 @@
+# syntax=docker/dockerfile:1.7
+
 # ── Build stage ─────────────────────────────────────────────────────────────────
-FROM eclipse-temurin:25.0.3_9-jdk-noble AS builder
+FROM dhi.io/eclipse-temurin:25-jdk-debian13-dev AS builder
 WORKDIR /app
+
+ENV GRADLE_OPTS="-Dorg.gradle.wrapper.networkTimeout=60000 -Dorg.gradle.internal.http.connectionTimeout=60000 -Dorg.gradle.internal.http.socketTimeout=60000"
 
 COPY settings.gradle.kts build.gradle.kts gradle.properties ./
 COPY gradle gradle
 COPY gradlew ./
 
 COPY domain/build.gradle.kts domain/
-COPY domain/src domain/src
 COPY application/build.gradle.kts application/
-COPY application/src application/src
 COPY infrastructure/build.gradle.kts infrastructure/
-COPY infrastructure/src infrastructure/src
 COPY api/build.gradle.kts api/
+
+RUN chmod +x ./gradlew
+
+# Prime Gradle dependency cache using only build scripts.
+RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
+    sh -c 'for i in 1 2 3; do ./gradlew :api:dependencies --no-daemon && exit 0; sleep 5; done; exit 1'
+
+COPY domain/src domain/src
+COPY application/src application/src
+COPY infrastructure/src infrastructure/src
 COPY api/src api/src
 
-RUN chmod +x ./gradlew && ./gradlew :api:bootJar --no-daemon
+RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
+    sh -c 'for i in 1 2 3; do ./gradlew :api:bootJar --no-daemon && exit 0; sleep 5; done; exit 1'
+
+# Pre-create uploads directory for runtime image without shell utilities.
+RUN mkdir -p /tmp/uploads
 
 # ── Runtime stage ────────────────────────────────────────────────────────────────
-FROM eclipse-temurin:25.0.3_9-jre-noble
+FROM dhi.io/eclipse-temurin:25
 WORKDIR /app
 
-RUN apt-get update \
-	&& apt-get install -y --no-install-recommends curl \
-	&& rm -rf /var/lib/apt/lists/*
+COPY --from=builder --chown=65532:65532 /tmp/uploads /data/uploads
+COPY --from=builder --chown=65532:65532 /app/api/build/libs/audita-api.jar app.jar
 
-RUN addgroup --system audita && adduser --system --ingroup audita audita
-
-# Pre-create the uploads directory with correct ownership so the Docker volume
-# inherits audita:audita ownership on first initialisation.
-RUN mkdir -p /data/uploads && chown -R audita:audita /data/uploads
-
-USER audita
-
-COPY --from=builder --chown=audita:audita /app/api/build/libs/audita-api.jar app.jar
+USER 65532:65532
 
 EXPOSE 8080
 # Virtual threads available natively in Java 25 — no flag needed

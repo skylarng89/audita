@@ -1,5 +1,23 @@
 # Audita — Changelog
 
+## [0.6.1] — 2026-05-23
+
+### Fixed (Post-Sprint Container Hardening — 2026-05-23)
+
+- **DHI hardened runtime compatibility**: removed API runtime assumptions about shell/package tools and switched to hardened-safe non-root runtime semantics.
+  - API runtime now uses numeric non-root ownership (`COPY --chown=65532:65532`) and avoids shell-dependent runtime setup.
+  - Removed compose healthchecks that depended on `curl`/shell inside hardened API image.
+- **Gradle wrapper network resilience in Docker build**: increased wrapper timeout (`networkTimeout=60000`) and hardened build-stage Gradle network timeout behavior to prevent transient distribution download failures.
+- **Compose stack verification**: local hardened stack now builds and starts cleanly (`api`, `web`), with API actuator health returning `200` and startup logs confirming successful boot.
+
+### Verification (Post-Sprint Container Hardening — 2026-05-23)
+
+- `docker compose -f docker-compose.local.yml build api`.
+- `docker compose -f docker-compose.local.yml up -d --build`.
+- `docker compose -f docker-compose.local.yml ps`.
+- `docker compose -f docker-compose.local.yml logs --tail=200 api`.
+- `curl -sS -o /tmp/audita-health.json -w "%{http_code}" http://localhost:7080/actuator/health`.
+
 ## [0.6.0] — 2026-05-19
 
 ### Added (Sprint 12 — Launch Readiness — 2026-05-19)

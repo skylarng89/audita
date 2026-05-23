@@ -435,3 +435,28 @@ All Sprint 12 tasks completed. v0.6.0 released.
 - `cd audita-web && pnpm test` (41 tests, 13 files)
 - `cd audita-web && pnpm build`
 - `cd audita-api && ./gradlew :api:compileJava :infrastructure:compileJava --no-daemon`
+
+## Post-Sprint 4 — DHI Container Hardening + Build Reliability (2026-05-23)
+
+### Objectives
+
+1. Ensure API Docker image is compatible with DHI hardened runtime constraints.
+2. Remove shell/curl runtime assumptions from compose/runtime flow.
+3. Stabilize Docker build path for Gradle wrapper distribution downloads.
+
+### Work Items
+
+- DHI-001: Harden API runtime stage for distroless/hardened execution using numeric non-root ownership. ✅
+- DHI-002: Remove compose API healthchecks that depend on in-image curl/shell. ✅
+- DHI-003: Increase Gradle wrapper timeout and apply Docker build network timeout hardening. ✅
+- DHI-004: Rebuild hardened API image and verify compose startup path end-to-end. ✅
+- DHI-005: Validate API readiness endpoint from host and confirm successful boot logs. ✅
+- DHI-006: Reconcile memory-bank records for container hardening closure. ✅
+
+### Verification
+
+- `docker compose -f docker-compose.local.yml build api`
+- `docker compose -f docker-compose.local.yml up -d --build`
+- `docker compose -f docker-compose.local.yml ps`
+- `docker compose -f docker-compose.local.yml logs --no-color --tail=200 api`
+- `curl -sS -o /tmp/audita-health.json -w "%{http_code}" http://localhost:7080/actuator/health`

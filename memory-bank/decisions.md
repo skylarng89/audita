@@ -390,3 +390,29 @@
 
 - `CommentServiceTest` passes with mention-email flow and comment persistence path.
 - Rich-text comments with mention spans persist and render without proxy/API rejection.
+
+---
+
+## ADR-019: Hardened Runtime Images Must Not Depend on Shell or Curl Healthchecks
+
+**Date:** 2026-05-23
+**Status:** Accepted
+
+**Decision:** For DHI hardened runtime images, avoid shell/package-manager/runtime mutation assumptions and remove in-container healthchecks that require `curl` or `/bin/sh`.
+
+**Reasoning:**
+
+- DHI runtime images are intentionally minimal and may not include `/bin/sh`, `apt-get`, or `curl`.
+- Runtime-stage `RUN` or shell-form healthchecks fail under hardened images and create false negatives unrelated to application health.
+- Numeric non-root ownership (`COPY --chown=<uid>:<gid>`) keeps runtime deterministic and compatible with distroless/hardened bases.
+
+**Trade-offs:**
+
+- Loses convenient in-container `curl` health probe pattern in compose files.
+- Health/readiness validation should move to app endpoints from external probes/orchestrator-native checks.
+
+**Validation:**
+
+- `docker compose -f docker-compose.local.yml build api` succeeds with hardened image.
+- `docker compose -f docker-compose.local.yml up -d --build` brings up `api` and `web`.
+- API actuator endpoint returns HTTP 200 at `http://localhost:7080/actuator/health`.

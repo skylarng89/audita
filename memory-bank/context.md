@@ -1,7 +1,7 @@
 # Audita — Active Context
 
-**Last Updated:** 2026-05-22
-**Current Phase:** Post-Sprint mention UX + comment deep-link auth continuity hotfix complete
+**Last Updated:** 2026-05-23
+**Current Phase:** Post-Sprint container hardening + DHI runtime compatibility verification complete
 **Active Sprint:** Sprint 13 (completed)
 
 ---
@@ -37,7 +37,8 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 | Post-Sprint 1 | 19/19 | 19 | Reliability, UX & Rich-Text Hardening | 2026-05-22 |
 | Post-Sprint 2 | 8/8 | 8 | Approver UX Polish + Activity Stream + CI Trivy Fix | 2026-05-22 |
 | Post-Sprint 3 | 9/9 | 9 | Mention UX + Comment Deep-Link + Nuxt API XSS Validator Scope Fix | 2026-05-22 |
-| **TOTAL** | **231/231** | **231** | — | — |
+| Post-Sprint 4 | 6/6 | 6 | DHI Hardened Runtime + Docker Build Reliability | 2026-05-23 |
+| **TOTAL** | **237/237** | **237** | — | — |
 
 **Sprint 12: Launch Readiness** — All 6 tasks completed. v0.6.0 released.
 
@@ -138,13 +139,13 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 
 ## Current Blockers
 
-- **No active implementation blockers.** All post-sprint hardening, polish, and mention/deep-link hotfix tasks complete: settings fixes, auth session guards, log noise elimination, rich-text upgrade, approver UX redesign + polish, activity stream readability, CI Trivy scan, and comment mention posting continuity.
-- **Current baseline remains healthy:** backend targeted tests passing; frontend `typecheck`, `test` (41 tests), and `build` all passing; CI Trivy scan passing.
+- **No active implementation blockers.** DHI runtime/container issues are resolved: hardened API runtime runs without shell/package-manager assumptions, healthchecks no longer depend on curl, and local compose stack builds/starts cleanly.
+- **Current baseline remains healthy:** local compose stack (`api`, `web`) is up, API actuator health returns `200`, startup logs confirm successful boot and tenant migration path completion.
 
 ---
 
 ## Next Actions
 
-1. Consider cutting v0.7.0 release with all post-sprint fixes + Sprint 13 + mention/deep-link hotfix bundle.
-2. Run CI dry-run on feature branch to validate end-to-end release gates (including mention comment POST regression path) before merge.
-3. Prioritize Sprint 14 backlog from remaining architecture/performance opportunities.
+1. Run targeted RBAC/approval regression checks in running stack (requester visibility + optional-only approver closure + submit-without-approver guard).
+2. Execute CI dry-run on feature branch to validate hardened Docker path and release gates end-to-end.
+3. Prepare v0.7.0 release candidate notes including Post-Sprint 4 container hardening outcomes.

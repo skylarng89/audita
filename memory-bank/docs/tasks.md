@@ -2,7 +2,7 @@
 
 **Project:** Audita — Multi-Tenant ITIL/ITSM Change Management Platform
 **Version:** 0.1.0
-**Last Updated:** 2026-05-22
+**Last Updated:** 2026-05-23
 **Team Size:** 2–3 Developers
 
 ---
@@ -1623,3 +1623,44 @@
 - `cd audita-web && npx nuxi build` passes.
 - `cd audita-api && ./gradlew :infrastructure:compileJava` passes.
 - `cd audita-api && ./gradlew :infrastructure:test --tests "*CommentServiceTest*"` passes.
+
+---
+
+## Post-Sprint 4: DHI Runtime Hardening + Docker Build Reliability (2026-05-23)
+
+> **Goal:** Ensure API/web containers run reliably with DHI hardened images and remove runtime assumptions that fail on minimal images.
+
+| Task ID | Task | Priority | Status | Assigned To | Notes |
+| ------- | ---- | -------- | ------ | ----------- | ----- |
+| DHI-001 | Remove API runtime shell/package-manager assumptions | High | ✅ Completed | Developer 1 | Hardened runtime model avoids `/bin/sh` and runtime apt operations |
+| DHI-002 | Use deterministic non-root runtime ownership in API image | High | ✅ Completed | Developer 1 | Runtime copy uses `--chown=65532:65532` |
+| DHI-003 | Remove API healthchecks requiring curl in compose files | High | ✅ Completed | Developer 1 | Updated `docker-compose.yml` and `docker-compose.local.yml` |
+| DHI-004 | Increase Gradle wrapper timeout for Docker builds | Medium | ✅ Completed | Developer 1 | `gradle-wrapper.properties` set to `networkTimeout=60000` |
+| DHI-005 | Validate hardened compose stack startup and API readiness | High | ✅ Completed | Developer 1 | `up -d --build` + `ps` + actuator health `200` |
+| DHI-006 | Reconcile memory-bank records for container hardening closure | Medium | ✅ Completed | Developer 1 | Updated `context.md`, `plan.md`, `decisions.md`, `changelog.md`, session log |
+
+### Recent Implementations
+
+### DHI Runtime Hardening + Docker Reliability (Completed 2026-05-23)
+
+**Overview**: Finalized hardened container runtime compatibility and verified local compose stack starts cleanly with API health endpoint responding successfully.
+
+**Files Created/Modified**:
+
+- `audita-api/Dockerfile` — hardened runtime-safe non-root copy/ownership and Docker build resilience updates.
+- `audita-api/gradle/wrapper/gradle-wrapper.properties` — increased wrapper network timeout.
+- `docker-compose.local.yml` — removed API curl-based healthcheck.
+- `docker-compose.yml` — removed API curl-based healthcheck.
+
+**Key Changes**:
+
+- Hardened runtime no longer depends on shell/curl/package manager availability.
+- Compose startup no longer fails from incompatible in-container healthcheck tooling assumptions.
+- Docker build path for API is resilient to transient Gradle wrapper distribution download delays.
+
+**Test Coverage**:
+
+- `docker compose -f docker-compose.local.yml build api` passes.
+- `docker compose -f docker-compose.local.yml up -d --build` passes.
+- `docker compose -f docker-compose.local.yml ps` shows `api` and `web` up.
+- `curl http://localhost:7080/actuator/health` returns `200`.
