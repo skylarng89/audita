@@ -48,7 +48,17 @@
               ? 'bg-white dark:bg-slate-700 text-on-surface dark:text-gray-100 shadow-sm'
               : 'text-muted hover:text-on-surface hover:bg-white/50 dark:hover:text-gray-300 dark:hover:bg-slate-700/50'
           "
+          :title="
+            crTab.key === 'approvers' && needsApproverAttention
+              ? 'Add at least one approver before submitting'
+              : undefined
+          "
         >
+          <span
+            v-if="crTab.key === 'approvers' && needsApproverAttention"
+            class="absolute -inset-0.5 rounded-lg ring-2 ring-danger/70 animate-pulse pointer-events-none"
+            aria-hidden="true"
+          />
           {{ crTab.label }}
           <span
             v-if="crTab.count !== undefined"
@@ -63,6 +73,23 @@
             {{ crTab.count }}
           </span>
         </button>
+      </div>
+      <div
+        v-if="changeRequest.status === 'DRAFT'"
+        class="mt-3 flex flex-wrap items-center gap-2 text-xs"
+      >
+        <span class="rounded-full px-2 py-1 bg-primary/10 text-primary font-medium"
+          >Step 1: Draft Details</span
+        >
+        <span
+          class="rounded-full px-2 py-1 font-medium"
+          :class="
+            needsApproverAttention
+              ? 'bg-danger/10 text-danger'
+              : 'bg-success/10 text-success'
+          "
+          >Step 2: Add Approvers</span
+        >
       </div>
     </div>
 
@@ -364,9 +391,23 @@
 
         <!-- Workflow actions -->
         <div class="card p-5 md:col-span-2 flex flex-wrap gap-2">
+          <div
+            v-if="needsApproverAttention"
+            class="w-full mb-2 rounded-lg border border-danger/40 bg-danger/5 px-3 py-2 text-sm text-danger"
+          >
+            Add at least one approver before submitting this change request.
+            <button
+              type="button"
+              class="ml-2 underline font-medium"
+              @click="tab = 'approvers'"
+            >
+              Go to Approvers
+            </button>
+          </div>
           <button
             class="btn-primary btn-md"
-            :disabled="changeRequest.status !== 'DRAFT'"
+            :disabled="!canSubmitDraft"
+            :title="submitDisabledReason"
             @click="submitCr"
           >
             Submit
@@ -1123,6 +1164,29 @@ const approvalDisabledReason = computed(() => {
   return "You cannot take approval action in the current workflow state.";
 });
 
+const needsApproverAttention = computed(
+  () =>
+    changeRequest.value?.status === "DRAFT" && approvers.value.length < 1,
+);
+
+const canSubmitDraft = computed(
+  () =>
+    changeRequest.value?.status === "DRAFT" && !needsApproverAttention.value,
+);
+
+const submitDisabledReason = computed(() => {
+  if (!changeRequest.value) {
+    return undefined;
+  }
+  if (changeRequest.value.status !== "DRAFT") {
+    return "Only draft change requests can be submitted.";
+  }
+  if (needsApproverAttention.value) {
+    return "Add at least one approver before submitting this change request.";
+  }
+  return undefined;
+});
+
 // ── Tab list with counts ────────────────────────────────────────────────────
 const crTabs = computed(() => [
   { key: "details", label: "Details" },
@@ -1618,6 +1682,16 @@ function formatSize(bytes: number) {
 }
 
 async function submitCr() {
+  if (!canSubmitDraft.value) {
+    if (needsApproverAttention.value) {
+      tab.value = "approvers";
+    }
+    toastError(
+      submitDisabledReason.value ??
+        "Unable to submit this change request.",
+    );
+    return;
+  }
   try {
     changeRequest.value = await submit(id.value);
     activity.value = await listActivity(id.value);

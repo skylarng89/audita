@@ -1,6 +1,7 @@
 package io.audita.infrastructure.service;
 
 import io.audita.domain.exception.DomainNotPermittedException;
+import io.audita.domain.exception.InvalidStateTransitionException;
 import io.audita.domain.model.ApprovalType;
 import io.audita.domain.model.Priority;
 import io.audita.domain.model.RiskLevel;
@@ -133,6 +134,24 @@ class ChangeRequestServiceSecurityTest {
 
         verifyNoInteractions(activityStreamRepository);
         verify(changeRequestRepository).findById(changeRequestId);
+    }
+
+    @Test
+    void submitRequiresAtLeastOneApprover() {
+        UUID changeRequestId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+
+        ChangeRequestEntity changeRequest = buildDraftChangeRequest(ownerId);
+        ReflectionTestUtils.setField(changeRequest, "id", changeRequestId);
+        when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
+        when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId)).thenReturn(List.of());
+
+        InvalidStateTransitionException ex = assertThrows(
+                InvalidStateTransitionException.class,
+                () -> changeRequestService.submit(changeRequestId, ownerId, "REQUESTER"));
+
+        assertThat(ex.getErrorCode()).isEqualTo("APPROVERS_REQUIRED");
+        verifyNoInteractions(activityStreamRepository);
     }
 
     @Test

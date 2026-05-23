@@ -181,6 +181,10 @@ public class ChangeRequestService {
         ChangeRequestEntity changeRequest = getById(id);
         assertCanMutate(changeRequest, actorUserId, actorRole);
         ensureDefaultApprovers(changeRequest);
+        if (crApproverRepository.countByChangeRequestId(changeRequest.getId()) < 1) {
+            throw new InvalidStateTransitionException("APPROVERS_REQUIRED",
+                    "Add at least one approver before submitting this change request.");
+        }
         changeRequest.submit();
         changeRequest.setSlaDeadline(OffsetDateTime.now().plusHours(resolveSlaHours(changeRequest.getPriority())));
         ChangeRequestEntity submitted = changeRequestRepository.save(changeRequest);
