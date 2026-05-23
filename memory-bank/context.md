@@ -140,7 +140,7 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 ## Current Blockers
 
 - **No active implementation blockers.** DHI runtime/container issues are resolved: hardened API runtime runs without shell/package-manager assumptions, healthchecks no longer depend on curl, and local compose stack builds/starts cleanly.
-- **Current baseline remains healthy:** local compose stack (`api`, `web`) is up, API actuator health returns `200`, startup logs confirm successful boot and tenant migration path completion.
+- **Current baseline remains healthy:** local compose stack (`api`, `web`) is up, API actuator health returns `200`, startup logs confirm successful boot and tenant migration path completion, and focused regressions for visibility + approver-submit/closure semantics pass.
 
 ---
 

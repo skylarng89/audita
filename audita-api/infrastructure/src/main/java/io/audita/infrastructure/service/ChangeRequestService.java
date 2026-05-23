@@ -725,11 +725,14 @@ public class ChangeRequestService {
     }
 
     private void ensureDefaultApprovers(ChangeRequestEntity changeRequest) {
-        if (!resolveRequireDefaultApprovers()) {
+        UUID changeRequestId = changeRequest.getId();
+        List<UUID> configuredUserIds = resolveUuidListSetting(WORKFLOW_DEFAULT_APPROVER_USER_IDS_KEY);
+        List<UUID> configuredGroupIds = resolveUuidListSetting(WORKFLOW_DEFAULT_APPROVER_GROUP_IDS_KEY);
+
+        if (configuredUserIds.isEmpty() && configuredGroupIds.isEmpty()) {
             return;
         }
 
-        UUID changeRequestId = changeRequest.getId();
         List<CrApproverEntity> existingApprovers = crApproverRepository
                 .findByChangeRequestIdOrderByPositionAsc(changeRequestId);
         Map<UUID, CrApproverEntity> existingByUserId = existingApprovers.stream()
@@ -738,9 +741,6 @@ public class ChangeRequestService {
                         approver -> approver,
                         (left, ignored) -> left,
                         LinkedHashMap::new));
-
-        List<UUID> configuredUserIds = resolveUuidListSetting(WORKFLOW_DEFAULT_APPROVER_USER_IDS_KEY);
-        List<UUID> configuredGroupIds = resolveUuidListSetting(WORKFLOW_DEFAULT_APPROVER_GROUP_IDS_KEY);
 
         List<UserEntity> usersFromSettings = configuredUserIds.isEmpty()
                 ? List.of()
@@ -782,12 +782,6 @@ public class ChangeRequestService {
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVERS_AUTO_ADDED", Map.of(
                 PAYLOAD_COUNT, newApprovers.size(),
                 PAYLOAD_STATUS, changeRequest.getStatus().name()));
-    }
-
-    private boolean resolveRequireDefaultApprovers() {
-        return orgSettingRepository.findById(WORKFLOW_REQUIRE_DEFAULT_APPROVERS_KEY)
-                .map(setting -> Boolean.parseBoolean(setting.getValue()))
-                .orElse(true);
     }
 
     private List<UUID> resolveUuidListSetting(String key) {

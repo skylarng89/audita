@@ -199,16 +199,9 @@
             <option value="NON_LINEAR">Non-linear</option>
           </select>
         </div>
-        <div class="flex items-center gap-2 pt-7">
-          <input
-            id="require-default-approvers"
-            v-model="settings.workflowDefaults.requireDefaultApprovers"
-            type="checkbox"
-            class="rounded border-border"
-          />
-          <label for="require-default-approvers" class="text-sm"
-            >Require default approvers on new change requests</label
-          >
+        <div class="rounded-lg border border-border/70 bg-surface-container-low p-3 text-sm text-muted dark:border-border-dark dark:bg-slate-900/50">
+          Configured default approver users and groups are always auto-added to
+          new change requests.
         </div>
       </div>
     </section>
@@ -767,8 +760,7 @@ async function loadSettings() {
       response.securityDefaults.passwordPolicy;
     settings.workflowDefaults.approvalTypeDefault =
       response.workflowDefaults.approvalTypeDefault;
-    settings.workflowDefaults.requireDefaultApprovers =
-      response.workflowDefaults.requireDefaultApprovers;
+    settings.workflowDefaults.requireDefaultApprovers = true;
     settings.slaDefaults.lowHours = response.slaDefaults.lowHours;
     settings.slaDefaults.mediumHours = response.slaDefaults.mediumHours;
     settings.slaDefaults.highHours = response.slaDefaults.highHours;
@@ -817,6 +809,7 @@ async function saveSettings() {
   savingSettings.value = true;
   errorMessage.value = "";
   try {
+    settings.workflowDefaults.requireDefaultApprovers = true;
     const normalizedTimezone = normalizeTimezone(settings.timezone);
     settings.timezone = normalizedTimezone;
     await api<TenantAdminSettingsResponse>("/api/v1/settings", {
