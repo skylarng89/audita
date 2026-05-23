@@ -77,7 +77,7 @@ services:
   web:
     build:
       context: ./audita-web
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
       args:
         DEBUG: ${DEBUG:-false}
     container_name: audita-web

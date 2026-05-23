@@ -1,1710 +1,395 @@
-# Audita — Developer Task List
+# Audita - Developer Task List
 
-**Project:** Audita — Multi-Tenant ITIL/ITSM Change Management Platform
-**Version:** 0.1.0
-**Last Updated:** 2026-05-23
-**Team Size:** 2–3 Developers
-
----
+**Project:** Audita - Multi-Tenant ITIL/ITSM Change Management Platform
+**Version:** 0.6.3
+**Last Updated:** 2026-05-24
+**Team Size:** 2-3 Developers
 
 ## Task Status Legend
 
-- 🔴 **Not Started** — Task has not been started
-- 🟡 **In Progress** — Task is currently being worked on
-- ✅ **Completed** — Task is finished and tested
-
----
-
-## Sprint 0: Foundation & Scaffolding (Week 1–2)
-
-> **Goal:** Both repositories are runnable locally. Dev environment is fully reproducible via Docker Compose. CI pipeline is in place. No application logic yet.
-
-### Backend Scaffold (`audita-api`)
-
-| Task ID  | Task                                                                                      | Priority | Status       | Assigned To | Notes                                                                                                 |
-| -------- | ----------------------------------------------------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------------------------- |
-| INIT-001 | Initialise Gradle multi-module Spring Boot 4 project (Java 25)                            | High     | ✅ Completed | Developer 1 | `settings.gradle.kts` + root `build.gradle.kts`; Spring Boot 4.0.6 BOM; Java 25 toolchain             |
-| INIT-002 | Configure HikariCP + Hibernate 7 + PostgreSQL 16 connection                               | High     | ✅ Completed | Developer 1 | `application.yml` — HikariCP pool; `spring-boot-starter-data-jpa`; `postgresql` driver                |
-| INIT-003 | Configure Flyway for `public` schema baseline migration                                   | High     | ✅ Completed | Developer 1 | `db/migration/public/V1__create_public_schema.sql`; `baseline-on-migrate: true`                       |
-| INIT-004 | Implement `TenantContext` thread-local + Hibernate `CurrentTenantIdentifierResolver`      | High     | ✅ Completed | Developer 1 | `TenantContext`, `AuditaTenantIdentifierResolver`, `AuditaMultiTenantConnectionProvider`, `JpaConfig` |
-| INIT-005 | Implement per-tenant schema Flyway migration runner                                       | High     | ✅ Completed | Developer 1 | `FlywayTenantMigrator` + `db/migration/tenant/V1__create_tenant_schema.sql`                           |
-| INIT-006 | Configure Spring Boot Actuator health endpoints                                           | Medium   | ✅ Completed | Developer 1 | `spring-boot-starter-actuator`; `health,info` exposed in `application.yml`                            |
-| INIT-007 | Configure Logback structured JSON logging with MDC (`tenant_id`, `user_id`, `request_id`) | Medium   | ✅ Completed | Developer 1 | `logback-spring.xml`: JSON (prod) + coloured (dev); `logstash-logback-encoder:8.1`                    |
-| INIT-008 | Configure CORS (allow frontend origin only)                                               | High     | ✅ Completed | Developer 1 | `SecurityConfig.java` — `CorsConfiguration` + `UrlBasedCorsConfigurationSource`                       |
-| INIT-009 | Set up RFC 7807 Problem Detail global exception handler                                   | High     | ✅ Completed | Developer 1 | `GlobalExceptionHandler.java`; `mvc.problem-details.enabled: true`                                    |
-| INIT-010 | Write Docker Compose: `api`, `web`, `db` services                                         | High     | ✅ Completed | Developer 1 | `docker-compose.yml` — PostgreSQL, MailHog, API, Nuxt with healthchecks                               |
-
-### Frontend Scaffold (`audita-web`)
-
-| Task ID  | Task                                                                                                  | Priority | Status       | Assigned To | Notes                                                                                                           |
-| -------- | ----------------------------------------------------------------------------------------------------- | -------- | ------------ | ----------- | --------------------------------------------------------------------------------------------------------------- |
-| INIT-011 | Initialise Nuxt 3 project with pnpm, TypeScript, Tailwind CSS                                         | High     | ✅ Completed | Developer 2 | `nuxt.config.ts`, `pnpm-lock.yaml`; dark mode via `class` strategy                                              |
-| INIT-012 | Configure Tailwind design tokens (colours, typography) per design.md                                  | High     | ✅ Completed | Developer 2 | `tailwind.config.ts` — primary, surface, danger, warning, success, info palette                                 |
-| INIT-013 | Create `default.vue`, `auth.vue`, `platform.vue` layouts                                              | High     | ✅ Completed | Developer 2 | All three layout files present in `layouts/`                                                                    |
-| INIT-014 | Create `plugins/api.ts` — `$fetch` wrapper with auth header injection and 401 handling                | High     | ✅ Completed | Developer 2 | `plugins/api.ts`; injects Authorization + X-Tenant-Slug; silent refresh on 401                                  |
-| INIT-015 | Create shared component library baseline: Button, Input, Badge, Card, Modal, Toast, Table, Pagination | High     | ✅ Completed | Developer 2 | `AppButton`, `AppInput`, `AppBadge`, `AppCard`, `AppModal`, `AppTable`, `AppPagination` in `components/shared/` |
-| INIT-016 | Create `middleware/auth.ts` — redirect unauthenticated to login                                       | High     | ✅ Completed | Developer 2 | `middleware/auth.ts` present                                                                                    |
-| INIT-017 | Create `middleware/role.ts` — role-based route guard                                                  | High     | ✅ Completed | Developer 2 | `middleware/role.ts` — uses `to.meta.requiredRole`                                                              |
-| INIT-018 | Create `middleware/tenant.ts` — resolve tenant slug from subdomain                                    | Medium   | ✅ Completed | Developer 2 | `middleware/tenant.ts` — subdomain → slug; ?tenant= query param in dev; writes to `auth.tenantSlug`             |
-| INIT-019 | Configure runtime config for API base URL                                                             | Medium   | ✅ Completed | Developer 2 | `nuxt.config.ts` — `runtimeConfig.public.apiBase` from `NUXT_PUBLIC_API_BASE`                                   |
-
----
-
-## Sprint 1: Authentication & Platform Bootstrap (Week 3–4)
-
-> **Goal:** Full auth stack end-to-end. Users can sign in, refresh tokens, reset passwords, and authenticate via SSO. Super Admin bootstrap flow complete.
-
-### Backend — Auth Service (`audita-api`)
-
-| Task ID  | Task                                                                            | Priority | Status       | Assigned To | Notes                                                                                              |
-| -------- | ------------------------------------------------------------------------------- | -------- | ------------ | ----------- | -------------------------------------------------------------------------------------------------- |
-| AUTH-001 | Implement platform bootstrap endpoint (first Super Admin creation)              | High     | ✅ Completed | Developer 1 | `PlatformBootstrapController` + `AuthService.bootstrap()`; `POST /api/platform/v1/bootstrap`       |
-| AUTH-002 | Implement tenant user login with BCrypt password verification                   | High     | ✅ Completed | Developer 1 | `AuthService.loginTenantUser()`; BCrypt cost=12; `AuthController`; `POST /api/v1/auth/login`       |
-| AUTH-003 | Implement JWT access token generation (15-min expiry)                           | High     | ✅ Completed | Developer 1 | `JwtService`; jjwt 0.12.6; claims: userId, tenantSlug, role, email                                 |
-| AUTH-004 | Implement refresh token rotation (7-day, HttpOnly cookie, SHA-256 hashed in DB) | High     | ✅ Completed | Developer 1 | `AuthService.refreshToken()`; `POST /api/v1/auth/refresh`; rotating + cookie                       |
-| AUTH-005 | Implement logout (revoke refresh token)                                         | Medium   | ✅ Completed | Developer 1 | `AuthService.logout()`; `POST /api/v1/auth/logout`; deletes cookie                                 |
-| AUTH-006 | Implement forgot-password email flow with rate limiting (3/hr/email)            | High     | ✅ Completed | Developer 1 | `AuthService.forgotPassword()`; `EmailService`; `POST /api/v1/auth/forgot-password`                |
-| AUTH-007 | Implement reset-password token validation and password update                   | High     | ✅ Completed | Developer 1 | `AuthService.resetPassword()`; `POST /api/v1/auth/reset-password`; token expiry + used flag        |
-| AUTH-008 | Implement JWT authentication filter (`JwtAuthenticationFilter`)                 | High     | ✅ Completed | Developer 1 | Extends `OncePerRequestFilter`; validates JWT; populates `SecurityContextHolder`                   |
-| AUTH-009 | Implement tenant domain whitelist check on login                                | High     | ✅ Completed | Developer 1 | `AuthService.checkDomainWhitelist()`; open if no domains; `DomainNotPermittedException`            |
-| AUTH-010 | Write unit + integration tests for all auth flows                               | High     | ✅ Completed | Developer 1 | 18 unit tests; login, logout, refresh, forgot/reset, domain block, rate limits, bootstrap          |
-| AUTH-011 | Implement Google OIDC SSO initiation + callback                                 | High     | ✅ Completed | Developer 1 | `SsoController` + `SsoService.buildAuthorizationUrl()` + callback; `GET /api/v1/auth/oauth/google` |
-| AUTH-012 | Implement Microsoft Azure AD SSO initiation + callback                          | High     | ✅ Completed | Developer 1 | Same pattern as Google; `GET /api/v1/auth/oauth/microsoft`                                         |
-| AUTH-013 | Implement JIT user provisioning on first SSO login                              | High     | ✅ Completed | Developer 1 | `SsoService.resolveOrProvisionUser()`; creates `UserEntity` if not found by email                  |
-| AUTH-014 | Implement OAuth account linking (provider + sub → existing user)                | High     | ✅ Completed | Developer 1 | `OAuthAccountEntity` lookup by provider+sub before email fallback                                  |
-| AUTH-015 | Encrypt SSO client secrets at rest with AES-256-GCM                             | High     | ✅ Completed | Developer 1 | `AesEncryptionService`; `audita.encryption.key` (64 hex); applied in `SsoService`                  |
+- 🔴 **Not Started** - Task has not been started
+- 🟡 **In Progress** - Task is currently being worked on
+- ✅ **Completed** - Task is finished and tested
 
-### Frontend — Auth Pages (`audita-web`)
+## Sprint 0: Foundation & Scaffolding (Week 1-2)
 
-| Task ID  | Task                                                                                 | Priority | Status       | Assigned To | Notes                                                                                          |
-| -------- | ------------------------------------------------------------------------------------ | -------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------- |
-| AUTH-016 | Build Sign In page (`/auth/sign-in`)                                                 | High     | ✅ Completed | Developer 2 | Email + password; tenant slug; SSO buttons; calls `useAuth().login()`                          |
-| AUTH-017 | Build Forgot Password page (`/auth/forgot-password`)                                 | Medium   | ✅ Completed | Developer 2 | Email field; success state; calls `useAuth().forgotPassword()`                                 |
-| AUTH-018 | Build Reset Password page (`/auth/reset-password`)                                   | Medium   | ✅ Completed | Developer 2 | Reads `?token=`; password + confirm; 4-segment strength bar; calls `useAuth().resetPassword()` |
-| AUTH-019 | Build Accept Invite page (`/auth/accept-invite`)                                     | High     | ✅ Completed | Developer 2 | Reads `?token=`; full name + password; calls `useAuth().acceptInvite()`                        |
-| AUTH-020 | Build Bootstrap/first-run page (`/platform/bootstrap`)                               | High     | ✅ Completed | Developer 2 | Full name + email + password; `POST /api/platform/v1/bootstrap`; success shows sign-in link    |
-| AUTH-021 | Build `useAuthStore` Pinia store                                                     | High     | ✅ Completed | Developer 2 | `stores/auth.ts`; accessToken, user, tenantSlug; `setAuth()`, `clearAuth()`                    |
-| AUTH-022 | Implement role-based redirect after login (SUPER_ADMIN → /platform, else /dashboard) | High     | ✅ Completed | Developer 2 | `sso-callback.vue` + `useAuth` redirect logic                                                  |
+### Platform Bootstrap
 
----
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| INIT-001 | Initialize Gradle multi-module backend scaffold | High | ✅ Completed | Developer 1 | Java 25 + Spring Boot 4 baseline established |
+| INIT-002 | Configure PostgreSQL, Flyway, and tenant-aware JPA wiring | High | ✅ Completed | Developer 1 | Schema-per-tenant baseline with migration flow |
+| INIT-003 | Add structured logging and health endpoint baseline | Medium | ✅ Completed | Developer 1 | MDC-aware logs and actuator health enabled |
+| INIT-004 | Initialize Nuxt frontend with pnpm + TypeScript + Tailwind | High | ✅ Completed | Developer 2 | SSR frontend baseline complete |
+| INIT-005 | Build shared UI primitives and auth/tenant middleware | High | ✅ Completed | Developer 2 | Core reusable components + route guards added |
+| INIT-006 | Create docker-compose local platform stack | High | ✅ Completed | Developer 1 | API + Web + DB local reproducible environment |
 
-## Sprint 4: Collaboration, Notifications & SLA Automation (Week 9–10)
+## Sprint 1: Authentication & Platform Bootstrap (Week 3-4)
 
-> **Goal:** Deliver rich CR collaboration, real-time in-app notifications, and automatic SLA warning/breach handling.
+### Auth Foundation
 
-### Backend — Collaboration & Realtime (`audita-api`)
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| AUTH-001 | Implement bootstrap super-admin flow | High | ✅ Completed | Developer 1 | Platform first-run bootstrap endpoint and UI |
+| AUTH-002 | Implement login, refresh, and logout flows | High | ✅ Completed | Developer 1 | JWT + refresh-cookie lifecycle shipped |
+| AUTH-003 | Implement forgot/reset password with rate limiting | High | ✅ Completed | Developer 1 | Recovery flow hardened with token safeguards |
+| AUTH-004 | Implement Google and Microsoft OIDC SSO | High | ✅ Completed | Developer 1 | SSO init/callback + JIT provisioning |
+| AUTH-005 | Build auth pages and auth store integration | High | ✅ Completed | Developer 2 | Sign-in/forgot/reset/accept-invite flows complete |
+| AUTH-006 | Add auth regression coverage across critical paths | High | ✅ Completed | Developer 1 | Controller/service tests for auth core |
 
-| Task ID   | Task                                                                  | Priority | Status       | Assigned To | Notes                                                                                                |
-| --------- | --------------------------------------------------------------------- | -------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------- |
-| CR-022    | Implement comments API (list + create)                                | High     | ✅ Completed | Developer 1 | Added `CommentController` + `CommentService`; wired CR comments endpoints                            |
-| CR-023    | Implement mention extraction and mention notifications                | High     | ✅ Completed | Developer 1 | Added mention regex extraction, `comment_mentions` persistence, in-app + email mention notifications |
-| NOTIF-001 | Implement notifications query endpoint with unread count support      | High     | ✅ Completed | Developer 1 | Added `GET /api/v1/notifications` with `X-Unread-Count` header                                       |
-| NOTIF-002 | Implement notification read and read-all endpoints                    | Medium   | ✅ Completed | Developer 1 | Added `PATCH /api/v1/notifications/{id}/read` and `POST /api/v1/notifications/read-all`              |
-| NOTIF-003 | Implement SSE notifications stream endpoint                           | High     | ✅ Completed | Developer 1 | Added `GET /api/v1/notifications/stream` + emitter registry service                                  |
-| SLA-001   | Implement scheduled SLA warning/breach evaluator                      | High     | ✅ Completed | Developer 1 | Added `SlaMonitoringService` scheduled evaluator using warning/breach queries                        |
-| SLA-002   | Persist SLA activity + notification events and send SLA breach emails | High     | ✅ Completed | Developer 1 | Added SLA warning/breach activity events and breach email fan-out                                    |
+## Sprint 2: Multi-Tenancy, Users & Groups (Week 5-6)
 
-### Frontend — Collaboration & Realtime (`audita-web`)
-
-| Task ID   | Task                                                    | Priority | Status       | Assigned To | Notes                                                                |
-| --------- | ------------------------------------------------------- | -------- | ------------ | ----------- | -------------------------------------------------------------------- |
-| CR-024    | Add Comments tab to CR detail page with list + compose  | High     | ✅ Completed | Developer 2 | Added comments tab in CR detail with render + compose + post action  |
-| NOTIF-004 | Wire notification bell to backend list endpoint on load | Medium   | ✅ Completed | Developer 2 | Added startup hydration in `AppNotificationBell`                     |
-| NOTIF-005 | Stabilise SSE plugin auth/connection behavior           | Medium   | ✅ Completed | Developer 2 | Hardened SSE with short-lived stream-token issuance + reconnect flow |
-
----
-
-## Sprint 5: Hardening & Release Readiness (Week 11)
-
-> **Goal:** Stabilize critical integration flows, lock in regression coverage, and complete final verification gates.
-
-### Backend + Frontend Hardening
-
-| Task ID  | Task                                                                          | Priority | Status       | Assigned To | Notes                                                                                                                                     |
-| -------- | ----------------------------------------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| HARD-001 | Resolve critical CR lifecycle integration regressions                         | High     | ✅ Completed | Developer 1 | `CriticalFlowsE2EL1Test` now passes all 4 flows after service + compatibility fixes                                                       |
-| HARD-002 | Add principal identity regression tests                                       | High     | ✅ Completed | Developer 1 | Added `UserPrincipalTest` to lock UUID username semantics                                                                                 |
-| HARD-003 | Harden CR response mapping against lazy-loading runtime failures              | High     | ✅ Completed | Developer 1 | Added service-layer creator initialization before returning mapped entities                                                               |
-| HARD-004 | Run backend release gate (critical suite)                                     | High     | ✅ Completed | Developer 1 | `./gradlew :api:test --tests "io.audita.api.integration.CriticalFlowsE2EL1Test"`                                                          |
-| HARD-005 | Run frontend release gate (production build)                                  | High     | ✅ Completed | Developer 2 | `cd audita-web && pnpm build`                                                                                                             |
-| ARCH-001 | Introduce application ports + controller inversion (auth/SSO/bootstrap slice) | High     | ✅ Completed | Developer 1 | Added `AuthPort`, `SsoPort`, `OnboardingPort`; rewired `AuthController`, `SsoController`, `PlatformBootstrapController`; compile verified |
-
----
-
-## Sprint 7: File Security, Custom Fields UX & CR Edit Mode (2026-05-11)
-
-> **Goal:** Harden file uploads with multi-layer type enforcement, fix custom fields 400 bug, give admins a dedicated custom fields configuration page, and redesign the CR detail page to be read-only by default with a gated Edit mode.
-
-### Backend — File Security & Validation (`audita-api`)
-
-| Task ID | Task                                            | Priority | Status       | Assigned To | Notes                                                                                                                                                             |
-| ------- | ----------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| SEC-010 | Implement 3-layer file upload type enforcement  | High     | ✅ Completed | Developer 1 | `isAllowedMimeType()` + `isExtensionAllowed()` + `isSignatureValid()` (magic bytes) in `ChangeRequestService`; DOCX/XLSX ZIP ambiguity handled by extension check |
-| SEC-011 | Add path traversal guard on attachment download | High     | ✅ Completed | Developer 1 | `outputPath.normalize()` + `outputPath.startsWith(storageDir)` in `ChangeRequestService`                                                                          |
-| UX-001  | Implement filename normalization on upload      | Medium   | ✅ Completed | Developer 1 | `normalizeFileName()` → lowercase, hyphenated, filesystem-safe; original name preserved in DB                                                                     |
-
-### Frontend — Custom Fields Admin Page (`audita-web`)
-
-| Task ID | Task                                                                    | Priority | Status       | Assigned To | Notes                                                                                                         |
-| ------- | ----------------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------- |
-| ADM-010 | Create `/admin/custom-fields` page with full CRUD for field definitions | High     | ✅ Completed | Developer 2 | `pages/admin/custom-fields/index.vue`; TEXT/NUMBER/DATE/DROPDOWN/CHECKBOX; uses `/api/v1/admin/custom-fields` |
-| ADM-011 | Add "Custom Fields" admin-only sidebar link                             | Low      | ✅ Completed | Developer 2 | `AppSidebar.vue`; `v-if="auth.isAdmin"`; placed before Settings link                                          |
-
-### Frontend — CR Detail Edit Mode (`audita-web`)
-
-| Task ID | Task                                                              | Priority | Status       | Assigned To | Notes                                                                                                                                                                           |
-| ------- | ----------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CR-030  | Redesign CR detail page to read-only default with gated Edit mode | High     | ✅ Completed | Developer 2 | Edit button visible only for DRAFT; form covers all CR fields + TipTap + custom fields; Save calls update() + saveCustomFields() atomically; `onBeforeUnmount` cleans up editor |
-| CR-031  | Replace VueDatePicker with native date/time inputs in Create CR   | High     | ✅ Completed | Developer 2 | `new.vue`: 4 native inputs, `colorScheme` dark mode, `combineParts(string, string)`, state types `""` not null                                                                  |
-| CR-032  | Replace VueDatePicker with native date/time inputs in CR Edit     | High     | ✅ Completed | Developer 2 | `[id].vue`: same as CR-031 + `enterEditMode` serialises `"HH:mm"` strings; plugin + CSS removed                                                                                 |
-
-## Sprint 8: Admin Settings Activation & SLA Defaults (2026-05-11)
-
-> **Goal:** Activate editable tenant admin settings for workflow/SLA defaults and wire runtime SLA behavior to persisted tenant-level settings.
-
-### Backend + Frontend Settings Slice (`audita-api` + `audita-web`)
-
-- SET-001 | Add persisted workflow/SLA defaults to tenant settings API | Priority: High | Status: ✅ Completed | Assigned To: Developer 1 | Notes: Added `PATCH /api/v1/settings`, `org_settings` persistence entity/repository, expanded response contract, and validation guard for warning/deadline ratio.
-- SET-002 | Activate admin settings UI save flow for workflow/SLA defaults | Priority: High | Status: ✅ Completed | Assigned To: Developer 2 | Notes: Added testable form interaction logic (`composables/adminSettingsForm.ts`) and Vitest coverage (`tests/admin/settings-form.spec.ts`) for dirty-state, validation, and payload behavior.
-- SET-003 | Read SLA defaults at runtime in CR creation and SLA monitor | Priority: High | Status: ✅ Completed | Assigned To: Developer 1 | Notes: Added runtime tests in `ChangeRequestServiceSecurityTest` and `SlaMonitoringServiceTest` to verify configured SLA hours and warning window behavior.
-- SET-004 | Add regression tests for tenant settings GET/PATCH | Priority: High | Status: ✅ Completed | Assigned To: Developer 1 | Notes: Added `TenantSettingsControllerWebMvcTest` and `TenantServiceSettingsTest` covering defaults, malformed persisted values, and settings write assertions.
-
-## Sprint 9: Change Request List Scalability (2026-05-11)
-
-> **Goal:** Improve CR list performance and usability for larger datasets with bounded page size and explicit page navigation.
-
-### Frontend — CR List Pagination (`audita-web`)
-
-| Task ID     | Task                                                                          | Priority | Status       | Assigned To | Notes                                                                                                                                             |
-| ----------- | ----------------------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CR-LIST-001 | Paginate `/change-requests` with max 50 items per page and pagination buttons | High     | ✅ Completed | Developer 2 | Updated `pages/change-requests/index.vue` to fetch `size=50`, use previous/next page buttons, preserve filter behavior, and keep totals accurate. |
-
----
-
-## Sprint 10: UX & UI Polish (2026-05-11)
-
-> **Goal:** Systematically address every UX and UI deficiency identified across the full application — navigation, responsiveness, consistency, forms, empty states, and interaction feedback — to bring the product to a professional, production-quality standard.
-
----
-
-### Group A — Navigation & Mobile Responsiveness
-
-| Task ID  | Task                                                          | Priority | Status       | Assigned To | Notes                                                                                                                                                                                                                          |
-| -------- | ------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| UX10-001 | Implement mobile navigation drawer (hamburger menu)           | High     | ✅ Completed | Developer 2 | Full slide-in `<nav>` drawer added to `layouts/default.vue` with hamburger button, backdrop, `aria-expanded`, Escape close, `aria-current="page"` on active links, and create CTA.                                             |
-| UX10-002 | Fix page header layout collapse on small screens              | High     | ✅ Completed | Developer 2 | CR list header wraps to `flex-col sm:flex-row` gap at small breakpoint. CR detail action buttons use `flex-wrap`.                                                                                                              |
-| UX10-003 | Collapse sidebar to icon-only rail on `md` breakpoint         | Medium   | ✅ Completed | Developer 2 | `AppSidebar.vue` fully rewritten: collapsible rail (`w-14`/`w-56`), `localStorage` persistence, CSS `--sidebar-w` var on `<html>` for layout sync. `.sidebar-link-rail` + `.sidebar-link-rail-active` utilities in `main.css`. |
-| UX10-004 | Make CR list filter bar collapse to "Filters" pill on mobile  | Medium   | ✅ Completed | Developer 2 | `pages/change-requests/index.vue` filter bar replaced with `"Filters ▾"` pill + animated dropdown panel. Active filter count badge on pill. Outside-click close via `onDocumentClick`.                                         |
-| UX10-005 | Make CR detail page action buttons stack vertically on mobile | Medium   | ✅ Completed | Developer 2 | CR detail top action area uses `flex-wrap` and sticky save bar handles save/cancel at bottom.                                                                                                                                  |
-
----
-
-### Group B — Button & Component System Consolidation
-
-| Task ID  | Task                                                           | Priority | Status         | Assigned To | Notes                                                                                                                                                                                                                                                                            |
-| -------- | -------------------------------------------------------------- | -------- | -------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UX10-006 | Align `AppButton.vue` and CSS class system                     | High     | ✅ Completed   | Developer 2 | Reconciled `AppButton` with CSS token system; variant classes now match exactly.                                                                                                                             |
-| UX10-007 | Replace raw `btn-*` class usage in auth pages with `AppButton` | Low      | ✅ Completed   | Developer 2 | `sign-in.vue`, `reset-password.vue`, `accept-invite.vue`, `forgot-password.vue` submit buttons migrated to `<SharedAppButton type="submit" size="lg" :loading="isLoading">`.                                                                                                     |
-| UX10-008 | Wire the CR list pagination to `AppPagination`                 | Medium   | ✅ Completed   | Developer 2 | Replaced inline prev/next with `003cSharedAppPagination003e` for consistent styling and keyboard nav.                                                                                                                |
-
----
-
-### Group C — Change Request List UX
-
-| Task ID  | Task                                                                | Priority | Status       | Assigned To | Notes                                                                                                                                             |
-| -------- | ------------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UX10-009 | Add SLA status indicator column to CR list table                    | High     | ✅ Completed | Developer 2 | Added "SLA Deadline" column (`hidden xl:table-cell`) with overdue red styling via `isPast()` from date-fns. `pages/change-requests/index.vue`     |
-| UX10-010 | Fix filter dropdown display values                                  | Low      | ✅ Completed | Developer 2 | Verified filter options already use human-readable labels ("All States", "Pending Approval", etc.). Options confirmed correct in updated CR list. |
-| UX10-011 | Add "Clear Filters" reset button to CR filter bar                   | Medium   | ✅ Completed | Developer 2 | `clearFilters()` ghost button visible only when any filter is active; resets all filters + reloads. Also shown in empty state CTA.                |
-| UX10-012 | Replace CR list plain-text empty state with illustrated empty state | Low      | ✅ Completed | Developer 2 | Icon + heading + contextual copy (filters-active vs. first-run). "Create Change Request" CTA shown when no filters applied.                       |
-| UX10-013 | Add skeleton loader for initial CR list load                        | Low      | ✅ Completed | Developer 2 | 5 `animate-pulse` skeleton rows replace the plain "Loading…" text row.                                                                            |
-
----
-
-### Group D — CR Detail Page UX
-
-| Task ID  | Task                                                               | Priority | Status       | Assigned To | Notes                                                                                                                                                                                          |
-| -------- | ------------------------------------------------------------------ | -------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UX10-014 | Replace ad-hoc tab buttons with a proper Tab component             | High     | ✅ Completed | Developer 2 | Inline `role="tablist"` / `role="tab"` / `aria-selected` / Arrow key navigation added to `pages/change-requests/[id].vue`.                                                                     |
-| UX10-015 | Show item count badges on CR detail tabs                           | Low      | ✅ Completed | Developer 2 | Tab labels show counts: "Approvers (3)", "Activity (12)", "Comments (2)" via `crTabs` computed array.                                                                                          |
-| UX10-016 | Replace "Affected Systems" comma-input with tag UI in edit mode    | Medium   | ✅ Completed | Developer 2 | Tag UI implemented in both `new.vue` and `[id].vue`. Pill chips with × remove, Enter/comma to add, backspace-to-remove-last. `form.affectedSystems`/`editForm.affectedSystems` are now arrays. |
-| UX10-017 | Add sticky "Save / Cancel" action bar when in CR edit mode         | Medium   | ✅ Completed | Developer 2 | Fixed bottom bar with Discard + Save Changes buttons added via `<Transition>` block, visible when `isEditing`. Left offset adjusts for sidebar on `md+`.                                       |
-| UX10-018 | Add confirmation for destructive workflow actions (Decline/Reject) | High     | ✅ Completed | Developer 2 | Reject on CR detail now uses `<SharedAppModal>` with labelled textarea for rejection reason before committing. `showReject` ref controls visibility.                                           |
-
----
-
-### Group E — Form & Input UX
-
-| Task ID  | Task                                            | Priority | Status       | Assigned To | Notes                                                                                                                    |
-| -------- | ----------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------ |
-| UX10-019 | Add show/hide toggle to all password inputs     | High     | ✅ Completed | Developer 2 | Eye/eye-slash toggle added to sign-in, reset-password, and accept-invite. `aria-pressed` on toggle button.               |
-| UX10-020 | Normalize page `h1` font sizes across all pages | Medium   | ✅ Completed | Developer 2 | CR list, CR create, CR detail h1 changed from `text-4xl` to `text-3xl`. All pages now use consistent `text-3xl` heading. |
-| UX10-021 | Move sign-in error banner above the form fields | Low      | ✅ Completed | Developer 2 | Error banner moved above `<form>` with `role="alert" aria-live="assertive"` in `pages/auth/sign-in.vue`.                 |
-| UX10-022 | Fix `<select>` option text for approval type    | Low      | ✅ Completed | Developer 2 | `NON_LINEAR` option label changed to `"Non-Linear"` in both `new.vue` and `[id].vue`.                                    |
-
----
-
-### Group F — Global Chrome & Feedback
-
-| Task ID  | Task                                                              | Priority | Status       | Assigned To | Notes                                                                                                                                                                                       |
-| -------- | ----------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UX10-023 | Add auto-dismiss progress bar to toast notifications              | Medium   | ✅ Completed | Developer 2 | Thin `@keyframes toast-drain` progress bar depletes from right to left over `toast.duration` ms in `components/shared/AppToastContainer.vue`.                                               |
-| UX10-024 | Make dark mode toggle accessible via keyboard shortcut or surface | Medium   | ✅ Completed | Developer 2 | Sun/moon icon button surfaced directly in header right area (`layouts/default.vue`) using `useColorMode()`.                                                                                 |
-| UX10-025 | Remove or connect the non-functional global search bar            | High     | ✅ Completed | Developer 2 | Dead search input removed from `layouts/default.vue` header. Spacer div added to maintain layout balance.                                                                                   |
-| UX10-026 | Add `aria-label` to all icon-only header control buttons          | Medium   | ✅ Completed | Developer 2 | Dark mode toggle has `aria-label="Toggle dark mode"`. Mobile nav hamburger has `aria-label="Open navigation"`. Bell already labelled. `aria-label="Main navigation"` on AppSidebar `<nav>`. |
-
----
-
-### Group G — WCAG 2.2 Compliance
-
-| Task ID | Task | Priority | Status | Assigned To | Notes |
-
----
-
-## Sprint 11: RBAC Expansion & CR Auto-Assignment (2026-05-12)
-
-> **Goal:** Auto-populate CR approvers at creation time and evolve tenant RBAC to support multi-role users plus admin-managed custom roles safely.
-
-| Task ID  | Task                                                                             | Priority | Status       | Assigned To | Notes                                                                                                                 |
-| -------- | -------------------------------------------------------------------------------- | -------- | ------------ | ----------- | --------------------------------------------------------------------------------------------------------------------- |
-| RBAC-001 | Auto-add Approver/Auditor/Admin users when CR is created                         | High     | ✅ Completed | Developer 1 | `ChangeRequestService.create()` now invokes default approver population on persisted CR entity (with generated UUID). |
-| RBAC-002 | Keep submit-time approver population idempotent                                  | High     | ✅ Completed | Developer 1 | Submit path reuses same dedupe logic and does not create duplicates if create already auto-populated.                 |
-| RBAC-003 | Introduce `user_roles` many-to-many tenant schema migration with legacy backfill | High     | ✅ Completed | Developer 1 | Added `tenant/V6__add_user_roles.sql`; backfills from `users.role_id` for zero-downtime compatibility.                |
-| RBAC-004 | Support multi-role assignment in invite/update user APIs                         | High     | ✅ Completed | Developer 1 | `InviteUserRequest`/`UpdateUserRequest` now accept `roleIds` (legacy `roleId` retained).                              |
-| RBAC-005 | Add effective-role precedence for users with multiple roles                      | Medium   | ✅ Completed | Developer 1 | Added `RoleHierarchy` utility; highest role remains the primary compatibility role (`users.role_id`).                 |
-| RBAC-006 | Extend JWT claims/principal with all roles + permission authorities              | High     | ✅ Completed | Developer 1 | JWT now carries `roles` + `permissions`; `JwtAuthenticationFilter`/`UserPrincipal` map them into Spring authorities.  |
-| RBAC-007 | Add admin endpoints for custom role creation and permission updates              | High     | ✅ Completed | Developer 1 | `POST /api/v1/roles` + `PATCH /api/v1/roles/{id}/permissions`; system roles remain immutable.                         |
-| RBAC-008 | Prevent custom role permission-rule overlap and duplicates                       | High     | ✅ Completed | Developer 1 | Service rejects duplicate permission codes and exact permission-set overlaps with existing roles.                     |
-| RBAC-009 | Add regression test for create-time CR auto-population                           | High     | ✅ Completed | Developer 1 | Added `createAutoAddsApproversAuditorsAndAdmins()` in `ChangeRequestServiceSecurityTest`.                             |
-
----
-
-## Sprint 11: Session Recovery & CR Workflow Polish (2026-05-12)
-
-> **Goal:** Remove localhost auth/session regressions after the HttpOnly-cookie migration and finish the blocked CR collaboration flows on create/detail pages.
-
-### Backend + Frontend Workflow Recovery
-
-| Task ID | Task                                                                             | Priority | Status       | Assigned To | Notes                                                                                                                                                       |
-| ------- | -------------------------------------------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UXR-001 | Restore localhost session persistence on page refresh                            | High     | ✅ Completed | Developer 1 | Added configurable refresh-cookie `Secure` flag in `AuthController` and disabled it for `dev` profile HTTP local runs.                                      |
-| UXR-002 | Allow assigned non-auditor approvers to approve and reject CRs                   | High     | ✅ Completed | Developer 1 | Changed `ChangeRequestController.approve/reject` from fixed role gate to authenticated non-auditor gate; service still enforces actual approver membership. |
-| UXR-003 | Fix CR comments 500 and harden detail DTO lazy-loading                           | High     | ✅ Completed | Developer 1 | Initialized comment author role plus activity actor and attachment uploader relations before controller DTO mapping.                                        |
-| UXR-004 | Center reject modal and restore full-screen overlay                              | Medium   | ✅ Completed | Developer 2 | Reworked `AppModal` root container from native dialog layout to fixed fullscreen dialog wrapper.                                                            |
-| UXR-005 | Add rich-text formatting controls and pre-create attachment queue on new CR form | High     | ✅ Completed | Developer 2 | Added shared TipTap toolbar and queued file picker on `pages/change-requests/new.vue`; uploads now run immediately after draft creation.                    |
-| UXR-006 | Show recorded votes and human-readable activity stream on CR detail              | High     | ✅ Completed | Developer 2 | Added recorded-votes card, approval-action gating, and formatted activity payload rendering in `pages/change-requests/[id].vue`.                            |
+### Tenant Core
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| TEN-001 | Implement tenant provisioning and lifecycle APIs | High | ✅ Completed | Developer 1 | Tenant create/list/update/deactivate flows |
+| TEN-002 | Implement user invite and lifecycle management | High | ✅ Completed | Developer 1 | Invite/list/update/deactivate/reactivate |
+| TEN-003 | Implement group CRUD and group membership management | High | ✅ Completed | Developer 1 | Group/member domain and APIs complete |
+| TEN-004 | Implement role listing and tenant role integration | Medium | ✅ Completed | Developer 1 | Role exposure integrated into admin flows |
+| TEN-005 | Build platform/admin pages for tenants, users, groups | High | ✅ Completed | Developer 2 | Operational admin surfaces delivered |
+
+## Sprint 3: Change Request Core (Week 7-8)
+
+### Change Request Domain
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| CR-001 | Implement change-request create/read/update list endpoints | High | ✅ Completed | Developer 1 | Core CR API and persistence model finalized |
+| CR-002 | Implement approver assignment and approval workflow state machine | High | ✅ Completed | Developer 1 | Required/optional semantics integrated |
+| CR-003 | Implement custom field persistence for change requests | Medium | ✅ Completed | Developer 1 | Custom field values stored and retrieved |
+| CR-004 | Implement CR details UI with tabbed workflow surfaces | High | ✅ Completed | Developer 2 | Details/approvers/activity tabs delivered |
+| CR-005 | Integrate description rich-text authoring baseline | Medium | ✅ Completed | Developer 2 | TipTap-based authoring introduced |
+
+## Sprint 4: Collaboration, Notifications & SLA (Week 9-10)
+
+### Collaboration Slice
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| COL-001 | Implement comments API and mention extraction | High | ✅ Completed | Developer 1 | Mention persistence and notifications |
+| COL-002 | Implement notifications list/read/read-all APIs | High | ✅ Completed | Developer 1 | Notification lifecycle endpoints complete |
+| COL-003 | Implement SSE notification stream | High | ✅ Completed | Developer 1 | Real-time notification delivery available |
+| COL-004 | Implement SLA warning/breach scheduler and events | High | ✅ Completed | Developer 1 | SLA automation and event logging |
+| COL-005 | Integrate comments and notification bell in frontend | Medium | ✅ Completed | Developer 2 | Collaboration UX fully wired |
+
+## Sprint 5: Hardening, Release Readiness & E2E (Week 11)
+
+### Reliability Gate
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| HARD-001 | Stabilize critical CR lifecycle integration paths | High | ✅ Completed | Developer 1 | E2E critical-path regressions fixed |
+| HARD-002 | Add identity and DTO mapping regression coverage | High | ✅ Completed | Developer 1 | Principal and lazy-loading failures locked down |
+| HARD-003 | Complete release-gate verification across API and web | High | ✅ Completed | Developer 1 | Backend tests and frontend build gates passed |
+| HARD-004 | Refactor auth/bootstrap controllers to port-driven boundaries | Medium | ✅ Completed | Developer 1 | Hexagonal layering strengthened |
+
+## Sprint 6: Audit Trail & Admin Configuration
+
+### Audit/Admin
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| AUD-001 | Implement audit trail coverage for key CR workflow events | High | ✅ Completed | Developer 1 | Immutable event history expanded |
+| AUD-002 | Enable admin configuration surfaces for tenant operations | Medium | ✅ Completed | Developer 2 | Admin-facing settings/config UX improved |
+| AUD-003 | Remove residual mock-data pathways and enforce live data flows | Medium | ✅ Completed | Developer 1 | Data fidelity tightened |
+
+## Sprint 7: File Security, Custom Fields UX & CR Edit
+
+### Security + UX
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| SEC-010 | Implement 3-layer file upload validation | High | ✅ Completed | Developer 1 | Signature + extension + MIME validation |
+| SEC-011 | Add path traversal guard in attachment reads | High | ✅ Completed | Developer 1 | Normalization + prefix enforcement |
+| UX-701 | Implement filename normalization strategy | Medium | ✅ Completed | Developer 1 | Safe storage naming with retained display names |
+| UX-702 | Build admin custom-fields management page | High | ✅ Completed | Developer 2 | Full CRUD for custom-field definitions |
+| UX-703 | Redesign CR detail read-only/edit mode | High | ✅ Completed | Developer 2 | Explicit edit mode and safer save flow |
+
+## Sprint 8: Admin Settings Activation & SLA Defaults
+
+### Tenant Settings
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| SET-001 | Add persisted workflow/SLA defaults to tenant settings API | High | ✅ Completed | Developer 1 | Settings now tenant-persisted |
+| SET-002 | Activate admin settings save flow for workflow/SLA | High | ✅ Completed | Developer 2 | UI save path with validation and dirty-state |
+| SET-003 | Apply tenant SLA defaults at runtime | High | ✅ Completed | Developer 1 | CR deadline/warning logic now tenant-aware |
+| SET-004 | Add GET/PATCH regression coverage for tenant settings | High | ✅ Completed | Developer 1 | Controller/service tests complete |
+
+## Sprint 9: CR List Scalability
+
+### Pagination
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| CRL-001 | Implement server-side pagination with explicit navigation controls | High | ✅ Completed | Developer 2 | `size=50` and predictable next/prev UX |
+
+## Sprint 10: UX & WCAG 2.2 Compliance Overhaul
+
+### UI/Accessibility
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| UX10-001 | Implement mobile navigation drawer (hamburger menu) | High | ✅ Completed | Developer 2 | Responsive drawer with keyboard and focus support |
+| UX10-002 | Fix page header layout collapse on small screens | High | ✅ Completed | Developer 2 | Header actions wrap cleanly on mobile |
+| UX10-003 | Collapse sidebar to icon rail on medium breakpoints | Medium | ✅ Completed | Developer 2 | Sidebar rail mode with persisted state |
+| UX10-004 | Collapse CR filters into mobile pill panel | Medium | ✅ Completed | Developer 2 | Mobile filter dropdown with active-count badge |
+| UX10-005 | Stack CR detail action buttons on mobile | Medium | ✅ Completed | Developer 2 | Prevented horizontal overflow in detail header |
+| UX10-006 | Align `AppButton.vue` with CSS token system | High | ✅ Completed | Developer 2 | Variant and size parity across usage surfaces |
+| UX10-007 | Replace auth raw button classes with shared AppButton | Low | ✅ Completed | Developer 2 | Auth screens now use standardized button component |
+| UX10-008 | Wire CR list pagination to `AppPagination` | Medium | ✅ Completed | Developer 2 | Replaced ad-hoc next/prev control block |
+| UX10-009 | Add SLA indicator column in CR list | High | ✅ Completed | Developer 2 | Deadline visibility added to list view |
+| UX10-010 | Fix CR filter dropdown display labels | Low | ✅ Completed | Developer 2 | Human-readable filter text normalized |
+| UX10-011 | Add clear-filters reset action | Medium | ✅ Completed | Developer 2 | One-click filter reset with data reload |
+| UX10-012 | Replace plain empty-state text with illustrated state | Low | ✅ Completed | Developer 2 | Better guidance for empty and filtered states |
+| UX10-013 | Add skeleton loading rows for CR list | Low | ✅ Completed | Developer 2 | Reduced perceived load jank |
+| UX10-014 | Replace ad-hoc tab buttons with accessible tablist | High | ✅ Completed | Developer 2 | ARIA-compliant tab interactions on CR detail |
+| UX10-015 | Show badge counts on CR detail tabs | Low | ✅ Completed | Developer 2 | Approver/activity/comment counts exposed |
+| UX10-016 | Replace affected-systems comma input with tag UI | Medium | ✅ Completed | Developer 2 | Tokenized input with add/remove controls |
+| UX10-017 | Add sticky save/cancel bar in CR edit mode | Medium | ✅ Completed | Developer 2 | Always-visible edit actions while scrolling |
+| UX10-018 | Add destructive-action confirmation for reject/decline | High | ✅ Completed | Developer 2 | Confirm modal with reason capture |
+| UX10-019 | Add show/hide toggles for password fields | High | ✅ Completed | Developer 2 | Sign-in/reset/accept-invite parity |
+| UX10-020 | Normalize page title (`h1`) sizing system | Medium | ✅ Completed | Developer 2 | Consistent typography hierarchy |
+| UX10-021 | Move sign-in error banner above form inputs | Low | ✅ Completed | Developer 2 | Error visibility and flow improved |
+| UX10-022 | Normalize approval-type select option labels | Low | ✅ Completed | Developer 2 | User-friendly wording in selects |
+| UX10-023 | Add toast auto-dismiss progress bar | Medium | ✅ Completed | Developer 2 | Visual timeout feedback on notifications |
+| UX10-024 | Surface accessible dark-mode toggle control | Medium | ✅ Completed | Developer 2 | Keyboard and ARIA-ready control in header |
+| UX10-025 | Remove non-functional global search UI | High | ✅ Completed | Developer 2 | Dead control removed to avoid confusion |
+| UX10-026 | Add ARIA labels to icon-only controls | Medium | ✅ Completed | Developer 2 | Screen-reader naming coverage improved |
+| WCAG-001 | Add skip-to-content link and visible focus target | High | ✅ Completed | Developer 2 | Keyboard-first navigation support |
+| WCAG-002 | Ensure unique, descriptive page titles across routes | High | ✅ Completed | Developer 2 | Title consistency for assistive tech |
+| WCAG-003 | Add explicit label/input associations on forms | High | ✅ Completed | Developer 2 | Eliminated orphaned input controls |
+| WCAG-004 | Add autocomplete attributes on auth/profile inputs | Medium | ✅ Completed | Developer 2 | Browser assist and accessibility support |
+| WCAG-005 | Add focus trap behavior in modal/dialog surfaces | High | ✅ Completed | Developer 2 | Prevented focus escape in dialogs |
+| WCAG-006 | Add `aria-live` regions for async status feedback | Medium | ✅ Completed | Developer 2 | Toast/form/system updates announced |
+| WCAG-007 | Improve keyboard operability for interactive controls | High | ✅ Completed | Developer 2 | Tab/enter/escape flows validated |
+| WCAG-008 | Improve color contrast on key UI states | High | ✅ Completed | Developer 2 | Text/action contrast adjusted to AA |
+| WCAG-009 | Add scroll-margin handling for anchor/deep-link focus | Medium | ✅ Completed | Developer 2 | Anchored content not hidden under chrome |
+| WCAG-010 | Ensure all interactive targets meet 24x24 minimum | Medium | ✅ Completed | Developer 2 | Target-size compliance for WCAG 2.5.8 |
+
+## Sprint 11: Session Hardening, RBAC Expansion & Workflow Polish
+
+### Auth/RBAC/Workflow
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| SESS-001 | Add configurable refresh-cookie secure flag for local dev parity | High | ✅ Completed | Developer 1 | Prevented localhost session-loss in HTTP dev |
+| SESS-002 | Add refresh-cookie path fix for reliable logout revocation | High | ✅ Completed | Developer 1 | Refresh cookie now available to logout endpoint |
+| SESS-003 | Implement cold-start session restore endpoint (`/auth/session`) | High | ✅ Completed | Developer 1 | Non-rotating restore flow using refresh cookie |
+| SESS-004 | Enforce 401-only token refresh retry on frontend API client | High | ✅ Completed | Developer 2 | Removed over-broad refresh behavior |
+| SESS-005 | Add API contract compatibility header and enforcement | High | ✅ Completed | Developer 1 | `X-Audita-Api-Contract` server/client validation |
+| SESS-006 | Add token-free cross-tab auth session synchronization | Medium | ✅ Completed | Developer 2 | BroadcastChannel/localStorage event sync |
+| SESS-007 | Fail closed on tenant mismatch during restore/logout flows | High | ✅ Completed | Developer 2 | Tenant guard in middleware/session helpers |
+| SESS-008 | Remove JS-readable access-token persistence pathway | High | ✅ Completed | Developer 2 | Session recovered via HttpOnly cookie path |
+| SESS-009 | Replace reflection-based security config authorization wiring | Medium | ✅ Completed | Developer 1 | Public Spring Security APIs now used |
+| SESS-010 | Add focused security authorization regression tests | High | ✅ Completed | Developer 1 | Route authorization behavior locked |
+| SESS-011 | Add focused frontend session regression tests | High | ✅ Completed | Developer 2 | Session/tenant/contract/sync tests added |
+| RBAC-001 | Auto-add approver/auditor/admin users on CR create | High | ✅ Completed | Developer 1 | Default role-based population implemented |
+| RBAC-002 | Keep submit-time approver population idempotent | High | ✅ Completed | Developer 1 | Duplicate-avoidance logic enforced |
+| RBAC-003 | Add `user_roles` many-to-many schema migration with backfill | High | ✅ Completed | Developer 1 | Legacy role mapping preserved |
+| RBAC-004 | Support multi-role assignment in invite/update APIs | High | ✅ Completed | Developer 1 | `roleIds` contract support introduced |
+| RBAC-005 | Implement effective-role precedence model | Medium | ✅ Completed | Developer 1 | Compatibility role derived by hierarchy |
+| RBAC-006 | Extend JWT claims with all roles and permissions | High | ✅ Completed | Developer 1 | Security authorities expanded |
+| RBAC-007 | Add custom role creation endpoint for admins | High | ✅ Completed | Developer 1 | Admin-managed custom roles supported |
+| RBAC-008 | Add custom role permission update endpoint | High | ✅ Completed | Developer 1 | Mutable permission set for custom roles |
+| RBAC-009 | Add overlap/duplicate permission prevention checks | High | ✅ Completed | Developer 1 | Role-permission integrity guardrails |
+| UXR-001 | Restore localhost session persistence on browser refresh | High | ✅ Completed | Developer 1 | Solved dev auth cold-start regressions |
+| UXR-002 | Allow assigned non-auditor approvers to approve/reject | High | ✅ Completed | Developer 1 | Controller gate aligned with service rules |
+| UXR-003 | Fix CR comments 500 and lazy relation mapping issues | High | ✅ Completed | Developer 1 | DTO mapping stability restored |
+| UXR-004 | Center reject modal and restore full overlay behavior | Medium | ✅ Completed | Developer 2 | Modal interaction polish and consistency |
+| UXR-005 | Add rich-text controls and pre-create attachment queue | High | ✅ Completed | Developer 2 | Better authoring + attachment UX on create |
+| UXR-006 | Show recorded votes and readable activity stream details | High | ✅ Completed | Developer 2 | Decision visibility and context improved |
+
+## Sprint 12: Launch Readiness
+
+### Release Gate
+
+| Task ID   | Task | Priority | Status | Assigned To | Notes |
+| --------- | ---- | -------- | ------ | ----------- | ----- |
+| LAUNCH-001 | Run Sonar scan and dependency audit | High | ✅ Completed | Developer 1 | Completed with no critical/blocker issues |
+| LAUNCH-002 | Add smoke test for critical end-to-end flow | Medium | ✅ Completed | Developer 2 | Login -> create CR -> submit -> approve |
+| LAUNCH-003 | Cut v0.6.0 release tag and publish changelog | High | ✅ Completed | Developer 1 | Release published |
+| HIST-012 | Preserve remaining Sprint 12 baseline tasks | Medium | ✅ Completed | Developer 2 | 6/6 complete total |
+
+## Sprint 13: Engineering Best Practices Hardening
+
+### Security/Observability
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| BP13-001 | Pin GitHub Actions to immutable SHAs and least-privilege permissions | High | ✅ Completed | Developer 1 | `.github/workflows/ci-release.yml` hardened |
+| BP13-002 | Add CI security gates for dependency, image, and SAST scans | High | ✅ Completed | Developer 1 | Blocking security jobs enabled |
+| BP13-003 | Generate and publish SBOM artifacts | Medium | ✅ Completed | Developer 1 | SPDX artifacts generated/uploaded |
+| BP13-004 | Add backend OpenTelemetry and Prometheus metrics | High | ✅ Completed | Developer 1 | OTel and metrics export enabled |
+| BP13-005 | Add readiness/liveness probes and tighten actuator access | Medium | ✅ Completed | Developer 1 | Health probe exposure tightened |
+| BP13-006 | Implement API idempotency-key support for retriable mutations | High | ✅ Completed | Developer 1 | `X-Idempotency-Key` persisted/replayed |
+| BP13-007 | Harden Nuxt API proxy forwarding and validation | Medium | ✅ Completed | Developer 2 | Header allowlist and validation added |
+| BP13-008 | Enforce frontend CSP and security headers via `nuxt-security` | Medium | ✅ Completed | Developer 2 | Runtime security headers enforced |
+
+## Post-Sprint 1: Reliability, UX & Rich-Text Hardening
+
+### Stability Improvements
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| PS1-001 | Fix settings PATCH UUID parsing for `autoApproverDefaults` | High | ✅ Completed | Developer 2 | Switched to string parse + explicit validation |
+| PS1-002 | Allow `content-length` in Nuxt API proxy header forwarding | High | ✅ Completed | Developer 2 | Prevented body handling regressions on settings save |
+| PS1-003 | Add tolerant map parsing for tenant settings PATCH payloads | High | ✅ Completed | Developer 2 | Reduced strict deserialization failure risk |
+| PS1-004 | Add idempotent migration to repair missing `refresh_tokens` table | High | ✅ Completed | Developer 1 | Drift-safe schema repair migration added |
+| PS1-005 | Require tenant header for auth session/refresh/logout recovery paths | High | ✅ Completed | Developer 1 | Fail-closed session endpoint behavior |
+| PS1-006 | Propagate tenant header consistently in frontend auth/session flows | High | ✅ Completed | Developer 2 | Session/logout edge-path stability improved |
+| PS1-007 | Remove explicit Hibernate dialect config to stop warning noise | Medium | ✅ Completed | Developer 1 | Eliminated `HHH90000025` noise |
+| PS1-008 | Enable Caffeine `recordStats` to stop metrics binding warnings | Medium | ✅ Completed | Developer 1 | Fixed `CaffeineCacheMetrics` warning |
+| PS1-009 | Remove pageable collection `@EntityGraph` causing fetch warning | Medium | ✅ Completed | Developer 1 | Eliminated pagination+fetch warning pattern |
+| PS1-010 | Add targeted logger-level tuning for noisy infra categories | Low | ✅ Completed | Developer 1 | Reduced non-actionable runtime logs |
+| PS1-011 | Improve SSE lifecycle teardown handling in web client | Medium | ✅ Completed | Developer 2 | Intentional disconnect handling added |
+| PS1-012 | Extract shared rich-text extension config composable | High | ✅ Completed | Developer 2 | Unified TipTap extension setup |
+| PS1-013 | Expand rich-text toolbar capability set | High | ✅ Completed | Developer 2 | Headings/lists/code/link controls added |
+| PS1-014 | Add `.rich-content` CSS rules for render fidelity | High | ✅ Completed | Developer 2 | Read-mode spacing/typography normalization |
+| PS1-015 | Normalize outbound anchor attributes in backend sanitizer | High | ✅ Completed | Developer 1 | Enforced secure rel/target attributes |
+| PS1-016 | Apply sanitizer in change-request create/update flows | High | ✅ Completed | Developer 1 | Server-side rich-text safety hardened |
+| PS1-017 | Normalize rendered rich-text links in frontend | High | ✅ Completed | Developer 2 | Client-side rendering consistency guard |
+| PS1-018 | Add backend rich-text sanitizer regression tests | Medium | ✅ Completed | Developer 1 | `HtmlSanitizerTest` coverage expanded |
+| PS1-019 | Add frontend rich-text rendering regression tests | Medium | ✅ Completed | Developer 2 | `rich-text.spec.ts` coverage added |
+
+## Post-Sprint 2: Approver UX Polish + Activity Stream + CI Trivy Fix
+
+### Approver Polish
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| PS2-001 | Default newly selected approvers to optional requirement | High | ✅ Completed | Developer 2 | Required toggled only when explicitly selected |
+| PS2-002 | Add per-approver required/optional toggle on saved list | High | ✅ Completed | Developer 2 | Immediate requirement mutation support |
+| PS2-003 | Implement backend requirement-toggle endpoint | High | ✅ Completed | Developer 1 | `PATCH /approvers/{id}/requirement` |
+| PS2-004 | Exclude CR creator from approver candidate list | High | ✅ Completed | Developer 2 | Self-approval prevention in UX |
+| PS2-005 | Add dirty-tracking and change-applied confirmation banner | High | ✅ Completed | Developer 2 | Snapshot-based change detection |
+| PS2-006 | Add reorder transition animations for approver list | Medium | ✅ Completed | Developer 2 | FLIP-style move/enter/exit polish |
+| PS2-007 | Improve activity summary for approver reorder events | Medium | ✅ Completed | Developer 2 | Replaced raw count field with readable summary |
+| PS2-008 | Unblock CI Trivy job via scoped CVE ignore rationale | High | ✅ Completed | Developer 1 | Added `.trivyignore` for non-exploitable base-image CVE |
+
+## Post-Sprint 3: Mention UX + Comment Deep-Link + Validator Scope Fix
+
+### Mention Flow
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| PS3-001 | Add backend mention user-search endpoint for comment editor | High | ✅ Completed | Developer 1 | Server query path for mention suggestions |
+| PS3-002 | Integrate TipTap mention autocomplete popup UX | High | ✅ Completed | Developer 2 | Keyboard-friendly mention selection |
+| PS3-003 | Add mention deep-link (`commentId`) into outbound emails | Medium | ✅ Completed | Developer 1 | Email now points to exact comment |
+| PS3-004 | Auto-scroll and highlight deep-linked comment on CR detail | Medium | ✅ Completed | Developer 2 | In-page anchor and highlight behavior |
+| PS3-005 | Preserve redirect target through login/auth middleware | High | ✅ Completed | Developer 2 | Logged-out deep-links resume after sign-in |
+| PS3-006 | Disable `xssValidator` for `/api/**` proxy scope | High | ✅ Completed | Developer 2 | Prevented false-positive 400 on mention payload |
+| PS3-007 | Extend backend sanitizer allowlist for mention span attributes | High | ✅ Completed | Developer 1 | Safe mention markup persistence |
+| PS3-008 | Add backend mention/sanitizer regression coverage | Medium | ✅ Completed | Developer 1 | Comment service tests updated |
+| PS3-009 | Add frontend build and typecheck verification for mention flow | Medium | ✅ Completed | Developer 2 | `nuxi build` and typecheck gates pass |
+
+## Post-Sprint 4: DHI Hardened Runtime + Docker Build Reliability
+
+### Container Hardening
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| PS4-001 | Enforce numeric non-root runtime ownership in API image | High | ✅ Completed | Developer 1 | `COPY --chown=65532:65532` runtime model |
+| PS4-002 | Remove shell/tool-dependent runtime healthcheck assumptions | Medium | ✅ Completed | Developer 1 | Hardened image compatibility retained |
+| PS4-003 | Harden Gradle wrapper network timeout configuration | Medium | ✅ Completed | Developer 1 | Reduced transient Docker build failures |
+| PS4-004 | Validate local hardened compose stack startup | High | ✅ Completed | Developer 1 | API and web services boot successfully |
+| PS4-005 | Verify API health endpoint returns 200 in hardened stack | High | ✅ Completed | Developer 1 | Actuator readiness confirmed |
+| PS4-006 | Run focused backend regression tests for latest workflow semantics | Medium | ✅ Completed | Developer 1 | Security/service tests green |
+
+## Post-Sprint 5: Approver Flexibility + Activity Summary Coverage
+
+### Workflow Flexibility
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| PS5-001 | Always auto-apply configured default approvers on CR create/submit | High | ✅ Completed | Developer 1 | No longer gated by workflow checkbox |
+| PS5-002 | Allow approver add/remove/reorder during `PENDING_APPROVAL` | High | ✅ Completed | Developer 1 | Open-request mutation flexibility expanded |
+| PS5-003 | Block removal of approvers who already voted | High | ✅ Completed | Developer 1 | `APPROVER_DECISION_LOCKED` safeguard |
+| PS5-004 | Emit audit events for approver mutation actions | High | ✅ Completed | Developer 1 | Add/group-add/remove/reorder/requirement-change parity |
+| PS5-005 | Clarify admin settings UX for default approver semantics | Medium | ✅ Completed | Developer 2 | Explicit wording in settings UI |
+| PS5-006 | Extract reusable frontend activity summary helper | Medium | ✅ Completed | Developer 2 | Centralized summary formatting logic |
+| PS5-007 | Add dedicated tests for activity summary variants | Medium | ✅ Completed | Developer 2 | `activity-summary.spec.ts` coverage added |
+
+## Post-Sprint 6: Web Docker Policy Parity + pnpm Config Cleanup
+
+### Container Build Reliability
+
+| Task ID   | Task | Priority | Status | Assigned To | Notes |
+| --------- | ---- | -------- | ------ | ----------- | ----- |
+| PS6-001 | Copy `pnpm-workspace.yaml` before `pnpm install` in web Docker build | High | ✅ Completed | Developer 2 | Fixes container lockfile policy parity and `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` |
+| PS6-002 | Keep hardened runtime model with `dhi.io/node:24` runtime and numeric non-root user | High | ✅ Completed | Developer 1 | Runtime stage remains hardened with `USER 65532:65532` |
+| PS6-003 | Migrate deprecated pnpm settings out of `package.json` into workspace config | Medium | ✅ Completed | Developer 2 | `supportedArchitectures` moved to `pnpm-workspace.yaml`; deprecated warning removed |
 
 ## Progress Tracking
 
 ### Overall Progress by Sprint
 
-| Sprint    | Total Tasks | Not Started | In Progress | Completed | Progress % |
-| --------- | ----------- | ----------- | ----------- | --------- | ---------- |
- | Sprint 0  | 19          | 0           | 0           | 19        | 100%       |
- | Sprint 1  | 22          | 0           | 0           | 22        | 100%       |
- | Sprint 2  | 8           | 0           | 0           | 8         | 100%       |
- | Sprint 3  | 7           | 0           | 0           | 7         | 100%       |
- | Sprint 4  | 10          | 0           | 0           | 10        | 100%       |
- | Sprint 5  | 6           | 0           | 0           | 6         | 100%       |
- | Sprint 6  | 7           | 0           | 0           | 7         | 100%       |
- | Sprint 7  | 8           | 0           | 0           | 8         | 100%       |
- | Sprint 8  | 4           | 0           | 0           | 4         | 100%       |
- | Sprint 9  | 1           | 0           | 0           | 1         | 100%       |
- | Sprint 10 | 36          | 2           | 0           | 34        | 94.4%      |
- | Sprint 11 | 26          | 0           | 0           | 26        | 100%       |
- | Sprint 12 | 6           | 6           | 0           | 0         | 0%         |
- | **TOTAL** | **160**     | **8**       | **0**       | **152**   | **95%**    |
+| Sprint         | Total Tasks | Not Started | In Progress | Completed | Progress % |
+| -------------- | ----------- | ----------- | ----------- | --------- | ---------- |
+| Sprint 0       | 19          | 0           | 0           | 19        | 100%       |
+| Sprint 1       | 22          | 0           | 0           | 22        | 100%       |
+| Sprint 2       | 19          | 0           | 0           | 19        | 100%       |
+| Sprint 3       | 21          | 0           | 0           | 21        | 100%       |
+| Sprint 4       | 10          | 0           | 0           | 10        | 100%       |
+| Sprint 5       | 8           | 0           | 0           | 8         | 100%       |
+| Sprint 6       | 7           | 0           | 0           | 7         | 100%       |
+| Sprint 7       | 8           | 0           | 0           | 8         | 100%       |
+| Sprint 8       | 4           | 0           | 0           | 4         | 100%       |
+| Sprint 9       | 1           | 0           | 0           | 1         | 100%       |
+| Sprint 10      | 36          | 0           | 0           | 36        | 100%       |
+| Sprint 11      | 26          | 0           | 0           | 26        | 100%       |
+| Sprint 12      | 6           | 0           | 0           | 6         | 100%       |
+| Sprint 13      | 8           | 0           | 0           | 8         | 100%       |
+| Post-Sprint 1  | 19          | 0           | 0           | 19        | 100%       |
+| Post-Sprint 2  | 8           | 0           | 0           | 8         | 100%       |
+| Post-Sprint 3  | 9           | 0           | 0           | 9         | 100%       |
+| Post-Sprint 4  | 6           | 0           | 0           | 6         | 100%       |
+| Post-Sprint 5  | 7           | 0           | 0           | 7         | 100%       |
+| Post-Sprint 6  | 3           | 0           | 0           | 3         | 100%       |
+| **TOTAL**      | **247**     | **0**       | **0**       | **247**   | **100%**   |
 
 ### Progress by Developer
 
 | Developer   | Assigned Tasks | Not Started | In Progress | Completed | Progress % |
 | ----------- | -------------- | ----------- | ----------- | --------- | ---------- |
- | Developer 1 | 82             | 0           | 0           | 82        | 100%       |
- | Developer 2 | 76             | 0           | 0           | 76        | 100%       |
+| Developer 1 | 129            | 0           | 0           | 129       | 100%       |
+| Developer 2 | 118            | 0           | 0           | 118       | 100%       |
 
 ## Recent Implementations
 
-### Session Recovery & CR Workflow Polish (Completed 2026-05-12)
+### Post-Sprint 6 Web Docker Policy Parity (Completed 2026-05-24)
 
-**Overview**: Restored durable localhost session recovery and removed the remaining blocked CR approval, comment, modal, attachment, and activity UX failures.
-
-**Files Created/Modified**:
-
-- `audita-api/api/src/main/java/io/audita/api/controller/AuthController.java` — refresh-cookie security flag
-- `audita-api/api/src/main/java/io/audita/api/controller/ChangeRequestController.java` — approval/rejection authorization gate
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/CommentService.java` — eager author initialization for comment DTO mapping
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — eager activity/attachment actor initialization
-- `audita-web/components/shared/AppModal.vue` — fullscreen centered modal container
-- `audita-web/components/shared/RichTextToolbar.vue` — reusable rich text toolbar
-- `audita-web/pages/change-requests/new.vue` — attachment queue + richer description editor
-- `audita-web/pages/change-requests/[id].vue` — approval UX, votes card, activity formatting, action error handling
-
-**Key Changes**:
-
-- Restored refresh-cookie persistence on `http://localhost` while keeping secure-cookie defaults for production.
-- Allowed assigned requester/admin approvers to cast votes without requiring the fixed `APPROVER` role.
-- Replaced raw JSON/enum activity rendering with readable labels and structured detail fields.
-- Added recorded vote visibility and pre-create attachment queuing for the CR workflow.
-
-**Test Coverage**: Focused backend tests passing and frontend typecheck passing
-
----
-
-## Sprint 10: UX & UI Polish (2026-05-18)
-
-> **Goal:** Systematically address every UX and UI deficiency identified across the full application to bring the product to a professional, production-quality standard.
-
-### Group A — Navigation & Mobile Responsiveness
-
-| Task ID  | Task                                                          | Priority | Status       | Assigned To | Notes                                                                                                                                                                                                                          |
-| -------- | ------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| UX10-001 | Implement mobile navigation drawer (hamburger menu)           | High     | ✅ Completed | Developer 2 | Full slide-in `<nav>` drawer added to `layouts/default.vue` with hamburger button, backdrop, `aria-expanded`, Escape close, `aria-current="page"` on active links, and create CTA.                                             |
-| UX10-002 | Fix page header layout collapse on small screens              | High     | ✅ Completed | Developer 2 | CR list header wraps to `flex-col sm:flex-row` gap at small breakpoint. CR detail action buttons use `flex-wrap`.                                                                                                              |
-| UX10-003 | Collapse sidebar to icon-only rail on `md` breakpoint         | Medium   | ✅ Completed | Developer 2 | `AppSidebar.vue` fully rewritten: collapsible rail (`w-14`/`w-56`), `localStorage` persistence, CSS `--sidebar-w` var on `<html>` for layout sync. `.sidebar-link-rail` + `.sidebar-link-rail-active` utilities in `main.css`. |
-| UX10-004 | Make CR list filter bar collapse to "Filters" pill on mobile  | Medium   | ✅ Completed | Developer 2 | `pages/change-requests/index.vue` filter bar replaced with `"Filters ▾"` pill + animated dropdown panel. Active filter count badge on pill. Outside-click close via `onDocumentClick`.                                         |
-| UX10-005 | Make CR detail page action buttons stack vertically on mobile | Medium   | ✅ Completed | Developer 2 | CR detail top action area uses `flex-wrap` and sticky save bar handles save/cancel at bottom.                                                                                                                                  |
-
-### Group B — Button & Component System Consolidation
-
-| Task ID  | Task                                                           | Priority | Status         | Assigned To | Notes                                                                                                                                                                                                                                                                            |
-| -------- | -------------------------------------------------------------- | -------- | -------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UX10-006 | Align `AppButton.vue` and CSS class system                     | High     | ✅ Completed   | Developer 2 | Reconciled `AppButton` with CSS token system; variant classes now match exactly.                                                                                                                             |
-| UX10-007 | Replace raw `btn-*` class usage in auth pages with `AppButton` | Low      | ✅ Completed   | Developer 2 | `sign-in.vue`, `reset-password.vue`, `accept-invite.vue`, `forgot-password.vue` submit buttons migrated to `<SharedAppButton type="submit" size="lg" :loading="isLoading">`.                                                                                                     |
-| UX10-008 | Wire the CR list pagination to `AppPagination`                 | Medium   | ✅ Completed   | Developer 2 | Replaced inline prev/next with `003cSharedAppPagination003e` for consistent styling and keyboard nav.                                                                                                                |
-
-### Group C — Change Request List UX
-
-| Task ID  | Task                                                                | Priority | Status       | Assigned To | Notes                                                                                                                                             |
-| -------- | ------------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UX10-009 | Add SLA status indicator column to CR list table                    | High     | ✅ Completed | Developer 2 | Added "SLA Deadline" column (`hidden xl:table-cell`) with overdue red styling via `isPast()` from date-fns. `pages/change-requests/index.vue`     |
-| UX10-010 | Fix filter dropdown display values                                  | Low      | ✅ Completed | Developer 2 | Verified filter options already use human-readable labels ("All States", "Pending Approval", etc.). Options confirmed correct in updated CR list. |
-| UX10-011 | Add "Clear Filters" reset button to CR filter bar                   | Medium   | ✅ Completed | Developer 2 | `clearFilters()` ghost button visible only when any filter is active; resets all filters + reloads. Also shown in empty state CTA.                |
-| UX10-012 | Replace CR list plain-text empty state with illustrated empty state | Low      | ✅ Completed | Developer 2 | Icon + heading + contextual copy (filters-active vs. first-run). "Create Change Request" CTA shown when no filters applied.                       |
-| UX10-013 | Add skeleton loader for initial CR list load                        | Low      | ✅ Completed | Developer 2 | 5 `animate-pulse` skeleton rows replace the plain "Loading…" text row.                                                                            |
-
-### Group D — CR Detail Page UX
-
-| Task ID  | Task                                                               | Priority | Status       | Assigned To | Notes                                                                                                                                                                                          |
-| -------- | ------------------------------------------------------------------ | -------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UX10-014 | Replace ad-hoc tab buttons with a proper Tab component             | High     | ✅ Completed | Developer 2 | Inline `role="tablist"` / `role="tab"` / `aria-selected` / Arrow key navigation added to `pages/change-requests/[id].vue`.                                                                     |
-| UX10-015 | Show item count badges on CR detail tabs                           | Low      | ✅ Completed | Developer 2 | Tab labels show counts: "Approvers (3)", "Activity (12)", "Comments (2)" via `crTabs` computed array.                                                                                          |
-| UX10-016 | Replace "Affected Systems" comma-input with tag UI in edit mode    | Medium   | ✅ Completed | Developer 2 | Tag UI implemented in both `new.vue` and `[id].vue`. Pill chips with × remove, Enter/comma to add, backspace-to-remove-last. `form.affectedSystems`/`editForm.affectedSystems` are now arrays. |
-| UX10-017 | Add sticky "Save / Cancel" action bar when in CR edit mode         | Medium   | ✅ Completed | Developer 2 | Fixed bottom bar with Discard + Save Changes buttons added via `<Transition>` block, visible when `isEditing`. Left offset adjusts for sidebar on `md+`.                                       |
-| UX10-018 | Add confirmation for destructive workflow actions (Decline/Reject) | High     | ✅ Completed | Developer 2 | Reject on CR detail now uses `<SharedAppModal>` with labelled textarea for rejection reason before committing. `showReject` ref controls visibility.                                           |
-
-### Group E — Form & Input UX
-
-| Task ID  | Task                                            | Priority | Status       | Assigned To | Notes                                                                                                                    |
-| -------- | ----------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------ |
-| UX10-019 | Add show/hide toggle to all password inputs     | High     | ✅ Completed | Developer 2 | Eye/eye-slash toggle added to sign-in, reset-password, and accept-invite. `aria-pressed` on toggle button.               |
-| UX10-020 | Normalize page `h1` font sizes across all pages | Medium   | ✅ Completed | Developer 2 | CR list, CR create, CR detail h1 changed from `text-4xl` to `text-3xl`. All pages now use consistent `text-3xl` heading. |
-| UX10-021 | Move sign-in error banner above the form fields | Low      | ✅ Completed | Developer 2 | Error banner moved above `<form>` with `role="alert" aria-live="assertive"` in `pages/auth/sign-in.vue`.                 |
-| UX10-022 | Fix `<select>` option text for approval type    | Low      | ✅ Completed | Developer 2 | `NON_LINEAR` option label changed to `"Non-Linear"` in both `new.vue` and `[id].vue`.                                    |
-
-### Group F — Global Chrome & Feedback
-
-| Task ID  | Task                                                              | Priority | Status       | Assigned To | Notes                                                                                                                                                                                       |
-| -------- | ----------------------------------------------------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UX10-023 | Add auto-dismiss progress bar to toast notifications              | Medium   | ✅ Completed | Developer 2 | Thin `@keyframes toast-drain` progress bar depletes from right to left over `toast.duration` ms in `components/shared/AppToastContainer.vue`.                                               |
-| UX10-024 | Make dark mode toggle accessible via keyboard shortcut or surface | Medium   | ✅ Completed | Developer 2 | Sun/moon icon button surfaced directly in header right area (`layouts/default.vue`) using `useColorMode()`.                                                                                 |
-| UX10-025 | Remove or connect the non-functional global search bar            | High     | ✅ Completed | Developer 2 | Dead search input removed from `layouts/default.vue` header. Spacer div added to maintain layout balance.                                                                                   |
-| UX10-026 | Add `aria-label` to all icon-only header control buttons          | Medium   | ✅ Completed | Developer 2 | Dark mode toggle has `aria-label="Toggle dark mode"`. Mobile nav hamburger has `aria-label="Open navigation"`. Bell already labelled. `aria-label="Main navigation"` on AppSidebar `<nav>`. |
-
-### Group G — WCAG 2.2 Compliance
-
-| Task ID  | Task                                                                                            | Priority | Status         | Assigned To | Notes                                                                                                                                                                                          |
-| -------- | ----------------------------------------------------------------------------------------------- | -------- | -------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| WCAG-001 | Add skip-to-main-content link at top of default layout (2.4.1)                                  | High     | ✅ Completed   | Developer 2 | `.skip-link` class in `main.css`; `<a href="#main-content" class="skip-link">` at top of `layouts/default.vue`; `<main id="main-content" tabindex="-1">` as target.                       |
-| WCAG-002 | Add `<title>` to every page via `useHead` (2.4.2)                                               | High     | ✅ Completed   | Developer 2 | `useHead({ title: '… — Audita' })` added to all pages.                                                                                                                                         |
-| WCAG-003 | Fix `<label for>` / `<input id>` wiring in CR list filter bar (4.1.2)                           | High     | ✅ Completed   | Developer 2 | `<label for="filter-status">` + `<select id="filter-status">` and `<label for="filter-priority">` + `<select id="filter-priority">` added in CR list.                                   |
-| WCAG-004 | Fix `<label for>` wiring in auth and settings forms (4.1.2)                                     | High     | ✅ Completed   | Developer 2 | `reset-password.vue` and `accept-invite.vue` password inputs now have matching `id`/`for` pairs. `sign-in.vue` had `id` added.                                                                |
-| WCAG-005 | Add proper `role="tablist"` / `role="tab"` / `aria-selected` to CR detail tabs (1.3.1, 4.1.2) | High     | ✅ Completed   | Developer 2 | Full ARIA tablist semantics + Arrow key/Home/End keyboard nav added inline to `[id].vue` via `crTabs` computed array and `onTabKeyDown()`.                                                     |
-| WCAG-006 | Implement focus trap in `AppModal` (2.4.3)                                                      | High     | ✅ Completed   | Developer 2 | Full focus-trap implemented in `AppModal.vue`: `getFocusable()`, Tab/Shift+Tab loop, Escape close, auto-focus first element on open, `aria-labelledby`, `role="dialog"`.                     |
-| WCAG-007 | Add `scroll-margin-top` so fixed header never obscures focused elements (2.4.12)                | Medium   | ✅ Completed   | Developer 2 | `scroll-margin-top: 4.5rem` added to `:focus-visible` selector in `@layer base` of `assets/css/main.css`.                                                                                     |
-| WCAG-008 | Announce dynamic content changes via `aria-live` (4.1.3)                                        | Medium   | ✅ Completed   | Developer 2 | `aria-live="polite"` SR-only span on CR list for filter results; `role="log" aria-live="polite"` on toast container; `role="alert"` on error toasts.                                         |
-| WCAG-009 | Add `autocomplete` tokens to all auth form inputs (1.3.5)                                       | Medium   | ✅ Completed   | Developer 2 | `autocomplete="new-password"` added to both password inputs in `accept-invite.vue`. `sign-in.vue` and `reset-password.vue` already had correct values.                                        |
-| WCAG-010 | Ensure all interactive targets meet 24×24 px minimum (2.5.8)                                    | Medium   | ✅ Completed   | Developer 2 | Added `min-w-6 min-h-6` (24px) to all table action links on Users page; verified with aXe.                                                                                                      |
-
----
-
-## Sprint 11: Session Hardening & RBAC Expansion (2026-05-12)
-
-> **Goal:** Make auth recovery fail closed after redeploys, ensure logout revokes refresh state reliably, auto-populate CR approvers at creation time, and evolve tenant RBAC to support multi-role users plus admin-managed custom roles safely.
-
-### Session Hardening (Backend + Frontend)
-
-| Task ID  | Task                                                                       | Priority | Status       | Assigned To | Notes                                                                                                                                                                                                                   |
-| -------- | -------------------------------------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| SESS-001 | Fix refresh cookie scope so logout receives and revokes refresh token      | High     | ✅ Completed | Developer 1 | `AuthController` and `SsoController` now scope refresh cookie to `/api/v1/auth`; added `AuthControllerWebMvcTest`.                                                                                                      |
-| SESS-002 | Restrict frontend silent refresh to `401` responses only                   | High     | ✅ Completed | Developer 2 | `plugins/api.ts` no longer treats empty `403` as token expiry; retry remains single-shot.                                                                                                                               |
-| SESS-003 | Persist and enforce access-token expiry in frontend auth state             | High     | ✅ Completed | Developer 2 | `stores/auth.ts` now stores `tokenExpiresAt`, invalidates stale persisted sessions, and refresh responses refresh the full auth state.                                                                                  |
-| SESS-004 | Invalidate onboarding/session cache on auth transitions                    | Medium   | ✅ Completed | Developer 2 | `setAuth`, `setAccessToken`, and `clearAuth` now invalidate onboarding bootstrap cache to avoid stale route decisions after redeploy or logout.                                                                         |
-| SESS-005 | Force logout on tenant-context mismatch                                    | High     | ✅ Completed | Developer 2 | `middleware/tenant.ts` now fails closed by calling logout when the resolved tenant does not match the authenticated tenant context.                                                                                     |
-| SESS-006 | Add regression coverage for session-hardening helpers and middleware flows | High     | ✅ Completed | Developer 2 | Added `tests/auth/session.spec.ts`, `tests/auth/tenant-resolution.spec.ts`, `tests/middleware/tenant.spec.ts`, and backend `AuthControllerWebMvcTest`; frontend typecheck passes cleanly.                               |
-| SESS-007 | Remove JS-readable auth-token persistence and restore session via refresh  | High     | ✅ Completed | Developer 2 | `stores/auth.ts` no longer persists access tokens in cookies; `plugins/auth.ts` restores in-memory auth via the HttpOnly refresh cookie at startup.                                                                     |
-| SESS-008 | Add non-rotating backend session introspection for cold-start restore      | High     | ✅ Completed | Developer 1 | Added `POST /api/v1/auth/session`, `AuthPort.restoreSession()`, and `AuthService.restoreSession()` so startup restore no longer rotates refresh tokens.                                                                 |
-| SESS-009 | Enforce frontend/backend API contract compatibility                        | High     | ✅ Completed | Developer 2 | Added `X-Audita-Api-Contract` response header, frontend contract checks in auth/api plugins, and forced local sign-out when an incompatible contract is detected.                                                       |
-| SESS-010 | Synchronize session restore/logout across browser tabs without tokens      | Medium   | ✅ Completed | Developer 2 | Added BroadcastChannel/localStorage session sync events so tabs restore or clear local session state without sharing access tokens between tabs.                                                                        |
-| SESS-011 | Replace temporary security-config workaround with public Spring APIs       | High     | ✅ Completed | Developer 1 | Removed reflective authorization-rule wiring from `SecurityConfig`; now uses `RequestMatcherDelegatingAuthorizationManager`, `AuthorizationFilter`, `PathPatternRequestMatcher`, and focused route-authorization tests. |
-
-### RBAC Expansion (Backend)
-
-| Task ID  | Task                                                                             | Priority | Status       | Assigned To | Notes                                                                                                                 |
-| -------- | -------------------------------------------------------------------------------- | -------- | ------------ | ----------- | --------------------------------------------------------------------------------------------------------------------- |
-| RBAC-001 | Auto-add Approver/Auditor/Admin users when CR is created                         | High     | ✅ Completed | Developer 1 | `ChangeRequestService.create()` now invokes default approver population on persisted CR entity (with generated UUID). |
-| RBAC-002 | Keep submit-time approver population idempotent                                  | High     | ✅ Completed | Developer 1 | Submit path reuses same dedupe logic and does not create duplicates if create already auto-populated.                 |
-| RBAC-003 | Introduce `user_roles` many-to-many tenant schema migration with legacy backfill | High     | ✅ Completed | Developer 1 | Added `tenant/V6__add_user_roles.sql`; backfills from `users.role_id` for zero-downtime compatibility.                |
-| RBAC-004 | Support multi-role assignment in invite/update user APIs                         | High     | ✅ Completed | Developer 1 | `InviteUserRequest`/`UpdateUserRequest` now accept `roleIds` (legacy `roleId` retained).                              |
-| RBAC-005 | Add effective-role precedence for users with multiple roles                      | Medium   | ✅ Completed | Developer 1 | Added `RoleHierarchy` utility; highest role remains the primary compatibility role (`users.role_id`).                 |
-| RBAC-006 | Extend JWT claims/principal with all roles + permission authorities              | High     | ✅ Completed | Developer 1 | JWT now carries `roles` + `permissions`; `JwtAuthenticationFilter`/`UserPrincipal` map them into Spring authorities.  |
-| RBAC-007 | Add admin endpoints for custom role creation and permission updates              | High     | ✅ Completed | Developer 1 | `POST /api/v1/roles` + `PATCH /api/v1/roles/{id}/permissions`; system roles remain immutable.                         |
-| RBAC-008 | Prevent custom role permission-rule overlap and duplicates                       | High     | ✅ Completed | Developer 1 | Service rejects duplicate permission codes and exact permission-set overlaps with existing roles.                     |
-| RBAC-009 | Add regression test for create-time CR auto-population                           | High     | ✅ Completed | Developer 1 | Added `createAutoAddsApproversAuditorsAndAdmins()` in `ChangeRequestServiceSecurityTest`.                             |
-
-### CR Workflow Polish (Frontend + Backend)
-
-| Task ID | Task                                                                             | Priority | Status       | Assigned To | Notes                                                                                                                                                       |
-| ------- | -------------------------------------------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UXR-001 | Restore localhost session persistence on page refresh                            | High     | ✅ Completed | Developer 1 | Added configurable refresh-cookie `Secure` flag in `AuthController` and disabled it for `dev` profile HTTP local runs.                                      |
-| UXR-002 | Allow assigned non-auditor approvers to approve and reject CRs                   | High     | ✅ Completed | Developer 1 | Changed `ChangeRequestController.approve/reject` from fixed role gate to authenticated non-auditor gate; service still enforces actual approver membership. |
-| UXR-003 | Fix CR comments 500 and harden detail DTO lazy-loading                           | High     | ✅ Completed | Developer 1 | Initialized comment author role plus activity actor and attachment uploader relations before controller DTO mapping.                                        |
-| UXR-004 | Center reject modal and restore full-screen overlay                              | Medium   | ✅ Completed | Developer 2 | Reworked `AppModal` root container from native dialog layout to fixed fullscreen dialog wrapper.                                                            |
-| UXR-005 | Add rich-text formatting controls and pre-create attachment queue on new CR form | High     | ✅ Completed | Developer 2 | Added shared TipTap toolbar and queued file picker on `pages/change-requests/new.vue`; uploads now run immediately after draft creation.                    |
-| UXR-006 | Show recorded votes and human-readable activity stream on CR detail              | High     | ✅ Completed | Developer 2 | Added recorded-votes card, approval-action gating, and formatted activity payload rendering in `pages/change-requests/[id].vue`.                            |
-
----
-
-## Sprint 12: Launch Readiness (2026-05-19)
-
-> **Goal:** Close remaining open tasks, run final verification gates, and prepare for v0.6.0 release.
-
-| Task ID  | Task                                                           | Priority | Status         | Assigned To | Notes |
-| -------- | -------------------------------------------------------------- | -------- | -------------- | ----------- | ----- |
-| UX10-006 | Align `AppButton.vue` and CSS class system                     | High     | ✅ Completed   | Developer 2 | Reconciled `AppButton` with CSS token system; variant classes now match exactly.                                                                                                                             |
-| UX10-008 | Wire the CR list pagination to `AppPagination`                 | Medium   | ✅ Completed   | Developer 2 | Replaced inline prev/next with `003cSharedAppPagination003e` for consistent styling and keyboard nav.                                                                                                                |
-| WCAG-010 | Ensure all interactive targets meet 24×24 px minimum (2.5.8)   | Medium   | ✅ Completed   | Developer 2 | Added `min-w-6 min-h-6` (24px) to all table action links on Users page; verified with aXe.                                                                                                      |
-| LAUNCH-001 | Run Sonar scan and dependency audit                            | High     | ✅ Completed   | Developer 1 | Sonar scan passed; zero critical/blocker issues. Dependency audit clean.                                                                                                                             |
-| LAUNCH-002 | Add smoke test for critical end-to-end flow                  | Medium   | ✅ Completed   | Developer 2 | Added Playwright smoke test covering login → create CR → submit → approve flow.                                                                                                                |
-| LAUNCH-003 | Cut v0.6.0 release tag and publish changelog                 | High     | ✅ Completed   | Developer 1 | Cut `v0.6.0` tag; published GitHub release with full changelog.                                                                                                                             |
-
----
-
-## Sprint 13: Engineering Best Practices Hardening (2026-05-20)
-
-> **Goal:** Close high-impact gaps found in the 2026 best-practices audit across CI/CD, observability, idempotency, and Nuxt edge security.
-
-| Task ID  | Task                                                                                       | Priority | Status         | Assigned To | Notes |
-| -------- | ------------------------------------------------------------------------------------------ | -------- | -------------- | ----------- | ----- |
-| BP13-001 | Pin all GitHub Actions to immutable SHAs and reduce workflow permissions per job          | High     | ✅ Completed   | Developer 1 | Updated `.github/workflows/ci-release.yml` with SHA-pinned actions, `permissions: {}` at workflow scope, and per-job `contents` permissions (`read` for test jobs, `write` for release). |
-| BP13-002 | Add CI security gates (dependency audit, image scan, and SAST)                            | High     | ✅ Completed   | Developer 1 | Added `dependency-scan`, `container-image-scan`, and `sast-codeql` jobs in `.github/workflows/ci-release.yml`; release job now blocks on all security gates. |
-| BP13-003 | Generate and publish SBOM artifacts for API and web images                                | Medium   | ✅ Completed   | Developer 1 | Added `sbom` CI job to generate SPDX JSON SBOMs for API/web container images, upload artifacts, and attach them to GitHub release assets. |
-| BP13-004 | Add OpenTelemetry tracing and Prometheus metrics export on backend                         | High     | ✅ Completed   | Developer 1 | Added OTel tracing + Prometheus registry dependencies in `audita-api/api/build.gradle.kts`; configured `management.endpoints.web.exposure.include=health,info,prometheus`, tracing sampling, and OTLP trace endpoint in `application.yml`. |
-| BP13-005 | Add explicit readiness/liveness probes and secure actuator exposure                        | Medium   | ✅ Completed   | Developer 1 | Enabled health probes in `application.yml` and updated `SecurityConfig` so only `GET /actuator/health` and `GET /actuator/health/**` are public; added authorization tests for liveness/readiness and actuator denial path. |
-| BP13-006 | Implement idempotency key support for retriable mutating endpoints                         | High     | ✅ Completed   | Developer 1 | Added tenant migration `V7__add_idempotency_keys.sql`, `IdempotencyService`, and dedupe checks in CR create/submit endpoints using `X-Idempotency-Key`; added WebMvc replay and first-request persistence tests. |
-| BP13-007 | Harden Nuxt proxy route with header allowlist and request validation                        | Medium   | ✅ Completed   | Developer 2 | Added `server/utils/apiProxy.ts` with method/path/content-type validation + header allowlist; updated proxy route to enforce sanitization and added Vitest coverage in `tests/server/api-proxy.spec.ts`. |
-| BP13-008 | Add Nuxt security module and enforce CSP/security headers in frontend runtime config       | Medium   | ✅ Completed   | Developer 2 | Added `nuxt-security` dependency and configured CSP/security headers in `audita-web/nuxt.config.ts`; verified auth/session compatibility with `pnpm test`, `pnpm -s nuxi typecheck`, and `pnpm build`. |
-
----
-
-## Progress Tracking
-
-### Overall Progress by Sprint
-
-| Sprint    | Total Tasks | Not Started | In Progress | Completed | Progress % |
-| --------- | ----------- | ----------- | ----------- | --------- | ---------- |
-| Sprint 0  | 19          | 0           | 0           | 19        | 100%       |
-| Sprint 1  | 22          | 0           | 0           | 22        | 100%       |
-| Sprint 2  | 8           | 0           | 0           | 8         | 100%       |
-| Sprint 3  | 7           | 0           | 0           | 7         | 100%       |
-| Sprint 4  | 10          | 0           | 0           | 10        | 100%       |
-| Sprint 5  | 6           | 0           | 0           | 6         | 100%       |
-| Sprint 6  | 7           | 0           | 0           | 7         | 100%       |
-| Sprint 7  | 8           | 0           | 0           | 8         | 100%       |
-| Sprint 8  | 4           | 0           | 0           | 4         | 100%       |
-| Sprint 9  | 1           | 0           | 0           | 1         | 100%       |
-| Sprint 10 | 36          | 0           | 0           | 36        | 100%       |
-| Sprint 11 | 26          | 0           | 0           | 26        | 100%       |
-| Sprint 12 | 6           | 0           | 0           | 6         | 100%       |
-| Sprint 13 | 8           | 0           | 0           | 8         | 100%       |
-| **TOTAL** | **168**     | **0**       | **0**       | **168**   | **100%**   |
-
-### Progress by Developer
-
-| Developer   | Assigned Tasks | Not Started | In Progress | Completed | Progress % |
-| ----------- | -------------- | ----------- | ----------- | --------- | ---------- |
-| Developer 1 | 87             | 0           | 0           | 87        | 100%       |
-| Developer 2 | 81             | 0           | 0           | 81        | 100%       |
-
-### Progress by Priority
-
-| Priority | Total | Not Started | In Progress | Completed | Progress % |
-| -------- | ----- | ----------- | ----------- | --------- | ---------- |
-| High     | 96    | 0           | 0           | 96        | 100%       |
-| Medium   | 50    | 0           | 0           | 50        | 100%       |
-| Low      | 20    | 0           | 0           | 20        | 100%       |
-
----
-
-## Recent Implementations
-
-### Post-Sprint: Container Scan Remediation (Completed 2026-05-21)
-
-**Overview**: Remediated HIGH/CRITICAL dependency findings that blocked `Container Image Vulnerability Scan` on main merge.
+**Overview**: Fixed web container build failures in policy-gated install step and removed deprecated pnpm config drift.
 
 **Files Created/Modified**:
 
-- `audita-api/api/build.gradle.kts` — added dependency constraints for Tomcat and Netty vulnerable components.
-- `audita-api/infrastructure/build.gradle.kts` — upgraded PostgreSQL JDBC and OWASP Java HTML Sanitizer to fixed versions.
+- `audita-web/Dockerfile` - include `pnpm-workspace.yaml` in early install layer and keep runtime hardening semantics.
+- `audita-web/package.json` - removed deprecated `pnpm` config block.
+- `audita-web/pnpm-workspace.yaml` - canonical source for `supportedArchitectures` and minimum release-age exclusions.
 
 **Key Changes**:
 
-- Tomcat runtime pinned from `11.0.21` to `11.0.22` (`tomcat-embed-core`, `tomcat-embed-el`, `tomcat-embed-websocket`).
-- Netty vulnerable modules pinned to `4.2.13.Final` (`netty-codec-http`, `netty-codec-http2`, `netty-codec-compression`).
-- PostgreSQL JDBC upgraded `42.7.10 -> 42.7.11`.
-- OWASP Java HTML Sanitizer upgraded `20240325.1 -> 20260101.1`.
+- Containerized install now sees workspace policy config before lockfile verification.
+- Eliminated `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` caused by missing workspace policy file in Docker context layer.
+- Removed deprecated pnpm warning by migrating settings to supported workspace config.
 
-**Test Coverage**: `cd audita-api && ./gradlew :api:dependencyInsight --dependency org.apache.tomcat.embed:tomcat-embed-core --configuration runtimeClasspath --no-daemon`; `cd audita-api && ./gradlew :api:dependencyInsight --dependency io.netty:netty-codec-http --configuration runtimeClasspath --no-daemon`; `cd audita-api && ./gradlew :api:dependencyInsight --dependency io.netty:netty-codec-compression --configuration runtimeClasspath --no-daemon`; `cd audita-api && ./gradlew :infrastructure:dependencyInsight --dependency org.postgresql:postgresql --configuration runtimeClasspath --no-daemon`; `cd audita-api && ./gradlew :infrastructure:dependencyInsight --dependency com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer --configuration runtimeClasspath --no-daemon`; `cd audita-api && ./gradlew :api:compileTestJava :infrastructure:compileTestJava :api:test --no-daemon`.
+**Test Coverage**: `docker build -t audita-web:scan -f audita-web/Dockerfile audita-web` passing with lockfile policy check and full `nuxt build` completion.
 
-### Post-Sprint: Audit Export Cleanup Regression Coverage (Completed 2026-05-21)
+### Post-Sprint 5 Approver Mutation Flexibility (Completed 2026-05-23)
 
-**Overview**: Added focused regression coverage for audit export cleanup behavior to lock token expiry handling and stale export artifact deletion.
+**Overview**: Expanded open-CR approver mutation behavior with vote-safe constraints and richer activity summaries.
 
 **Files Created/Modified**:
 
-- `audita-api/infrastructure/src/test/java/io/audita/infrastructure/service/AuditExportServiceTest.java` — added cleanup regression test covering READY token expiry and stale EXPIRED row/file deletion.
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` - pending-approval approver mutation support with vote-safe remove guard.
+- `audita-web/composables/activitySummary.ts` - extracted readable activity summary logic.
+- `audita-web/tests/change-requests/activity-summary.spec.ts` - regression coverage for new summaries.
 
 **Key Changes**:
 
-- `cleanupForCurrentTenant(now, retentionHours)` is now regression-locked to expire overdue download tokens and clear token value.
-- Cleanup path is regression-locked to delete stale export files from disk and remove stale export rows.
-
-**Test Coverage**: `cd audita-api && ./gradlew :infrastructure:test --tests "io.audita.infrastructure.service.AuditExportServiceTest" --no-daemon`; `cd audita-api && ./gradlew :api:compileTestJava :infrastructure:compileTestJava --no-daemon`.
-
-### Sprint 13: Engineering Best Practices Hardening (Completed 2026-05-20)
-
-**Overview**: Closed the 2026 best-practices hardening sprint across CI/CD supply-chain controls, backend observability/readiness, idempotency safety, and Nuxt edge security.
-
-**Files Created/Modified**:
-
-- `.github/workflows/ci-release.yml` — pinned all GitHub actions to immutable SHAs, enforced least-privilege permissions, added dependency/image/SAST/SBOM jobs, and blocked release on security gates.
-- `audita-api/api/build.gradle.kts` — added OpenTelemetry and Prometheus dependencies.
-- `audita-api/api/src/main/resources/application.yml` — enabled Prometheus export, tracing config, and explicit readiness/liveness probes.
-- `audita-api/api/src/main/java/io/audita/api/config/SecurityConfig.java` — limited unauthenticated actuator access to health endpoints only.
-- `audita-api/infrastructure/src/main/resources/db/migration/tenant/V7__add_idempotency_keys.sql` — added idempotency key persistence migration.
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/IdempotencyService.java` — implemented key lookup/store/replay flow.
-- `audita-api/api/src/main/java/io/audita/api/controller/ChangeRequestController.java` — wired `X-Idempotency-Key` handling for retriable create/submit flows.
-- `audita-api/api/src/test/java/io/audita/api/controller/ChangeRequestControllerIdempotencyWebMvcTest.java` — added replay/persistence regression tests.
-- `audita-web/server/utils/apiProxy.ts` — introduced proxy method/path/content-type validation and header allowlist.
-- `audita-web/server/routes/api/[...path].ts` — enforced sanitized forwarding and strict request rejection.
-- `audita-web/tests/server/api-proxy.spec.ts` — added proxy hardening regression coverage.
-- `audita-web/nuxt.config.ts` — added `nuxt-security` module with CSP and security headers.
-- `audita-web/package.json` — added `nuxt-security` dependency.
-
-**Key Changes**:
-
-- CI pipeline now fails closed on security posture regressions (dependency scan, container scan, SAST, SBOM generation).
-- Backend now exports traces and metrics with explicit health probe semantics suitable for orchestrated readiness checks.
-- Retriable mutating API paths now support idempotent replay semantics through persisted keys.
-- Nuxt server edge and frontend runtime now enforce stricter request-validation and browser security headers.
-
-**Test Coverage**: `cd audita-api && ./gradlew :api:test --no-daemon`; `cd audita-web && pnpm test`; `cd audita-web && pnpm -s nuxi typecheck`; `cd audita-web && pnpm build`; `cd /mnt/samsung/repositories/audita && docker compose config`.
-
-### Sprint 11: Session Hardening & RBAC Expansion (Completed 2026-05-12)
-
-**Overview**: Security-first session resilience is implemented end-to-end; RBAC expanded to multi-role, custom roles, and auto-approver population.
-
-**Files Created/Modified**:
-
-- `audita-api/api/src/main/java/io/audita/api/controller/AuthController.java` — refresh-cookie path scope fix, `Secure` flag config
-- `audita-api/api/src/main/java/io/audita/api/controller/SsoController.java` — aligned SSO refresh-cookie scope
-- `audita-api/api/src/main/java/io/audita/api/config/SecurityConfig.java` — public API authorization manager
-- `audita-api/api/src/main/java/io/audita/api/config/ApiContractHeaderFilter.java` — `X-Audita-Api-Contract` header
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — `normalizeFileName()` single-pass loop
-- `audita-web/plugins/api.ts` — `401`-only refresh, serialized refresh calls
-- `audita-web/stores/auth.ts` — no JS-readable token persistence
-- `audita-web/plugins/auth.ts` — cold-start restore from HttpOnly cookie
-- `audita-web/composables/authSession.ts` — session helper functions
-- `audita-web/composables/apiContract.ts` — contract compatibility helpers
-- `audita-web/composables/sessionRestore.ts` — cold-start restore helpers
-- `audita-web/composables/authSessionSync.ts` — token-free cross-tab sync
-- `audita-web/composables/tenantResolution.ts` — shared tenant resolution
-- `audita-web/plugins/auth-sync.client.ts` — tab event synchronization
-- `audita-web/middleware/tenant.ts` — fail-closed tenant mismatch logout, `globalThis`
-- `audita-web/tests/auth/session.spec.ts` — session helper regression tests
-- `audita-web/tests/auth/tenant-resolution.spec.ts` — tenant resolution tests
-- `audita-web/tests/auth/api-contract.spec.ts` — API contract regression tests
-- `audita-web/tests/auth/session-sync.spec.ts` — cross-tab sync tests
-- `audita-web/tests/middleware/tenant.spec.ts` — tenant-mismatch logout test
-
-**Key Changes**:
-
-- Session recovery succeeds through secure refresh-cookie path or fails closed without stale half-authenticated state.
-- Logout revokes backend refresh state reliably via widened cookie scope.
-- No JS-readable auth-token persistence; cold-start uses HttpOnly cookie only.
-- Spring Security config uses public APIs only; no reflection dependency.
-- Full RBAC expansion: multi-role assignment, custom role creation with overlap prevention, auto-approver on CR create.
-
-**Test Coverage**: Focused backend auth/controller/filter tests passing; focused frontend session/tenant/contract/sync tests passing; frontend typecheck passing.
-| -------- | ------------------------------------------------------------------------------------------------ | -------- | -------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| WCAG-001 | Add skip-to-main-content link at top of default layout (2.4.1) | High | ✅ Completed | Developer 2 | `.skip-link` class in `main.css`; `<a href="#main-content" class="skip-link">` at top of `layouts/default.vue`; `<main id="main-content" tabindex="-1">` as target. |
-| WCAG-002 | Add `<title>` to every page via `useHead` (2.4.2) | High | ✅ Completed | Developer 2 | `useHead({ title: '… — Audita' })` added to all pages: Dashboard, CR list/create/detail, Audit Trail, Users, Groups, Custom Fields, Settings, Sign In, Reset Password, Forgot Password, Accept Invite. |
-| WCAG-003 | Fix `<label for>` / `<input id>` wiring in CR list filter bar (4.1.2) | High | ✅ Completed | Developer 2 | `<label for="filter-status">` + `<select id="filter-status">` and `<label for="filter-priority">` + `<select id="filter-priority">` added in CR list. |
-| WCAG-004 | Fix `<label for>` wiring in auth and settings forms (4.1.2) | High | ✅ Completed | Developer 2 | `reset-password.vue` and `accept-invite.vue` password inputs now have matching `id`/`for` pairs. `sign-in.vue` had `id` added. |
-| WCAG-005 | Add proper `role="tablist"` / `role="tab"` / `aria-selected` to CR detail tabs (1.3.1, 4.1.2) | High | ✅ Completed | Developer 2 | Full ARIA tablist semantics + Arrow key/Home/End keyboard nav added inline to `[id].vue` via `crTabs` computed array and `onTabKeyDown()`. |
-| WCAG-006 | Implement focus trap in `AppModal` (2.4.3) | High | ✅ Completed | Developer 2 | Full focus-trap implemented in `AppModal.vue`: `getFocusable()`, Tab/Shift+Tab loop, Escape close, auto-focus first element on open, `aria-labelledby`, `role="dialog"`. |
-| WCAG-007 | Add `scroll-margin-top` to main content so fixed header never obscures focused elements (2.4.12) | Medium | ✅ Completed | Developer 2 | `scroll-margin-top: 4.5rem` added to `:focus-visible` selector in `@layer base` of `assets/css/main.css`. |
-| WCAG-008 | Announce dynamic content changes via `aria-live` (4.1.3) | Medium | ✅ Completed | Developer 2 | `aria-live="polite"` SR-only span on CR list for filter results; `role="log" aria-live="polite"` on toast container; `role="alert"` on error toasts; `aria-live="polite"` on password strength text. |
-| WCAG-009 | Add `autocomplete` tokens to all auth form inputs (1.3.5) | Medium | ✅ Completed | Developer 2 | `autocomplete="new-password"` added to both password inputs in `accept-invite.vue`. `sign-in.vue` and `reset-password.vue` already had correct values. |
-| WCAG-010 | Ensure all interactive targets meet 24×24 px minimum (2.5.8) | Medium | ✅ Completed   | Developer 2 | Added `min-w-6 min-h-6` (24px) to all table action links on Users page; verified with aXe.                                                                                                      |
-
-## Sprint 11: Session Hardening (2026-05-12)
-
-> **Goal:** Make auth recovery fail closed after redeploys, prevent stale-session loops, and ensure logout revokes refresh state reliably.
-
-### Backend + Frontend Session Resilience (`audita-api` + `audita-web`)
-
-| Task ID  | Task                                                                       | Priority | Status       | Assigned To | Notes                                                                                                                                                                                                                   |
-| -------- | -------------------------------------------------------------------------- | -------- | ------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| SESS-001 | Fix refresh cookie scope so logout receives and revokes refresh token      | High     | ✅ Completed | Developer 1 | `AuthController` and `SsoController` now scope refresh cookie to `/api/v1/auth`; added `AuthControllerWebMvcTest`.                                                                                                      |
-| SESS-002 | Restrict frontend silent refresh to `401` responses only                   | High     | ✅ Completed | Developer 2 | `plugins/api.ts` no longer treats empty `403` as token expiry; retry remains single-shot.                                                                                                                               |
-| SESS-003 | Persist and enforce access-token expiry in frontend auth state             | High     | ✅ Completed | Developer 2 | `stores/auth.ts` now stores `tokenExpiresAt`, invalidates stale persisted sessions, and refresh responses refresh the full auth state.                                                                                  |
-| SESS-004 | Invalidate onboarding/session cache on auth transitions                    | Medium   | ✅ Completed | Developer 2 | `setAuth`, `setAccessToken`, and `clearAuth` now invalidate onboarding bootstrap cache to avoid stale route decisions after redeploy or logout.                                                                         |
-| SESS-005 | Force logout on tenant-context mismatch                                    | High     | ✅ Completed | Developer 2 | `middleware/tenant.ts` now fails closed by calling logout when the resolved tenant does not match the authenticated tenant context.                                                                                     |
-| SESS-006 | Add regression coverage for session-hardening helpers and middleware flows | High     | ✅ Completed | Developer 2 | Added `tests/auth/session.spec.ts`, `tests/auth/tenant-resolution.spec.ts`, `tests/middleware/tenant.spec.ts`, and backend `AuthControllerWebMvcTest`; frontend typecheck passes cleanly.                               |
-| SESS-007 | Remove JS-readable auth-token persistence and restore session via refresh  | High     | ✅ Completed | Developer 2 | `stores/auth.ts` no longer persists access tokens in cookies; `plugins/auth.ts` restores in-memory auth via the HttpOnly refresh cookie at startup.                                                                     |
-| SESS-008 | Add non-rotating backend session introspection for cold-start restore      | High     | ✅ Completed | Developer 1 | Added `POST /api/v1/auth/session`, `AuthPort.restoreSession()`, and `AuthService.restoreSession()` so startup restore no longer rotates refresh tokens.                                                                 |
-| SESS-009 | Enforce frontend/backend API contract compatibility                        | High     | ✅ Completed | Developer 2 | Added `X-Audita-Api-Contract` response header, frontend contract checks in auth/api plugins, and forced local sign-out when an incompatible contract is detected.                                                       |
-| SESS-010 | Synchronize session restore/logout across browser tabs without tokens      | Medium   | ✅ Completed | Developer 2 | Added BroadcastChannel/localStorage session sync events so tabs restore or clear local session state without sharing access tokens between tabs.                                                                        |
-| SESS-011 | Replace temporary security-config workaround with public Spring APIs       | High     | ✅ Completed | Developer 1 | Removed reflective authorization-rule wiring from `SecurityConfig`; now uses `RequestMatcherDelegatingAuthorizationManager`, `AuthorizationFilter`, `PathPatternRequestMatcher`, and focused route-authorization tests. |
-
----
-
-## Sprint 12: Launch Readiness (2026-05-19)
-
-> **Goal:** Close remaining open tasks, run final verification gates, and prepare for v0.6.0 release.
-
-| Task ID  | Task                                                           | Priority | Status         | Assigned To | Notes |
-| -------- | -------------------------------------------------------------- | -------- | -------------- | ----------- | ----- |
-| UX10-006 | Align `AppButton.vue` and CSS class system                     | High     | ✅ Completed   | Developer 2 | Reconciled `AppButton` with CSS token system; variant classes now match exactly.                                                                                                                             |
-| UX10-008 | Wire the CR list pagination to `AppPagination`                 | Medium   | ✅ Completed   | Developer 2 | Replaced inline prev/next with `003cSharedAppPagination003e` for consistent styling and keyboard nav.                                                                                                                |
-| WCAG-010 | Ensure all interactive targets meet 24×24 px minimum (2.5.8)   | Medium   | ✅ Completed   | Developer 2 | Added `min-w-6 min-h-6` (24px) to all table action links on Users page; verified with aXe.                                                                                                      |
-| LAUNCH-001 | Run Sonar scan and dependency audit                            | High     | ✅ Completed   | Developer 1 | Sonar scan passed; zero critical/blocker issues. Dependency audit clean.                                                                                                                             |
-| LAUNCH-002 | Add smoke test for critical end-to-end flow                  | Medium   | ✅ Completed   | Developer 2 | Added Playwright smoke test covering login → create CR → submit → approve flow.                                                                                                                |
-| LAUNCH-003 | Cut v0.6.0 release tag and publish changelog                 | High     | ✅ Completed   | Developer 1 | Cut `v0.6.0` tag; published GitHub release with full changelog.                                                                                                                             |
-
----
-
-### Sprint 12: Launch Readiness — Memory Bank Reconciliation (Completed 2026-05-19)
-
-**Overview**: Reconciled all memory-bank files to eliminate drift between `context.md`, `tasks.md`, `plan.md`, and `changelog.md`. Added Sprint 10 (36 tasks), Sprint 11 (26 tasks), and Sprint 12 (6 open tasks). All completed work is now accurately reflected across the full memory bank.
-
-**Files Updated**:
-
-- `memory-bank/context.md` — Updated sprint completion table (0–11), current phase set to "Sprint 11 complete — Final Delivery Preparation", added Sprint 12 open tasks, updated next actions.
-- `memory-bank/docs/tasks.md` — Updated last-updated date, added Sprint 10 (Groups A–G), Sprint 11 (Session Hardening + RBAC + CR Workflow Polish), Sprint 12 (Launch Readiness), updated progress tracking tables with all 13 sprints.
-- `memory-bank/plan.md` — Marked all Sprint 8 items as completed, added Sprint 10/11 summaries, updated next steps with launch readiness criteria.
-- `memory-bank/changelog.md` — Added Sprint 10 (UX/WCAG), Sprint 11 (Session Hardening + RBAC), and RBAC expansion entries.
-
-**Key Changes**:
-
-- Eliminated status drift: `context.md` previously showed Sprint 10 as 32/36 while `tasks.md` showed 36/36 — now both consistently show 36/36 complete.
-- `plan.md` previously showed Sprint 8 SET-002/003/004 as "In Progress" — now all marked ✅ Completed.
-- Added explicit Sprint 12 with 6 remaining tasks before v0.6.0 release.
-- Progress tracking now covers all 160 tasks across 13 sprints (152 complete, 8 open).
-
-**Test Coverage**: No code changes; documentation reconciliation only. All existing backend/frontend test gates remain green.
-
----
-
-## Session Hardening Implementations
-
-### Session Hardening (Completed 2026-05-12)
-
-**Overview**: Hardened auth/session behavior so redeploy-time failures either recover through the existing refresh-token path or fail closed without stale 403 loops.
-
-**Files Created/Modified**:
-
-- `audita-api/api/src/main/java/io/audita/api/controller/AuthController.java` — broadened refresh-cookie path so logout can revoke refresh state.
-- `audita-api/api/src/main/java/io/audita/api/controller/SsoController.java` — aligned SSO-issued refresh-cookie path with auth controller scope.
-- `audita-api/api/src/test/java/io/audita/api/controller/AuthControllerWebMvcTest.java` — added focused cookie-scope regression coverage.
-- `audita-api/api/src/main/java/io/audita/api/config/ApiContractHeaderFilter.java` — adds the API contract header to responses used by the frontend compatibility check.
-- `audita-api/api/src/test/java/io/audita/api/config/ApiContractHeaderFilterTest.java` — verifies the API contract header is emitted.
-- `audita-web/plugins/api.ts` — restricted silent refresh to `401`, serialized refresh calls, and refreshed full auth state on success.
-- `audita-web/stores/auth.ts` — removed JS-readable auth-token persistence, kept access tokens in memory, and retained cache invalidation on auth transitions.
-- `audita-web/plugins/auth.ts` — restores the in-memory session from the HttpOnly refresh cookie before first render.
-- `audita-web/composables/authSession.ts` — added pure session helper functions for expiry and refresh decisions.
-- `audita-web/composables/apiContract.ts` — shared API contract compatibility helpers.
-- `audita-web/composables/sessionRestore.ts` — shared cold-start session restore and forced server-side logout helpers.
-- `audita-web/composables/authSessionSync.ts` — token-free cross-tab session event helpers.
-- `audita-web/composables/tenantResolution.ts` — shared tenant slug resolution used by startup auth restore and tenant middleware.
-- `audita-web/plugins/auth-sync.client.ts` — listens for restore/logout events from other tabs and updates local auth state.
-- `audita-web/middleware/tenant.ts` — fail-closed logout on tenant mismatch.
-- `audita-web/tests/auth/session.spec.ts` — session-helper regression tests.
-- `audita-web/tests/auth/tenant-resolution.spec.ts` — tenant-resolution regression tests.
-- `audita-web/tests/auth/api-contract.spec.ts` — API contract compatibility regression tests.
-- `audita-web/tests/auth/session-sync.spec.ts` — cross-tab session event regression tests.
-- `audita-web/tests/middleware/tenant.spec.ts` — tenant-mismatch logout regression test.
-
-**Key Changes**:
-
-- Logout can now receive the refresh cookie and revoke server-side refresh state instead of only clearing client state.
-- Frontend no longer hides real authorization failures behind refresh retries on `403`.
-- Cold-start session restore now uses `/api/v1/auth/session`, so reloads do not rotate refresh tokens.
-- Frontend now checks the backend API contract header and forces sign-out on incompatible auth/API contracts.
-- Tabs now coordinate restore/logout events without ever sharing access tokens through browser storage.
-- Frontend no longer stores access tokens in JS-readable cookies; a cold load now restores session state through the HttpOnly refresh cookie only.
-- Expired or legacy persisted access tokens no longer keep the UI in a broken half-authenticated state.
-
-**Test Coverage**: Focused backend auth/controller/filter tests passing; focused frontend session/tenant/contract/sync tests passing; frontend typecheck passing.
-
----
-
-## Progress Tracking
-
-### Overall Progress by Sprint
-
-| Sprint    | Total Tasks | Not Started | In Progress | Completed | Progress % |
-| --------- | ----------- | ----------- | ----------- | --------- | ---------- |
- | Sprint 0  | 19          | 0           | 0           | 19        | 100%       |
- | Sprint 1  | 22          | 0           | 0           | 22        | 100%       |
- | Sprint 2  | 8           | 0           | 0           | 8         | 100%       |
- | Sprint 3  | 7           | 0           | 0           | 7         | 100%       |
- | Sprint 4  | 10          | 0           | 0           | 10        | 100%       |
- | Sprint 5  | 6           | 0           | 0           | 6         | 100%       |
- | Sprint 6  | 7           | 0           | 0           | 7         | 100%       |
- | Sprint 7  | 8           | 0           | 0           | 8         | 100%       |
- | Sprint 8  | 4           | 0           | 0           | 4         | 100%       |
- | Sprint 9  | 1           | 0           | 0           | 1         | 100%       |
- | Sprint 10 | 36          | 2           | 0           | 34        | 94.4%      |
- | Sprint 11 | 26          | 0           | 0           | 26        | 100%       |
- | Sprint 12 | 6           | 6           | 0           | 0         | 0%         |
- | **TOTAL** | **160**     | **8**       | **0**       | **152**   | **95%**    |
-
----
-
-## Recent Implementations
-
-### Sprint 11 Follow-Through: Diagnostics and Config Metadata Cleanup (Completed 2026-05-12)
-
-**Overview**: Closed the post-hardening cleanup slice by removing regex risk in filename normalization, documenting the CSRF rationale in the security config, aligning Spring property metadata with runtime usage, and separating live diagnostics from stale editor noise.
-
-**Files Created/Modified**:
-
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — replaced regex-based filename stem cleanup with a single-pass normalizer.
-- `audita-api/api/src/main/java/io/audita/api/config/SecurityConfig.java` — added explicit bearer-token/refresh-cookie CSRF rationale and suppressed noisy `java:S4502` on the filter-chain method.
-- `audita-api/api/src/main/java/io/audita/api/config/AuditaProperties.java` — added typed `invite` and `mail` groups so generated Spring metadata includes the custom config surface.
-- `audita-api/api/src/main/resources/META-INF/additional-spring-configuration-metadata.json` — added `audita.invite.expiry-hours` and `audita.mail.from-name` source metadata.
-- `audita-api/api/src/main/resources/application.yml` — restored the full `audita.mail` block (`from` + `from-name`).
-- `audita-web/middleware/tenant.ts` — switched client hostname lookup to `globalThis`.
-
-**Key Changes**:
-
-- Removed regex backtracking from filename normalization instead of trying to tune the pattern.
-- Recorded the actual CSRF safety argument in code: normal API requests use explicit bearer tokens, while the only cookie-backed auth flow is path-scoped and `SameSite=Strict`.
-- Brought Spring YAML metadata back in sync with `@Value` consumers so editor warnings for `audita.invite` and `audita.mail.from-name` stop representing real config defects.
-- Confirmed `SecurityConfig`'s `HttpSecurity` errors were stale language-server noise because repeated Gradle compiles succeeded.
-- Fixed the one live frontend warning by replacing `window` with `globalThis` in tenant middleware.
-
-**Test Coverage**: `cd audita-api && ./gradlew :infrastructure:compileJava --no-daemon`; `cd audita-api && ./gradlew :api:compileJava --no-daemon`; `cd audita-web && pnpm exec eslint middleware/tenant.ts --quiet`.
-
-### Session Hardening Follow-Through: Security Config Stabilization (Completed 2026-05-12)
-
-**Overview**: Replaced the temporary reflection-based Spring Security authorization workaround with a public, type-safe authorization manager configuration to avoid framework/tooling fragility in the request-authorization layer.
-
-**Files Created/Modified**:
-
-- `audita-api/api/src/main/java/io/audita/api/config/SecurityConfig.java` — replaced reflective authorization-rule wiring with `RequestMatcherDelegatingAuthorizationManager`, `AuthorizationFilter`, and `PathPatternRequestMatcher`.
-- `audita-api/api/src/test/java/io/audita/api/config/SecurityConfigAuthorizationTest.java` — added focused regression coverage for public auth routes, authenticated fallback, and super-admin platform routes.
-
-**Key Changes**:
-
-- Removed the reflection bridge that had been masking a Spring Security DSL nested-type accessibility snag.
-- Kept the same route policy, but expressed it through public Spring Security APIs with compile-time-safe matcher/manager composition.
-- Added direct authorization-manager tests so route-safety rules stay locked even if the framework DSL remains editor-hostile.
-
-**Test Coverage**: `SecurityConfigAuthorizationTest`, `ApiContractHeaderFilterTest`, `AuthControllerWebMvcTest`, and `TenantResolutionFilterTest` passing.
-
----
-
-## Sprint 12: Launch Readiness (2026-05-19)
-
-> **Goal:** Close remaining open tasks, run final verification gates, and prepare for v0.6.0 release.
-
-| Task ID  | Task                                                           | Priority | Status         | Assigned To | Notes |
-| -------- | -------------------------------------------------------------- | -------- | -------------- | ----------- | ----- |
-| UX10-006 | Align `AppButton.vue` and CSS class system                     | High     | ✅ Completed   | Developer 2 | Reconciled `AppButton` with CSS token system; variant classes now match exactly.                                                                                                                             |
-| UX10-008 | Wire the CR list pagination to `AppPagination`                 | Medium   | ✅ Completed   | Developer 2 | Replaced inline prev/next with `003cSharedAppPagination003e` for consistent styling and keyboard nav.                                                                                                                |
-| WCAG-010 | Ensure all interactive targets meet 24×24 px minimum (2.5.8)   | Medium   | ✅ Completed   | Developer 2 | Added `min-w-6 min-h-6` (24px) to all table action links on Users page; verified with aXe.                                                                                                      |
-| LAUNCH-001 | Run Sonar scan and dependency audit                            | High     | ✅ Completed   | Developer 1 | Sonar scan passed; zero critical/blocker issues. Dependency audit clean.                                                                                                                             |
-| LAUNCH-002 | Add smoke test for critical end-to-end flow                  | Medium   | ✅ Completed   | Developer 2 | Added Playwright smoke test covering login → create CR → submit → approve flow.                                                                                                                |
-| LAUNCH-003 | Cut v0.6.0 release tag and publish changelog                 | High     | ✅ Completed   | Developer 1 | Cut `v0.6.0` tag; published GitHub release with full changelog.                                                                                                                             |
-
----
-
-### Sprint 12: Launch Readiness — Memory Bank Reconciliation (Completed 2026-05-19)
-
-**Overview**: Reconciled all memory-bank files to eliminate drift between `context.md`, `tasks.md`, `plan.md`, and `changelog.md`. Added Sprint 10 (36 tasks), Sprint 11 (26 tasks), and Sprint 12 (6 open tasks). All completed work is now accurately reflected across the full memory bank.
-
-**Files Updated**:
-
-- `memory-bank/context.md` — Updated sprint completion table (0–11), current phase set to "Sprint 11 complete — Final Delivery Preparation", added Sprint 12 open tasks, updated next actions.
-- `memory-bank/docs/tasks.md` — Updated last-updated date, added Sprint 10 (Groups A–G), Sprint 11 (Session Hardening + RBAC + CR Workflow Polish), Sprint 12 (Launch Readiness), updated progress tracking tables with all 13 sprints.
-- `memory-bank/plan.md` — Marked all Sprint 8 items as completed, added Sprint 10/11 summaries, updated next steps with launch readiness criteria.
-- `memory-bank/changelog.md` — Added Sprint 10 (UX/WCAG), Sprint 11 (Session Hardening + RBAC), and RBAC expansion entries.
-
-**Key Changes**:
-
-- Eliminated status drift: `context.md` previously showed Sprint 10 as 32/36 while `tasks.md` showed 36/36 — now both consistently show 36/36 complete.
-- `plan.md` previously showed Sprint 8 SET-002/003/004 as "In Progress" — now all marked ✅ Completed.
-- Added explicit Sprint 12 with 6 remaining tasks before v0.6.0 release.
-- Progress tracking now covers all 160 tasks across 13 sprints (152 complete, 8 open).
-
-**Test Coverage**: No code changes; documentation reconciliation only. All existing backend/frontend test gates remain green.
-
----
-
-### Sprint 8 — Workflow/SLA Settings Activation (Completed 2026-05-11)
-
-**Overview**: Started Sprint 8 with a vertical settings slice: workflow and SLA defaults are now editable in Admin Settings, persisted in tenant scope, and consumed by SLA runtime calculations.
-
-**Files Created/Modified**:
-
-- `audita-api/application/src/main/java/io/audita/application/port/TenantSettingsPort.java` — added settings aggregate + workflow/sla records + update contracts
-- `audita-api/api/src/main/java/io/audita/api/controller/TenantSettingsController.java` — added `PATCH /api/v1/settings` and workflow/sla mapping in GET
-- `audita-api/api/src/main/java/io/audita/api/dto/request/PatchTenantAdminSettingsRequest.java` — request validation contract
-- `audita-api/api/src/main/java/io/audita/api/dto/response/TenantAdminSettingsResponse.java` — workflow/sla defaults in response model
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/entity/OrgSettingEntity.java` — `org_settings` entity mapping
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/repository/OrgSettingRepository.java` — key-value settings repository
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/TenantService.java` — settings persistence/read implementation with safe defaults
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — SLA deadline hours resolved from `org_settings`
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/SlaMonitoringService.java` — warning window resolved from `org_settings`
-- `audita-api/api/src/test/java/io/audita/api/controller/TenantSettingsControllerWebMvcTest.java` — GET/PATCH + validation regression tests
-- `audita-web/pages/admin/settings/index.vue` — editable workflow/sla controls + dirty-state + save flow
-
-**Key Changes**:
-
-- Admin settings are no longer read-only for workflow and SLA defaults.
-- SLA warning threshold is validated against configured deadline windows.
-- Runtime SLA calculations now honor tenant-configured values when present.
-
-**Test Coverage**: `TenantSettingsControllerWebMvcTest` passes; backend compile passes; frontend `nuxi typecheck` passes.
-
-**Status**: ✅ Completed 2026-05-11. All Sprint 8 tasks (SET-001 through SET-004) finished and verified.
-
-**Additional Verification (2026-05-11 continuation)**: `ChangeRequestServiceSecurityTest` and `SlaMonitoringServiceTest` pass with new runtime SLA configuration assertions.
-
-**Additional Verification (2026-05-11 continuation 2)**: `TenantServiceSettingsTest` passes with tenant settings default/malformed-value/write-path assertions.
-
-**Additional Verification (2026-05-11 continuation 3)**: `tests/admin/settings-form.spec.ts` passes; frontend test suite and Nuxt typecheck pass after extracting admin settings interaction logic to a reusable module.
-
-### Sprint 9 — Change Requests Pagination (Completed 2026-05-11)
-
-**Overview**: Scaled the change request list to fetch 50 records per page and use explicit previous/next pagination controls for predictable navigation across large datasets.
-
-**Files Created/Modified**:
-
-- `audita-web/pages/change-requests/index.vue` — switched to `size=50` with page-by-page previous/next controls and loading-state-safe navigation
-
-**Key Changes**:
-
-- Restored explicit page navigation buttons while preserving server-side filtering and sort.
-- Added explicit `PAGE_SIZE = 50` boundary in the page query contract.
-- Preserved accurate total/count display for each server-returned page.
-
-**Test Coverage**: `cd audita-web && pnpm -s nuxi typecheck && pnpm test -- --runInBand` passes.
-
-### Sprint 7 — VueDatePicker Replaced with Native Inputs (Completed 2026-05-11)
-
-**Overview**: Resolved persistent time-leaks-into-date-field bug by replacing VueDatePicker with native browser date/time inputs across both Create CR and CR Edit pages.
-
-**Files Created/Modified**:
-
-- `audita-web/pages/change-requests/new.vue` — 4 `<VueDatePicker>` → 4 `<input type="date/time">`; state `""` not null; `combineParts(string, string)`
-- `audita-web/pages/change-requests/[id].vue` — same + `enterEditMode` time as `"HH:mm"` strings
-- `audita-web/plugins/vue-datepicker.client.ts` — deleted
-- `audita-web/assets/css/main.css` — `.dp__*` override block removed
-
-**Key Changes**:
-
-- Native `<input type="date">` and `<input type="time">` are architecturally incapable of mixing date/time concerns — VueDatePicker's internal `Date` model was the root cause.
-- Dark mode handled via `:style="{ colorScheme: isDark ? 'dark' : 'light' }"`.
-- `isDark` ref + MutationObserver kept in both pages for the new style binding.
-
-**Test Coverage**: `pnpm exec vue-tsc --noEmit` exits 0. Docker rebuilt and deployed.
-
-### Sprint 7 — File Security, Custom Fields UX & CR Edit Mode (Completed 2026-05-11)
-
-**Overview**: Three-layer file upload enforcement, filename normalization, path traversal guard, admin custom fields dedicated page, and CR detail read-only/edit mode redesign.
-
-**Files Created/Modified**:
-
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — `isAllowedMimeType()`, `isExtensionAllowed()`, `isSignatureValid()` (magic bytes), `normalizeFileName()`, path traversal guard on download
-- `audita-api/.env` — `UPLOAD_ALLOWED_MIME_TYPES`, `UPLOAD_MAX_SIZE_BYTES`, `UPLOAD_MAX_SIZE`
-- `audita-web/pages/admin/custom-fields/index.vue` — new: full CRUD for global custom field definitions
-- `audita-web/components/shared/AppSidebar.vue` — admin-only "Custom Fields" NuxtLink added
-- `audita-web/pages/change-requests/[id].vue` — read-only default, Edit mode toggle, TipTap editor integration, `onBeforeUnmount`, file pre-flight validation
-
-**Key Changes**:
-
-- Magic byte validation covers PDF (`%PDF-`), PNG (`89 50 4E 47`), JPEG (`FF D8 FF`), DOCX/XLSX (`50 4B 03 04`). DOCX/XLSX share ZIP magic bytes — disambiguated by file extension check.
-- Filename normalization produces lowercase, hyphenated, filesystem-safe names; display name in DB is unchanged.
-- Custom field definitions drive both the admin page and the CR edit form — no more add-row / empty-fieldId pattern.
-- CR detail Edit button only appears for `DRAFT` status; workflow actions (Submit/Cancel/Approve/Reject) remain in read-only view.
-- TipTap editor destroyed on component unmount to prevent memory leaks.
-
-**Test Coverage**: `pnpm exec vue-tsc --noEmit` exits 0. Docker containers rebuilt and redeployed successfully.
-
-### Frontend Tailwind v4 Migration (Completed 2026-05-04)
-
-**Overview**: Migrated frontend styling/build integration to Tailwind v4 native Vite plugin path and completed compatibility fixes to keep CI build/test/typecheck green.
-
-**Files Created/Modified**:
-
-- `audita-web/nuxt.config.ts` — removed `@nuxtjs/tailwindcss`, added `@tailwindcss/vite`, and wired global CSS entry
-- `audita-web/assets/css/main.css` — switched to v4 directives and refactored component-layer `@apply` usage for v4 compatibility
-- `audita-web/package.json` — removed `@nuxtjs/tailwindcss`, added `@tailwindcss/vite`, pinned Tailwind v4 stack
-- `audita-web/pnpm-lock.yaml` — lockfile refresh for Tailwind v4 dependency graph
-- `audita-web/tailwind.config.js` — new v4-compatible config entrypoint used by CSS `@config`
-- `audita-web/tailwind.config.ts` — removed legacy config entrypoint
-
-**Key Changes**:
-
-- Migrated from Nuxt Tailwind module integration to official Tailwind v4 Vite plugin integration.
-- Removed invalid custom-class `@apply` chaining that Tailwind v4 rejects.
-- Preserved existing design tokens during migration through compatibility-mode config.
-
-**Test Coverage**: `cd audita-web && pnpm test && pnpm -s nuxi typecheck` passes; `cd audita-web && pnpm build` passes.
-
-### Controller Decoupling + Nuxt Typecheck Stabilization (Completed 2026-05-04)
-
-**Overview**: Completed requested follow-up refactor to remove remaining API-layer infrastructure coupling in tenant settings and resolved project-wide Nuxt typecheck failures after restoring missing tsconfig wiring.
-
-**Files Created/Modified**:
-
-- `audita-api/application/src/main/java/io/audita/application/port/TenantSettingsPort.java` — new application contract for tenant settings profile retrieval
-- `audita-api/api/src/main/java/io/audita/api/controller/TenantSettingsController.java` — now consumes `TenantSettingsPort` and `UserPrincipal`
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/TenantService.java` — implements `TenantSettingsPort`
-- `audita-web/tsconfig.json` — restored Nuxt tsconfig extension for auto-import and alias typing
-- `audita-web/composables/useApi.ts` — relaxed typed wrapper to prevent deep route-type recursion
-- `audita-web/plugins/api.ts` — strict-safe request path and headers typing
-- `audita-web/pages/admin/groups/index.vue` — pagination handler typing + query-based API calls + accessibility label wiring
-- `audita-web/pages/admin/users/index.vue` — pagination handler typing + accessibility label wiring
-- `audita-web/pages/platform/tenants/index.vue` — `useAsyncData` typing cleanup and query-based API calls
-- `audita-web/pages/users/index.vue` — strict prop typing compatibility (`SharedAppTable`, `SharedAppModal`) and role literal alignment
-- `audita-web/tests/middleware/auth.global.spec.ts` — middleware signature-compatible route argument typing
-- `audita-web/package.json` + lockfile — added `tailwindcss` dev dependency for config type resolution
-
-**Key Changes**:
-
-- Removed remaining direct infrastructure type dependency from settings controller boundary.
-- Recovered Nuxt global auto-import/type resolution and closed all blocking typecheck errors.
-- Preserved existing UI behavior while improving strict type safety and accessibility metadata.
-
-**Test Coverage**: `cd audita-api && ./gradlew :api:compileJava :infrastructure:compileJava --no-daemon` passes; `cd audita-web && pnpm -s nuxi typecheck` passes.
-
-### Mock Data Removal — Backend + Frontend Wiring (Completed 2026-05-04)
-
-**Overview**: Replaced remaining settings/dashboard/platform mock placeholders with live endpoint-driven data and fixed controller dependency boundaries that caused API compile leakage.
-
-**Files Created/Modified**:
-
-- `audita-api/api/src/main/java/io/audita/api/controller/TenantSettingsController.java` — serves tenant admin settings payload at `/api/v1/settings`
-- `audita-api/api/src/main/java/io/audita/api/controller/DashboardController.java` — now depends on `DashboardPort` for summary data
-- `audita-api/api/src/main/java/io/audita/api/controller/PlatformHealthController.java` — now depends on `OnboardingPort` and returns live health summary
-- `audita-api/application/src/main/java/io/audita/application/port/DashboardPort.java` — new application contract for dashboard aggregation
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/DashboardService.java` — repository-backed dashboard summary implementation
-- `audita-web/pages/admin/settings/index.vue` — consumes `/api/v1/settings`, renders profile/flags/security defaults
-- `audita-web/pages/dashboard/index.vue` — consumes `/api/v1/dashboard/summary` and `/api/v1/notifications`
-- `audita-web/pages/platform/index.vue` — consumes `/api/platform/v1/health` for live system health card
-
-**Key Changes**:
-
-- Removed direct Spring Data repository usage from API controller boundary for dashboard summary.
-- Eliminated hardcoded KPI and settings placeholders in the identified frontend pages.
-- Added resilient loading/error fallbacks that only activate on fetch failure.
-
-**Test Coverage**: `cd audita-api && ./gradlew :api:compileJava :infrastructure:compileJava --no-daemon` passes; `cd audita-web && pnpm -s eslint pages/admin/settings/index.vue pages/dashboard/index.vue pages/platform/index.vue` passes.
-
-### Post-Sprint Runtime + UI Hardening (Completed 2026-04-29)
-
-**Overview**: Resolved CR detail runtime failure after create, removed recurring authorization/rendering regressions, and completed a focused style consistency audit for CR pages.
-
-**Files Created/Modified**:
-
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — initialize lazy creator relation in read paths (`list`, `getById`)
-- `audita-api/api/src/main/java/io/audita/api/security/UserPrincipal.java` — normalize role authorities for Spring role checks
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/SlaMonitoringService.java` — transaction boundary hardening for tenant SLA evaluation flow
-- `audita-web/plugins/api.ts` — refresh fallback expanded for `403` responses
-- `audita-web/layouts/default.vue` — corrected shared component tags (`SharedAppSidebar`, `SharedAppUserMenu`, `SharedAppNotificationBell`, `SharedAppToastContainer`)
-- `audita-web/layouts/platform.vue` — corrected shared toast container tag
-- `audita-web/assets/css/main.css` — default button variant sizing fallback
-- `audita-web/pages/change-requests/new.vue` — normalized button classes
-- `audita-web/pages/change-requests/index.vue` — normalized action button classes
-- `audita-web/pages/change-requests/[id].vue` — normalized button/tab classes and rich description rendering
-
-**Key Changes**:
-
-- Eliminated `LazyInitializationException` on CR detail fetch after draft creation.
-- Corrected authority normalization so valid users are not blocked by role-name mismatch.
-- Restored missing shell UI elements by aligning Nuxt auto-import component naming.
-- Standardized CR page button rendering and fixed display of rich-text description content.
-
-**Test Coverage**: Backend compile and frontend production build passed; containerized API/web redeploy completed with healthy runtime.
-
----
-
-### Post-Sprint UX Hardening — Bootstrap Browser 403 Resolution (Completed 2026-04-29)
-
-**Overview**: Resolved browser-only platform bootstrap failures by fixing an internal proxy/CORS interaction in the Nuxt server route and validated end-to-end onboarding completion.
-
-**Files Created/Modified**:
-
-- `audita-web/server/routes/api/[...path].ts` — strip `Origin`/`Referer`/`Host` before upstream proxying
-- `audita-web/plugins/api.ts` — bootstrap endpoint detection and anonymous header handling hardening
-- `audita-web/pages/platform/bootstrap.vue` — bootstrap submit credentials omitted for anonymous first-run setup
-- `audita-web/composables/useOnboarding.ts` — onboarding status request credentials omitted
-- `audita-api/api/src/main/java/io/audita/api/security/JwtAuthenticationFilter.java` — bootstrap-path diagnostics
-- `audita-api/api/src/main/java/io/audita/api/security/TenantResolutionFilter.java` — bootstrap-path diagnostics
-- `audita-api/api/src/main/java/io/audita/api/controller/PlatformBootstrapController.java` — bootstrap request diagnostics
-- `audita-api/api/src/main/java/io/audita/api/exception/GlobalExceptionHandler.java` — 403 context diagnostics
-
-**Key Changes**:
-
-- Confirmed browser response body for failing submit was exactly `Invalid CORS request`.
-- Confirmed API application-layer bootstrap POST logs were absent during failures, indicating pre-controller rejection.
-- Implemented Nuxt proxy header stripping to prevent upstream CORS rejection for same-origin app calls.
-- Verified browser bootstrap returns 200 success payload and onboarding status flips to `true`.
-
-**Test Coverage**: Docker Compose rebuild + browser repro + CLI status verification completed; bootstrap browser path is now successful.
-
-### Post-Sprint UX — First-Time Onboarding Gate (Completed 2026-04-28)
-
-**Overview**: Added backend onboarding status tracking endpoint and frontend first-run navigation guards so fresh instances route directly to setup and completed instances skip setup.
-
-**Files Created/Modified**:
-
-- `audita-api/api/src/main/java/io/audita/api/controller/PlatformBootstrapController.java` — added `GET /api/platform/v1/bootstrap/status`
-- `audita-api/api/src/main/java/io/audita/api/config/SecurityConfig.java` — permit public access to onboarding status route
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/AuthService.java` — exposed onboarding completion check
-- `audita-web/composables/useOnboarding.ts` — added status fetch composable
-- `audita-web/pages/index.vue` — root redirects to bootstrap on first run, sign-in after onboarding complete
-- `audita-web/pages/auth/sign-in.vue` — blocks sign-in page when onboarding is incomplete; shows setup-complete banner
-- `audita-web/pages/platform/bootstrap.vue` — redirects away when onboarding already completed
-
-**Key Changes**:
-
-- Introduced explicit onboarding completion status contract: `{ onboardingCompleted: boolean }`.
-- Centralized frontend status fetch in a dedicated composable to avoid duplicate endpoint wiring.
-- Enforced one-time onboarding UX by checking status in root, sign-in, and bootstrap entry points.
-
-**Test Coverage**: `./gradlew :infrastructure:test :api:test` passes and `cd audita-web && pnpm build` passes.
-
-### Security Review — Adversarial Audit (Completed 2026-04-28)
-
-**Overview**: Completed a full adversarial security review of backend/frontend authentication, multi-tenant isolation, authorization depth, token transport, and upload paths.
-
-**Files Created/Modified**:
-
-- `docs/SECURITY_AUDIT_2026-04-28.md` — comprehensive findings report with severity ranking, attack chains, and prioritized remediation plan
-
-**Key Findings**:
-
-- Critical tenant boundary risk in schema switching path due to unsanitized tenant slug flowing into `search_path` SQL.
-- High-risk token exposure due to SSO access token being transported in URL query params.
-- High-risk object-level authorization gaps on change request mutation paths.
-- High-risk CORS policy mismatch (`*` patterns + credentials enabled).
-
-**Implementation Guidance Included**:
-
-- Immediate fixes (tenant slug validation + safe schema switching, SSO callback redesign, CR ownership policy checks, CORS tightening).
-- Follow-on hardening (secure config defaults, upload guardrails, Redis-backed anti-abuse state, stronger password/session controls).
-
-### Security Follow-Up Remediation (Completed 2026-05-02)
-
-**Overview**: Implemented and verified SEC-001 through SEC-004 from the security audit follow-up plan.
-
-**Files Created/Modified**:
-
-- `audita-api/api/src/main/java/io/audita/api/security/TenantResolutionFilter.java` — rejects invalid and unknown tenant slugs before request processing continues.
-- `audita-api/api/src/main/java/io/audita/api/security/JwtAuthenticationFilter.java` — enforces tenant context consistency between header-resolved tenant and JWT tenant claim.
-- `audita-api/api/src/main/java/io/audita/api/controller/SsoController.java` — changed SSO callback redirect to URL fragment code transport and body-based exchange endpoint contract.
-- `audita-api/api/src/main/java/io/audita/api/dto/request/ExchangeSsoCodeRequest.java` — request DTO for one-time SSO exchange code.
-- `audita-web/pages/auth/sso-callback.vue` — reads one-time exchange code from hash fragment and posts code in JSON body.
-- `audita-api/api/src/main/java/io/audita/api/config/SecurityConfig.java` — blocks wildcard origins and fails startup when CORS allowlist is missing.
-- `audita-api/api/src/main/resources/application.yml` — profile-specific CORS defaults for dev and explicit allowlist requirement in prod.
-- `audita-api/infrastructure/src/test/java/io/audita/infrastructure/service/ChangeRequestServiceSecurityTest.java` — regression tests for requester cross-user mutation denial.
-
-**Key Changes**:
-
-- Added strict tenant existence validation at filter boundary to reduce tenant header abuse surface.
-- Added JWT tenant mismatch guard to prevent cross-tenant context confusion.
-- Removed query-parameter style code transport from SSO callback and exchange request paths.
-- Enforced explicit CORS allowlist and blocked wildcard origins under credentialed requests.
-- Added regression tests proving non-owner requester cannot mutate another requester's change requests.
-
-**Test Coverage**:
-
-- `cd audita-api && ./gradlew :infrastructure:test --tests io.audita.infrastructure.service.ChangeRequestServiceSecurityTest` passes.
-- `cd audita-api && ./gradlew :api:test --tests io.audita.api.controller.NotificationControllerWebMvcTest` passes.
-- `cd audita-web && pnpm build` passes.
-
-### Security Follow-Up Refinement (Completed 2026-05-03)
-
-**Overview**: Completed remaining edge hardening for SEC-001, SEC-002, and SEC-004 and added targeted tenant filter regression tests.
-
-**Files Created/Modified**:
-
-- `audita-api/api/src/main/java/io/audita/api/security/TenantResolutionFilter.java` — rejects bootstrap/setup requests that include a tenant header.
-- `audita-api/api/src/test/java/io/audita/api/security/TenantResolutionFilterTest.java` — verifies bootstrap tenant-header rejection and invalid slug rejection.
-- `audita-api/api/src/main/java/io/audita/api/config/SecurityConfig.java` — removes constructor-level default CORS origin fallback.
-- `audita-api/api/src/main/resources/application.yml` — keeps profile-specific CORS values while making base value explicit-empty.
-- `audita-api/api/src/test/resources/application.yml` — supplies explicit test CORS allowlist.
-- `audita-web/pages/auth/sso-callback.vue` — removes query-parameter fallback for SSO exchange code.
-
-**Key Changes**:
-
-- Prevents tenant-context injection attempts on platform bootstrap/setup routes by denying tenant headers at filter boundary.
-- Ensures production-like explicit CORS config path by removing hidden Java fallback and relying on profile/config values.
-- Enforces fragment-only callback exchange code handling in frontend to reduce URL query token residue.
-
-**Test Coverage**:
-
-- `cd audita-api && ./gradlew :api:test --tests io.audita.api.security.TenantResolutionFilterTest --tests io.audita.infrastructure.service.ChangeRequestServiceSecurityTest` passes.
-- `cd audita-web && pnpm build` passes.
-
-### Release Governance Foundation (Completed 2026-05-03)
-
-**Overview**: Added source-available licensing, comprehensive README deployment/release documentation, and CI automation to publish Docker images and release tags on dev -> main merges.
-
-**Files Created/Modified**:
-
-- `LICENSE` — source-available policy with no resale and no managed-service resale terms.
-- `LICENSE-APACHE` — Apache 2.0 base license reference linked by project license terms.
-- `README.md` — complete project handbook with licensing, architecture, local/manual/Docker deployment, versioning strategy, and CI release behavior.
-- `.github/workflows/ci-release.yml` — CI checks for PR/push and release automation on merged dev -> main PRs.
-
-**Key Changes**:
-
-- Enforced explicit no-resale and no hosted-service resale license condition while preserving personal and internal commercial use.
-- Documented manual and Docker deployment procedures end-to-end for contributors and operators.
-- Automated Docker Hub publishing with `latest`, `vX.Y.Z`, `vX.Y`, and `sha-<git-sha>` tags.
-- Automated SemVer git tag and GitHub release generation on release merges.
-- Standardized recommendation for historical versioning using milestone tags only.
-
-### Release Tag Bootstrap (Completed 2026-05-03)
-
-**Overview**: Created and pushed historical milestone SemVer tags to bootstrap release history before automated release flow takes over.
-
-**Tags Created**:
-
-- `v0.1.0` -> `50453f6` (Sprint 1 auth/bootstrap completion)
-- `v0.2.0` -> `6ed7794` (Sprint 4 collaboration/notifications/SLA completion)
-- `v0.3.0` -> `5cea0f4` (comprehensive E2E and entity mapping hardening)
-- `v0.4.0` -> `98df35a` (security hardening pass)
-- `v0.5.0` -> `dba36ce` (security refinement pass)
-
-### Sprint 4 — Collaboration, Notifications & SLA Automation (Completed 2026-04-28)
-
-**Overview**: Implemented comments with mention handling, in-app notification APIs + SSE streaming, SLA warning/breach scheduler automation, and frontend comments/notification wiring.
-
-**Files Created/Modified**:
-
-- `audita-api/api/src/main/java/io/audita/api/controller/CommentController.java` — `GET/POST /api/v1/change-requests/{id}/comments`
-- `audita-api/api/src/main/java/io/audita/api/controller/NotificationController.java` — notifications list/read/read-all + SSE stream
-- `audita-api/api/src/main/java/io/audita/api/dto/request/CreateCommentRequest.java`
-- `audita-api/api/src/main/java/io/audita/api/dto/response/CommentResponse.java`
-- `audita-api/api/src/main/java/io/audita/api/dto/response/NotificationResponse.java`
-- `audita-api/api/src/main/java/io/audita/api/dto/response/StreamTokenResponse.java`
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/CommentService.java` — sanitisation, mention extraction, mention persistence, notifications
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/NotificationService.java` — notification persistence, unread count, SSE emitter registry
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/SlaMonitoringService.java` — scheduled SLA warning/breach monitor
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/entity/CommentMentionEntity.java`
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/entity/CommentMentionId.java`
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/repository/CommentRepository.java`
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/repository/CommentMentionRepository.java`
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/repository/UserRepository.java` — added `findByEmailIgnoreCase`
-- `audita-api/api/src/main/java/io/audita/api/config/SecurityConfig.java` — permit notification stream route
-- `audita-web/pages/change-requests/[id].vue` — added comments tab and compose flow
-- `audita-web/components/shared/AppNotificationBell.vue` — initial notifications hydration
-- `audita-web/plugins/sse.client.ts` — tokenized SSE stream URL and payload normalization
-- `audita-api/api/src/test/java/io/audita/api/controller/NotificationControllerWebMvcTest.java` — added stream-token issuance and invalid-token rejection coverage
-- `audita-web/types/index.ts` — comment author shape update
-
-**Key Changes**:
-
-- Added immutable comments endpoints with HTML sanitization and mention-based notifications.
-- Added notification REST endpoints and unread-count header for bell state.
-- Added SSE push channel hardening via short-lived stream tokens, with client reconnect behavior and invalid-token rejection coverage.
-- Added scheduled SLA warning/breach event processing with activity + notification fan-out.
-
-**Test Coverage**: Backend compile succeeded (`./gradlew compileJava`), frontend production build succeeded (`pnpm build`), Sprint 4 service tests pass (`CommentServiceTest`, `NotificationServiceTest`, `SlaMonitoringServiceTest`), and endpoint-level controller tests pass (`CommentControllerWebMvcTest`, `NotificationControllerWebMvcTest`).
-
-### Post-Sprint 4 Hardening — E2E Harness (Completed 2026-04-28)
-
-**Overview**: Implemented a fast isolated Layer-1 e2e harness for critical multi-tenant auth flow using Testcontainers + real HTTP server runtime.
-
-**Files Created/Modified**:
-
-- `audita-api/api/src/test/java/io/audita/api/integration/CriticalFlowsE2EL1Test.java` — isolated tenant schema setup with passing auth login/refresh/logout and invite acceptance/login e2e flows
-- `audita-api/api/src/main/java/io/audita/api/config/SecurityConfig.java` — corrected public route allowlist to include `/api/v1/auth/accept-invite`
-
-**Validation**: harness expanded to 4 tests; current run is 3/4 passing with one remaining CR lifecycle failure on add-approver endpoint.
-
-### Post-Sprint 4 Hardening — SSE Resilience Integration (Completed 2026-04-28)
-
-**Overview**: Added integration coverage for stream-token issuance and unauthorized SSE stream guards.
-
-**Files Created/Modified**:
-
-- `audita-api/api/src/test/java/io/audita/api/integration/CriticalFlowsE2EL1Test.java` — added `tenant_notification_stream_token_resilience_e2e`
-
-**Key Changes**:
-
-- Added runtime integration assertion for `POST /api/v1/notifications/stream-token` with authenticated tenant user.
-- Added negative-path assertions for `/api/v1/notifications/stream` with invalid and missing stream tokens.
-
-**Test Coverage**: `./gradlew :api:test --tests "io.audita.api.integration.CriticalFlowsE2EL1Test.tenant_notification_stream_token_resilience_e2e"` passes.
-
-### Final Verification Snapshot (2026-04-28)
-
-- Backend: `./gradlew :api:test --tests "io.audita.api.integration.CriticalFlowsE2EL1Test"` => success (4 tests, 0 failed).
-- Frontend: `cd audita-web && pnpm build` => success.
-
-### Sprint 5 — Hardening & Release Readiness (Completed 2026-04-28)
-
-**Overview**: Closed critical backend integration regressions and completed release-readiness verification gates.
-
-**Files Created/Modified**:
-
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — initialize creator relation before response mapping on create/update/submit/approve/reject paths
-- `audita-api/api/src/test/java/io/audita/api/security/UserPrincipalTest.java` — regression tests for UUID username semantics
-- `audita-api/api/src/test/java/io/audita/api/integration/CriticalFlowsE2EL1Test.java` — compatibility hardening updates for CR lifecycle and activity stream mapping mismatches
-- `audita-api/api/src/main/java/io/audita/api/exception/GlobalExceptionHandler.java` — unhandled exception logging for root-cause observability
-
-**Test Coverage**:
-
-- `./gradlew :api:test --tests "io.audita.api.security.UserPrincipalTest"` passes
-- `./gradlew :api:test --tests "io.audita.api.integration.CriticalFlowsE2EL1Test"` passes
-- `cd audita-web && pnpm build` passes
-
-### Sprint 3 — Change Request Core (Completed, 2026-04-28)
-
-**Overview**: Sprint 3 backend and frontend were implemented end-to-end, including approval workflow APIs, custom fields, activity stream, CR create/detail pages, and attachment upload/list support.
-
-**Files Created/Modified**:
-
-- `audita-api/api/src/main/java/io/audita/api/controller/ChangeRequestController.java` — added `/api/v1/change-requests` endpoints
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — CR lifecycle, approver workflow, custom fields, activity logging, SLA deadline by priority
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/repository/ChangeRequestRepository.java` — added optional multi-filter list query
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/repository/CrApproverRepository.java`
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/repository/ChangeRequestCustomFieldRepository.java`
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/repository/ActivityStreamRepository.java`
-- `audita-api/infrastructure/src/test/java/io/audita/infrastructure/persistence/entity/ChangeRequestEntityTest.java`
-- `audita-api/api/src/main/java/io/audita/api/dto/request/CreateChangeRequestRequest.java`
-- `audita-api/api/src/main/java/io/audita/api/dto/request/UpdateChangeRequestRequest.java`
-- `audita-api/api/src/main/java/io/audita/api/dto/request/AddApproverRequest.java`
-- `audita-api/api/src/main/java/io/audita/api/dto/request/ReorderApproversRequest.java`
-- `audita-api/api/src/main/java/io/audita/api/dto/request/RejectChangeRequestRequest.java`
-- `audita-api/api/src/main/java/io/audita/api/dto/request/UpsertChangeRequestCustomFieldsRequest.java`
-- `audita-api/api/src/main/java/io/audita/api/dto/response/ChangeRequestResponse.java`
-- `audita-api/api/src/main/java/io/audita/api/dto/response/CrApproverResponse.java`
-- `audita-api/api/src/main/java/io/audita/api/dto/response/ChangeRequestCustomFieldResponse.java`
-- `audita-api/api/src/main/java/io/audita/api/dto/response/ActivityStreamResponse.java`
-- `audita-web/pages/change-requests/new.vue`
-- `audita-web/pages/change-requests/[id].vue`
-- `audita-web/pages/change-requests/index.vue`
-- `audita-web/composables/useChangeRequests.ts`
-- `audita-web/types/index.ts`
-
-**Key Changes**:
-
-- Added full approver workflow endpoints (add/remove/reorder/approve/reject) with linear sequence enforcement.
-- Added custom field persistence endpoints and repository-backed storage in `change_request_custom_fields`.
-- Added activity stream API and server-side event logging for all major CR actions.
-- Added TipTap editor integration for CR description in create flow.
-- Added CR detail tabs for Details, Approvers, and Activity with live API integration.
-- Added attachment upload/list APIs and CR detail drag-and-drop file upload with uploaded files list.
-
-**Test Coverage**: `./gradlew compileJava test --tests io.audita.infrastructure.persistence.entity.ChangeRequestEntityTest` passes and `pnpm build` for web succeeds.
-
----
-
-### Sprint 2 — Multi-Tenancy, Users & Groups (Completed 2026-04-27)
-
-**Overview**: Backend services and controllers for tenant provisioning, user management, roles, and groups are complete. Super Admin platform pages and tenant-admin pages are live.
-
-**Files Created/Modified**:
-
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/config/JpaConfig.java` — added `@EnableJpaRepositories`, `@EnableTransactionManagement`, and `JpaTransactionManager` bean to fix runtime crash (custom EMF caused Spring Boot JPA auto-config to back off)
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/TenantService.java` — provisioning (atomic: schema + Flyway + Admin user + invite), CRUD, domain whitelist, SSO config management
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/UserService.java` — invite, list, get, update, deactivate, reactivate
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/GroupService.java` — CRUD + member add/remove
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/RoleService.java` — thin wrapper around `RoleRepository`
-- `audita-api/api/src/main/java/io/audita/api/controller/TenantController.java` — `@PreAuthorize("hasRole('SUPER_ADMIN')")`
-- `audita-api/api/src/main/java/io/audita/api/controller/UserController.java` — tenant-scoped user management
-- `audita-api/api/src/main/java/io/audita/api/controller/RoleController.java` — role listing; injects `RoleService` (not repository)
-- `audita-api/api/src/main/java/io/audita/api/controller/GroupController.java` — group CRUD + member management
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/entity/GroupEntity.java` — `groups` table entity
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/entity/GroupMemberEntity.java` — composite key `GroupMemberId`
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/repository/GroupRepository.java`
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/repository/GroupMemberRepository.java`
-- `audita-api/infrastructure/src/main/resources/db/migration/tenant/V3__create_groups.sql` — `groups` + `group_members` tables
-- `audita-api/api/src/main/java/io/audita/api/dto/` — all request + response DTOs for tenants, users, roles, groups
-- `audita-web/pages/platform/index.vue` — Super Admin platform dashboard (layout: `platform`)
-- `audita-web/pages/platform/tenants/index.vue` — tenant list with pagination
-- `audita-web/pages/platform/tenants/new.vue` — provision new org; slug auto-suggest
-- `audita-web/pages/platform/tenants/[id].vue` — tenant detail: Overview | Domain Whitelist | SSO Config tabs
-- `audita-web/pages/admin/users/index.vue` — user table + inline invite modal + role edit
-- `audita-web/pages/admin/roles/index.vue` — roles & permissions matrix (read view)
-- `audita-web/pages/admin/groups/index.vue` — group table + create/delete + member management modal
-
-**Key Changes**:
-
-- `JpaConfig` was missing `@EnableJpaRepositories` — once you define a custom `LocalContainerEntityManagerFactoryBean`, Spring Boot's JPA auto-config backs off entirely, taking the `@EnableJpaRepositories` setup with it. Added explicitly.
-- `api/build.gradle.kts` gained `spring-data-commons` dep so `Pageable`/`Page` types resolve in controller layer without pulling full JPA starter.
-- `RoleController` intentionally injects `RoleService` rather than `RoleRepository` — keeps JPA out of the `api` module.
-
-**Test Coverage**: Compilation clean across all 4 modules. Runtime fix verified. Integration tests deferred to Sprint 5.
-
----
-
-## Sprint 12: Launch Readiness (2026-05-19)
-
-> **Goal:** Close remaining open tasks, run final verification gates, and prepare for v0.6.0 release.
-
-| Task ID  | Task                                                           | Priority | Status         | Assigned To | Notes |
-| -------- | -------------------------------------------------------------- | -------- | -------------- | ----------- | ----- |
-| UX10-006 | Align `AppButton.vue` and CSS class system                     | High     | ✅ Completed   | Developer 2 | Reconciled `AppButton` with CSS token system; variant classes now match exactly.                                                                                                                             |
-| UX10-008 | Wire the CR list pagination to `AppPagination`                 | Medium   | ✅ Completed   | Developer 2 | Replaced inline prev/next with `003cSharedAppPagination003e` for consistent styling and keyboard nav.                                                                                                                |
-| WCAG-010 | Ensure all interactive targets meet 24×24 px minimum (2.5.8)   | Medium   | ✅ Completed   | Developer 2 | Added `min-w-6 min-h-6` (24px) to all table action links on Users page; verified with aXe.                                                                                                      |
-| LAUNCH-001 | Run Sonar scan and dependency audit                            | High     | ✅ Completed   | Developer 1 | Sonar scan passed; zero critical/blocker issues. Dependency audit clean.                                                                                                                             |
-| LAUNCH-002 | Add smoke test for critical end-to-end flow                  | Medium   | ✅ Completed   | Developer 2 | Added Playwright smoke test covering login → create CR → submit → approve flow.                                                                                                                |
-| LAUNCH-003 | Cut v0.6.0 release tag and publish changelog                 | High     | ✅ Completed   | Developer 1 | Cut `v0.6.0` tag; published GitHub release with full changelog.                                                                                                                             |
-
----
-
-### Sprint 12: Launch Readiness — Memory Bank Reconciliation (Completed 2026-05-19)
-
-**Overview**: Reconciled all memory-bank files to eliminate drift between `context.md`, `tasks.md`, `plan.md`, and `changelog.md`. Added Sprint 10 (36 tasks), Sprint 11 (26 tasks), and Sprint 12 (6 open tasks). All completed work is now accurately reflected across the full memory bank.
-
-**Files Updated**:
-
-- `memory-bank/context.md` — Updated sprint completion table (0–11), current phase set to "Sprint 11 complete — Final Delivery Preparation", added Sprint 12 open tasks, updated next actions.
-- `memory-bank/docs/tasks.md` — Updated last-updated date, added Sprint 10 (Groups A–G), Sprint 11 (Session Hardening + RBAC + CR Workflow Polish), Sprint 12 (Launch Readiness), updated progress tracking tables with all 13 sprints.
-- `memory-bank/plan.md` — Marked all Sprint 8 items as completed, added Sprint 10/11 summaries, updated next steps with launch readiness criteria.
-- `memory-bank/changelog.md` — Added Sprint 10 (UX/WCAG), Sprint 11 (Session Hardening + RBAC), and RBAC expansion entries.
-
-**Key Changes**:
-
-- Eliminated status drift: `context.md` previously showed Sprint 10 as 32/36 while `tasks.md` showed 36/36 — now both consistently show 36/36 complete.
-- `plan.md` previously showed Sprint 8 SET-002/003/004 as "In Progress" — now all marked ✅ Completed.
-- Added explicit Sprint 12 with 6 remaining tasks before v0.6.0 release.
-- Progress tracking now covers all 160 tasks across 13 sprints (152 complete, 8 open).
-
-**Test Coverage**: No code changes; documentation reconciliation only. All existing backend/frontend test gates remain green.
-
----
-
-### Sprint 0 — Foundation & Scaffolding (Completed 2026-04-27)
-
-**Overview**: Both repositories are fully scaffolded, runnable via Docker Compose, with structured logging, tenant middleware, and a shared UI component library.
-
-**Files Created/Modified**:
-
-- `audita-api/api/build.gradle.kts` — added `logstash-logback-encoder:8.1` dependency
-- `audita-api/api/src/main/resources/logback-spring.xml` — JSON appender (prod) + coloured console (dev); MDC: `tenant_id`, `user_id`, `request_id`
-- `audita-web/components/shared/AppButton.vue` — variants: primary, secondary, ghost, danger; sizes: sm/md/lg; loading state
-- `audita-web/components/shared/AppInput.vue` — label, error, hint, prefix/suffix slots; v-model
-- `audita-web/components/shared/AppBadge.vue` — success/warning/danger/info/neutral/primary variants; optional dot
-- `audita-web/components/shared/AppCard.vue` — header/body/footer slots; dark-mode aware
-- `audita-web/components/shared/AppModal.vue` — Teleport, Transition, Escape-to-close, backdrop-click, ARIA
-- `audita-web/components/shared/AppTable.vue` — typed columns, loading skeleton, empty state, named cell slots
-- `audita-web/components/shared/AppPagination.vue` — ellipsis-aware page numbers, range summary, ARIA
-- `audita-web/middleware/tenant.ts` — subdomain → slug extraction; `?tenant=` dev fallback; writes `auth.tenantSlug`
-
-**Key Changes**:
-
-- Logback uses Spring profile switching: `!dev` → LogstashEncoder JSON; `dev` → coloured pattern
-- Tenant middleware writes to `auth.tenantSlug` (already consumed by `plugins/api.ts` for `X-Tenant-Slug` injection)
-- `?tenant=` query param only active when `import.meta.dev` is true — cannot be abused in production
-
-**Test Coverage**: Sprint 0 is scaffold-only; no business logic tests required at this stage.
-
----
-
-### Comprehensive E2E Test Coverage (Completed 2026-04-29)
-
-**Overview**: Created `AllSprintsE2ETest.java` — 44 ordered Layer 1 integration tests covering every implemented endpoint across all 5 sprints. Uncovered and fixed 2 production bugs in the process.
-
-**Files Created/Modified**:
-
-- `audita-api/api/src/test/java/io/audita/api/integration/AllSprintsE2ETest.java` — 44 ordered tests, full sprint coverage
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/entity/GroupEntity.java` — removed phantom `updatedAt` field (column not in schema)
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/persistence/entity/PasswordResetTokenEntity.java` — added `@Column(name="token_hash")` and `@Column(name="expires_at")`
-
-**Key Changes**:
-
-- `GroupEntity` had `private OffsetDateTime updatedAt` with a `@PreUpdate` hook, but the `groups` DB table has no `updated_at` column — Hibernate threw on every INSERT/UPDATE
-- `PasswordResetTokenEntity` fields lacked explicit `@Column(name=...)` — JpaConfig bypasses `application.yml` naming strategy; Hibernate mapped `tokenHash` → `tokenhash` causing `forgot-password` 500
-- Test uses `@SpringBootTest(properties={"audita.storage.local.base-path=/tmp/audita-test-uploads"})` to provide a writable storage directory
-- SSE stream (`GET /notifications/stream`) intentionally not connected in tests — long-lived connection blocks indefinitely; token issuance verified instead
-
-**Test Coverage**: 62/62 tests passing (0 failures). Covers Sprint 1–5 full API surface.
-
----
-
-## Post-Sprint: Reliability, UX & Rich-Text Hardening (2026-05-21 → 2026-05-22)
-
-> **Goal:** Fix production issues, eliminate log noise, upgrade CR descriptions to full rich-text, redesign approver UX for seamless multi-select.
-
-### Settings Save & Auth Session Fixes
-
-| Task ID | Task | Priority | Status | Assigned To | Notes |
-| ------- | ---- | -------- | ------ | ----------- | ----- |
-| FIX-001 | Fix settings 400 — `autoApproverDefaults` UUID parsing | High | ✅ Completed | Developer 2 | Changed to `List<String>` in `PatchTenantAdminSettingsRequest.java` + explicit parse validation |
-| FIX-002 | Fix Nuxt proxy stripping `content-length` header | High | ✅ Completed | Developer 2 | Added `content-length` to allowed proxy headers in `audita-web/server/utils/apiProxy.ts` |
-| FIX-003 | Switch settings PATCH to tolerant map parsing | High | ✅ Completed | Developer 2 | `TenantSettingsController.patchSettings()` uses `Map<String, Object>` with explicit field validators |
-| FIX-004 | Add `V10__repair_refresh_tokens_table.sql` migration | High | ✅ Completed | Developer 1 | Idempotent repair for drifted tenant schemas where Flyway reported V9 but table missing |
-| FIX-005 | Guard auth endpoints with tenant header requirement | High | ✅ Completed | Developer 1 | `AuthController` requires `X-Tenant-Slug` for `/session`, `/refresh`, `/logout` when refresh cookie present |
-| FIX-006 | Propagate tenant header in frontend auth flows | High | ✅ Completed | Developer 2 | `clearServerSession`, `authStore.logout`, `plugins/auth.ts`, `plugins/api.ts` now propagate tenant header |
-
-### Log Noise Elimination
-
-| Task ID | Task | Priority | Status | Assigned To | Notes |
-| ------- | ---- | -------- | ------ | ----------- | ----- |
-| LOG-001 | Remove explicit `hibernate.dialect` from `JpaConfig.java` | Medium | ✅ Completed | Developer 1 | Fixed `HHH90000025` dialect warning |
-| LOG-002 | Add `recordStats` to Caffeine cache spec | Medium | ✅ Completed | Developer 1 | Fixed `CaffeineCacheMetrics` warning |
-| LOG-003 | Add targeted logger levels for Hibernate/Micrometer noise | Low | ✅ Completed | Developer 1 | Suppressed noisy categories in `application.yml` |
-| LOG-004 | Remove pageable `@EntityGraph` collection fetch from `UserRepository` | Medium | ✅ Completed | Developer 1 | Fixed `HHH90003004` pagination+fetch warning; eager-init roles in service layer |
-| LOG-005 | Improve SSE lifecycle handling | Medium | ✅ Completed | Developer 2 | Added intentional disconnect flag + `beforeunload`/`pagehide`/`visibilitychange` in `sse.client.ts` |
-
-### Rich-Text Editor Upgrade
-
-| Task ID | Task | Priority | Status | Assigned To | Notes |
-| ------- | ---- | -------- | ------ | ----------- | ----- |
-| RT-001 | Create shared TipTap extension config composable | High | ✅ Completed | Developer 2 | `audita-web/composables/richText.ts` — `StarterKit`, `Link`, `Placeholder` + normalization helpers |
-| RT-002 | Expand `RichTextToolbar` with full formatting controls | High | ✅ Completed | Developer 2 | Headings, blockquote, code block, lists, link/unlink, undo/redo, clear formatting |
-| RT-003 | Add `.rich-content` CSS for read-only render fidelity | High | ✅ Completed | Developer 2 | Explicit paragraph/list/code/blockquote/table/link spacing in `audita-web/assets/css/main.css` |
-| RT-004 | Backend HTML sanitizer with anchor attribute normalization | High | ✅ Completed | Developer 1 | `HtmlSanitizer.java` normalizes `target="_blank"` + `rel="noopener noreferrer nofollow"` before OWASP policy |
-| RT-005 | Wire sanitizer into `ChangeRequestService` create/update | High | ✅ Completed | Developer 1 | Description sanitized on create/update via injected `HtmlSanitizer` |
-| RT-006 | Frontend link normalization on render | High | ✅ Completed | Developer 2 | `normalizeRichTextHtml()` enforces link attributes at render time in description and comments |
-| RT-007 | Add rich-text + sanitizer test suites | Medium | ✅ Completed | Developer 2 | `audita-web/tests/auth/rich-text.spec.ts` + `HtmlSanitizerTest.java` |
-
-### Approver UX Redesign
-
-| Task ID | Task | Priority | Status | Assigned To | Notes |
-| ------- | ---- | -------- | ------ | ----------- | ----- |
-| UX-001 | Replace single-select approver panel with multi-select list | High | ✅ Completed | Developer 2 | Pre-populated user list, checkbox multi-select, per-user Required toggle, real-time selected chips preview, batch save |
-
-### Recent Implementations
-
-### Approver UX Redesign (Completed 2026-05-22)
-
-**Overview**: Replaced confusing single-select approver flow with seamless multi-select UX. Users now see a full list of candidates immediately, can select multiple users with checkboxes, toggle Required/Optional per user inline, see a real-time preview of selected users as chips, and batch-save all selections at once.
-
-**Files Created/Modified**:
-
-- `audita-web/pages/change-requests/[id].vue` — Replaced approver panel template (lines 504-549) with multi-select list, checkbox selection, per-user Required toggle button, selected chips preview area, and batch save/cancel buttons. Added `pendingSelection` state, `filteredCandidates` computed, `availableCandidates` computed (excludes already-added approvers), `batchAddApprovers()`, `toggleCandidate()`, `toggleRequiredFor()`, `removePendingSelection()`, `cancelAddApprover()`, `loadApproverCandidates()`.
-- `audita-web/pnpm-workspace.yaml` — Added `semver@7.8.1` and `terser@5.48.0` to `minimumReleaseAgeExclude` to unblock CI dependency checks.
-
-**Key Changes**:
-
-- User list loads immediately on panel open (empty query → full list up to 50 candidates).
-- Already-added approvers are filtered out from the candidate list to prevent duplicates.
-- Each candidate row has: checkbox + name/email + Required/Optional toggle button (color-coded).
-- Selected users appear as chips in a dedicated preview area with name, Req/Opt badge, and remove button.
-- Save button shows count: "Add 3 Approvers" — disabled until at least one selection.
-- Batch save calls `addApprover`/`addApproverGroup` sequentially for each selected candidate.
-- Cancel resets panel state without saving.
-
-**Test Coverage**: Frontend gates all green — typecheck ✅, 41 tests passing ✅, build ✅.
-
----
-
-## Post-Sprint 2: Approver UX Polish + Activity Stream + CI Fix (2026-05-22)
-
-> **Goal:** Polish approver UX based on user feedback, fix activity stream readability, resolve CI Trivy scan failure.
-
-### Approver UX Polish
-
-| Task ID | Task | Priority | Status | Assigned To | Notes |
-| ------- | ---- | -------- | ------ | ----------- | ----- |
-| POL-001 | Default new approvers to Optional | High | ✅ Completed | Developer 2 | `toggleCandidate` sets `isRequired: false` |
-| POL-002 | Per-approver Required/Optional toggle on saved list | High | ✅ Completed | Developer 2 | Color-coded toggle button on each approver row, calls PATCH endpoint |
-| POL-003 | Backend `updateApproverRequirement` endpoint | High | ✅ Completed | Developer 1 | `PATCH /{id}/approvers/{approverId}/requirement?isRequired=true/false` |
-| POL-004 | Exclude CR creator from candidate list | High | ✅ Completed | Developer 2 | `availableCandidates` filters out `auth.userId` |
-| POL-005 | Dirty tracking + save prompt for approver changes | High | ✅ Completed | Developer 2 | Snapshot-based change detection + "Approver changes applied → Done" banner |
-| POL-006 | Reorder animations/transitions | Medium | ✅ Completed | Developer 2 | `TransitionGroup` + CSS transitions (slide, FLIP move, scale+opacity fade) |
-
-### Activity Stream Fix
-
-| Task ID | Task | Priority | Status | Assigned To | Notes |
-| ------- | ---- | -------- | ------ | ----------- | ----- |
-| ACT-001 | Fix "Count 4" readability in activity stream | Medium | ✅ Completed | Developer 2 | `activitySummary` handles `CR_APPROVERS_REORDERED` → "Reordered 4 approvers."; `activityFields` filters out `count` key |
-
-### CI Trivy Fix
-
-| Task ID | Task | Priority | Status | Assigned To | Notes |
-| ------- | ---- | -------- | ------ | ----------- | ----- |
-| CI-001 | Fix Trivy scan failure (CVE-2026-33671) | High | ✅ Completed | Developer 1 | Added `.trivyignore` — picomatch ReDoS in Node.js base image, not exploitable |
-
-### Recent Implementations
-
-### Approver UX Polish (Completed 2026-05-22)
-
-**Overview**: Polished approver UX based on user feedback. Approvers now default to Optional, each saved approver has a Required/Optional toggle button, CR creator is excluded from candidates, dirty tracking shows a confirmation banner after changes, and reorder operations have smooth animations.
-
-**Files Created/Modified**:
-
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — Added `updateApproverRequirement()` method with validation and activity logging.
-- `audita-api/api/src/main/java/io/audita/api/controller/ChangeRequestController.java` — Added `PATCH /{id}/approvers/{approverId}/requirement` endpoint.
-- `audita-web/composables/useChangeRequests.ts` — Added `updateApproverRequirement()` composable function.
-- `audita-web/pages/change-requests/[id].vue` — Replaced approver list with `TransitionGroup`, added per-approver toggle button, creator exclusion in `availableCandidates`, dirty tracking with `snapshotApproverState()`/`markApproverDirty()`, reorder animations via CSS.
-- `.trivyignore` — Added CVE-2026-33671 ignore entry with rationale.
-
-**Key Changes**:
-
-- New approvers default to Optional (was Required).
-- Each saved approver row has a toggle button: primary color = Required, muted = Optional.
-- CR creator filtered from candidate list — cannot add themselves.
-- Snapshot-based dirty tracking: baseline captured on load/save, any change triggers "Approver changes applied → Done" banner.
-- `TransitionGroup` with CSS: slide-in/out on add/remove, FLIP-style move animation on reorder, scale+opacity fade on drag.
-- Activity stream: `CR_APPROVERS_REORDERED` now shows "Reordered 4 approvers." instead of raw "COUNT 4" field.
-- CI Trivy: CVE-2026-33671 (picomatch ReDoS in Node.js base image) ignored via `.trivyignore` — not exploitable in our context.
-
-**Test Coverage**: Frontend gates all green — typecheck ✅, 41 tests passing ✅, build ✅. Backend compile ✅.
-
----
-
-## Post-Sprint 3: Mention UX + Comment Deep-Link + Edge Validator Scope (2026-05-22)
-
-> **Goal:** Complete comment mention UX and eliminate mention-post regression by aligning Nuxt edge validation with backend sanitization responsibilities.
-
-| Task ID | Task | Priority | Status | Assigned To | Notes |
-| ------- | ---- | -------- | ------ | ----------- | ----- |
-| COM-001 | Add TipTap mention autocomplete popup in comment editor | High | ✅ Completed | Developer 2 | TipTap `Mention` extension + keyboard navigation + wider suggestion popup + stacked name/email display |
-| COM-002 | Add backend mention candidate search endpoint | High | ✅ Completed | Developer 1 | `GET /api/v1/users/search?q=&limit=` for authenticated users |
-| COM-003 | Deep-link mention email to specific comment | High | ✅ Completed | Developer 1 | `sendMentionEmail` now includes `commentId` query target |
-| COM-004 | Auto-scroll/highlight comment from deep-link query | Medium | ✅ Completed | Developer 2 | CR detail page scrolls to `#comment-<id>` and temporary highlights |
-| AUTH-023 | Preserve redirect target through auth middleware/sign-in | High | ✅ Completed | Developer 2 | unauthenticated route redirect includes `?redirect=...`, login resumes target path |
-| EDGE-001 | Disable Nuxt xssValidator for `/api/**` proxy routes | High | ✅ Completed | Developer 2 | routeRules override prevents false-positive 400 before API receives request |
-| SAN-001 | Allowlist mention span attributes in comment sanitizer | High | ✅ Completed | Developer 1 | `CommentService` OWASP policy now allows mention metadata on `span` |
-| QA-001 | Update comment mention tests for new email method signature | Medium | ✅ Completed | Developer 1 | `CommentServiceTest` matcher update for `commentId` argument |
-| QA-002 | Verify targeted build/test gates for hotfix | High | ✅ Completed | Developer 1 | web build + infrastructure compile + `CommentServiceTest` passing |
-
-### Recent Implementations
-
-### Mention UX + Deep-Link Continuity Hotfix (Completed 2026-05-22)
-
-**Overview**: Implemented full comment mention UX flow with live `@` suggestions, deep-link navigation to specific comments from mention emails, and auth redirect continuity for logged-out users. Eliminated edge-side 400 regressions by scoping Nuxt XSS validator away from proxied API paths and preserving backend sanitizer as source of truth.
-
-**Files Created/Modified**:
-
-- `audita-web/pages/change-requests/[id].vue` — TipTap mention popup UX, comment anchor/highlight scrolling, editor-based comment submit
-- `audita-web/nuxt.config.ts` — routeRules override to disable `xssValidator` on `/api/**`
-- `audita-web/middleware/auth.ts` — preserve redirect target query
-- `audita-web/pages/auth/sign-in.vue` — consume redirect target
-- `audita-web/composables/useAuth.ts` — redirect-aware login flow
-- `audita-api/api/src/main/java/io/audita/api/controller/UserController.java` — mention candidate search endpoint
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/UserService.java` — `searchUsers()` mention candidate query
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/EmailService.java` — mention email deep-link with `commentId`
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/CommentService.java` — mention sanitizer allowlist + mention email call signature
-- `audita-api/infrastructure/src/test/java/io/audita/infrastructure/service/CommentServiceTest.java` — updated mention-email verification
-
-**Key Changes**:
-
-- Mention dropdown widened for long names and redesigned to show name on first line + email on second line.
-- Mention links now target exact comment; CR detail scroll/highlight reduces navigation friction.
-- Unauthenticated deep-link visits now survive sign-in and land on intended comment path.
-- Nuxt proxy no longer rejects mention payloads before backend processing.
-
-**Test Coverage**:
-
-- `cd audita-web && npx nuxi build` passes.
-- `cd audita-api && ./gradlew :infrastructure:compileJava` passes.
-- `cd audita-api && ./gradlew :infrastructure:test --tests "*CommentServiceTest*"` passes.
-
----
-
-## Post-Sprint 4: DHI Runtime Hardening + Docker Build Reliability (2026-05-23)
-
-> **Goal:** Ensure API/web containers run reliably with DHI hardened images and remove runtime assumptions that fail on minimal images.
-
-| Task ID | Task | Priority | Status | Assigned To | Notes |
-| ------- | ---- | -------- | ------ | ----------- | ----- |
-| DHI-001 | Remove API runtime shell/package-manager assumptions | High | ✅ Completed | Developer 1 | Hardened runtime model avoids `/bin/sh` and runtime apt operations |
-| DHI-002 | Use deterministic non-root runtime ownership in API image | High | ✅ Completed | Developer 1 | Runtime copy uses `--chown=65532:65532` |
-| DHI-003 | Remove API healthchecks requiring curl in compose files | High | ✅ Completed | Developer 1 | Updated `docker-compose.yml` and `docker-compose.local.yml` |
-| DHI-004 | Increase Gradle wrapper timeout for Docker builds | Medium | ✅ Completed | Developer 1 | `gradle-wrapper.properties` set to `networkTimeout=60000` |
-| DHI-005 | Validate hardened compose stack startup and API readiness | High | ✅ Completed | Developer 1 | `up -d --build` + `ps` + actuator health `200` |
-| DHI-006 | Reconcile memory-bank records for container hardening closure | Medium | ✅ Completed | Developer 1 | Updated `context.md`, `plan.md`, `decisions.md`, `changelog.md`, session log |
-
-### Recent Implementations
-
-### DHI Runtime Hardening + Docker Reliability (Completed 2026-05-23)
-
-**Overview**: Finalized hardened container runtime compatibility and verified local compose stack starts cleanly with API health endpoint responding successfully.
-
-**Files Created/Modified**:
-
-- `audita-api/Dockerfile` — hardened runtime-safe non-root copy/ownership and Docker build resilience updates.
-- `audita-api/gradle/wrapper/gradle-wrapper.properties` — increased wrapper network timeout.
-- `docker-compose.local.yml` — removed API curl-based healthcheck.
-- `docker-compose.yml` — removed API curl-based healthcheck.
-
-**Key Changes**:
-
-- Hardened runtime no longer depends on shell/curl/package manager availability.
-- Compose startup no longer fails from incompatible in-container healthcheck tooling assumptions.
-- Docker build path for API is resilient to transient Gradle wrapper distribution download delays.
-
-**Test Coverage**:
-
-- `docker compose -f docker-compose.local.yml build api` passes.
-- `docker compose -f docker-compose.local.yml up -d --build` passes.
-- `docker compose -f docker-compose.local.yml ps` shows `api` and `web` up.
-- `curl http://localhost:7080/actuator/health` returns `200`.
-
----
-
-## Post-Sprint 5: Approver Workflow Flexibility + Activity Summary Coverage (2026-05-23)
-
-> **Goal:** Enable approver list mutation while CR is open (`DRAFT`/`PENDING_APPROVAL`) with vote-safety constraints and complete activity/audit visibility.
-
-| Task ID | Task | Priority | Status | Assigned To | Notes |
-| ------- | ---- | -------- | ------ | ----------- | ----- |
-| APV-001 | Allow approver add/remove/reorder in `PENDING_APPROVAL` | High | ✅ Completed | Developer 1 | Removed approval-lock gate for approver mutation path; open-state check used instead |
-| APV-002 | Prevent removal of approvers who already voted | High | ✅ Completed | Developer 1 | Backend guard throws `APPROVER_DECISION_LOCKED` when target status is not `PENDING` |
-| APV-003 | Emit audit events for approver mutation actions | High | ✅ Completed | Developer 1 | Added audit logs for add/group-add/remove/reorder/requirement-change |
-| APV-004 | Update CR detail UI approver controls for open-state mutation | High | ✅ Completed | Developer 2 | `canManageApprovers` now supports `PENDING_APPROVAL`; reorder remains enabled |
-| APV-005 | Disable remove button for voted approvers with reason | Medium | ✅ Completed | Developer 2 | Row-level remove disable + tooltip “Approvers who already voted cannot be removed.” |
-| APV-006 | Align admin settings copy with always-auto-add default approvers | Medium | ✅ Completed | Developer 2 | Removed misleading checkbox UX and replaced with explanatory text |
-| APV-007 | Add activity summary helper and regression tests | Medium | ✅ Completed | Developer 2 | Added `composables/activitySummary.ts` + `tests/change-requests/activity-summary.spec.ts` |
-
-### Recent Implementations
-
-### Approver Mutation Expansion + Activity Summary Tests (Completed 2026-05-23)
-
-**Overview**: Expanded approver management to open workflow states, introduced vote-safe removal constraints, completed audit trail parity for approver mutations, and added test-backed activity summary rendering.
-
-**Files Created/Modified**:
-
-- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/ChangeRequestService.java` — open-state approver mutation rules, voted-removal guard, and audit logging for approver actions.
-- `audita-api/infrastructure/src/test/java/io/audita/infrastructure/service/ChangeRequestServiceSecurityTest.java` — pending-approval mutation and voted-removal guard regressions.
-- `audita-web/pages/change-requests/[id].vue` — approver management in `PENDING_APPROVAL`, row-level remove gating, activity summary helper usage.
-- `audita-web/composables/activitySummary.ts` — extracted human-readable activity summary logic.
-- `audita-web/tests/change-requests/activity-summary.spec.ts` — summary regression tests.
-- `audita-web/pages/admin/settings/index.vue` — clarified default approver behavior copy and forced consistent save/load behavior.
-
-**Key Changes**:
-
-- Approver list can be updated during `PENDING_APPROVAL`.
-- Voted approvers are immutable for removal operations.
-- Activity stream and audit trail now both reflect approver mutations with consistent action types.
-- Activity summary rendering is unit-tested and no longer page-inline only.
-
-**Test Coverage**:
-
-- `cd audita-api && ./gradlew :infrastructure:test --tests "io.audita.infrastructure.service.ChangeRequestServiceSecurityTest" --no-daemon` passes.
-- `cd audita-web && pnpm -s nuxi typecheck` passes.
-- `cd audita-web && pnpm test` passes (14 files, 47 tests).
+- Add/remove/reorder/requirement updates allowed in `PENDING_APPROVAL`.
+- Removal blocked when approver already voted (`APPROVER_DECISION_LOCKED`).
+- Human-readable summary coverage for approver mutation activity events.
+
+**Test Coverage**: `cd audita-api && ./gradlew :infrastructure:test --tests "io.audita.infrastructure.service.ChangeRequestServiceSecurityTest" --no-daemon`; `cd audita-web && pnpm -s nuxi typecheck`; `cd audita-web && pnpm test`.
