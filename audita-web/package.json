@@ -41,7 +41,7 @@
     "@nuxt/eslint": "^0.7.6",
     "@pinia/nuxt": "^0.9.0",
     "@tailwindcss/vite": "^4.3.0",
-    "@types/node": "^22.19.19",
+    "@types/node": "^25.9.1",
     "tailwindcss": "^4.3.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.7",
