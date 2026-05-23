@@ -1,12 +1,3 @@
 {
-  "servers": {
-    "context-engine": {
-      "command": "/home/patrick/.local/bin/cce",
-      "args": [
-        "serve",
-        "--project-dir",
-        "/mnt/samsung/repositories/audita"
-      ]
-    }
-  }
+	"servers": {}
 }

@@ -1,0 +1,12 @@
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/audita-api"
+    schedule:
+      interval: "daily"
+    target-branch: dev
+  - package-ecosystem: "npm"
+    directory: "/audita-web"
+    schedule:
+      interval: "daily"
+    target-branch: dev
