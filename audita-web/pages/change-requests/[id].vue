@@ -994,6 +994,12 @@ const comments = ref<Comment[]>([]);
 const tab = ref<string>("details");
 const highlightedCommentId = ref<string | null>(null);
 
+type MentionPopupController = {
+  update: (props: any) => void;
+  onKeyDown: (props: any) => boolean;
+  destroy: () => void;
+};
+
 async function searchMentionUsers(query: string) {
   try {
     const results = await api<Array<{ id: string; fullName: string; email: string }>>(
@@ -1026,7 +1032,7 @@ const commentEditor = useEditor({
           }));
         },
         render: () => {
-          let popup: { destroy: () => void } | null = null;
+          let popup: MentionPopupController | null = null;
           return {
             onStart: (props: any) => {
               popup = createMentionPopup(props);
@@ -1045,7 +1051,6 @@ const commentEditor = useEditor({
       },
     }),
   ],
-  immediatelyRender: false,
 });
 
 const sortedApprovers = computed(() =>
