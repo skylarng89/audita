@@ -1573,3 +1573,53 @@
 - CI Trivy: CVE-2026-33671 (picomatch ReDoS in Node.js base image) ignored via `.trivyignore` — not exploitable in our context.
 
 **Test Coverage**: Frontend gates all green — typecheck ✅, 41 tests passing ✅, build ✅. Backend compile ✅.
+
+---
+
+## Post-Sprint 3: Mention UX + Comment Deep-Link + Edge Validator Scope (2026-05-22)
+
+> **Goal:** Complete comment mention UX and eliminate mention-post regression by aligning Nuxt edge validation with backend sanitization responsibilities.
+
+| Task ID | Task | Priority | Status | Assigned To | Notes |
+| ------- | ---- | -------- | ------ | ----------- | ----- |
+| COM-001 | Add TipTap mention autocomplete popup in comment editor | High | ✅ Completed | Developer 2 | TipTap `Mention` extension + keyboard navigation + wider suggestion popup + stacked name/email display |
+| COM-002 | Add backend mention candidate search endpoint | High | ✅ Completed | Developer 1 | `GET /api/v1/users/search?q=&limit=` for authenticated users |
+| COM-003 | Deep-link mention email to specific comment | High | ✅ Completed | Developer 1 | `sendMentionEmail` now includes `commentId` query target |
+| COM-004 | Auto-scroll/highlight comment from deep-link query | Medium | ✅ Completed | Developer 2 | CR detail page scrolls to `#comment-<id>` and temporary highlights |
+| AUTH-023 | Preserve redirect target through auth middleware/sign-in | High | ✅ Completed | Developer 2 | unauthenticated route redirect includes `?redirect=...`, login resumes target path |
+| EDGE-001 | Disable Nuxt xssValidator for `/api/**` proxy routes | High | ✅ Completed | Developer 2 | routeRules override prevents false-positive 400 before API receives request |
+| SAN-001 | Allowlist mention span attributes in comment sanitizer | High | ✅ Completed | Developer 1 | `CommentService` OWASP policy now allows mention metadata on `span` |
+| QA-001 | Update comment mention tests for new email method signature | Medium | ✅ Completed | Developer 1 | `CommentServiceTest` matcher update for `commentId` argument |
+| QA-002 | Verify targeted build/test gates for hotfix | High | ✅ Completed | Developer 1 | web build + infrastructure compile + `CommentServiceTest` passing |
+
+### Recent Implementations
+
+### Mention UX + Deep-Link Continuity Hotfix (Completed 2026-05-22)
+
+**Overview**: Implemented full comment mention UX flow with live `@` suggestions, deep-link navigation to specific comments from mention emails, and auth redirect continuity for logged-out users. Eliminated edge-side 400 regressions by scoping Nuxt XSS validator away from proxied API paths and preserving backend sanitizer as source of truth.
+
+**Files Created/Modified**:
+
+- `audita-web/pages/change-requests/[id].vue` — TipTap mention popup UX, comment anchor/highlight scrolling, editor-based comment submit
+- `audita-web/nuxt.config.ts` — routeRules override to disable `xssValidator` on `/api/**`
+- `audita-web/middleware/auth.ts` — preserve redirect target query
+- `audita-web/pages/auth/sign-in.vue` — consume redirect target
+- `audita-web/composables/useAuth.ts` — redirect-aware login flow
+- `audita-api/api/src/main/java/io/audita/api/controller/UserController.java` — mention candidate search endpoint
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/UserService.java` — `searchUsers()` mention candidate query
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/EmailService.java` — mention email deep-link with `commentId`
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/service/CommentService.java` — mention sanitizer allowlist + mention email call signature
+- `audita-api/infrastructure/src/test/java/io/audita/infrastructure/service/CommentServiceTest.java` — updated mention-email verification
+
+**Key Changes**:
+
+- Mention dropdown widened for long names and redesigned to show name on first line + email on second line.
+- Mention links now target exact comment; CR detail scroll/highlight reduces navigation friction.
+- Unauthenticated deep-link visits now survive sign-in and land on intended comment path.
+- Nuxt proxy no longer rejects mention payloads before backend processing.
+
+**Test Coverage**:
+
+- `cd audita-web && npx nuxi build` passes.
+- `cd audita-api && ./gradlew :infrastructure:compileJava` passes.
+- `cd audita-api && ./gradlew :infrastructure:test --tests "*CommentServiceTest*"` passes.

@@ -162,6 +162,20 @@ All Sprint 12 tasks completed. v0.6.0 released.
 - REL-UX-001: Implement tenant-scoped timezone UX (IANA dropdown) and apply timezone-aware formatting across user-facing date displays. ✅ (Completed 2026-05-21)
 - Verification: `cd audita-web && pnpm -s nuxi typecheck`, `cd audita-web && pnpm test`, and `cd audita-web && pnpm build` all pass (12 files, 39 tests including `tests/auth/timezone.spec.ts`).
 
+## Post-Sprint Mention + Deep-Link Continuity Hotfix (2026-05-22)
+
+- REL-COM-001: Enable live comment mention autocomplete (`@`) with backend user search endpoint + TipTap suggestion popup UX. ✅ (Completed 2026-05-22)
+- REL-COM-002: Deep-link mention emails to exact comment and auto-focus comment on CR detail load. ✅ (Completed 2026-05-22)
+- REL-AUTH-001: Preserve redirect target through sign-in so logged-out users return to comment deep-link, not dashboard. ✅ (Completed 2026-05-22)
+- REL-EDGE-001: Disable `nuxt-security` `xssValidator` for `/api/**` proxy routes to avoid false-positive 400 rejects on mention markup. ✅ (Completed 2026-05-22)
+- REL-SAN-001: Allowlist TipTap mention span attributes in backend comment sanitizer policy. ✅ (Completed 2026-05-22)
+
+### Verification
+
+- `cd audita-web && npx nuxi build` passes.
+- `cd audita-api && ./gradlew :infrastructure:compileJava` passes.
+- `cd audita-api && ./gradlew :infrastructure:test --tests "*CommentServiceTest*"` passes.
+
 ---
 
 ## Post-Sprint UX Follow-Up (2026-04-28)

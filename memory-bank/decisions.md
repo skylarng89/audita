@@ -340,3 +340,53 @@
 **Validation:**
 - Frontend verification gates passed: `pnpm test`, `pnpm -s nuxi typecheck`, `pnpm build`.
 - Backend compile passed: `./gradlew :api:compileJava :infrastructure:compileJava --no-daemon`.
+
+---
+
+## ADR-017: Disable Nuxt `xssValidator` on Internal `/api/**` Proxy Routes
+
+**Date:** 2026-05-22
+**Status:** Accepted
+
+**Decision:** Disable `nuxt-security` `xssValidator` for internal `/api/**` proxy routes in `audita-web/nuxt.config.ts` route rules.
+
+**Reasoning:**
+
+- TipTap mention markup (`<span class="mention" data-* ...>`) in JSON request bodies triggered Nuxt edge-side XSS mutation detection, causing false-positive `400 Bad Request` before requests reached Spring API.
+- Backend already performs authoritative sanitization using OWASP Java HTML Sanitizer before persistence.
+- Allowing rich-text JSON payloads through the proxy avoids duplicate sanitization semantics and prevents proxy/API policy mismatch.
+
+**Trade-offs:**
+
+- Removes one edge-layer request-body validator for proxied API paths.
+- Security responsibility for payload sanitization is explicitly concentrated in backend service layer.
+
+**Validation:**
+
+- Mention comment POST requests now reach API path instead of failing at Nuxt edge with 400.
+- Frontend build remains green after route-rule override.
+
+---
+
+## ADR-018: Preserve TipTap Mention Metadata in Comment Sanitization Policy
+
+**Date:** 2026-05-22
+**Status:** Accepted
+
+**Decision:** Extend `CommentService` HTML policy to allow `span` with mention metadata attributes (`class`, `data-type`, `data-id`, `data-label`, `data-mention-suggestion-char`).
+
+**Reasoning:**
+
+- Mention rendering and downstream mention-aware UX rely on structured span metadata emitted by TipTap Mention extension.
+- Generic formatting/link policies do not include this metadata by default.
+- Explicit allowlisting keeps sanitizer deterministic while preserving required mention semantics.
+
+**Trade-offs:**
+
+- Slightly broader allowlist surface in comment HTML sanitizer.
+- Requires policy updates if mention extension attribute contract changes.
+
+**Validation:**
+
+- `CommentServiceTest` passes with mention-email flow and comment persistence path.
+- Rich-text comments with mention spans persist and render without proxy/API rejection.

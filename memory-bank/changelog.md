@@ -136,6 +136,21 @@
 - `cd audita-web && pnpm build`.
 - `cd audita-api && ./gradlew :api:compileJava :infrastructure:compileJava --no-daemon`.
 
+### Fixed (Comment Mentions + Deep-Link Auth Continuity — 2026-05-22)
+
+- **Comment mention POST false-positive 400 at Nuxt edge**: mention payloads containing `<span class="mention" ...>` were rejected by `nuxt-security` `xssValidator` before proxying to API.
+  - Added route-scoped security override in `nuxt.config.ts`: disable `xssValidator` for `/api/**` proxy routes while keeping backend sanitization authoritative.
+- **Comment sanitizer compatibility with mention markup**: `CommentService` sanitizer policy now explicitly allowlists mention span attributes (`class`, `data-type`, `data-id`, `data-label`, `data-mention-suggestion-char`).
+- **Mention UX**: TipTap comment editor now supports live `@` autocomplete popup with backend user search and keyboard navigation.
+- **Mention email deep-link**: mention email now links to exact comment via `?commentId=<id>`; CR detail auto-scrolls and highlights target comment.
+- **Logged-out deep-link continuity**: auth middleware preserves `redirect` target on sign-in and login flow resumes intended URL after authentication.
+
+### Verification (Comment Mentions + Deep-Link Auth Continuity — 2026-05-22)
+
+- `cd audita-web && npx nuxi build`.
+- `cd audita-api && ./gradlew :infrastructure:compileJava`.
+- `cd audita-api && ./gradlew :infrastructure:test --tests "*CommentServiceTest*"`.
+
 ## [0.1.0] — Unreleased (In Development)
 
 ### Changed (Sprint 11 — Session Hardening & Security Config Stabilization — 2026-05-12)

@@ -1,7 +1,7 @@
 # Audita — Active Context
 
 **Last Updated:** 2026-05-22
-**Current Phase:** Post-Sprint reliability + UX hardening + approver UX polish complete
+**Current Phase:** Post-Sprint mention UX + comment deep-link auth continuity hotfix complete
 **Active Sprint:** Sprint 13 (completed)
 
 ---
@@ -36,7 +36,8 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 | Sprint 13 | 8/8 | 8 | Engineering Best Practices Hardening | 2026-05-19 |
 | Post-Sprint 1 | 19/19 | 19 | Reliability, UX & Rich-Text Hardening | 2026-05-22 |
 | Post-Sprint 2 | 8/8 | 8 | Approver UX Polish + Activity Stream + CI Trivy Fix | 2026-05-22 |
-| **TOTAL** | **222/222** | **222** | — | — |
+| Post-Sprint 3 | 9/9 | 9 | Mention UX + Comment Deep-Link + Nuxt API XSS Validator Scope Fix | 2026-05-22 |
+| **TOTAL** | **231/231** | **231** | — | — |
 
 **Sprint 12: Launch Readiness** — All 6 tasks completed. v0.6.0 released.
 
@@ -56,6 +57,7 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 - **Sprint 13 complete (2026-05-19).** Engineering best practices: GitHub Actions SHA pinning, CI security gates (SAST/SCA/image scan), SBOM generation, OpenTelemetry + Prometheus metrics, readiness/liveness probes, API idempotency keys, Nuxt proxy hardening, `nuxt-security` CSP headers. 8/8 tasks.
 - **Post-Sprint hardening complete (2026-05-22).** Settings save 400 fixes (UUID parsing → proxy content-length → tolerant map parsing), auth session/logout tenant-header guards + V10 refresh_tokens repair migration, log noise elimination (dialect, cache stats, pagination fetch, SSE lifecycle), full rich-text editor upgrade (TipTap Link + expanded toolbar + backend sanitizer + render normalization + CSS), approver UX redesign (multi-select list with checkboxes, per-user Required toggle, real-time selected chips preview, batch save). 19/19 tasks.
 - **Post-Sprint 2 polish complete (2026-05-22).** Approver UX polish: default Optional, per-approver Required/Optional toggle on saved list, creator excluded from candidates, dirty tracking + save prompt, reorder animations (`TransitionGroup` + CSS). Backend: `PATCH /{id}/approvers/{approverId}/requirement` endpoint. Activity stream: "Reordered 4 approvers" human-readable summary instead of raw "COUNT 4" field. CI: `.trivyignore` for CVE-2026-33671 (picomatch ReDoS in Node.js base image, not exploitable). 8/8 tasks.
+- **Post-Sprint 3 hotfix complete (2026-05-22).** Comment mentions now support live `@` autocomplete (backend user search endpoint + TipTap mention popup with keyboard support), mention emails deep-link directly to comment (`?commentId=`), CR detail auto-scroll/highlight targets comment anchor, auth middleware/login preserve redirect target after sign-in, Nuxt `xssValidator` disabled for `/api/**` proxy routes to prevent false-positive 400 rejects on mention markup, and backend comment sanitizer allowlists mention `span` attributes. 9/9 tasks.
 
 ---
 
@@ -136,13 +138,13 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 
 ## Current Blockers
 
-- **No active implementation blockers.** All post-sprint hardening and polish tasks complete: settings fixes, auth session guards, log noise elimination, rich-text upgrade, approver UX redesign + polish, activity stream readability, CI Trivy scan.
+- **No active implementation blockers.** All post-sprint hardening, polish, and mention/deep-link hotfix tasks complete: settings fixes, auth session guards, log noise elimination, rich-text upgrade, approver UX redesign + polish, activity stream readability, CI Trivy scan, and comment mention posting continuity.
 - **Current baseline remains healthy:** backend targeted tests passing; frontend `typecheck`, `test` (41 tests), and `build` all passing; CI Trivy scan passing.
 
 ---
 
 ## Next Actions
 
-1. Consider cutting v0.7.0 release with all post-sprint fixes + Sprint 13 + approver UX redesign + polish.
-2. Run CI dry-run on feature branch to validate end-to-end release gates (including Trivy scan) before merge.
+1. Consider cutting v0.7.0 release with all post-sprint fixes + Sprint 13 + mention/deep-link hotfix bundle.
+2. Run CI dry-run on feature branch to validate end-to-end release gates (including mention comment POST regression path) before merge.
 3. Prioritize Sprint 14 backlog from remaining architecture/performance opportunities.
