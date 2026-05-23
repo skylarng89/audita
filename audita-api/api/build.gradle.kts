@@ -9,9 +9,9 @@ dependencies {
         implementation("org.apache.tomcat.embed:tomcat-embed-el:11.0.22")
         implementation("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.22")
 
-        implementation("io.netty:netty-codec-compression:4.2.13.Final")
-        implementation("io.netty:netty-codec-http:4.2.13.Final")
-        implementation("io.netty:netty-codec-http2:4.2.13.Final")
+        implementation("io.netty:netty-codec-compression:4.2.14.Final")
+        implementation("io.netty:netty-codec-http:4.2.14.Final")
+        implementation("io.netty:netty-codec-http2:4.2.14.Final")
     }
 
     implementation(project(":domain"))
@@ -42,7 +42,7 @@ dependencies {
     implementation("net.logstash.logback:logstash-logback-encoder:8.1")
 
     // JWT — needed by JwtAuthenticationFilter (not transitively visible from :infrastructure)
-    implementation("io.jsonwebtoken:jjwt-api:0.12.6")
+    implementation("io.jsonwebtoken:jjwt-api:0.13.0")
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
