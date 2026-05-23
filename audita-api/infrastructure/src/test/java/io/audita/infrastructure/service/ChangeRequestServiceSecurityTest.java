@@ -3,6 +3,8 @@ package io.audita.infrastructure.service;
 import io.audita.domain.exception.DomainNotPermittedException;
 import io.audita.domain.exception.InvalidStateTransitionException;
 import io.audita.domain.model.ApprovalType;
+import io.audita.domain.model.ApproverStatus;
+import io.audita.domain.model.ChangeRequestStatus;
 import io.audita.domain.model.Priority;
 import io.audita.domain.model.RiskLevel;
 import io.audita.domain.model.UserStatus;
@@ -41,6 +43,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class ChangeRequestServiceSecurityTest {
@@ -345,6 +348,61 @@ class ChangeRequestServiceSecurityTest {
                             && first.isRequired()
                             && first.getPosition() == 1;
                 }));
+    }
+
+    @Test
+    void removeApproverAllowsPendingApprovalWhenTargetHasNotVoted() {
+        UUID changeRequestId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        UUID approverId = UUID.randomUUID();
+
+        ChangeRequestEntity changeRequest = buildDraftChangeRequest(ownerId);
+        changeRequest.setStatus(ChangeRequestStatus.PENDING_APPROVAL);
+        changeRequest.setApprovalLocked(true);
+        ReflectionTestUtils.setField(changeRequest, "id", changeRequestId);
+
+        UserEntity pendingUser = new UserEntity("pending@example.com", "Pending User");
+        ReflectionTestUtils.setField(pendingUser, "id", UUID.randomUUID());
+        CrApproverEntity approver = new CrApproverEntity(changeRequest, pendingUser, true, 1, true);
+        ReflectionTestUtils.setField(approver, "id", approverId);
+        approver.setStatus(ApproverStatus.PENDING);
+
+        when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
+        when(crApproverRepository.findById(approverId)).thenReturn(Optional.of(approver));
+        when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId)).thenReturn(List.of());
+
+        changeRequestService.removeApprover(changeRequestId, approverId, ownerId, "REQUESTER");
+
+        verify(crApproverRepository).delete(approver);
+        verify(crApproverRepository).saveAll(any());
+    }
+
+    @Test
+    void removeApproverRejectsWhenApproverAlreadyVoted() {
+        UUID changeRequestId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        UUID approverId = UUID.randomUUID();
+
+        ChangeRequestEntity changeRequest = buildDraftChangeRequest(ownerId);
+        changeRequest.setStatus(ChangeRequestStatus.PENDING_APPROVAL);
+        changeRequest.setApprovalLocked(true);
+        ReflectionTestUtils.setField(changeRequest, "id", changeRequestId);
+
+        UserEntity decidedUser = new UserEntity("decided@example.com", "Decided User");
+        ReflectionTestUtils.setField(decidedUser, "id", UUID.randomUUID());
+        CrApproverEntity approver = new CrApproverEntity(changeRequest, decidedUser, true, 1, true);
+        ReflectionTestUtils.setField(approver, "id", approverId);
+        approver.setStatus(ApproverStatus.APPROVED);
+
+        when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
+        when(crApproverRepository.findById(approverId)).thenReturn(Optional.of(approver));
+
+        InvalidStateTransitionException ex = assertThrows(
+                InvalidStateTransitionException.class,
+                () -> changeRequestService.removeApprover(changeRequestId, approverId, ownerId, "REQUESTER"));
+
+        assertThat(ex.getErrorCode()).isEqualTo("APPROVER_DECISION_LOCKED");
+        verify(crApproverRepository, never()).delete(any());
     }
 
     private ChangeRequestEntity buildDraftChangeRequest(UUID ownerId) {

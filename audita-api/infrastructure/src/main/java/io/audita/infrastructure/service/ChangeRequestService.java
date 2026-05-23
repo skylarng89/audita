@@ -58,7 +58,6 @@ public class ChangeRequestService {
     private static final String PAYLOAD_COUNT = "count";
     private static final String ENTITY_CHANGE_REQUEST = "change_request";
     private static final String PAYLOAD_APPROVER_ID = "approverId";
-    private static final String WORKFLOW_REQUIRE_DEFAULT_APPROVERS_KEY = "workflow.require_default_approvers";
     private static final String WORKFLOW_DEFAULT_APPROVER_USER_IDS_KEY = "workflow.default_approver_user_ids";
     private static final String WORKFLOW_DEFAULT_APPROVER_GROUP_IDS_KEY = "workflow.default_approver_group_ids";
 
@@ -281,9 +280,7 @@ public class ChangeRequestService {
             String actorRole) {
         ChangeRequestEntity changeRequest = getById(changeRequestId);
         assertCanMutate(changeRequest, actorUserId, actorRole);
-        if (changeRequest.isApprovalLocked()) {
-            throw new InvalidStateTransitionException("APPROVERS_LOCKED", "Approvers are locked and cannot be changed.");
-        }
+        assertApproverManagementAllowed(changeRequest);
 
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "User not found."));
@@ -297,6 +294,10 @@ public class ChangeRequestService {
         CrApproverEntity created = crApproverRepository.save(approver);
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVER_ADDED",
                 Map.of(PAYLOAD_APPROVER_ID, created.getId().toString(), "userId", userId.toString()));
+        auditLogService.log("CR_APPROVER_ADDED", ENTITY_CHANGE_REQUEST, changeRequestId,
+                actorUserId, resolveActorEmail(actorUserId),
+                Map.of(PAYLOAD_APPROVER_ID, created.getId().toString(), "userId", userId.toString(), "isRequired", isRequired),
+                null);
         return crApproverRepository.findWithUserAndRolesById(created.getId())
                 .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "Approver not found."));
     }
@@ -308,9 +309,7 @@ public class ChangeRequestService {
             String actorRole) {
         ChangeRequestEntity changeRequest = getById(changeRequestId);
         assertCanMutate(changeRequest, actorUserId, actorRole);
-        if (changeRequest.isApprovalLocked()) {
-            throw new InvalidStateTransitionException("APPROVERS_LOCKED", "Approvers are locked and cannot be changed.");
-        }
+        assertApproverManagementAllowed(changeRequest);
 
         if (!groupRepository.existsById(groupId)) {
             throw new DomainNotPermittedException(ERROR_NOT_FOUND, "Group not found.");
@@ -343,6 +342,10 @@ public class ChangeRequestService {
         List<CrApproverEntity> saved = crApproverRepository.saveAll(additions);
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVER_GROUP_ADDED",
                 Map.of("groupId", groupId.toString(), PAYLOAD_COUNT, saved.size()));
+        auditLogService.log("CR_APPROVER_GROUP_ADDED", ENTITY_CHANGE_REQUEST, changeRequestId,
+                actorUserId, resolveActorEmail(actorUserId),
+                Map.of("groupId", groupId.toString(), PAYLOAD_COUNT, saved.size(), "isRequired", isRequired),
+                null);
         Set<UUID> savedIds = saved.stream().map(CrApproverEntity::getId).collect(java.util.stream.Collectors.toSet());
         return crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId).stream()
                 .filter(a -> savedIds.contains(a.getId()))
@@ -352,19 +355,24 @@ public class ChangeRequestService {
     public void removeApprover(UUID changeRequestId, UUID approverId, UUID actorUserId, String actorRole) {
         ChangeRequestEntity changeRequest = getById(changeRequestId);
         assertCanMutate(changeRequest, actorUserId, actorRole);
-        if (changeRequest.isApprovalLocked()) {
-            throw new InvalidStateTransitionException("APPROVERS_LOCKED", "Approvers are locked and cannot be changed.");
-        }
+        assertApproverManagementAllowed(changeRequest);
 
         CrApproverEntity approver = crApproverRepository.findById(approverId)
                 .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "Approver not found."));
         if (!approver.getChangeRequest().getId().equals(changeRequestId)) {
             throw new DomainNotPermittedException(ERROR_NOT_FOUND, "Approver not found on this change request.");
         }
+        if (approver.getStatus() != ApproverStatus.PENDING) {
+            throw new InvalidStateTransitionException("APPROVER_DECISION_LOCKED",
+                    "Approvers who already voted cannot be removed.");
+        }
 
         crApproverRepository.delete(approver);
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVER_REMOVED",
                 Map.of(PAYLOAD_APPROVER_ID, approverId.toString()));
+        auditLogService.log("CR_APPROVER_REMOVED", ENTITY_CHANGE_REQUEST, changeRequestId,
+                actorUserId, resolveActorEmail(actorUserId),
+                Map.of(PAYLOAD_APPROVER_ID, approverId.toString()), null);
         resequenceApprovers(changeRequestId);
     }
 
@@ -374,9 +382,7 @@ public class ChangeRequestService {
             String actorRole) {
         ChangeRequestEntity changeRequest = getById(changeRequestId);
         assertCanMutate(changeRequest, actorUserId, actorRole);
-        if (changeRequest.isApprovalLocked()) {
-            throw new InvalidStateTransitionException("Approvers are locked and cannot be changed.");
-        }
+        assertApproverManagementAllowed(changeRequest);
 
         List<CrApproverEntity> existing = crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId);
         if (existing.size() != approverIds.size()) {
@@ -399,6 +405,9 @@ public class ChangeRequestService {
                 .toList();
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVERS_REORDERED",
                 Map.of(PAYLOAD_COUNT, saved.size()));
+        auditLogService.log("CR_APPROVERS_REORDERED", ENTITY_CHANGE_REQUEST, changeRequestId,
+                actorUserId, resolveActorEmail(actorUserId),
+                Map.of(PAYLOAD_COUNT, saved.size()), null);
         return saved;
     }
 
@@ -409,9 +418,7 @@ public class ChangeRequestService {
             String actorRole) {
         ChangeRequestEntity changeRequest = getById(changeRequestId);
         assertCanMutate(changeRequest, actorUserId, actorRole);
-        if (changeRequest.isApprovalLocked()) {
-            throw new InvalidStateTransitionException("APPROVERS_LOCKED", "Approvers are locked and cannot be changed.");
-        }
+        assertApproverManagementAllowed(changeRequest);
 
         CrApproverEntity approver = crApproverRepository.findWithUserAndRolesById(approverId)
                 .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "Approver not found."));
@@ -423,6 +430,10 @@ public class ChangeRequestService {
         crApproverRepository.save(approver);
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVER_REQUIREMENT_CHANGED",
                 Map.of(PAYLOAD_APPROVER_ID, approverId.toString(), "isRequired", isRequired));
+        auditLogService.log("CR_APPROVER_REQUIREMENT_CHANGED", ENTITY_CHANGE_REQUEST, changeRequestId,
+                actorUserId, resolveActorEmail(actorUserId),
+                Map.of(PAYLOAD_APPROVER_ID, approverId.toString(), "isRequired", isRequired),
+                null);
         return crApproverRepository.findWithUserAndRolesById(approverId)
                 .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "Approver not found."));
     }
@@ -866,6 +877,22 @@ public class ChangeRequestService {
     private boolean hasGlobalViewAccess(String viewerRole) {
         String normalizedRole = viewerRole == null ? "" : viewerRole.toUpperCase();
         return GLOBAL_VIEW_ROLES.contains(normalizedRole);
+    }
+
+    private void assertApproverManagementAllowed(ChangeRequestEntity changeRequest) {
+        if (!changeRequest.getStatus().isEditable()) {
+            throw new InvalidStateTransitionException("APPROVER_MUTATION_CLOSED",
+                    "Approvers can only be modified while the change request is open.");
+        }
+    }
+
+    private String resolveActorEmail(UUID actorUserId) {
+        if (actorUserId == null) {
+            return null;
+        }
+        return userRepository.findById(actorUserId)
+                .map(UserEntity::getEmail)
+                .orElse(null);
     }
 
     private boolean isViewerAllowed(ChangeRequestEntity changeRequest, UUID viewerId) {

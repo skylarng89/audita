@@ -728,8 +728,8 @@
             </button>
             <button
               class="btn-ghost btn-md"
-              :disabled="!canManageApprovers"
-              :title="approverManagementDisabledReason"
+              :disabled="!canRemoveApprover(a)"
+              :title="approverRowDisabledReason(a)"
               @click="removeApproverAction(a.id)"
             >
               Remove
@@ -1084,10 +1084,10 @@ const canManageApprovers = computed(() => {
   if (!changeRequest.value) {
     return false;
   }
-  if (changeRequest.value.status !== "DRAFT") {
-    return false;
-  }
-  if (changeRequest.value.approvalLocked) {
+  if (
+    changeRequest.value.status !== "DRAFT" &&
+    changeRequest.value.status !== "PENDING_APPROVAL"
+  ) {
     return false;
   }
   return isCreator.value || auth.isSuperAdmin || auth.role === "Admin";
@@ -1099,14 +1099,31 @@ const approverManagementDisabledReason = computed(() => {
   if (!changeRequest.value) {
     return "Approver management is unavailable while loading this change request.";
   }
-  if (changeRequest.value.status !== "DRAFT") {
-    return "Approvers can only be changed while the change request is in Draft.";
-  }
-  if (changeRequest.value.approvalLocked) {
-    return "Approvers are locked and cannot be changed.";
+  if (
+    changeRequest.value.status !== "DRAFT" &&
+    changeRequest.value.status !== "PENDING_APPROVAL"
+  ) {
+    return "Approvers can only be changed while the change request is open.";
   }
   return "Only the requester or an admin can manage approvers.";
 });
+
+function canRemoveApprover(approver: CrApprover) {
+  if (!canManageApprovers.value) {
+    return false;
+  }
+  return approver.status === "PENDING";
+}
+
+function approverRowDisabledReason(approver: CrApprover) {
+  if (!canManageApprovers.value) {
+    return approverManagementDisabledReason.value;
+  }
+  if (approver.status !== "PENDING") {
+    return "Approvers who already voted cannot be removed.";
+  }
+  return `Remove ${approver.userFullName}`;
+}
 const canSeeApprovalActions = computed(() => {
   if (
     !changeRequest.value ||
@@ -1552,6 +1569,28 @@ function activitySummary(event: ActivityEntry) {
   const reason = event.payload?.reason;
   if (typeof reason === "string" && reason.trim()) {
     return reason.trim();
+  }
+  if (event.actionType === "CR_APPROVER_ADDED") {
+    return "Added approver.";
+  }
+  if (event.actionType === "CR_APPROVER_GROUP_ADDED") {
+    const count = event.payload?.count;
+    if (typeof count === "number") {
+      return `Added ${count} approver${count === 1 ? "" : "s"} from group.`;
+    }
+    return "Added approvers from group.";
+  }
+  if (event.actionType === "CR_APPROVER_REMOVED") {
+    return "Removed approver.";
+  }
+  if (event.actionType === "CR_APPROVER_REQUIREMENT_CHANGED") {
+    const isRequired = event.payload?.isRequired;
+    if (typeof isRequired === "boolean") {
+      return isRequired
+        ? "Marked approver as required."
+        : "Marked approver as optional.";
+    }
+    return "Updated approver requirement.";
   }
   if (event.actionType === "CR_APPROVERS_REORDERED") {
     const count = event.payload?.count;
