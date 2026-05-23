@@ -442,3 +442,28 @@
 - Backend regression tests pass for pending-approval removal allow/deny paths, including `APPROVER_DECISION_LOCKED`.
 - Frontend UI enforces row-level remove disable for voted approvers with explicit reason text.
 - Audit trail now records approver add/group-add/remove/reorder/requirement-change actions.
+
+---
+
+## ADR-021: Docker Build Must Include `pnpm-workspace.yaml` Before Install
+
+**Date:** 2026-05-24
+**Status:** Accepted
+
+**Decision:** In `audita-web` Docker build stages, copy `pnpm-workspace.yaml` together with `package.json` and `pnpm-lock.yaml` before running `pnpm install`.
+
+**Reasoning:**
+
+- Supply-chain policy settings (`minimumReleaseAgeExclude`, `allowBuilds`, `supportedArchitectures`) are resolved from workspace-level config, not `package.json#pnpm` in current pnpm.
+- Omitting `pnpm-workspace.yaml` in early image layers caused lockfile policy verification to fail under CI/containerized builds despite passing locally.
+- Keeping policy files in install layer ensures deterministic install behavior between local development, Docker image builds, and GitHub Actions scan jobs.
+
+**Trade-offs:**
+
+- Slightly broader cache invalidation for dependency layers when workspace policy file changes.
+- Requires Dockerfile maintenance discipline when pnpm policy files are added/renamed.
+
+**Validation:**
+
+- `docker build -t audita-web:scan -f audita-web/Dockerfile audita-web` passes lockfile verification and full production build.
+- Previous `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` failure in web builder install step is eliminated.

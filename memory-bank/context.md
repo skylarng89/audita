@@ -1,7 +1,7 @@
 # Audita — Active Context
 
-**Last Updated:** 2026-05-23
-**Current Phase:** Post-Sprint approver workflow mutation expansion + activity summary coverage complete
+**Last Updated:** 2026-05-24
+**Current Phase:** Post-Sprint container scan reliability fixes for web Docker build + pnpm supply-chain policy parity complete
 **Active Sprint:** Sprint 13 (completed)
 
 ---
@@ -39,7 +39,8 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 | Post-Sprint 3 | 9/9 | 9 | Mention UX + Comment Deep-Link + Nuxt API XSS Validator Scope Fix | 2026-05-22 |
 | Post-Sprint 4 | 6/6 | 6 | DHI Hardened Runtime + Docker Build Reliability | 2026-05-23 |
 | Post-Sprint 5 | 7/7 | 7 | Approver Workflow Flexibility + Activity Summary Test Coverage | 2026-05-23 |
-| **TOTAL** | **244/244** | **244** | — | — |
+| Post-Sprint 6 | 3/3 | 3 | Web Docker policy parity + pnpm config cleanup | 2026-05-24 |
+| **TOTAL** | **247/247** | **247** | — | — |
 
 **Sprint 12: Launch Readiness** — All 6 tasks completed. v0.6.0 released.
 
@@ -60,6 +61,7 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 - **Post-Sprint hardening complete (2026-05-22).** Settings save 400 fixes (UUID parsing → proxy content-length → tolerant map parsing), auth session/logout tenant-header guards + V10 refresh_tokens repair migration, log noise elimination (dialect, cache stats, pagination fetch, SSE lifecycle), full rich-text editor upgrade (TipTap Link + expanded toolbar + backend sanitizer + render normalization + CSS), approver UX redesign (multi-select list with checkboxes, per-user Required toggle, real-time selected chips preview, batch save). 19/19 tasks.
 - **Post-Sprint 2 polish complete (2026-05-22).** Approver UX polish: default Optional, per-approver Required/Optional toggle on saved list, creator excluded from candidates, dirty tracking + save prompt, reorder animations (`TransitionGroup` + CSS). Backend: `PATCH /{id}/approvers/{approverId}/requirement` endpoint. Activity stream: "Reordered 4 approvers" human-readable summary instead of raw "COUNT 4" field. CI: `.trivyignore` for CVE-2026-33671 (picomatch ReDoS in Node.js base image, not exploitable). 8/8 tasks.
 - **Post-Sprint 3 hotfix complete (2026-05-22).** Comment mentions now support live `@` autocomplete (backend user search endpoint + TipTap mention popup with keyboard support), mention emails deep-link directly to comment (`?commentId=`), CR detail auto-scroll/highlight targets comment anchor, auth middleware/login preserve redirect target after sign-in, Nuxt `xssValidator` disabled for `/api/**` proxy routes to prevent false-positive 400 rejects on mention markup, and backend comment sanitizer allowlists mention `span` attributes. 9/9 tasks.
+- **Post-Sprint 6 container scan reliability complete (2026-05-24).** Fixed web image build failure in CI/container scan path by copying `pnpm-workspace.yaml` before `pnpm install` so minimum release-age exclusions are available during lockfile policy validation. Cleaned pnpm config drift by moving deprecated `package.json#pnpm.supportedArchitectures` to `pnpm-workspace.yaml`. Runtime image remains hardened (`dhi.io/node:24`) with numeric non-root user. 3/3 tasks.
 
 ---
 
@@ -82,7 +84,7 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 
 - **Backend tests**: 62/62 passing (AllSprintsE2ETest + critical flows + security regression + controller tests + HtmlSanitizerTest)
 - **Frontend gates**: `pnpm test` (41 tests, 13 files), `pnpm -s nuxi typecheck`, `pnpm build` all passing
-- **CI Trivy scan**: passing — CVE-2026-33671 (picomatch in Node.js base image) ignored via `.trivyignore` (not exploitable in our context)
+- **CI Trivy/container image scan path**: web Docker build now passes lockfile supply-chain policy validation in containerized install step after workspace-policy copy fix
 - **Docker**: Full Compose stack operational (PostgreSQL 17, MailHog, API, Web)
 - **Security hardening**: SEC-001 through SEC-004 complete, with refinements; Sprint 13 best practices complete
 - **Sonar**: `sonar-scan.sh` ready; last known state: no critical/blocker issues after regex normalization fix
@@ -140,13 +142,13 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 
 ## Current Blockers
 
-- **No active implementation blockers.** Approver management flow now supports add/remove/reorder in `PENDING_APPROVAL` with vote-safety guard (voted approvers cannot be removed), and default approvers are always auto-added when configured.
-- **Current baseline remains healthy:** backend approver security suite passes, frontend `typecheck` passes, and frontend tests pass (`47` tests across `14` files).
+- **No active implementation blockers.**
+- **Current baseline remains healthy:** web Docker image build passes locally with policy checks enabled; pnpm policy warnings about deprecated `package.json#pnpm` keys removed.
 
 ---
 
 ## Next Actions
 
-1. Execute CI dry-run on feature branch to validate full approver-mutation path (activity + audit trail events included).
-2. Add/verify integration coverage for pending-approval approver mutation endpoints via API-level tests.
-3. Prepare v0.7.0 release candidate notes including Post-Sprint 4+5 outcomes.
+1. Execute CI run on `main` to confirm `Container Image Vulnerability Scan` remains green with latest web Docker/pnpm policy updates.
+2. Monitor lockfile churn for minimum-release-age exclusions and remove temporary excludes once package age threshold naturally passes.
+3. Prepare v0.7.0 release candidate notes including Post-Sprint 6 container reliability outcomes.

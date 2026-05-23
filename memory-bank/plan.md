@@ -176,6 +176,16 @@ All Sprint 12 tasks completed. v0.6.0 released.
 - `cd audita-api && ./gradlew :infrastructure:compileJava` passes.
 - `cd audita-api && ./gradlew :infrastructure:test --tests "*CommentServiceTest*"` passes.
 
+## Post-Sprint 6 — Web Docker + pnpm Policy Parity (2026-05-24)
+
+- REL-WEB-001: Fix containerized `pnpm install` policy failures by copying `pnpm-workspace.yaml` in early web Docker build layer. ✅ (Completed 2026-05-24)
+- REL-WEB-002: Keep hardened runtime semantics (`dhi.io/node:24` runtime with numeric non-root user) while using `dhi.io/node:24-dev` for builder compatibility. ✅ (Completed 2026-05-24)
+- REL-WEB-003: Remove deprecated pnpm settings from `package.json` and migrate supported architecture policy to `pnpm-workspace.yaml`. ✅ (Completed 2026-05-24)
+
+### Verification
+
+- `docker build -t audita-web:scan -f audita-web/Dockerfile audita-web` passes with lockfile policy validation and full Nuxt production build.
+
 ---
 
 ## Post-Sprint UX Follow-Up (2026-04-28)

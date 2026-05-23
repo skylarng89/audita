@@ -1,5 +1,18 @@
 # Audita — Changelog
 
+## [0.6.3] — 2026-05-24
+
+### Fixed (Post-Sprint Web Container Build Reliability — 2026-05-24)
+
+- **Web image lockfile policy failure in Docker build**: fixed container install stage policy drift by copying `pnpm-workspace.yaml` alongside `package.json` and `pnpm-lock.yaml` before `pnpm install` in `audita-web/Dockerfile`.
+  - Root cause: minimum-release-age exclusion policy lived in `pnpm-workspace.yaml` but was absent in early Docker layers, causing `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` for fresh package releases during CI/container scan builds.
+- **Deprecated pnpm config warnings removed**: migrated `supportedArchitectures` from `audita-web/package.json` (`pnpm` field) to `audita-web/pnpm-workspace.yaml` (supported location in current pnpm).
+
+### Verification (Post-Sprint Web Container Build Reliability — 2026-05-24)
+
+- `docker build -t audita-web:scan -f audita-web/Dockerfile audita-web`.
+- Confirmed lockfile supply-chain policy passes in containerized install step and full `nuxt build` completes.
+
 ## [0.6.2] — 2026-05-23
 
 ### Changed (Post-Sprint Approver Workflow Flexibility — 2026-05-23)
