@@ -52,6 +52,7 @@ import java.util.UUID;
 public class ChangeRequestService {
 
     private static final Set<String> ELEVATED_ROLES = Set.of("ADMIN", "SUPER_ADMIN");
+    private static final Set<String> GLOBAL_VIEW_ROLES = Set.of("ADMIN", "SUPER_ADMIN", "AUDITOR");
     private static final String ERROR_NOT_FOUND = "NOT_FOUND";
     private static final String PAYLOAD_STATUS = "status";
     private static final String PAYLOAD_COUNT = "count";
@@ -210,9 +211,18 @@ public class ChangeRequestService {
             String category,
             UUID createdBy,
             UUID viewerId,
+            String viewerRole,
             Pageable pageable) {
+        boolean viewerHasGlobalAccess = hasGlobalViewAccess(viewerRole);
         return changeRequestRepository.findAllFiltered(
-                status, priority, category, createdBy, viewerId, ChangeRequestStatus.DRAFT, pageable)
+                status,
+                priority,
+                category,
+                createdBy,
+                viewerId,
+                viewerHasGlobalAccess,
+                ChangeRequestStatus.DRAFT,
+                pageable)
                 .map(changeRequest -> {
                     initializeCreator(changeRequest);
                     return changeRequest;
@@ -231,8 +241,11 @@ public class ChangeRequestService {
     }
 
     @Transactional(readOnly = true)
-    public ChangeRequestEntity getById(UUID id, UUID viewerId) {
+    public ChangeRequestEntity getById(UUID id, UUID viewerId, String viewerRole) {
         ChangeRequestEntity changeRequest = getById(id);
+        if (!hasGlobalViewAccess(viewerRole) && !isViewerAllowed(changeRequest, viewerId)) {
+            throw new DomainNotPermittedException(ERROR_NOT_FOUND, "Change request not found.");
+        }
         // Draft CRs are private to their creator. Return NOT_FOUND (not 403) to
         // avoid leaking that the resource exists to users who cannot see it.
         if (changeRequest.getStatus() == ChangeRequestStatus.DRAFT &&
@@ -850,6 +863,19 @@ public class ChangeRequestService {
         return actor.getRoles().stream()
                 .map(role -> role.getName() == null ? "" : role.getName().toUpperCase())
                 .anyMatch(ELEVATED_ROLES::contains);
+    }
+
+    private boolean hasGlobalViewAccess(String viewerRole) {
+        String normalizedRole = viewerRole == null ? "" : viewerRole.toUpperCase();
+        return GLOBAL_VIEW_ROLES.contains(normalizedRole);
+    }
+
+    private boolean isViewerAllowed(ChangeRequestEntity changeRequest, UUID viewerId) {
+        UserEntity createdBy = changeRequest.getCreatedBy();
+        if (createdBy != null && createdBy.getId().equals(viewerId)) {
+            return true;
+        }
+        return crApproverRepository.findByChangeRequestIdAndUserId(changeRequest.getId(), viewerId).isPresent();
     }
 
     private boolean isAllowedMimeType(String mimeType) {

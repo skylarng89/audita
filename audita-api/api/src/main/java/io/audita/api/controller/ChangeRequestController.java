@@ -64,7 +64,7 @@ public class ChangeRequestController {
         var existingResource = idempotencyService.findResourceId(createdById, OPERATION_CREATE, idempotencyKey);
         if (existingResource.isPresent()) {
             ChangeRequestResponse replay = ChangeRequestResponse.from(
-                    changeRequestService.getById(existingResource.get(), createdById));
+                    changeRequestService.getById(existingResource.get(), createdById, principal.role()));
             return ResponseEntity.ok(replay);
         }
 
@@ -111,7 +111,8 @@ public class ChangeRequestController {
         String operation = OPERATION_SUBMIT_PREFIX + id;
         var existingResource = idempotencyService.findResourceId(principal.userId(), operation, idempotencyKey);
         if (existingResource.isPresent()) {
-            return ChangeRequestResponse.from(changeRequestService.getById(existingResource.get(), principal.userId()));
+            return ChangeRequestResponse.from(
+                    changeRequestService.getById(existingResource.get(), principal.userId(), principal.role()));
         }
 
         ChangeRequestResponse submitted = ChangeRequestResponse.from(
@@ -139,7 +140,7 @@ public class ChangeRequestController {
             @AuthenticationPrincipal UserPrincipal principal) {
 
         return PageResponse.from(
-                changeRequestService.list(status, priority, category, createdBy, principal.userId(), pageable),
+                changeRequestService.list(status, priority, category, createdBy, principal.userId(), principal.role(), pageable),
                 ChangeRequestResponse::from);
     }
 
@@ -153,7 +154,7 @@ public class ChangeRequestController {
     @PreAuthorize("isAuthenticated()")
     public ChangeRequestResponse get(@PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
-        return ChangeRequestResponse.from(changeRequestService.getById(id, principal.userId()));
+        return ChangeRequestResponse.from(changeRequestService.getById(id, principal.userId(), principal.role()));
     }
 
     @GetMapping("/{id}/approvers")

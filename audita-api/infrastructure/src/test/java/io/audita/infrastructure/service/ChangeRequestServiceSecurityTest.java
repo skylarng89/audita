@@ -20,6 +20,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.OffsetDateTime;
@@ -30,6 +33,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -56,6 +60,28 @@ class ChangeRequestServiceSecurityTest {
 
     @InjectMocks
     ChangeRequestService changeRequestService;
+
+    @Test
+    void listGrantsGlobalVisibilityForAuditor() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(changeRequestRepository.findAllFiltered(any(), any(), any(), any(), any(), eq(true), any(), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        changeRequestService.list(null, null, null, null, UUID.randomUUID(), "AUDITOR", pageable);
+
+        verify(changeRequestRepository).findAllFiltered(any(), any(), any(), any(), any(), eq(true), any(), eq(pageable));
+    }
+
+    @Test
+    void listRestrictsVisibilityForRequester() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(changeRequestRepository.findAllFiltered(any(), any(), any(), any(), any(), eq(false), any(), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        changeRequestService.list(null, null, null, null, UUID.randomUUID(), "REQUESTER", pageable);
+
+        verify(changeRequestRepository).findAllFiltered(any(), any(), any(), any(), any(), eq(false), any(), eq(pageable));
+    }
 
     @Test
     void updateDeniesRequesterWhoDoesNotOwnChangeRequest() {

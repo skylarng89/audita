@@ -54,6 +54,21 @@ class ChangeRequestEntityTest {
         assertEquals(ChangeRequestStatus.REJECTED, changeRequest.getStatus());
     }
 
+    @Test
+    void evaluateApprovalClosureApprovesWhenNoRequiredApproversAndAllOptionalApproved() {
+        ChangeRequestEntity changeRequest = baseChangeRequest();
+        changeRequest.setStatus(ChangeRequestStatus.PENDING_APPROVAL);
+
+        CrApproverEntity a1 = new CrApproverEntity();
+        a1.setRequired(false);
+        a1.setStatus(ApproverStatus.APPROVED);
+        changeRequest.getApprovers().add(a1);
+
+        changeRequest.evaluateApprovalClosure();
+
+        assertEquals(ChangeRequestStatus.APPROVED, changeRequest.getStatus());
+    }
+
     private ChangeRequestEntity baseChangeRequest() {
         ChangeRequestEntity changeRequest = new ChangeRequestEntity();
         changeRequest.setTitle("Upgrade core switch firmware");

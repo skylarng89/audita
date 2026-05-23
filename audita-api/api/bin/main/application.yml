@@ -1,0 +1,205 @@
+spring:
+  application:
+    name: audita-api
+
+  # ── Database ────────────────────────────────────────────────────────────────
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      validation-timeout: 5000
+      idle-timeout: 180000
+      max-lifetime: 240000
+      keepalive-time: 120000
+
+  # ── JPA / Hibernate ──────────────────────────────────────────────────────────
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO}
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategySnakeCaseImpl
+    open-in-view: false
+    properties:
+      hibernate:
+        "[format_sql]": false
+        "[physical_naming_strategy]": org.hibernate.boot.model.naming.PhysicalNamingStrategySnakeCaseImpl
+
+  # ── Flyway (public schema bootstrap only — tenant schemas handled by FlywayTenantMigrator) ──
+  flyway:
+    enabled: true
+    locations: classpath:db/migration/public
+    schemas: public
+    baseline-on-migrate: true
+    validate-on-migrate: true
+
+  # ── Mail ─────────────────────────────────────────────────────────────────────
+  mail:
+    host: ${DEFAULT_SMTP_HOST}
+    port: ${DEFAULT_SMTP_PORT}
+    username: ${DEFAULT_SMTP_USERNAME}
+    password: ${DEFAULT_SMTP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: ${DEFAULT_SMTP_AUTH}
+          starttls:
+            enable: ${DEFAULT_SMTP_TLS}
+
+  # ── Thymeleaf ─────────────────────────────────────────────────────────────────
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
+
+  # ── Web / Error Handling ──────────────────────────────────────────────────────
+  mvc:
+    problemdetails:
+      enabled: true
+  web:
+    error:
+      include-message: never
+      include-stacktrace: never
+
+  # ── Multipart / File Upload ───────────────────────────────────────────────────
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: ${UPLOAD_MAX_SIZE:10MB}
+      max-request-size: ${UPLOAD_MAX_SIZE:10MB}
+
+# ── Server ──────────────────────────────────────────────────────────────────────
+server:
+  port: ${PORT:8080}
+
+# ── Cache (Caffeine) ─────────────────────────────────────────────────────────────
+# onboardingStatus: changes exactly once (false → true after first-run setup).
+# maximumSize=1 keeps memory footprint negligible; expireAfterWrite is a safety-net
+# backstop in case a cache evict is somehow missed (e.g., direct DB repair).
+spring.cache:
+  type: caffeine
+  cache-names: onboardingStatus
+  caffeine:
+    spec: maximumSize=10,expireAfterWrite=1h,recordStats
+
+# ── Actuator ────────────────────────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  tracing:
+    sampling:
+      probability: ${OTEL_TRACING_SAMPLING_PROBABILITY:0.1}
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+    mail:
+      enabled: false
+
+# ── Audita custom properties ─────────────────────────────────────────────────────
+audita:
+  jwt:
+    secret: ${JWT_SECRET:}
+    expiry-seconds: ${JWT_EXPIRY_SECONDS}
+    stream-expiry-seconds: ${JWT_STREAM_EXPIRY_SECONDS}
+
+  refresh-token:
+    expiry-days: ${REFRESH_TOKEN_EXPIRY_DAYS}
+
+  auth:
+    cookie-secure: ${AUTH_COOKIE_SECURE:true}
+
+  encryption:
+    key: ${APP_ENCRYPTION_KEY}
+
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
+
+  security:
+    trust-forwarded-headers: ${TRUST_FORWARDED_HEADERS}
+
+  bootstrap:
+    setup-token: ${BOOTSTRAP_SETUP_TOKEN}
+
+  upload:
+    max-size-bytes: ${UPLOAD_MAX_SIZE_BYTES}
+    allowed-mime-types: ${UPLOAD_ALLOWED_MIME_TYPES}
+
+  sso:
+    # The public base URL of this API — used as redirect_uri base for OAuth2 callbacks
+    redirect-base-url: ${API_BASE_URL}
+    # The public base URL of the frontend — used to redirect the browser after SSO completes
+    frontend-base-url: ${FRONTEND_BASE_URL}
+
+  app:
+    base-url: ${APP_BASE_URL}
+
+  mail:
+    from: ${DEFAULT_SMTP_FROM}
+    from-name: ${DEFAULT_SMTP_FROM_NAME}
+  invite:
+    expiry-hours: ${INVITE_EXPIRY_HOURS}
+  audit:
+    export:
+      storage-path: ${AUDIT_EXPORT_STORAGE_PATH:${STORAGE_LOCAL_BASE_PATH:/tmp/audita-uploads}/exports}
+  storage:
+    backend: ${STORAGE_BACKEND}
+    local:
+      base-path: ${STORAGE_LOCAL_BASE_PATH}
+    s3:
+      bucket: ${STORAGE_S3_BUCKET}
+      region: ${STORAGE_S3_REGION}
+      access-key: ${STORAGE_S3_ACCESS_KEY}
+      secret-key: ${STORAGE_S3_SECRET_KEY}
+
+# ── Logging ──────────────────────────────────────────────────────────────────────
+logging:
+  level:
+    root: INFO
+    "[io.audita]": INFO
+    "[org.flywaydb]": INFO
+    "[org.hibernate.orm.deprecation]": ERROR
+    "[org.hibernate.orm.connections.pooling]": WARN
+    "[org.hibernate.orm.query]": ERROR
+    "[io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics]": ERROR
+  pattern:
+    console: "%d{ISO8601} %-5level [%thread] %logger{36} - %msg%n"
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+audita:
+  auth:
+    cookie-secure: ${AUTH_COOKIE_SECURE:false}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+audita:
+  auth:
+    cookie-secure: ${AUTH_COOKIE_SECURE:true}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}

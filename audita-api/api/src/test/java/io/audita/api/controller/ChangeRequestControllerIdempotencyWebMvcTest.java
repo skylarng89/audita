@@ -75,7 +75,7 @@ class ChangeRequestControllerIdempotencyWebMvcTest {
 
         when(idempotencyService.findResourceId(eq(userId), eq("cr:create"), eq(key)))
                 .thenReturn(Optional.of(changeRequestId));
-        when(changeRequestService.getById(changeRequestId, userId)).thenReturn(existing);
+        when(changeRequestService.getById(changeRequestId, userId, "REQUESTER")).thenReturn(existing);
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
