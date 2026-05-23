@@ -131,10 +131,42 @@
 
 | Task ID  | Task | Priority | Status | Assigned To | Notes |
 | -------- | ---- | -------- | ------ | ----------- | ----- |
-| UX10-001 | Implement mobile navigation drawer and responsive shell improvements | High | ✅ Completed | Developer 2 | Mobile nav and responsive layout fixes |
-| UX10-002 | Consolidate button/component usage and pagination UX consistency | High | ✅ Completed | Developer 2 | Shared component standardization completed |
-| UX10-003 | Improve CR list/detail usability and feedback states | High | ✅ Completed | Developer 2 | Empty states, skeletons, sticky actions, confirmations |
-| UX10-004 | Complete WCAG 2.2 AA compliance pass across pages/components | High | ✅ Completed | Developer 2 | Accessibility pass and regressions closed |
+| UX10-001 | Implement mobile navigation drawer (hamburger menu) | High | ✅ Completed | Developer 2 | Responsive drawer with keyboard and focus support |
+| UX10-002 | Fix page header layout collapse on small screens | High | ✅ Completed | Developer 2 | Header actions wrap cleanly on mobile |
+| UX10-003 | Collapse sidebar to icon rail on medium breakpoints | Medium | ✅ Completed | Developer 2 | Sidebar rail mode with persisted state |
+| UX10-004 | Collapse CR filters into mobile pill panel | Medium | ✅ Completed | Developer 2 | Mobile filter dropdown with active-count badge |
+| UX10-005 | Stack CR detail action buttons on mobile | Medium | ✅ Completed | Developer 2 | Prevented horizontal overflow in detail header |
+| UX10-006 | Align `AppButton.vue` with CSS token system | High | ✅ Completed | Developer 2 | Variant and size parity across usage surfaces |
+| UX10-007 | Replace auth raw button classes with shared AppButton | Low | ✅ Completed | Developer 2 | Auth screens now use standardized button component |
+| UX10-008 | Wire CR list pagination to `AppPagination` | Medium | ✅ Completed | Developer 2 | Replaced ad-hoc next/prev control block |
+| UX10-009 | Add SLA indicator column in CR list | High | ✅ Completed | Developer 2 | Deadline visibility added to list view |
+| UX10-010 | Fix CR filter dropdown display labels | Low | ✅ Completed | Developer 2 | Human-readable filter text normalized |
+| UX10-011 | Add clear-filters reset action | Medium | ✅ Completed | Developer 2 | One-click filter reset with data reload |
+| UX10-012 | Replace plain empty-state text with illustrated state | Low | ✅ Completed | Developer 2 | Better guidance for empty and filtered states |
+| UX10-013 | Add skeleton loading rows for CR list | Low | ✅ Completed | Developer 2 | Reduced perceived load jank |
+| UX10-014 | Replace ad-hoc tab buttons with accessible tablist | High | ✅ Completed | Developer 2 | ARIA-compliant tab interactions on CR detail |
+| UX10-015 | Show badge counts on CR detail tabs | Low | ✅ Completed | Developer 2 | Approver/activity/comment counts exposed |
+| UX10-016 | Replace affected-systems comma input with tag UI | Medium | ✅ Completed | Developer 2 | Tokenized input with add/remove controls |
+| UX10-017 | Add sticky save/cancel bar in CR edit mode | Medium | ✅ Completed | Developer 2 | Always-visible edit actions while scrolling |
+| UX10-018 | Add destructive-action confirmation for reject/decline | High | ✅ Completed | Developer 2 | Confirm modal with reason capture |
+| UX10-019 | Add show/hide toggles for password fields | High | ✅ Completed | Developer 2 | Sign-in/reset/accept-invite parity |
+| UX10-020 | Normalize page title (`h1`) sizing system | Medium | ✅ Completed | Developer 2 | Consistent typography hierarchy |
+| UX10-021 | Move sign-in error banner above form inputs | Low | ✅ Completed | Developer 2 | Error visibility and flow improved |
+| UX10-022 | Normalize approval-type select option labels | Low | ✅ Completed | Developer 2 | User-friendly wording in selects |
+| UX10-023 | Add toast auto-dismiss progress bar | Medium | ✅ Completed | Developer 2 | Visual timeout feedback on notifications |
+| UX10-024 | Surface accessible dark-mode toggle control | Medium | ✅ Completed | Developer 2 | Keyboard and ARIA-ready control in header |
+| UX10-025 | Remove non-functional global search UI | High | ✅ Completed | Developer 2 | Dead control removed to avoid confusion |
+| UX10-026 | Add ARIA labels to icon-only controls | Medium | ✅ Completed | Developer 2 | Screen-reader naming coverage improved |
+| WCAG-001 | Add skip-to-content link and visible focus target | High | ✅ Completed | Developer 2 | Keyboard-first navigation support |
+| WCAG-002 | Ensure unique, descriptive page titles across routes | High | ✅ Completed | Developer 2 | Title consistency for assistive tech |
+| WCAG-003 | Add explicit label/input associations on forms | High | ✅ Completed | Developer 2 | Eliminated orphaned input controls |
+| WCAG-004 | Add autocomplete attributes on auth/profile inputs | Medium | ✅ Completed | Developer 2 | Browser assist and accessibility support |
+| WCAG-005 | Add focus trap behavior in modal/dialog surfaces | High | ✅ Completed | Developer 2 | Prevented focus escape in dialogs |
+| WCAG-006 | Add `aria-live` regions for async status feedback | Medium | ✅ Completed | Developer 2 | Toast/form/system updates announced |
+| WCAG-007 | Improve keyboard operability for interactive controls | High | ✅ Completed | Developer 2 | Tab/enter/escape flows validated |
+| WCAG-008 | Improve color contrast on key UI states | High | ✅ Completed | Developer 2 | Text/action contrast adjusted to AA |
+| WCAG-009 | Add scroll-margin handling for anchor/deep-link focus | Medium | ✅ Completed | Developer 2 | Anchored content not hidden under chrome |
+| WCAG-010 | Ensure all interactive targets meet 24x24 minimum | Medium | ✅ Completed | Developer 2 | Target-size compliance for WCAG 2.5.8 |
 
 ## Sprint 11: Session Hardening, RBAC Expansion & Workflow Polish
 
@@ -142,11 +174,32 @@
 
 | Task ID  | Task | Priority | Status | Assigned To | Notes |
 | -------- | ---- | -------- | ------ | ----------- | ----- |
-| SESS-001 | Implement cold-start session restore and contract validation | High | ✅ Completed | Developer 1 | `/api/v1/auth/session` + `X-Audita-Api-Contract` |
-| SESS-002 | Tighten refresh/logout semantics and cross-tab sync | High | ✅ Completed | Developer 2 | 401-only refresh and token-free sync |
-| RBAC-001 | Implement multi-role user assignment and role hierarchy behavior | High | ✅ Completed | Developer 1 | Role precedence and compatibility role retained |
-| RBAC-002 | Add custom role creation/permission update endpoints with overlap checks | High | ✅ Completed | Developer 1 | System roles immutable; overlap prevented |
-| WF-001 | Auto-populate approvers and improve CR workflow collaboration UX | High | ✅ Completed | Developer 2 | Auto-assignment, richer CR detail interaction |
+| SESS-001 | Add configurable refresh-cookie secure flag for local dev parity | High | ✅ Completed | Developer 1 | Prevented localhost session-loss in HTTP dev |
+| SESS-002 | Add refresh-cookie path fix for reliable logout revocation | High | ✅ Completed | Developer 1 | Refresh cookie now available to logout endpoint |
+| SESS-003 | Implement cold-start session restore endpoint (`/auth/session`) | High | ✅ Completed | Developer 1 | Non-rotating restore flow using refresh cookie |
+| SESS-004 | Enforce 401-only token refresh retry on frontend API client | High | ✅ Completed | Developer 2 | Removed over-broad refresh behavior |
+| SESS-005 | Add API contract compatibility header and enforcement | High | ✅ Completed | Developer 1 | `X-Audita-Api-Contract` server/client validation |
+| SESS-006 | Add token-free cross-tab auth session synchronization | Medium | ✅ Completed | Developer 2 | BroadcastChannel/localStorage event sync |
+| SESS-007 | Fail closed on tenant mismatch during restore/logout flows | High | ✅ Completed | Developer 2 | Tenant guard in middleware/session helpers |
+| SESS-008 | Remove JS-readable access-token persistence pathway | High | ✅ Completed | Developer 2 | Session recovered via HttpOnly cookie path |
+| SESS-009 | Replace reflection-based security config authorization wiring | Medium | ✅ Completed | Developer 1 | Public Spring Security APIs now used |
+| SESS-010 | Add focused security authorization regression tests | High | ✅ Completed | Developer 1 | Route authorization behavior locked |
+| SESS-011 | Add focused frontend session regression tests | High | ✅ Completed | Developer 2 | Session/tenant/contract/sync tests added |
+| RBAC-001 | Auto-add approver/auditor/admin users on CR create | High | ✅ Completed | Developer 1 | Default role-based population implemented |
+| RBAC-002 | Keep submit-time approver population idempotent | High | ✅ Completed | Developer 1 | Duplicate-avoidance logic enforced |
+| RBAC-003 | Add `user_roles` many-to-many schema migration with backfill | High | ✅ Completed | Developer 1 | Legacy role mapping preserved |
+| RBAC-004 | Support multi-role assignment in invite/update APIs | High | ✅ Completed | Developer 1 | `roleIds` contract support introduced |
+| RBAC-005 | Implement effective-role precedence model | Medium | ✅ Completed | Developer 1 | Compatibility role derived by hierarchy |
+| RBAC-006 | Extend JWT claims with all roles and permissions | High | ✅ Completed | Developer 1 | Security authorities expanded |
+| RBAC-007 | Add custom role creation endpoint for admins | High | ✅ Completed | Developer 1 | Admin-managed custom roles supported |
+| RBAC-008 | Add custom role permission update endpoint | High | ✅ Completed | Developer 1 | Mutable permission set for custom roles |
+| RBAC-009 | Add overlap/duplicate permission prevention checks | High | ✅ Completed | Developer 1 | Role-permission integrity guardrails |
+| UXR-001 | Restore localhost session persistence on browser refresh | High | ✅ Completed | Developer 1 | Solved dev auth cold-start regressions |
+| UXR-002 | Allow assigned non-auditor approvers to approve/reject | High | ✅ Completed | Developer 1 | Controller gate aligned with service rules |
+| UXR-003 | Fix CR comments 500 and lazy relation mapping issues | High | ✅ Completed | Developer 1 | DTO mapping stability restored |
+| UXR-004 | Center reject modal and restore full overlay behavior | Medium | ✅ Completed | Developer 2 | Modal interaction polish and consistency |
+| UXR-005 | Add rich-text controls and pre-create attachment queue | High | ✅ Completed | Developer 2 | Better authoring + attachment UX on create |
+| UXR-006 | Show recorded votes and readable activity stream details | High | ✅ Completed | Developer 2 | Decision visibility and context improved |
 
 ## Sprint 12: Launch Readiness
 
@@ -180,7 +233,25 @@
 
 | Task ID  | Task | Priority | Status | Assigned To | Notes |
 | -------- | ---- | -------- | ------ | ----------- | ----- |
-| PS1-001 | Preserve completed Post-Sprint 1 tasks | High | ✅ Completed | Developer 1 | 19/19 complete |
+| PS1-001 | Fix settings PATCH UUID parsing for `autoApproverDefaults` | High | ✅ Completed | Developer 2 | Switched to string parse + explicit validation |
+| PS1-002 | Allow `content-length` in Nuxt API proxy header forwarding | High | ✅ Completed | Developer 2 | Prevented body handling regressions on settings save |
+| PS1-003 | Add tolerant map parsing for tenant settings PATCH payloads | High | ✅ Completed | Developer 2 | Reduced strict deserialization failure risk |
+| PS1-004 | Add idempotent migration to repair missing `refresh_tokens` table | High | ✅ Completed | Developer 1 | Drift-safe schema repair migration added |
+| PS1-005 | Require tenant header for auth session/refresh/logout recovery paths | High | ✅ Completed | Developer 1 | Fail-closed session endpoint behavior |
+| PS1-006 | Propagate tenant header consistently in frontend auth/session flows | High | ✅ Completed | Developer 2 | Session/logout edge-path stability improved |
+| PS1-007 | Remove explicit Hibernate dialect config to stop warning noise | Medium | ✅ Completed | Developer 1 | Eliminated `HHH90000025` noise |
+| PS1-008 | Enable Caffeine `recordStats` to stop metrics binding warnings | Medium | ✅ Completed | Developer 1 | Fixed `CaffeineCacheMetrics` warning |
+| PS1-009 | Remove pageable collection `@EntityGraph` causing fetch warning | Medium | ✅ Completed | Developer 1 | Eliminated pagination+fetch warning pattern |
+| PS1-010 | Add targeted logger-level tuning for noisy infra categories | Low | ✅ Completed | Developer 1 | Reduced non-actionable runtime logs |
+| PS1-011 | Improve SSE lifecycle teardown handling in web client | Medium | ✅ Completed | Developer 2 | Intentional disconnect handling added |
+| PS1-012 | Extract shared rich-text extension config composable | High | ✅ Completed | Developer 2 | Unified TipTap extension setup |
+| PS1-013 | Expand rich-text toolbar capability set | High | ✅ Completed | Developer 2 | Headings/lists/code/link controls added |
+| PS1-014 | Add `.rich-content` CSS rules for render fidelity | High | ✅ Completed | Developer 2 | Read-mode spacing/typography normalization |
+| PS1-015 | Normalize outbound anchor attributes in backend sanitizer | High | ✅ Completed | Developer 1 | Enforced secure rel/target attributes |
+| PS1-016 | Apply sanitizer in change-request create/update flows | High | ✅ Completed | Developer 1 | Server-side rich-text safety hardened |
+| PS1-017 | Normalize rendered rich-text links in frontend | High | ✅ Completed | Developer 2 | Client-side rendering consistency guard |
+| PS1-018 | Add backend rich-text sanitizer regression tests | Medium | ✅ Completed | Developer 1 | `HtmlSanitizerTest` coverage expanded |
+| PS1-019 | Add frontend rich-text rendering regression tests | Medium | ✅ Completed | Developer 2 | `rich-text.spec.ts` coverage added |
 
 ## Post-Sprint 2: Approver UX Polish + Activity Stream + CI Trivy Fix
 
@@ -188,7 +259,14 @@
 
 | Task ID  | Task | Priority | Status | Assigned To | Notes |
 | -------- | ---- | -------- | ------ | ----------- | ----- |
-| PS2-001 | Preserve completed Post-Sprint 2 tasks | High | ✅ Completed | Developer 2 | 8/8 complete |
+| PS2-001 | Default newly selected approvers to optional requirement | High | ✅ Completed | Developer 2 | Required toggled only when explicitly selected |
+| PS2-002 | Add per-approver required/optional toggle on saved list | High | ✅ Completed | Developer 2 | Immediate requirement mutation support |
+| PS2-003 | Implement backend requirement-toggle endpoint | High | ✅ Completed | Developer 1 | `PATCH /approvers/{id}/requirement` |
+| PS2-004 | Exclude CR creator from approver candidate list | High | ✅ Completed | Developer 2 | Self-approval prevention in UX |
+| PS2-005 | Add dirty-tracking and change-applied confirmation banner | High | ✅ Completed | Developer 2 | Snapshot-based change detection |
+| PS2-006 | Add reorder transition animations for approver list | Medium | ✅ Completed | Developer 2 | FLIP-style move/enter/exit polish |
+| PS2-007 | Improve activity summary for approver reorder events | Medium | ✅ Completed | Developer 2 | Replaced raw count field with readable summary |
+| PS2-008 | Unblock CI Trivy job via scoped CVE ignore rationale | High | ✅ Completed | Developer 1 | Added `.trivyignore` for non-exploitable base-image CVE |
 
 ## Post-Sprint 3: Mention UX + Comment Deep-Link + Validator Scope Fix
 
@@ -196,7 +274,15 @@
 
 | Task ID  | Task | Priority | Status | Assigned To | Notes |
 | -------- | ---- | -------- | ------ | ----------- | ----- |
-| PS3-001 | Preserve completed Post-Sprint 3 tasks | High | ✅ Completed | Developer 2 | 9/9 complete |
+| PS3-001 | Add backend mention user-search endpoint for comment editor | High | ✅ Completed | Developer 1 | Server query path for mention suggestions |
+| PS3-002 | Integrate TipTap mention autocomplete popup UX | High | ✅ Completed | Developer 2 | Keyboard-friendly mention selection |
+| PS3-003 | Add mention deep-link (`commentId`) into outbound emails | Medium | ✅ Completed | Developer 1 | Email now points to exact comment |
+| PS3-004 | Auto-scroll and highlight deep-linked comment on CR detail | Medium | ✅ Completed | Developer 2 | In-page anchor and highlight behavior |
+| PS3-005 | Preserve redirect target through login/auth middleware | High | ✅ Completed | Developer 2 | Logged-out deep-links resume after sign-in |
+| PS3-006 | Disable `xssValidator` for `/api/**` proxy scope | High | ✅ Completed | Developer 2 | Prevented false-positive 400 on mention payload |
+| PS3-007 | Extend backend sanitizer allowlist for mention span attributes | High | ✅ Completed | Developer 1 | Safe mention markup persistence |
+| PS3-008 | Add backend mention/sanitizer regression coverage | Medium | ✅ Completed | Developer 1 | Comment service tests updated |
+| PS3-009 | Add frontend build and typecheck verification for mention flow | Medium | ✅ Completed | Developer 2 | `nuxi build` and typecheck gates pass |
 
 ## Post-Sprint 4: DHI Hardened Runtime + Docker Build Reliability
 
@@ -204,7 +290,12 @@
 
 | Task ID  | Task | Priority | Status | Assigned To | Notes |
 | -------- | ---- | -------- | ------ | ----------- | ----- |
-| PS4-001 | Preserve completed Post-Sprint 4 tasks | High | ✅ Completed | Developer 1 | 6/6 complete |
+| PS4-001 | Enforce numeric non-root runtime ownership in API image | High | ✅ Completed | Developer 1 | `COPY --chown=65532:65532` runtime model |
+| PS4-002 | Remove shell/tool-dependent runtime healthcheck assumptions | Medium | ✅ Completed | Developer 1 | Hardened image compatibility retained |
+| PS4-003 | Harden Gradle wrapper network timeout configuration | Medium | ✅ Completed | Developer 1 | Reduced transient Docker build failures |
+| PS4-004 | Validate local hardened compose stack startup | High | ✅ Completed | Developer 1 | API and web services boot successfully |
+| PS4-005 | Verify API health endpoint returns 200 in hardened stack | High | ✅ Completed | Developer 1 | Actuator readiness confirmed |
+| PS4-006 | Run focused backend regression tests for latest workflow semantics | Medium | ✅ Completed | Developer 1 | Security/service tests green |
 
 ## Post-Sprint 5: Approver Flexibility + Activity Summary Coverage
 
@@ -212,7 +303,13 @@
 
 | Task ID  | Task | Priority | Status | Assigned To | Notes |
 | -------- | ---- | -------- | ------ | ----------- | ----- |
-| PS5-001 | Preserve completed Post-Sprint 5 tasks | High | ✅ Completed | Developer 1 | 7/7 complete |
+| PS5-001 | Always auto-apply configured default approvers on CR create/submit | High | ✅ Completed | Developer 1 | No longer gated by workflow checkbox |
+| PS5-002 | Allow approver add/remove/reorder during `PENDING_APPROVAL` | High | ✅ Completed | Developer 1 | Open-request mutation flexibility expanded |
+| PS5-003 | Block removal of approvers who already voted | High | ✅ Completed | Developer 1 | `APPROVER_DECISION_LOCKED` safeguard |
+| PS5-004 | Emit audit events for approver mutation actions | High | ✅ Completed | Developer 1 | Add/group-add/remove/reorder/requirement-change parity |
+| PS5-005 | Clarify admin settings UX for default approver semantics | Medium | ✅ Completed | Developer 2 | Explicit wording in settings UI |
+| PS5-006 | Extract reusable frontend activity summary helper | Medium | ✅ Completed | Developer 2 | Centralized summary formatting logic |
+| PS5-007 | Add dedicated tests for activity summary variants | Medium | ✅ Completed | Developer 2 | `activity-summary.spec.ts` coverage added |
 
 ## Post-Sprint 6: Web Docker Policy Parity + pnpm Config Cleanup
 
