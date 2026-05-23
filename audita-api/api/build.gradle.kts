@@ -42,7 +42,7 @@ dependencies {
     implementation("net.logstash.logback:logstash-logback-encoder:8.1")
 
     // JWT — needed by JwtAuthenticationFilter (not transitively visible from :infrastructure)
-    implementation("io.jsonwebtoken:jjwt-api:0.12.6")
+    implementation("io.jsonwebtoken:jjwt-api:0.13.0")
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
