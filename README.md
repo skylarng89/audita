@@ -179,8 +179,8 @@ Important backend variables:
 | REFRESH_TOKEN_EXPIRY_DAYS | Refresh token TTL |
 | APP_ENCRYPTION_KEY | 64-char hex AES key for sensitive config values |
 | APP_BASE_URL | Frontend base URL for links |
-| API_BASE_URL | Public API base URL used in SSO callback generation |
-| FRONTEND_BASE_URL | Frontend base URL used after SSO flow |
+| API_BASE_URL | Public API base URL used for externally visible links where applicable |
+| FRONTEND_BASE_URL | Deprecated: SSO endpoints are not implemented in current app surfaces |
 | CORS_ALLOWED_ORIGINS | Comma-separated explicit origin allowlist |
 
 Important frontend variables:
@@ -259,16 +259,28 @@ Basic flow:
 3. Open a pull request to dev.
 4. Merge dev into main for release publication.
 
+For detailed contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 By contributing, you agree your contributions are licensed under the same
 license terms in [LICENSE](LICENSE).
 
 ## Security baseline
+
+Audita implements a security-oriented baseline (encryption at rest for sensitive stored config, encrypted transport via TLS at the reverse proxy, strong password hashing, and role/tenant-bound authorization).
+
+This project is **not** a SOC 2/ISO/PCI/HIPAA attestation. Customers are responsible for assessing suitability to their own requirements and for operational controls in their deployment environment.
 
 - Use strong secrets in every non-local environment.
 - Keep CORS origins explicit and minimal.
 - Never expose development SMTP endpoints in production.
 - Run automated tests and security scans before release.
 - Audit role and tenant boundaries when adding new endpoints.
+
+## Customization & support
+
+White-labeling and custom development are available. Contact: `support@upperloftcreations.com`.
+
+Users can raise issues via GitHub, and maintainers welcome pull requests.
 
 ## Project documents
 
