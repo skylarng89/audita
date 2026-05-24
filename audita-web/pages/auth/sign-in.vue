@@ -155,7 +155,7 @@
     <p
       class="mt-8 text-center text-[10px] text-muted/70 uppercase tracking-widest"
     >
-      Secure Environment &bull; AES-256 Encrypted &bull; SOC2 Compliant
+      Secure Environment &bull; AES-256 Encrypted
     </p>
   </div>
 </template>
