@@ -1,6 +1,6 @@
 # AGENTS.md — Engineering & AI Code Generation Guide
 
-**Version:** 2026.2 | **Ref:** NIST CSF 2.0, OWASP Top 10, PCI-DSS v4.0, WCAG 2.2  
+**Version:** 2026.1 | **Ref:** NIST CSF 2.0, OWASP Top 10, PCI-DSS v4.0  
 **Updated:** 2026-03-26
 
 ---
@@ -25,7 +25,8 @@ Document tradeoff decisions in `memory-bank/docs/decisions.md`.
 - Use **Context7 MCP** for library/language docs; **Brave Search MCP** for current web info
 - On session start: scan for all `memory-bank/` folders; ingest and synthesise
 - If no memory-bank exists, ask the user whether to create one
-- On "Update session": locate and update **all** memory-bank folders in the workspace with all done in the session and also update the workspace memories.
+- On "Update session": locate and update **all** memory-bank folders in the workspace
+- Delegate tasks to sub-agents when appropriate, as many as possible. Issue clear instructions and context to the sub-agents.
 
 ---
 
@@ -39,9 +40,6 @@ Document tradeoff decisions in `memory-bank/docs/decisions.md`.
 - No noise comments, no over-generalisation, no defensive code for impossible states
 - Prefer pure functions; avoid boolean flag parameters — split into two named functions instead
 - Functions must have consistent return types — never return `string | null | undefined` arbitrarily
-- Call transactional methods via an injected dependency instead of directly via 'this'.
-- Replace generic exceptions with specific library exceptions or a custom exception.
-- Frontend code must always align with WCAG 2.2 specifications
 
 ---
 
@@ -190,7 +188,7 @@ end
 
 ## Security Baseline
 
-### Identity & Encryption
+**Identity & Encryption**
 
 - FIDO2/Passkeys everywhere — no SMS OTP; UEBA for behavioural drift detection
 - AES-256 at rest; TLS 1.3 in transit (including internal service-to-service)
@@ -198,13 +196,13 @@ end
 - Validate, sanitise, and type all inputs server-side; never trust client data
 - Secrets in hardware/cloud vaults (KMS, Vault) — never hardcoded or logged
 
-### Platform
+**Platform**
 
 - Frontend: strict CSP, HSTS, `X-Frame-Options: DENY`, SameSite + HttpOnly cookies; SRI hashes on all 3rd-party assets
 - Backend/API: RBAC/ABAC with least-privilege; rotate JWTs frequently; WAF + adaptive rate limiting + egress filtering
 - Mobile: Secure Enclave/Keystore biometrics; certificate pinning; root/jailbreak detection; minimal permissions
 
-### Pre-ship Security Checklist
+**Pre-ship Security Checklist**
 
 - [ ] All external input validated, sanitised, typed
 - [ ] Secrets in env/config stores — never in code or logs
@@ -290,7 +288,7 @@ COMMIT;
 - Never swallow exceptions inside a transaction
 - Log before rollback: operation, user ID, amount, correlation ID, error
 
-```js
+```
 BEGIN;
 try {
   // all financial operations
@@ -337,7 +335,7 @@ Network retries are inevitable. Without idempotency, retries create duplicate tr
 - Scope by: `user_id + operation_type + idempotency_key`
 - Apply to: payments, transfers, refunds, wallet credits, ledger writes, webhook deliveries
 
-```js
+```
 Header: X-Idempotency-Key: <client-generated UUID v4>
 ```
 
@@ -480,7 +478,7 @@ Header: X-Idempotency-Key: <client-generated UUID v4>
 
 Single source of truth for project context, continuity, and decisions.
 
-```yaml
+```
 memory-bank/
 ├── context.md           # Active state: current tasks, blockers, focus
 ├── decisions.md         # Append-only: architectural and non-obvious decisions
@@ -614,11 +612,13 @@ work. `context_search` returns the most relevant code chunks with
 confidence scores instead of whole files.
 
 When to use `context_search`:
+
 - Answering questions about the codebase ("how does X work?", "where is Y?")
 - Exploring structure or architecture
 - Finding related code, functions, or patterns
 
 Other tools:
+
 - `expand_chunk` for full source of a compressed result
 - `related_context` for what calls/imports a function
 - `session_recall` to recall past decisions
