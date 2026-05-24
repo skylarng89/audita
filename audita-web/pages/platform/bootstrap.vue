@@ -119,7 +119,7 @@
     </div>
 
     <p class="mt-8 text-center text-xs text-muted">
-      SECURE ENVIRONMENT &bull; AES-256 ENCRYPTED &bull; SOC2 COMPLIANT
+      SECURE ENVIRONMENT &bull; AES-256 ENCRYPTED
     </p>
   </div>
 </template>

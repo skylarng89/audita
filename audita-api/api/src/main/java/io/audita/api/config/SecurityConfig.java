@@ -65,26 +65,24 @@ public class SecurityConfig {
 
         private RequestMatcherDelegatingAuthorizationManager apiAuthorizationManager() {
                 return RequestMatcherDelegatingAuthorizationManager.builder()
-                                .requestMatchers(methodMatchers(HttpMethod.POST,
-                                                "/api/v1/auth/login",
-                                                "/api/v1/auth/session",
-                                                "/api/v1/auth/refresh",
-                                                "/api/v1/auth/logout",
-                                                "/api/v1/auth/forgot-password",
-                                                "/api/v1/auth/reset-password",
-                                                "/api/v1/auth/accept-invite",
-                                                "/api/v1/auth/oauth/exchange",
-                                                "/api/platform/v1/bootstrap",
-                                                "/api/platform/v1/setup"))
-                                .permitAll()
-                .requestMatchers(methodMatchers(HttpMethod.GET,
-                                                "/api/platform/v1/bootstrap/status",
-                                                "/api/v1/auth/oauth/**",
-                                                "/api/v1/notifications/stream",
-                                                "/api/v1/audit-trail/exports/download/**",
-                                                "/actuator/health",
-                                                "/actuator/health/**"))
-                                .permitAll()
+						.requestMatchers(methodMatchers(HttpMethod.POST,
+								"/api/v1/auth/login",
+								"/api/v1/auth/session",
+								"/api/v1/auth/refresh",
+								"/api/v1/auth/logout",
+								"/api/v1/auth/forgot-password",
+								"/api/v1/auth/reset-password",
+								"/api/v1/auth/accept-invite",
+								"/api/platform/v1/bootstrap",
+								"/api/platform/v1/setup"))
+						.permitAll()
+						.requestMatchers(methodMatchers(HttpMethod.GET,
+								"/api/platform/v1/bootstrap/status",
+								"/api/v1/notifications/stream",
+								"/api/v1/audit-trail/exports/download/**",
+								"/actuator/health",
+								"/actuator/health/**"))
+						.permitAll()
                                 .requestMatchers(pathMatchers("/api/platform/v1/**"))
                                 .hasRole("SUPER_ADMIN")
                                 .anyRequest()
