@@ -20,7 +20,7 @@ describe("tenant middleware", () => {
     });
   });
 
-  it("logs out authenticated users when the resolved tenant changes", async () => {
+  it("keeps authenticated users signed in when resolved tenant changes", async () => {
     const logout = vi.fn().mockResolvedValue(undefined);
     mockUseAuthStore.mockReturnValue({
       isAuthenticated: true,
@@ -38,6 +38,6 @@ describe("tenant middleware", () => {
     );
 
     expect(result).toBeUndefined();
-    expect(logout).toHaveBeenCalledOnce();
+    expect(logout).not.toHaveBeenCalled();
   });
 });

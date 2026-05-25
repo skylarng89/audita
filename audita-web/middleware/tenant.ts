@@ -29,13 +29,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
     isDev,
   });
 
-  // If already authenticated with a server-returned slug, verify it
-  // still matches the resolved tenant. If not, log the user out to
-  // prevent cross-tenant session reuse.
+  // If already authenticated with a server-returned slug, keep it.
+  // The server is the source of truth for tenant identity.
   if (auth.isAuthenticated && auth.tenantSlug) {
-    if (resolved && resolved !== auth.tenantSlug) {
-      await auth.logout();
-    }
     return;
   }
 
