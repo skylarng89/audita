@@ -17,6 +17,9 @@ import java.util.UUID;
 @Repository
 public interface ChangeRequestRepository extends JpaRepository<ChangeRequestEntity, UUID> {
 
+        long deleteByIsSampleTrue();
+        long countByIsSampleTrue();
+
        @Query("SELECT cr FROM ChangeRequestEntity cr " +
                  "WHERE (:status IS NULL OR cr.status = :status) " +
                  "AND (:priority IS NULL OR cr.priority = :priority) " +

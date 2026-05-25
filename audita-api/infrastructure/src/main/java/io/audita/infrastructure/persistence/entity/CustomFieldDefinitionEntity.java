@@ -32,6 +32,9 @@ public class CustomFieldDefinitionEntity {
     @Column(name = "display_order", nullable = false)
     private int displayOrder;
 
+    @Column(name = "is_sample", nullable = false)
+    private boolean isSample = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
@@ -59,4 +62,6 @@ public class CustomFieldDefinitionEntity {
     public int getDisplayOrder() { return displayOrder; }
     public void setDisplayOrder(int displayOrder) { this.displayOrder = displayOrder; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
+    public boolean isSample() { return isSample; }
+    public void setSample(boolean sample) { isSample = sample; }
 }

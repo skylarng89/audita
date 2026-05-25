@@ -32,6 +32,9 @@ public class NotificationEntity {
     @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
+    @Column(name = "is_sample", nullable = false)
+    private boolean isSample = false;
+
     protected NotificationEntity() {}
 
     public NotificationEntity(UserEntity recipient, String type, String title,
@@ -52,4 +55,6 @@ public class NotificationEntity {
     public boolean isRead() { return isRead; }
     public void setRead(boolean read) { this.isRead = read; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
+    public boolean isSample() { return isSample; }
+    public void setSample(boolean sample) { isSample = sample; }
 }

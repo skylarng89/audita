@@ -46,6 +46,9 @@ public class UserEntity {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt = OffsetDateTime.now();
 
+    @Column(name = "is_sample", nullable = false)
+    private boolean isSample = false;
+
     protected UserEntity() {
     }
 
@@ -131,5 +134,13 @@ public class UserEntity {
 
     public OffsetDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public boolean isSample() {
+        return isSample;
+    }
+
+    public void setSample(boolean sample) {
+        isSample = sample;
     }
 }

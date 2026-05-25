@@ -1,5 +1,6 @@
 package io.audita.infrastructure.persistence.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -25,6 +26,9 @@ public class CommentMentionEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
+    @Column(name = "is_sample", nullable = false)
+    private boolean isSample = false;
+
     protected CommentMentionEntity() {}
 
     public CommentMentionEntity(CommentEntity comment, UserEntity user) {
@@ -43,5 +47,13 @@ public class CommentMentionEntity {
 
     public UserEntity getUser() {
         return user;
+    }
+
+    public boolean isSample() {
+        return isSample;
+    }
+
+    public void setSample(boolean sample) {
+        isSample = sample;
     }
 }

@@ -33,6 +33,9 @@ public class ActivityStreamEntity {
     @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
+    @Column(name = "is_sample", nullable = false)
+    private boolean isSample = false;
+
     protected ActivityStreamEntity() {}
 
     public ActivityStreamEntity(ChangeRequestEntity changeRequest, UserEntity actor,
@@ -49,4 +52,6 @@ public class ActivityStreamEntity {
     public String getActionType() { return actionType; }
     public Map<String, Object> getPayload() { return payload; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
+    public boolean isSample() { return isSample; }
+    public void setSample(boolean sample) { isSample = sample; }
 }

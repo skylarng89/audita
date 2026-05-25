@@ -463,6 +463,118 @@
       </p>
     </section>
 
+    <!-- Sample Data -->
+    <section class="card p-5 shadow-card-hover">
+      <h2 class="text-lg font-semibold">Sample Data</h2>
+      <p class="text-sm text-muted mt-0.5">
+        Import demo data to explore the application with realistic change requests,
+        users, and activity. Sample data can be removed at any time without
+        affecting real data.
+      </p>
+
+      <div class="mt-4">
+        <div v-if="sampleDataImported" class="space-y-3">
+          <div
+            class="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20"
+          >
+            <span
+              class="inline-block h-2 w-2 rounded-full bg-green-500"
+              aria-hidden="true"
+            ></span>
+            <span class="text-sm font-medium text-green-800 dark:text-green-300">
+              Sample data is currently imported.
+            </span>
+          </div>
+          <button
+            type="button"
+            class="btn-ghost btn-sm text-danger border border-danger/30 hover:bg-danger/10"
+            :disabled="sampleDataLoading"
+            @click="
+              sampleDataAction = 'remove';
+              showSampleDataConfirmModal = true;
+            "
+          >
+            {{ sampleDataLoading ? "Removing..." : "Remove Sample Data" }}
+          </button>
+        </div>
+        <div v-else class="space-y-3">
+          <div
+            class="rounded-md border border-border p-3 dark:border-border-dark"
+          >
+            <span class="text-sm text-muted">
+              Import pre-configured demo data including 8 users, 4 groups, 15
+              change requests, custom fields, comments, and activity. Default
+              password: <strong>Password@2026</strong>
+            </span>
+          </div>
+          <button
+            type="button"
+            class="btn-primary btn-sm"
+            :disabled="sampleDataLoading"
+            @click="
+              sampleDataAction = 'import';
+              showSampleDataConfirmModal = true;
+            "
+          >
+            {{ sampleDataLoading ? "Importing..." : "Import Sample Data" }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sample Data Confirmation Modal -->
+    <SharedAppModal
+      :open="showSampleDataConfirmModal"
+      :title="
+        sampleDataAction === 'import'
+          ? 'Import Sample Data'
+          : 'Remove Sample Data'
+      "
+      @close="showSampleDataConfirmModal = false"
+    >
+      <div class="space-y-4">
+        <p v-if="sampleDataAction === 'import'" class="text-sm text-muted">
+          This will create demo data including 8 users (password:
+          <strong>Password@2026</strong>), 4 groups, 15 change requests,
+          custom fields, comments, and activity stream entries. Are you sure you
+          want to proceed?
+        </p>
+        <p v-else class="text-sm text-muted">
+          This will permanently remove all sample data from your organization.
+          Real data will not be affected. Are you sure you want to proceed?
+        </p>
+        <div class="flex justify-end gap-2">
+          <button
+            type="button"
+            class="btn-ghost btn-sm"
+            :disabled="sampleDataLoading"
+            @click="showSampleDataConfirmModal = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn-sm"
+            :class="
+              sampleDataAction === 'import'
+                ? 'btn-primary'
+                : 'bg-danger text-white hover:bg-danger/90'
+            "
+            :disabled="sampleDataLoading"
+            @click="handleSampleDataAction"
+          >
+            {{
+              sampleDataLoading
+                ? "Processing..."
+                : sampleDataAction === "import"
+                  ? "Import"
+                  : "Remove"
+            }}
+          </button>
+        </div>
+      </div>
+    </SharedAppModal>
+
     <!-- Custom Field Modal -->
     <SharedAppModal
       :open="showCfModal"
@@ -592,6 +704,15 @@ useHead({ title: "Settings — Audita" });
 const api = useApi();
 const { error: toastError } = useToast();
 const { searchApproverCandidates } = useChangeRequests();
+const {
+  sampleDataImported,
+  sampleDataLoading,
+  importSampleData,
+  removeSampleData,
+  setSampleDataImported,
+} = useSampleData();
+const showSampleDataConfirmModal = ref(false);
+const sampleDataAction = ref<"import" | "remove">("import");
 
 interface TenantAdminSettingsResponse {
   profile: {
@@ -629,6 +750,7 @@ interface TenantAdminSettingsResponse {
   auditDefaults: {
     exportLinkExpiryHours: number;
   };
+  sampleDataImported: boolean;
 }
 
 interface UserLookupResponse {
@@ -773,6 +895,7 @@ async function loadSettings() {
       response.autoApproverDefaults?.groupIds ?? [];
     settings.auditDefaults.exportLinkExpiryHours =
       response.auditDefaults?.exportLinkExpiryHours ?? 24;
+    setSampleDataImported(response.sampleDataImported ?? false);
     await hydrateAutoApproverLabels();
     settingsSnapshot.value = createSettingsSnapshot(
       {
@@ -911,6 +1034,24 @@ function removeAutoApproverGroup(groupId: string) {
 }
 
 onMounted(loadSettings);
+
+async function handleSampleDataAction() {
+  if (sampleDataAction.value === "import") {
+    const result = await importSampleData();
+    if (result) {
+      showSampleDataConfirmModal.value = false;
+      await loadSettings();
+      await loadCustomFields();
+    }
+  } else {
+    const result = await removeSampleData();
+    if (result) {
+      showSampleDataConfirmModal.value = false;
+      await loadSettings();
+      await loadCustomFields();
+    }
+  }
+}
 
 // ── Custom Fields ─────────────────────────────────────────────────────────────
 

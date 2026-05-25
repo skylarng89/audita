@@ -495,3 +495,37 @@ All Sprint 12 tasks completed. v0.6.0 released.
 - `cd audita-api && ./gradlew :infrastructure:test --tests "io.audita.infrastructure.service.ChangeRequestServiceSecurityTest" --no-daemon`
 - `cd audita-web && pnpm -s nuxi typecheck`
 - `cd audita-web && pnpm test`
+
+---
+
+## License Normalization & Social Media Launch Preparation (2026-05-25)
+
+### Objectives
+
+1. Switch project from source-available (Commons Clause) to true open-source Apache 2.0 license.
+2. Prepare platform-specific social media copy for Audita public launch.
+3. Define posting strategy, hashtags, and engagement playbook.
+
+### Work Items
+
+- **LIC-001**: Replace `LICENSE` with canonical Apache 2.0 text. ✅
+- **LIC-002**: Update `README.md` license section to reflect Apache 2.0. ✅
+- **LIC-003**: Add inbound=outbound contributor licensing note to `CONTRIBUTING.md`. ✅
+- **LIC-004**: Update `LICENSE-APACHE` reference to remove stale resale wording. ✅
+- **MKT-001**: Draft LinkedIn launch copy (playful/irreverent tone). ✅
+- **MKT-002**: Draft Twitter/X launch copy (punchy/hot-take tone). ✅
+- **MKT-003**: Draft Reddit/Hacker News launch copy (honest builder tone). ✅
+- **MKT-004**: Create 7-day posting schedule and engagement tips. ✅
+- **MKT-005**: Define hashtag strategy and CTA (star the repo). ✅
+
+### Decisions
+
+- User chose Apache 2.0 over custom source-available license after learning that "open source" implies no resale restrictions.
+- Tone: playful/irreverent.
+- CTA: star the GitHub repo.
+- User will provide own platform screenshots; auto-generated image assets discarded.
+
+### Verification
+
+- `git diff --check -- LICENSE README.md CONTRIBUTING.md LICENSE-APACHE` — clean.
+- Copy review: `social-media-assets/README.md` contains platform-specific posts ready for use.

@@ -14,6 +14,9 @@ import java.util.UUID;
 @Repository
 public interface NotificationRepository extends JpaRepository<NotificationEntity, UUID> {
 
+    long deleteByIsSampleTrue();
+    long countByIsSampleTrue();
+
     Page<NotificationEntity> findByRecipientIdOrderByCreatedAtDesc(UUID recipientId, Pageable pageable);
 
     List<NotificationEntity> findByRecipientIdAndIsReadFalseOrderByCreatedAtDesc(UUID recipientId);

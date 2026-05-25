@@ -12,6 +12,9 @@ import java.util.UUID;
 @Repository
 public interface GroupRepository extends JpaRepository<GroupEntity, UUID> {
 
+    long deleteByIsSampleTrue();
+    long countByIsSampleTrue();
+
     boolean existsByName(String name);
 
     Optional<GroupEntity> findByName(String name);

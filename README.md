@@ -1,6 +1,6 @@
 # Audita
 
-Audita is a self-hosted, multi-tenant ITIL/ITSM Change Management platform.
+Audita is an open source self-hosted, multi-tenant ITIL/ITSM Change Management platform.
 
 It provides structured, auditable change workflows across creation, approvals,
 collaboration, SLA tracking, and immutable audit trails with schema-per-tenant
@@ -33,12 +33,12 @@ See [LICENSE](LICENSE) for full terms.
 
 ## Architecture
 
-| Service | Technology | Default local port |
-| --- | --- | --- |
-| audita-api | Java 25 + Spring Boot 4 (hexagonal architecture) | 7080 -> 8080 |
-| audita-web | Nuxt 3 + Vue 3 + Tailwind CSS | 7000 -> 3000 |
-| db | PostgreSQL 17 | 7432 -> 5432 |
-| mailhog | MailHog (dev email capture) | 7025 SMTP, 8025 UI |
+| Service    | Technology                                       | Default local port |
+| ---------- | ------------------------------------------------ | ------------------ |
+| audita-api | Java 25 + Spring Boot 4 (hexagonal architecture) | 7080 -> 8080       |
+| audita-web | Nuxt 3 + Vue 3 + Tailwind CSS                    | 7000 -> 3000       |
+| db         | PostgreSQL 17                                    | 7432 -> 5432       |
+| mailhog    | MailHog (dev email capture)                      | 7025 SMTP, 8025 UI |
 
 Tenant model:
 
@@ -167,25 +167,25 @@ Deployment hardening requirements:
 
 Important backend variables:
 
-| Variable | Purpose |
-| --- | --- |
-| DATABASE_URL | JDBC URL for PostgreSQL |
-| DATABASE_USERNAME | DB username |
-| DATABASE_PASSWORD | DB password |
-| JWT_SECRET | JWT signing secret (32+ chars) |
-| JWT_EXPIRY_SECONDS | Access token TTL |
-| REFRESH_TOKEN_EXPIRY_DAYS | Refresh token TTL |
-| APP_ENCRYPTION_KEY | 64-char hex AES key for sensitive config values |
-| APP_BASE_URL | Frontend base URL for links |
-| API_BASE_URL | Public API base URL used for externally visible links where applicable |
-| FRONTEND_BASE_URL | Deprecated: SSO endpoints are not implemented in current app surfaces |
-| CORS_ALLOWED_ORIGINS | Comma-separated explicit origin allowlist |
+| Variable                  | Purpose                                                                |
+| ------------------------- | ---------------------------------------------------------------------- |
+| DATABASE_URL              | JDBC URL for PostgreSQL                                                |
+| DATABASE_USERNAME         | DB username                                                            |
+| DATABASE_PASSWORD         | DB password                                                            |
+| JWT_SECRET                | JWT signing secret (32+ chars)                                         |
+| JWT_EXPIRY_SECONDS        | Access token TTL                                                       |
+| REFRESH_TOKEN_EXPIRY_DAYS | Refresh token TTL                                                      |
+| APP_ENCRYPTION_KEY        | 64-char hex AES key for sensitive config values                        |
+| APP_BASE_URL              | Frontend base URL for links                                            |
+| API_BASE_URL              | Public API base URL used for externally visible links where applicable |
+| FRONTEND_BASE_URL         | Deprecated: SSO endpoints are not implemented in current app surfaces  |
+| CORS_ALLOWED_ORIGINS      | Comma-separated explicit origin allowlist                              |
 
 Important frontend variables:
 
-| Variable | Purpose |
-| --- | --- |
-| NUXT_PUBLIC_API_BASE | Browser-visible API base path or URL |
+| Variable               | Purpose                                          |
+| ---------------------- | ------------------------------------------------ |
+| NUXT_PUBLIC_API_BASE   | Browser-visible API base path or URL             |
 | NUXT_API_INTERNAL_BASE | Internal server-side API target for proxy routes |
 
 ## Versioning and release process
@@ -228,10 +228,10 @@ Behavior:
 
 Published Docker Hub images:
 
-| Service | Image |
-| --- | --- |
-| API | [skylarng89/audita-api](https://hub.docker.com/r/skylarng89/audita-api) |
-| Web | [skylarng89/audita-web](https://hub.docker.com/r/skylarng89/audita-web) |
+| Service | Image                                                                   |
+| ------- | ----------------------------------------------------------------------- |
+| API     | [skylarng89/audita-api](https://hub.docker.com/r/skylarng89/audita-api) |
+| Web     | [skylarng89/audita-web](https://hub.docker.com/r/skylarng89/audita-web) |
 
 Image tags per release: `latest`, `vX.Y.Z`, `vX.Y`, `sha-<git-sha>`
 

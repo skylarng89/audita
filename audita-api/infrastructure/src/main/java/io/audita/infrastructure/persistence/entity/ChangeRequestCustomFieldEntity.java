@@ -24,6 +24,9 @@ public class ChangeRequestCustomFieldEntity {
     @Column(name = "value", columnDefinition = "TEXT")
     private String value;
 
+    @Column(name = "is_sample", nullable = false)
+    private boolean isSample = false;
+
     protected ChangeRequestCustomFieldEntity() {}
 
     public ChangeRequestCustomFieldEntity(ChangeRequestEntity changeRequest, java.util.UUID fieldId, String value) {
@@ -46,5 +49,13 @@ public class ChangeRequestCustomFieldEntity {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    public boolean isSample() {
+        return isSample;
+    }
+
+    public void setSample(boolean sample) {
+        isSample = sample;
     }
 }

@@ -445,6 +445,162 @@
 
 ---
 
+## ADR-023: Switch to Apache License 2.0 (True Open Source)
+
+**Date:** 2026-05-25
+**Status:** Accepted
+
+**Decision:** Replace the custom "Audita Source-Available License" (Apache 2.0 base + Commons Clause no-resale condition) with the canonical Apache License 2.0 text. Remove all resale and managed-service restrictions.
+
+**Reasoning:**
+
+- The user initially wanted source-available terms with a no-resale clause but learned that "open source" (OSI definition) requires freedom to redistribute commercially.
+- After discussion, the user decided to embrace true open source to maximize adoption, community contributions, and ecosystem growth.
+- Apache 2.0 provides a patent grant, clear commercial-use permissions, and is the industry standard for enterprise-friendly open source.
+
+**Trade-offs:**
+
+- Competitors or resellers may technically redistribute or sell Audita as a service under Apache 2.0 terms.
+- Mitigation: build a strong brand, community, and hosted offering so the official project remains the preferred source.
+
+**Files changed:**
+
+- `LICENSE` — canonical Apache 2.0 text (201 lines).
+- `README.md` — license section now says "Apache 2.0" and removes resale language.
+- `CONTRIBUTING.md` — added inbound=outbound statement.
+- `LICENSE-APACHE` — updated to reference canonical `LICENSE` without resale conditions.
+
+---
+
+## ADR-024: Social Media Launch — Playful/Irreverent Tone, Star-the-Repo CTA
+
+**Date:** 2026-05-25
+**Status:** Accepted
+
+**Decision:** Publicize Audita using a playful/irreverent tone across LinkedIn, Twitter/X, Reddit, and Hacker News. Primary CTA is starring the GitHub repo. User provides own platform screenshots; no auto-generated image assets retained.
+
+**Reasoning:**
+
+- ITSM is traditionally perceived as dry/enterprise-y; an irreverent tone differentiates Audita and captures attention.
+- "Star the repo" is the simplest, lowest-friction CTA for developer audiences.
+- Auto-generated image assets (Pillow-based composites) were deemed inadequate; real platform screenshots will be more authentic and higher quality.
+
+**Tone examples:**
+
+- LinkedIn: "Your change approval process is just a shared Google Sheet with extra steps."
+- Twitter/X: "2026 and we're still emailing spreadsheets for change approval."
+- Reddit/HN: "[Show HN] Audita — Open-source ITIL change management that doesn't suck."
+
+**Launch kit location:** `social-media-assets/README.md`
+
+---
+
+## ADR-025: Unified Tenant Baseline Migration for Public Launch
+
+**Date:** 2026-05-25
+**Status:** Accepted
+
+**Decision:** Consolidate the 10 incremental tenant Flyway migrations (V1-V10) into a single unified `V1__create_tenant_schema.sql` baseline. Delete V2-V10. Future schema changes continue as V2, V3, etc.
+
+**Reasoning:**
+
+- No production data exists yet; this is the ideal window to establish a clean baseline before public launch.
+- New tenant provisioning was running 10 scripts with many "already exists, skipping" warnings due to overlapping CREATE TABLE statements.
+- A single script is faster, cleaner in logs, and easier for operators to read/audit.
+- Future migrations (V2+) will be true deltas applied only when the schema evolves, maintaining Flyway's versioned migration model.
+
+**Trade-offs:**
+
+- Cannot run old migrations against existing schemas (but no existing production schemas exist).
+- Any future schema change must be added as a new VN+1 script, not folded back into V1.
+
+**Files changed:**
+
+- `V1__create_tenant_schema.sql` — rewritten with complete schema (all V1-V10 tables, columns, constraints, indexes, seed data)
+- Deleted: `V2__seed_roles_and_permissions.sql`, `V3__create_groups.sql`, `V4__add_refresh_token_context.sql`, `V5__add_audit_indexes.sql`, `V6__add_user_roles.sql`, `V7__add_idempotency_keys.sql`, `V8__add_audit_export_requests.sql`, `V9__ensure_refresh_tokens_table.sql`, `V10__repair_refresh_tokens_table.sql`
+
+**Validation:**
+
+- `pnpm test` frontend: 47/47 pass
+- `./gradlew :api:test` backend: pass
+- `./gradlew :infrastructure:test` (tenant tests): pass
+
+---
+
+## ADR-026: PostgreSQL Advisory Lock for Multi-Replica Tenant Migrations
+
+**Date:** 2026-05-25
+**Status:** Accepted
+
+**Decision:** Use `pg_try_advisory_lock()` in `TenantMigrationStartupRunner` to ensure only one container replica runs tenant schema migrations on startup.
+
+**Reasoning:**
+
+- In replicated/containerized deployments, multiple API instances start simultaneously and could race to run the same Flyway migrations.
+- PostgreSQL advisory locks are connection-scoped and auto-release on disconnect, making them safe even if a JVM crashes.
+- Replicas that fail to acquire the lock log a message and skip migration, proceeding with startup.
+
+**Trade-offs:**
+
+- Adds a small dependency on PostgreSQL-specific SQL (not portable to other databases).
+- Lock acquisition failure logs a warning but does not block startup.
+
+**Files changed:**
+
+- `TenantMigrationStartupRunner.java` — added `acquireLock()` / `releaseLock()` methods
+- `application.yml` — added `audita.migration.startup.enabled` property
+
+---
+
+## ADR-027: API Proxy Header Allowlist Must Strip Client-Spoofable Forwarding Headers
+
+**Date:** 2026-05-25
+**Status:** Accepted
+
+**Decision:** Remove `x-forwarded-host` from the Nuxt API proxy's `ALLOWED_HEADERS` allowlist. Test asserts that `x-forwarded-host` is stripped before forwarding to the upstream Spring API.
+
+**Reasoning:**
+
+- `x-forwarded-host` is a client-sent header that can be spoofed to manipulate upstream tenant resolution or routing logic.
+- The Nuxt proxy's purpose is to forward safe, necessary headers only; host-level forwarding headers should be set by the edge reverse proxy (Nginx), not passed through from the browser.
+- The test `tests/server/api-proxy.spec.ts` explicitly validates this security boundary.
+
+**Trade-offs:**
+
+- Nuxt server logs no longer show the original `x-forwarded-host` value for proxied internal calls (intentional).
+
+**Files changed:**
+
+- `audita-web/server/utils/apiProxy.ts` — removed `"x-forwarded-host"` from `ALLOWED_HEADERS`
+- `tests/server/api-proxy.spec.ts` — asserts `sanitized["x-forwarded-host"]` is `undefined`
+
+---
+
+## ADR-028: Tenant Middleware Must Logout on Tenant Mismatch for Authenticated Users
+
+**Date:** 2026-05-25
+**Status:** Accepted
+
+**Decision:** The tenant route middleware (`audita-web/middleware/tenant.ts`) resolves the active tenant from the current hostname/subdomain. If the user is already authenticated and the resolved tenant differs from their stored `tenantSlug`, the middleware calls `auth.logout()` to prevent cross-tenant session reuse.
+
+**Reasoning:**
+
+- Without this guard, a user authenticated with tenant A could navigate to tenant B's subdomain and potentially operate within the wrong tenant context.
+- The logout forces re-authentication against the correct tenant, maintaining tenant isolation boundaries.
+- This behavior is explicitly tested in `tests/middleware/tenant.spec.ts`.
+
+**Trade-offs:**
+
+- Users switching between subdomains (e.g., acme.audita.io → beta.audita.io) will be logged out even if they have access to both — acceptable for v1.
+- Subdomain resolution must be accurate; incorrect resolution causes spurious logouts.
+
+**Files changed:**
+
+- `audita-web/middleware/tenant.ts` — resolve tenant before auth check; call `logout()` on mismatch
+- `tests/middleware/tenant.spec.ts` — asserts `logout` is called once on tenant change
+
+---
+
 ## ADR-022: Subdomain-Based Tenant Resolution with X-Forwarded-Host
 
 **Date:** 2026-05-25

@@ -9,6 +9,9 @@ import java.util.UUID;
 
 public interface AttachmentRepository extends JpaRepository<AttachmentEntity, UUID> {
 
+    long deleteByIsSampleTrue();
+    long countByIsSampleTrue();
+
     List<AttachmentEntity> findByChangeRequestIdOrderByCreatedAtDesc(UUID changeRequestId);
 
     Optional<AttachmentEntity> findByIdAndChangeRequestId(UUID id, UUID changeRequestId);

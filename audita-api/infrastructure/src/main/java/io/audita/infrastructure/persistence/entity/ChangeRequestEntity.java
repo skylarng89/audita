@@ -58,6 +58,9 @@ public class ChangeRequestEntity {
     @Column(nullable = false)
     private boolean slaBreached = false;
 
+    @Column(name = "is_sample", nullable = false)
+    private boolean isSample = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private UserEntity createdBy;
@@ -173,4 +176,6 @@ public class ChangeRequestEntity {
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public List<CrApproverEntity> getApprovers() { return approvers; }
+    public boolean isSample() { return isSample; }
+    public void setSample(boolean sample) { isSample = sample; }
 }

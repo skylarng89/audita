@@ -23,6 +23,9 @@ public class GroupMemberEntity {
     @Column(nullable = false, updatable = false)
     private OffsetDateTime addedAt = OffsetDateTime.now();
 
+    @Column(name = "is_sample", nullable = false)
+    private boolean isSample = false;
+
     protected GroupMemberEntity() {}
 
     public GroupMemberEntity(GroupEntity group, UserEntity user) {
@@ -36,4 +39,6 @@ public class GroupMemberEntity {
     public GroupEntity getGroup() { return group; }
     public UserEntity getUser() { return user; }
     public OffsetDateTime getAddedAt() { return addedAt; }
+    public boolean isSample() { return isSample; }
+    public void setSample(boolean sample) { isSample = sample; }
 }

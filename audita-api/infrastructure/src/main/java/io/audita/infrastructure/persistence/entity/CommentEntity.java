@@ -30,6 +30,9 @@ public class CommentEntity {
     @Column(nullable = false)
     private OffsetDateTime updatedAt = OffsetDateTime.now();
 
+    @Column(name = "is_sample", nullable = false)
+    private boolean isSample = false;
+
     protected CommentEntity() {}
 
     public CommentEntity(ChangeRequestEntity changeRequest, UserEntity author, String body) {
@@ -44,4 +47,6 @@ public class CommentEntity {
     public String getBody() { return body; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
+    public boolean isSample() { return isSample; }
+    public void setSample(boolean sample) { isSample = sample; }
 }

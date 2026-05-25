@@ -12,7 +12,8 @@ public record TenantAdminSettingsResponse(
                 WorkflowDefaults workflowDefaults,
                 SlaDefaults slaDefaults,
                 AutoApproverDefaults autoApproverDefaults,
-                AuditDefaults auditDefaults) {
+                AuditDefaults auditDefaults,
+                boolean sampleDataImported) {
         public record OrganizationProfile(
                         String name,
                         String slug,

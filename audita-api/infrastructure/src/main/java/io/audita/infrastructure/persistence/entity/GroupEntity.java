@@ -24,6 +24,9 @@ public class GroupEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
+    @Column(name = "is_sample", nullable = false)
+    private boolean isSample = false;
+
     protected GroupEntity() {}
 
     public GroupEntity(String name, String description, UserEntity createdBy) {
@@ -39,4 +42,6 @@ public class GroupEntity {
     public void setDescription(String description) { this.description = description; }
     public UserEntity getCreatedBy() { return createdBy; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
+    public boolean isSample() { return isSample; }
+    public void setSample(boolean sample) { isSample = sample; }
 }

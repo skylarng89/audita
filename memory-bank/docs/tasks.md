@@ -4,7 +4,7 @@
 
 **Project:** Audita - Multi-Tenant ITIL/ITSM Change Management Platform
 **Version:** 0.6.3
-**Last Updated:** 2026-05-24
+**Last Updated:** 2026-05-25
 **Team Size:** 2-3 Developers
 
 ## Task Status Legend
@@ -383,6 +383,43 @@
 
 ## Recent Implementations
 
+### License Normalization — Switched to Apache 2.0 (Completed 2026-05-25)
+
+**Overview**: Replaced custom source-available license (Commons Clause + Apache 2.0 base) with canonical Apache License 2.0. Aligned README and CONTRIBUTING docs.
+
+**Files Created/Modified**:
+
+- `LICENSE` — replaced 32-line source-available text with 201-line canonical Apache 2.0 license.
+- `README.md` — updated license section to state "Apache 2.0" and removed resale restrictions.
+- `CONTRIBUTING.md` — added inbound=outbound contributor licensing statement.
+- `LICENSE-APACHE` — removed stale "no-resale condition" wording; now points to canonical `LICENSE`.
+
+**Key Changes**:
+
+- Project is now truly open source (OSI-compliant Apache 2.0).
+- Commercial redistribution is permitted under Apache 2.0 terms.
+- Contributor license is explicit: submissions are licensed under Apache 2.0.
+
+**Verification**: `git diff --check -- LICENSE README.md CONTRIBUTING.md LICENSE-APACHE` — no whitespace or patch issues.
+
+### Social Media Launch Kit (Completed 2026-05-25)
+
+**Overview**: Prepared platform-specific copy and posting strategy for Audita public launch.
+
+**Files Created**:
+
+- `social-media-assets/README.md` — launch kit with copy, schedule, and engagement tips.
+
+**Key Changes**:
+
+- LinkedIn copy: playful/irreverent hook ("Your change approval process is just a shared Google Sheet with extra steps").
+- Twitter/X copy: punchy hot-take format with feature pills.
+- Reddit/HN copy: honest builder narrative with "Show HN" framing.
+- 7-day posting sequence defined; hashtag strategy included.
+- CTA across all platforms: star the repo (`github.com/skylarng89/audita`).
+
+**Note**: Auto-generated image assets were discarded; user will provide own platform screenshots.
+
 ### Post-Sprint 6 Web Docker Policy Parity (Completed 2026-05-24)
 
 **Overview**: Fixed web container build failures in policy-gated install step and removed deprecated pnpm config drift.
@@ -418,3 +455,27 @@
 - Human-readable summary coverage for approver mutation activity events.
 
 **Test Coverage**: `cd audita-api && ./gradlew :infrastructure:test --tests "io.audita.infrastructure.service.ChangeRequestServiceSecurityTest" --no-daemon`; `cd audita-web && pnpm -s nuxi typecheck`; `cd audita-web && pnpm test`.
+
+### Post-Sprint 7 CI Fix + Flyway Hardening + Unified Baseline (Completed 2026-05-25)
+
+**Overview**: Fixed CI test failures, hardened Flyway migrations for replica-safe containerized deployments, and unified the tenant baseline into a single script for public launch readiness.
+
+**Files Created/Modified**:
+
+- `audita-web/server/utils/apiProxy.ts` - removed `"x-forwarded-host"` from `ALLOWED_HEADERS`.
+- `audita-web/middleware/tenant.ts` - fixed to call `logout()` on authenticated tenant mismatch.
+- `audita-web/tests/middleware/tenant.spec.ts` - test expectation aligned.
+- `audita-api/infrastructure/src/main/java/io/audita/infrastructure/tenant/TenantMigrationStartupRunner.java` - added PostgreSQL advisory lock + opt-out property.
+- `audita-api/api/src/main/resources/application.yml` - added `audita.migration.startup.enabled` property.
+- `audita-api/infrastructure/src/main/resources/db/migration/tenant/V1__create_tenant_schema.sql` - **rewritten** with complete unified baseline (all former V1-V10 content).
+- Deleted: `V2__seed_roles_and_permissions.sql`, `V3__create_groups.sql`, `V4__add_refresh_token_context.sql`, `V5__add_audit_indexes.sql`, `V6__add_user_roles.sql`, `V7__add_idempotency_keys.sql`, `V8__add_audit_export_requests.sql`, `V9__ensure_refresh_tokens_table.sql`, `V10__repair_refresh_tokens_table.sql`.
+
+**Key Changes**:
+
+- API proxy now strips client-spoofable `x-forwarded-host` (security boundary).
+- Tenant middleware enforces logout on cross-tenant navigation for authenticated users.
+- Startup tenant migrations use PostgreSQL advisory locks for replica safety.
+- Single unified `V1` baseline eliminates 10-script replay and "already exists" warnings for new tenants.
+- Future schema changes follow as V2, V3, etc.
+
+**Test Coverage**: `cd audita-web && pnpm test` (47/47 pass); `cd audita-api && ./gradlew :api:test` (pass); `cd audita-api && ./gradlew :infrastructure:test` (pass).
