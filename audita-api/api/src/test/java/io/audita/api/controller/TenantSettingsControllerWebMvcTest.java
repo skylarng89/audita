@@ -48,7 +48,7 @@ class TenantSettingsControllerWebMvcTest {
         UserPrincipal principal = authenticate();
         when(tenantSettingsPort.getTenantSettings("acme")).thenReturn(
                 new TenantSettingsPort.TenantSettings(
-                        new TenantSettingsPort.TenantProfile("Acme Corp", "acme", "admin@acme.com", "UTC", "ACTIVE"),
+                        new TenantSettingsPort.TenantProfile("Acme Corp", "acme", "cm", "admin@acme.com", "UTC", "ACTIVE"),
                         new TenantSettingsPort.WorkflowDefaults(ApprovalType.LINEAR, true),
                         new TenantSettingsPort.SlaDefaults(72, 48, 24, 8, 1),
                         new TenantSettingsPort.AutoApproverDefaults(java.util.List.of(), java.util.List.of()),
@@ -72,7 +72,7 @@ class TenantSettingsControllerWebMvcTest {
         authenticate();
         when(tenantSettingsPort.getTenantSettings("acme")).thenReturn(
                 new TenantSettingsPort.TenantSettings(
-                        new TenantSettingsPort.TenantProfile("Acme Corp", "acme", "admin@acme.com", "UTC", "ACTIVE"),
+                        new TenantSettingsPort.TenantProfile("Acme Corp", "acme", "cm", "admin@acme.com", "UTC", "ACTIVE"),
                         new TenantSettingsPort.WorkflowDefaults(ApprovalType.NON_LINEAR, false),
                         new TenantSettingsPort.SlaDefaults(96, 72, 36, 12, 3),
                         new TenantSettingsPort.AutoApproverDefaults(java.util.List.of(), java.util.List.of()),

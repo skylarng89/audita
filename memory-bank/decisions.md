@@ -445,6 +445,35 @@
 
 ---
 
+## ADR-022: Subdomain-Based Tenant Resolution with X-Forwarded-Host
+
+**Date:** 2026-05-25
+**Status:** Accepted
+
+**Decision:** Tenant resolution now uses `X-Forwarded-Host` subdomain as the primary mechanism, with `X-Tenant-Slug` header as fallback. A `subdomain` column is stored on the `tenants` table and populated during setup from the browser hostname.
+
+**Reasoning:**
+
+- The previous approach derived tenant slug from subdomain client-side (`cm.mypixelpay.com` → `cm`), but the tenant slug was `pixelpay-systems-limited`. The mismatch caused 403 `Unknown tenant` errors.
+- `X-Forwarded-Host` is set by Nginx (server-side, not spoofable by clients), making it a trustable resolution source.
+- The `TenantResolutionFilter` now resolves in order: (1) `X-Forwarded-Host` subdomain → `tenants.subdomain` lookup, (2) `X-Tenant-Slug` header → `tenants.slug` lookup.
+- Subdomain is captured during setup from `window.location.hostname` and stored in the database, creating an explicit mapping.
+- The frontend middleware no longer force-logs-out on slug mismatch — the backend resolves the correct tenant regardless of what the frontend sends.
+
+**Trade-offs:**
+
+- Requires Nginx to set `proxy_set_header X-Forwarded-Host $host;` (already in our recommended config).
+- Requires the Nuxt proxy to forward `x-forwarded-host` to the API (added to `ALLOWED_HEADERS`).
+- Existing deployments must run the V2 Flyway migration and backfill the `subdomain` column, or rerun setup fresh.
+
+**Validation:**
+
+- Backend compilation and all existing tests pass.
+- `TenantSettingsControllerWebMvcTest`, `TenantResolutionFilterTest`, `TenantServiceSettingsTest` all green.
+- Pre-existing `AuthServiceTest` failures confirmed unrelated to this change.
+
+---
+
 ## ADR-021: Docker Build Must Include `pnpm-workspace.yaml` Before Install
 
 **Date:** 2026-05-24

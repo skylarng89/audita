@@ -71,6 +71,7 @@ class TenantServiceSettingsTest {
     @Test
     void getTenantSettings_handlesMalformedValuesWithSafeFallbacks() {
         when(tenantRepository.findBySlug("acme")).thenReturn(Optional.of(activeTenant("acme")));
+        when(orgSettingRepository.findById(any())).thenReturn(Optional.empty());
         when(orgSettingRepository.findById("workflow.approval_type_default"))
                 .thenReturn(Optional.of(new OrgSettingEntity("workflow.approval_type_default", "invalid")));
         when(orgSettingRepository.findById("workflow.require_default_approvers"))

@@ -1,8 +1,8 @@
 # Audita — Active Context
 
-**Last Updated:** 2026-05-24
-**Current Phase:** Post-Sprint container scan reliability fixes for web Docker build + pnpm supply-chain policy parity complete
-**Active Sprint:** Sprint 13 (completed)
+**Last Updated:** 2026-05-25
+**Current Phase:** Production deployment — Nginx vhost configured, subdomain-based tenant resolution implemented
+**Active Sprint:** Post-Sprint 7 — Production tenant resolution fix
 
 ---
 
@@ -40,7 +40,8 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 | Post-Sprint 4 | 6/6 | 6 | DHI Hardened Runtime + Docker Build Reliability | 2026-05-23 |
 | Post-Sprint 5 | 7/7 | 7 | Approver Workflow Flexibility + Activity Summary Test Coverage | 2026-05-23 |
 | Post-Sprint 6 | 3/3 | 3 | Web Docker policy parity + pnpm config cleanup | 2026-05-24 |
-| **TOTAL** | **247/247** | **247** | — | — |
+| Post-Sprint 7 | 1/1 | 1 | Production: subdomain-based tenant resolution | 2026-05-25 |
+| **TOTAL** | **248/248** | **248** | — | — |
 
 **Sprint 12: Launch Readiness** — All 6 tasks completed. v0.6.0 released.
 
@@ -143,12 +144,13 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 ## Current Blockers
 
 - **No active implementation blockers.**
-- **Current baseline remains healthy:** web Docker image build passes locally with policy checks enabled; pnpm policy warnings about deprecated `package.json#pnpm` keys removed.
+- **Production note:** Existing deployment at `cm.mypixelpay.com` needs database reset + fresh setup to populate the `subdomain` column, or manual SQL backfill: `UPDATE public.tenants SET subdomain = 'cm' WHERE slug = 'pixelpay-systems-limited';`
 
 ---
 
 ## Next Actions
 
-1. Execute CI run on `main` to confirm `Container Image Vulnerability Scan` remains green with latest web Docker/pnpm policy updates.
-2. Monitor lockfile churn for minimum-release-age exclusions and remove temporary excludes once package age threshold naturally passes.
-3. Prepare v0.7.0 release candidate notes including Post-Sprint 6 container reliability outcomes.
+1. Deploy the subdomain tenant resolution changes to production.
+2. Reset database and re-run setup (recommended) or backfill `subdomain` column via SQL.
+3. Verify login works at `cm.mypixelpay.com` with the X-Forwarded-Host resolution chain.
+4. Prepare v0.7.0 release candidate.

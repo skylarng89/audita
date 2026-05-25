@@ -19,6 +19,9 @@ public class TenantEntity {
     @Column(nullable = false, unique = true)
     private String slug;
 
+    @Column(unique = true)
+    private String subdomain;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TenantStatus status = TenantStatus.ACTIVE;
@@ -31,9 +34,14 @@ public class TenantEntity {
 
     protected TenantEntity() {}
 
-    public TenantEntity(String name, String slug) {
+    public TenantEntity(String name, String slug, String subdomain) {
         this.name = name;
         this.slug = slug;
+        this.subdomain = subdomain;
+    }
+
+    public TenantEntity(String name, String slug) {
+        this(name, slug, null);
     }
 
     @PreUpdate
@@ -46,6 +54,8 @@ public class TenantEntity {
     public void setName(String name) { this.name = name; }
     public String getSlug() { return slug; }
     public void setSlug(String slug) { this.slug = slug; }
+    public String getSubdomain() { return subdomain; }
+    public void setSubdomain(String subdomain) { this.subdomain = subdomain; }
     public TenantStatus getStatus() { return status; }
     public void setStatus(TenantStatus status) { this.status = status; }
     public OffsetDateTime getCreatedAt() { return createdAt; }

@@ -14,7 +14,11 @@ public interface TenantRepository extends JpaRepository<TenantEntity, UUID> {
 
     Optional<TenantEntity> findBySlug(String slug);
 
+    Optional<TenantEntity> findBySubdomain(String subdomain);
+
     boolean existsBySlug(String slug);
+
+    boolean existsBySubdomain(String subdomain);
 
     Optional<TenantEntity> findFirstByOrderByCreatedAtAsc();
 

@@ -22,6 +22,7 @@ public interface TenantSettingsPort {
     record TenantProfile(
             String name,
             String slug,
+            String subdomain,
             String primaryContactEmail,
             String timezone,
             String status) {
@@ -29,6 +30,7 @@ public interface TenantSettingsPort {
 
     record ProfileUpdate(
             String name,
+            String subdomain,
             String primaryContactEmail,
             String timezone) {
     }

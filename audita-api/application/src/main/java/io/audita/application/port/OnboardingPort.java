@@ -6,6 +6,7 @@ public interface OnboardingPort {
 
     void setupSingleTenant(String orgName,
                            String slug,
+                           String subdomain,
                            String adminFullName,
                            String adminEmail,
                            String rawPassword);
