@@ -24,8 +24,8 @@ async function resolveSignInRoute(auth: ReturnType<typeof useAuthStore>) {
   if (status !== null && !status.onboardingCompleted) {
     return "/setup";
   }
-  if (status?.tenantSlug && !auth.tenantSlug) {
-    auth.tenantSlug = status.tenantSlug;
+  if (status?.tenantSlug) {
+    auth.setTenantSlug(status.tenantSlug);
   }
   return null;
 }
