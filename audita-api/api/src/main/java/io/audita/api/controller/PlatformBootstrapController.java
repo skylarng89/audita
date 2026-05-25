@@ -83,6 +83,7 @@ public class PlatformBootstrapController {
         onboardingPort.setupSingleTenant(
                 request.orgName(),
                 request.slug(),
+                request.subdomain(),
                 request.fullName(),
                 request.email(),
             request.password());

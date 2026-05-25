@@ -204,12 +204,24 @@ const step = ref(1);
 const form = reactive({
   orgName: "",
   slug: "",
+  subdomain: "",
   fullName: "",
   email: "",
   password: "",
 });
 const error = ref("");
 const isLoading = ref(false);
+
+if (import.meta.client) {
+  const hostname = window.location.hostname;
+  const parts = hostname.split(".");
+  if (parts.length >= 3) {
+    const sub = parts[0];
+    if (!["www", "app", "api", "mail", "smtp"].includes(sub)) {
+      form.subdomain = sub;
+    }
+  }
+}
 
 function suggestSlug() {
   form.slug = form.orgName
@@ -280,6 +292,7 @@ async function handleSubmit() {
       body: {
         orgName: form.orgName,
         slug: form.slug,
+        subdomain: form.subdomain || null,
         fullName: form.fullName,
         email: form.email,
         password: form.password,

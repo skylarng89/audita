@@ -16,6 +16,7 @@ const ALLOWED_HEADERS = new Set([
   "content-length",
   "cookie",
   "x-audita-api-contract",
+  "x-forwarded-host",
   "x-idempotency-key",
   "x-setup-token",
   "x-tenant-slug",

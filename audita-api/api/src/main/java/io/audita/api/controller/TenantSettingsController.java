@@ -48,6 +48,7 @@ public class TenantSettingsController {
                 TenantAdminSettingsResponse.OrganizationProfile profile = new TenantAdminSettingsResponse.OrganizationProfile(
                                 tenant.name(),
                                 tenant.slug(),
+                                tenant.subdomain(),
                                 tenant.primaryContactEmail(),
                                 tenant.timezone(),
                                 tenant.status());
@@ -99,6 +100,7 @@ public class TenantSettingsController {
 
                 Map<String, Object> profile = requireObject(body, "profile");
                 String name = requireText(profile, "name");
+                String subdomain = optionalText(profile, "subdomain");
                 String primaryContactEmail = optionalText(profile, "primaryContactEmail");
                 String timezone = requireText(profile, "timezone");
 
@@ -138,6 +140,7 @@ public class TenantSettingsController {
                                 tenantSlug,
                                 new TenantSettingsPort.ProfileUpdate(
                                                 name,
+                                                subdomain,
                                                 primaryContactEmail,
                                                 timezone));
                 tenantSettingsPort.updateSlaDefaults(

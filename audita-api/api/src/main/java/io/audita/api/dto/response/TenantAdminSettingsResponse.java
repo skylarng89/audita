@@ -16,6 +16,7 @@ public record TenantAdminSettingsResponse(
         public record OrganizationProfile(
                         String name,
                         String slug,
+                        String subdomain,
                         String primaryContactEmail,
                         String timezone,
                         String status) {

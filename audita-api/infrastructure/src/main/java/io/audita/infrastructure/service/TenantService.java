@@ -28,6 +28,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 import java.util.Base64;
+import java.util.Locale;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -135,6 +136,7 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
         TenantProfile profile = new TenantProfile(
                 tenant.getName(),
                 tenant.getSlug(),
+                tenant.getSubdomain(),
                 readStringSetting(ORG_PRIMARY_CONTACT_EMAIL_KEY, null),
                 readStringSetting(ORG_TIMEZONE_KEY, "UTC"),
                 tenant.getStatus().name());
@@ -158,6 +160,18 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
     public void updateProfile(String tenantSlug, ProfileUpdate profile) {
         TenantEntity tenant = getTenantBySlug(tenantSlug);
         tenant.setName(profile.name());
+        if (profile.subdomain() != null) {
+            String normalisedSubdomain = profile.subdomain().trim().toLowerCase(Locale.ROOT);
+            if (normalisedSubdomain.isBlank()) {
+                tenant.setSubdomain(null);
+            } else if (!normalisedSubdomain.equals(tenant.getSubdomain())) {
+                if (tenantRepository.existsBySubdomain(normalisedSubdomain)) {
+                    throw new DomainNotPermittedException("SUBDOMAIN_TAKEN",
+                            "The subdomain '" + normalisedSubdomain + "' is already in use.");
+                }
+                tenant.setSubdomain(normalisedSubdomain);
+            }
+        }
         tenantRepository.save(tenant);
         saveSetting(ORG_PRIMARY_CONTACT_EMAIL_KEY,
                 profile.primaryContactEmail() == null ? "" : profile.primaryContactEmail().trim());
@@ -274,18 +288,25 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
      */
     @Override
     @CacheEvict(value = "onboardingStatus", allEntries = true)
-    public void setupSingleTenant(String orgName, String slug, String adminFullName,
-            String adminEmail, String rawPassword) {
+    public void setupSingleTenant(String orgName, String slug, String subdomain,
+            String adminFullName, String adminEmail, String rawPassword) {
         if (tenantRepository.count() > 0) {
             throw new DomainNotPermittedException("ALREADY_SETUP",
                     "Organisation has already been set up.");
         }
 
         String normalisedSlug = slug.toLowerCase().replaceAll("[^a-z0-9-]", "-");
+        String normalisedSubdomain = (subdomain != null && !subdomain.isBlank())
+                ? subdomain.trim().toLowerCase(Locale.ROOT) : null;
+
+        if (normalisedSubdomain != null && tenantRepository.existsBySubdomain(normalisedSubdomain)) {
+            throw new DomainNotPermittedException("SUBDOMAIN_TAKEN",
+                    "The subdomain '" + normalisedSubdomain + "' is already in use.");
+        }
 
         // 1. Persist tenant record in public schema
-        TenantEntity tenant = tenantRepository.save(new TenantEntity(orgName, normalisedSlug));
-        log.info("Single-tenant setup: tenant created id={} slug={}", tenant.getId(), normalisedSlug);
+        TenantEntity tenant = tenantRepository.save(new TenantEntity(orgName, normalisedSlug, normalisedSubdomain));
+        log.info("Single-tenant setup: tenant created id={} slug={} subdomain={}", tenant.getId(), normalisedSlug, normalisedSubdomain);
 
         // 2. Run per-tenant Flyway migrations
         flywayTenantMigrator.migrate(normalisedSlug);
