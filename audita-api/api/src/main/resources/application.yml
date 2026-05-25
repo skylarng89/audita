@@ -136,6 +136,13 @@ audita:
   bootstrap:
     setup-token: ${BOOTSTRAP_SETUP_TOKEN}
 
+  migration:
+    # Run tenant schema migrations on startup. Disable in replicated/container
+    # environments where a dedicated migration job or single instance handles
+    # schema upgrades (pg_advisory_lock is used as a safety interlock when enabled).
+    startup:
+      enabled: ${MIGRATION_STARTUP_ENABLED:true}
+
   upload:
     max-size-bytes: ${UPLOAD_MAX_SIZE_BYTES}
     allowed-mime-types: ${UPLOAD_ALLOWED_MIME_TYPES}
