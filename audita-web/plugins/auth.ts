@@ -21,10 +21,9 @@ export default defineNuxtPlugin(async () => {
     isDev,
   });
 
-  if (tenantSlug) {
+  auth.hydrateTenantSlug();
+  if (!auth.tenantSlug && tenantSlug) {
     auth.setTenantSlug(tenantSlug);
-  } else {
-    auth.hydrateTenantSlug();
   }
 
   try {
@@ -38,7 +37,7 @@ export default defineNuxtPlugin(async () => {
       await clearServerSession(auth.tenantSlug);
     } catch {}
     auth.clearAuth();
-    if (tenantSlug) {
+    if (!auth.tenantSlug && tenantSlug) {
       auth.setTenantSlug(tenantSlug);
     }
   } finally {
