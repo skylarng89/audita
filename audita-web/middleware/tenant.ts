@@ -16,15 +16,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const { ssrContext } = useNuxtApp();
   const isDev = Boolean(import.meta.dev);
 
-  // If already authenticated with a server-returned slug, trust it.
-  // The backend resolved the correct tenant via X-Forwarded-Host.
-  if (auth.isAuthenticated && auth.tenantSlug) {
-    return;
-  }
-
-  // Pre-login: resolve slug from subdomain so the login request
-  // includes X-Tenant-Slug. The backend may resolve a different tenant
-  // via X-Forwarded-Host, but the header still helps for direct API calls.
   const browserHostname =
     globalThis.location?.hostname ??
     globalThis.window?.location?.hostname ??
@@ -38,6 +29,19 @@ export default defineNuxtRouteMiddleware(async (to) => {
     isDev,
   });
 
+  // If already authenticated with a server-returned slug, verify it
+  // still matches the resolved tenant. If not, log the user out to
+  // prevent cross-tenant session reuse.
+  if (auth.isAuthenticated && auth.tenantSlug) {
+    if (resolved && resolved !== auth.tenantSlug) {
+      await auth.logout();
+    }
+    return;
+  }
+
+  // Pre-login: resolve slug from subdomain so the login request
+  // includes X-Tenant-Slug. The backend may resolve a different tenant
+  // via X-Forwarded-Host, but the header still helps for direct API calls.
   if (resolved) {
     auth.setTenantSlug(resolved);
   }
