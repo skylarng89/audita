@@ -26,7 +26,7 @@ Document tradeoff decisions in `memory-bank/docs/decisions.md`.
 - On session start: scan for all `memory-bank/` folders; ingest and synthesise
 - If no memory-bank exists, ask the user whether to create one
 - On "Update session": locate and update **all** memory-bank folders in the workspace
-- Delegate tasks to sub-agents when appropriate, as many as possible. Issue clear instructions and context to the sub-agents.
+- Delegate tasks to as many sub-agents possible with explicit instructions.
 
 ---
 
