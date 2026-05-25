@@ -60,3 +60,10 @@ When reporting a bug, include:
 - deployment mode (Docker/local)
 - steps to reproduce
 - expected vs actual behavior
+
+## License and contribution terms
+
+Audita is licensed under Apache License 2.0.
+
+By submitting a contribution, you agree that your contribution is licensed
+under the same Apache 2.0 license as this repository (inbound = outbound).

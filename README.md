@@ -6,18 +6,16 @@ It provides structured, auditable change workflows across creation, approvals,
 collaboration, SLA tracking, and immutable audit trails with schema-per-tenant
 data isolation.
 
-## License and Usage Terms
+## License
 
-This project is source-available.
+This project is licensed under the Apache License 2.0.
 
-- You may use, modify, fork, and contribute to this codebase.
-- Personal and internal commercial use are allowed.
-- You may not resell this software.
-- You may not provide paid hosted/managed services where value substantially
-  derives from this software.
+- Commercial and personal use are allowed.
+- Modification, distribution, and private use are allowed.
+- Contributions are welcome through pull requests.
+- Feature requests and bug reports are welcome in the GitHub issue tracker.
 
-See [LICENSE](LICENSE) and [LICENSE-APACHE](LICENSE-APACHE) for exact legal
-terms.
+See [LICENSE](LICENSE) for full terms.
 
 ## Contents
 
