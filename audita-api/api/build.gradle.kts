@@ -39,7 +39,7 @@ dependencies {
     implementation("com.github.ben-manes.caffeine:caffeine")
 
     // Structured JSON logging — encodes Logback events as JSON with MDC support
-    implementation("net.logstash.logback:logstash-logback-encoder:8.1")
+    implementation("net.logstash.logback:logstash-logback-encoder:9.0")
 
     // JWT — needed by JwtAuthenticationFilter (not transitively visible from :infrastructure)
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
@@ -51,8 +51,8 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.flywaydb:flyway-core")
-    testImplementation("org.testcontainers:junit-jupiter:1.20.4")
-    testImplementation("org.testcontainers:postgresql:1.20.4")
+    testImplementation("org.testcontainers:junit-jupiter:1.21.4")
+    testImplementation("org.testcontainers:postgresql:1.21.4")
 }
 
 tasks.withType<Test> {
