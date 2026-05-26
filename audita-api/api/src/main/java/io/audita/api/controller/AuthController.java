@@ -4,6 +4,7 @@ import io.audita.api.dto.request.*;
 import io.audita.api.dto.response.AuthResponse;
 import io.audita.application.port.AuthPort;
 import io.audita.application.port.AuthPort.LoginResult;
+import io.audita.infrastructure.tenant.TenantContext;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Map;
 
 @RestController
@@ -52,13 +54,19 @@ public class AuthController {
             HttpServletRequest servletRequest,
             HttpServletResponse response) {
 
+        String resolvedTenantSlug = resolveTenantSlug(tenantSlug);
         LoginResult result;
-        if (tenantSlug == null || tenantSlug.isBlank()) {
+        if (resolvedTenantSlug == null) {
             result = authService.loginSuperAdmin(request.email(), request.password());
         } else {
             String clientIp = resolveClientIp(servletRequest);
             String userAgent = servletRequest.getHeader(USER_AGENT_HEADER);
-            result = authService.loginTenantUser(request.email(), request.password(), tenantSlug, clientIp, userAgent);
+            result = authService.loginTenantUser(
+                    request.email(),
+                    request.password(),
+                    resolvedTenantSlug,
+                    clientIp,
+                    userAgent);
         }
 
         setRefreshCookie(response, result.rawRefreshToken());
@@ -74,7 +82,7 @@ public class AuthController {
         if (rawToken == null) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        if (!hasTenantHeader(request)) {
+        if (!hasTenantContext(request)) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
@@ -92,7 +100,7 @@ public class AuthController {
         if (rawToken == null) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        if (!hasTenantHeader(request)) {
+        if (!hasTenantContext(request)) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
@@ -106,7 +114,7 @@ public class AuthController {
     public ResponseEntity<Void> logout(
             HttpServletRequest request,
             HttpServletResponse response) {
-        if (extractRefreshCookie(request) != null && !hasTenantHeader(request)) {
+        if (extractRefreshCookie(request) != null && !hasTenantContext(request)) {
             clearRefreshCookie(response);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
@@ -171,9 +179,19 @@ public class AuthController {
                 .orElse(null);
     }
 
-    private boolean hasTenantHeader(HttpServletRequest request) {
-        String tenantSlug = request.getHeader("X-Tenant-Slug");
-        return tenantSlug != null && !tenantSlug.isBlank();
+    private boolean hasTenantContext(HttpServletRequest request) {
+        return resolveTenantSlug(request.getHeader("X-Tenant-Slug")) != null;
+    }
+
+    private String resolveTenantSlug(String headerTenantSlug) {
+        String contextTenantSlug = TenantContext.getCurrentTenant();
+        if (contextTenantSlug != null && !contextTenantSlug.isBlank()) {
+            return contextTenantSlug;
+        }
+        if (headerTenantSlug == null || headerTenantSlug.isBlank()) {
+            return null;
+        }
+        return headerTenantSlug.trim().toLowerCase(Locale.ROOT);
     }
 
     private AuthResponse toAuthResponse(LoginResult result) {

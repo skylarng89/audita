@@ -90,12 +90,24 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
                             request.getMethod(), request.getRequestURI(), normalizedSlug);
                     throw new AccessDeniedException("Tenant header is not allowed for bootstrap requests.");
                 }
-                if (!tenantExists(normalizedSlug)) {
-                    log.warn("Rejected request due to unknown tenant slug: method={} path={} tenantSlug={}",
-                            request.getMethod(), request.getRequestURI(), normalizedSlug);
-                    throw new AccessDeniedException("Unknown tenant.");
+                if (tenantExists(normalizedSlug)) {
+                    resolvedSlug = normalizedSlug;
+                } else {
+                    String slugBySubdomain = findSlugBySubdomain(normalizedSlug);
+                    if (slugBySubdomain == null) {
+                        log.warn("Rejected request due to unknown tenant slug: method={} path={} tenantSlug={}",
+                                request.getMethod(), request.getRequestURI(), normalizedSlug);
+                        throw new AccessDeniedException("Unknown tenant.");
+                    }
+                    resolvedSlug = slugBySubdomain;
+                    if (log.isInfoEnabled()) {
+                        log.info("Resolved tenant from tenant header subdomain alias: header={} slug={} method={} path={}",
+                                normalizedSlug,
+                                resolvedSlug,
+                                request.getMethod(),
+                                request.getRequestURI());
+                    }
                 }
-                resolvedSlug = normalizedSlug;
             }
         }
 

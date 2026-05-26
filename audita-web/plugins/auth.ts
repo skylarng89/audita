@@ -12,6 +12,7 @@ import { useAuthStore } from "~/stores/auth";
  */
 export default defineNuxtPlugin(async () => {
   const auth = useAuthStore();
+  const { fetchStatus } = useOnboarding();
   const isDev = Boolean(import.meta.dev);
   const config = useRuntimeConfig();
   const requestUrl = new URL(globalThis.location.href);
@@ -24,6 +25,11 @@ export default defineNuxtPlugin(async () => {
   auth.hydrateTenantSlug();
   if (!auth.tenantSlug && tenantSlug) {
     auth.setTenantSlug(tenantSlug);
+  }
+
+  const status = await fetchStatus();
+  if (status?.tenantSlug) {
+    auth.setTenantSlug(status.tenantSlug);
   }
 
   try {

@@ -1,6 +1,7 @@
 package io.audita.api.controller;
 
 import io.audita.api.security.UserPrincipal;
+import io.audita.application.port.SampleDataPort;
 import io.audita.application.port.TenantSettingsPort;
 import io.audita.domain.model.ApprovalType;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,9 +35,12 @@ class TenantSettingsControllerWebMvcTest {
     @Mock
     TenantSettingsPort tenantSettingsPort;
 
+    @Mock
+    SampleDataPort sampleDataPort;
+
     @BeforeEach
     void setUp() {
-        TenantSettingsController controller = new TenantSettingsController(tenantSettingsPort);
+        TenantSettingsController controller = new TenantSettingsController(tenantSettingsPort, sampleDataPort);
         ReflectionTestUtils.setField(controller, "jwtExpirySeconds", 900);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())

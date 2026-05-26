@@ -233,6 +233,8 @@ definePageMeta({ layout: "auth" });
 useHead({ title: "Complete Setup — Audita" });
 
 const route = useRoute();
+const auth = useAuthStore();
+const { fetchStatus } = useOnboarding();
 const { acceptInvite } = useAuth();
 
 const form = reactive({ password: "", confirm: "" });
@@ -263,34 +265,29 @@ function strengthColor(segment: number) {
 }
 
 async function handleSubmit() {
-  error.value = "";
-  if (form.password !== form.confirm) {
-    error.value = "Passwords do not match.";
-    return;
-  }
-  if (form.password.length < 8) {
-    error.value = "Password must be at least 8 characters.";
-    return;
-  }
+  const state = {
+    password: form.password,
+    confirmPassword: form.confirm,
+    done: done.value,
+    error: error.value,
+    isLoading: isLoading.value,
+  };
 
-  const token = route.query.token as string;
-  const tenantSlug = route.query.tenant as string;
-  if (!token || !tenantSlug) {
-    error.value = "Invalid invite link.";
-    return;
-  }
+  await runInviteAcceptanceSubmit({
+    state,
+    routeToken: route.query.token,
+    routeTenant: route.query.tenant,
+    authTenantSlug: auth.tenantSlug,
+    dependencies: {
+      acceptInvite,
+      fetchStatus,
+      setTenantSlug: (tenantSlug: string) => auth.setTenantSlug(tenantSlug),
+      resolveApiErrorMessage,
+    },
+  });
 
-  isLoading.value = true;
-  try {
-    await acceptInvite(token, form.password, tenantSlug);
-    done.value = true;
-  } catch (errorResponse: unknown) {
-    error.value = resolveApiErrorMessage(
-      errorResponse,
-      "This invite link is invalid or has expired.",
-    );
-  } finally {
-    isLoading.value = false;
-  }
+  done.value = state.done;
+  error.value = state.error;
+  isLoading.value = state.isLoading;
 }
 </script>
