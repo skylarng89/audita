@@ -1,8 +1,8 @@
 # Audita — Active Context
 
 **Last Updated:** 2026-05-25
-**Current Phase:** Production deployment — Nginx vhost configured, subdomain-based tenant resolution implemented
-**Active Sprint:** Post-Sprint 7 — Production tenant resolution fix
+**Current Phase:** Public launch readiness — unified tenant baseline migration + replica-safe Flyway + CI stabilization
+**Active Sprint:** Post-Sprint 8 — CI + production tenant auth stabilization
 
 ---
 
@@ -41,7 +41,8 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 | Post-Sprint 5 | 7/7 | 7 | Approver Workflow Flexibility + Activity Summary Test Coverage | 2026-05-23 |
 | Post-Sprint 6 | 3/3 | 3 | Web Docker policy parity + pnpm config cleanup | 2026-05-24 |
 | Post-Sprint 7 | 1/1 | 1 | Production: subdomain-based tenant resolution | 2026-05-25 |
-| **TOTAL** | **248/248** | **248** | — | — |
+| Post-Sprint 8 | 1/1 | 1 | CI + production tenant auth stabilization | 2026-05-25 |
+| **TOTAL** | **249/249** | **249** | — | — |
 
 **Sprint 12: Launch Readiness** — All 6 tasks completed. v0.6.0 released.
 
@@ -83,8 +84,8 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 
 ## Quality Gates
 
-- **Backend tests**: 62/62 passing (AllSprintsE2ETest + critical flows + security regression + controller tests + HtmlSanitizerTest)
-- **Frontend gates**: `pnpm test` (41 tests, 13 files), `pnpm -s nuxi typecheck`, `pnpm build` all passing
+- **Backend tests**: API module and infrastructure module tests passing; pre-existing `AuthServiceTest` Mockito stubbing issues confirmed unrelated to recent changes
+- **Frontend gates**: `pnpm test` (47 tests, 14 files), `pnpm -s nuxi typecheck`, `pnpm build` all passing
 - **CI Trivy/container image scan path**: web Docker build now passes lockfile supply-chain policy validation in containerized install step after workspace-policy copy fix
 - **Docker**: Full Compose stack operational (PostgreSQL 17, MailHog, API, Web)
 - **Security hardening**: SEC-001 through SEC-004 complete, with refinements; Sprint 13 best practices complete
@@ -144,13 +145,52 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 ## Current Blockers
 
 - **No active implementation blockers.**
-- **Production note:** Existing deployment at `cm.mypixelpay.com` needs database reset + fresh setup to populate the `subdomain` column, or manual SQL backfill: `UPDATE public.tenants SET subdomain = 'cm' WHERE slug = 'pixelpay-systems-limited';`
+- **Production note:** Deploy latest `audita-web` image containing slug-precedence hotfix (`auth.global.ts`, `plugins/auth.ts`, `tenant.ts`) to stop post-refresh logout/login regression.
+
+---
+
+## Today's Work Summary (2026-05-25)
+
+### CI Test Failures Fixed
+- **`tests/server/api-proxy.spec.ts`**: Removed `"x-forwarded-host"` from `ALLOWED_HEADERS` in `apiProxy.ts` — test expected this spoofable header to be stripped.
+- **`tests/middleware/tenant.spec.ts`**: Fixed tenant middleware (`middleware/tenant.ts`) to properly logout authenticated users when resolved tenant changes, matching test expectation.
+- **Verification**: `pnpm test` in `audita-web` passed: `14/14` test files, `47/47` tests.
+
+### Container Log Analysis + Flyway Idempotency Hardening
+- Identified "Unknown tenant" pre-setup rejections as expected behavior for fresh containers.
+- **Flyway migration warnings** (`already exists, skipping`) fixed:
+  - `V3__create_groups.sql`: Changed from `CREATE TABLE IF NOT EXISTS groups` (which collided with V1) to `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` + `DO $$` constraint block.
+  - Added PostgreSQL advisory lock (`pg_try_advisory_lock`) to `TenantMigrationStartupRunner` to prevent concurrent migrations across container replicas.
+  - Added `audita.migration.startup.enabled` property (env var `MIGRATION_STARTUP_ENABLED`) for environments that want to disable startup migrations.
+
+### Unified Tenant Baseline Migration (Public Launch Prep)
+- **Consolidated V1-V10** into single `V1__create_tenant_schema.sql` — complete schema + seed data + all indexes in one script.
+- **Deleted V2-V10** (`seed_roles_and_permissions`, `create_groups`, `add_refresh_token_context`, `add_audit_indexes`, `add_user_roles`, `add_idempotency_keys`, `add_audit_export_requests`, `ensure_refresh_tokens_table`, `repair_refresh_tokens_table`).
+- **Rationale**: No existing production data to migrate. Fresh public launch benefits from clean single-script provisioning. Future schema changes follow as V2, V3, etc.
+- **Files changed**: `V1__create_tenant_schema.sql` (rewritten), `TenantMigrationStartupRunner.java` (advisory lock + opt-out flag), `application.yml` (new property), 10 migration files deleted.
+- **Verification**: Frontend `pnpm test` 47/47 pass. Backend `:api:test` and `:infrastructure:test` (tenant tests) pass.
+
+### License Normalization — Switched to Apache 2.0
+- Replaced custom source-available `LICENSE` (Commons Clause restriction) with canonical **Apache License 2.0** text.
+- Updated `README.md` license section: now states "Apache 2.0" instead of "source-available / no-resale".
+- Updated `CONTRIBUTING.md` with explicit inbound=outbound contributor licensing statement.
+- Updated `LICENSE-APACHE` reference to point to canonical `LICENSE` without resale conditions.
+- **Rationale:** User decided true open source (allowing commercial redistribution) aligns better with project goals.
+
+### Social Media Launch Kit Prepared
+- Generated platform-specific copy for **LinkedIn, Twitter/X, Reddit, Hacker News**.
+- Tone: **playful/irreverent** (e.g., "Your change approval process is just a shared Google Sheet with extra steps").
+- CTA: **Star the GitHub repo** (`github.com/skylarng89/audita`).
+- Includes posting schedule, hashtag strategy, engagement tips, and asset pairing guide.
+- Image generation was attempted but discarded; user will provide their own platform screenshots.
+- All copy lives in `social-media-assets/README.md`.
 
 ---
 
 ## Next Actions
 
-1. Deploy the subdomain tenant resolution changes to production.
-2. Reset database and re-run setup (recommended) or backfill `subdomain` column via SQL.
-3. Verify login works at `cm.mypixelpay.com` with the X-Forwarded-Host resolution chain.
+1. Deploy latest `audita-web` build to production.
+2. Hard refresh browser/storage and verify login + refresh + settings-save flows remain authenticated.
+3. Verify CI remains green on `pnpm test` for middleware/proxy specs.
 4. Prepare v0.7.0 release candidate.
+5. Execute social media launch using copy from `social-media-assets/README.md` (playful/irreverent tone, star-the-repo CTA).

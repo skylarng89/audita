@@ -10,6 +10,9 @@ import java.util.UUID;
 
 public interface CrApproverRepository extends JpaRepository<CrApproverEntity, UUID> {
 
+    long deleteByIsSampleTrue();
+    long countByIsSampleTrue();
+
     @EntityGraph(attributePaths = {"user", "user.roles"})
     Optional<CrApproverEntity> findWithUserAndRolesById(UUID id);
 

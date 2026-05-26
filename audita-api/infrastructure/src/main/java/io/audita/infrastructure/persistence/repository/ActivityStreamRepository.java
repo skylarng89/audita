@@ -8,5 +8,8 @@ import java.util.UUID;
 
 public interface ActivityStreamRepository extends JpaRepository<ActivityStreamEntity, UUID> {
 
+    long deleteByIsSampleTrue();
+    long countByIsSampleTrue();
+
     List<ActivityStreamEntity> findByChangeRequestIdOrderByCreatedAtDesc(UUID changeRequestId);
 }

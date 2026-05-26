@@ -44,6 +44,9 @@ public class AttachmentEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
+    @Column(name = "is_sample", nullable = false)
+    private boolean isSample = false;
+
     protected AttachmentEntity() {}
 
     public AttachmentEntity(ChangeRequestEntity changeRequest,
@@ -90,5 +93,13 @@ public class AttachmentEntity {
 
     public OffsetDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public boolean isSample() {
+        return isSample;
+    }
+
+    public void setSample(boolean sample) {
+        isSample = sample;
     }
 }

@@ -2,6 +2,7 @@ package io.audita.api.controller;
 
 import io.audita.api.dto.response.TenantAdminSettingsResponse;
 import io.audita.api.security.UserPrincipal;
+import io.audita.application.port.SampleDataPort;
 import io.audita.application.port.TenantSettingsPort;
 import io.audita.domain.exception.DomainNotPermittedException;
 import io.audita.domain.model.ApprovalType;
@@ -26,12 +27,14 @@ import java.util.UUID;
 public class TenantSettingsController {
 
         private final TenantSettingsPort tenantSettingsPort;
+        private final SampleDataPort sampleDataPort;
 
         @Value("${audita.jwt.expiry-seconds:900}")
         private int jwtExpirySeconds;
 
-        public TenantSettingsController(TenantSettingsPort tenantSettingsPort) {
+        public TenantSettingsController(TenantSettingsPort tenantSettingsPort, SampleDataPort sampleDataPort) {
                 this.tenantSettingsPort = tenantSettingsPort;
+                this.sampleDataPort = sampleDataPort;
         }
 
         @GetMapping
@@ -76,17 +79,20 @@ public class TenantSettingsController {
                                 settings.autoApproverDefaults().userIds(),
                                 settings.autoApproverDefaults().groupIds());
 
-                TenantAdminSettingsResponse.AuditDefaults auditDefaults = new TenantAdminSettingsResponse.AuditDefaults(
-                                settings.auditDefaults().exportLinkExpiryHours());
+TenantAdminSettingsResponse.AuditDefaults auditDefaults = new TenantAdminSettingsResponse.AuditDefaults(
+                        settings.auditDefaults().exportLinkExpiryHours());
+
+                boolean sampleDataImported = sampleDataPort.isSampleDataImported(tenantSlug);
 
                 return new TenantAdminSettingsResponse(
-                                profile,
-                                featureFlags,
-                                securityDefaults,
-                                workflowDefaults,
-                                slaDefaults,
-                                autoApproverDefaults,
-                                auditDefaults);
+                        profile,
+                        featureFlags,
+                        securityDefaults,
+                        workflowDefaults,
+                        slaDefaults,
+                        autoApproverDefaults,
+                        auditDefaults,
+                        sampleDataImported);
         }
 
         @PatchMapping

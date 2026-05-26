@@ -1,5 +1,46 @@
 # Audita — Changelog
 
+## [0.6.5] — 2026-05-25
+
+### Fixed (CI + Container Hardening — 2026-05-25)
+
+- **CI test failures in middleware/proxy specs**:
+  - Removed `"x-forwarded-host"` from `apiProxy.ts` `ALLOWED_HEADERS` — test expected this spoofable header to be stripped.
+  - Fixed `middleware/tenant.ts` to call `auth.logout()` when authenticated user's resolved tenant differs from stored `tenantSlug`, matching test expectation.
+- **Flyway migration idempotency** for containerized/replicated environments:
+  - `TenantMigrationStartupRunner.java`: added PostgreSQL advisory lock (`pg_try_advisory_lock`) to prevent concurrent migrations across replicas.
+  - `application.yml`: added `audita.migration.startup.enabled` property (env `MIGRATION_STARTUP_ENABLED`) for environments that want to disable startup migrations.
+  - `V3__create_groups.sql` (pre-consolidation): changed from `CREATE TABLE IF NOT EXISTS groups` to `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` + `DO $$` constraint block to avoid "already exists" warnings.
+
+### Changed (Public Launch Prep — Unified Tenant Baseline — 2026-05-25)
+
+- **Consolidated V1-V10 tenant migrations into single `V1__create_tenant_schema.sql`**:
+  - New unified baseline includes all tables, columns, constraints, indexes, and seed data (roles, permissions, role_permissions) from the former 10 incremental scripts.
+  - Deleted: `V2__seed_roles_and_permissions.sql`, `V3__create_groups.sql`, `V4__add_refresh_token_context.sql`, `V5__add_audit_indexes.sql`, `V6__add_user_roles.sql`, `V7__add_idempotency_keys.sql`, `V8__add_audit_export_requests.sql`, `V9__ensure_refresh_tokens_table.sql`, `V10__repair_refresh_tokens_table.sql`.
+  - **Rationale:** No production data exists yet; fresh public launch benefits from clean single-script tenant provisioning. Future schema changes follow as V2, V3, etc.
+
+### Verification (2026-05-25)
+
+- `pnpm test` in `audita-web`: `14/14` test files, `47/47` tests pass.
+- `./gradlew :api:test` backend: pass.
+- `./gradlew :infrastructure:test` (tenant/migration tests): pass.
+
+---
+
+## [0.6.4] — 2026-05-25
+
+### Fixed (Post-Sprint CI + Production Tenant Auth Stabilization — 2026-05-25)
+
+- **Post-refresh logout/login regression on subdomain deployment**: fixed tenant slug precedence so frontend now keeps server-authoritative tenant slug after authentication and bootstrap-status checks.
+  - Updated `auth.global` middleware to always apply `bootstrap/status.tenantSlug` via store API.
+  - Updated auth plugin bootstrap path to hydrate stored slug first and only use subdomain fallback when no stored slug exists.
+  - Removed forced logout behavior in tenant middleware for authenticated users when resolved hostname token differs from stored slug.
+- **CI test failures in middleware/proxy specs**: aligned tenant middleware unit test expectations with new authenticated-session behavior while keeping API proxy hardening (still filters unsafe host-forwarding headers).
+
+### Verification (Post-Sprint CI + Production Tenant Auth Stabilization — 2026-05-25)
+
+- `pnpm test` in `audita-web` passed: `14/14` test files, `47/47` tests.
+
 ## [0.6.3] — 2026-05-24
 
 ### Fixed (Post-Sprint Web Container Build Reliability — 2026-05-24)

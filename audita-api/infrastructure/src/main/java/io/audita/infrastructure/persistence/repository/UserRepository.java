@@ -15,6 +15,9 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
+    long deleteByIsSampleTrue();
+    long countByIsSampleTrue();
+
     @Override
     @EntityGraph(attributePaths = { "role", "roles", "roles.permissions" })
     Optional<UserEntity> findById(UUID id);

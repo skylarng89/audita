@@ -10,5 +10,8 @@ import java.util.UUID;
 @Repository
 public interface CustomFieldDefinitionRepository extends JpaRepository<CustomFieldDefinitionEntity, UUID> {
 
+    long deleteByIsSampleTrue();
+    long countByIsSampleTrue();
+
     List<CustomFieldDefinitionEntity> findAllByOrderByDisplayOrderAsc();
 }

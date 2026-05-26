@@ -43,6 +43,9 @@ public class CrApproverEntity {
     @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
+    @Column(name = "is_sample", nullable = false)
+    private boolean isSample = false;
+
     protected CrApproverEntity() {}
 
     public CrApproverEntity(ChangeRequestEntity changeRequest, UserEntity user,
@@ -91,4 +94,6 @@ public class CrApproverEntity {
     public boolean isAdHoc() { return isAdHoc; }
     public void setAdHoc(boolean adHoc) { this.isAdHoc = adHoc; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
+    public boolean isSample() { return isSample; }
+    public void setSample(boolean sample) { isSample = sample; }
 }

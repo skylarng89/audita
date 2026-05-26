@@ -10,5 +10,8 @@ import java.util.UUID;
 @Repository
 public interface CommentRepository extends JpaRepository<CommentEntity, UUID> {
 
+    long deleteByIsSampleTrue();
+    long countByIsSampleTrue();
+
     List<CommentEntity> findByChangeRequestIdOrderByCreatedAtDesc(UUID changeRequestId);
 }
