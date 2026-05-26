@@ -11,9 +11,15 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TenantResolutionFilterTest {
@@ -62,5 +68,31 @@ class TenantResolutionFilterTest {
 
         verifyNoInteractions(dataSource);
         verifyNoInteractions(filterChain);
+    }
+
+    @Test
+    void tenant_header_matching_subdomain_resolves_to_slug() throws Exception {
+        Connection connection = mock(Connection.class);
+        PreparedStatement tenantExistsStatement = mock(PreparedStatement.class);
+        PreparedStatement subdomainStatement = mock(PreparedStatement.class);
+        ResultSet tenantExistsResult = mock(ResultSet.class);
+        ResultSet subdomainResult = mock(ResultSet.class);
+
+        when(dataSource.getConnection()).thenReturn(connection);
+        when(connection.prepareStatement("SELECT 1 FROM public.tenants WHERE slug = ?")).thenReturn(tenantExistsStatement);
+        when(connection.prepareStatement("SELECT slug FROM public.tenants WHERE subdomain = ?")).thenReturn(subdomainStatement);
+        when(tenantExistsStatement.executeQuery()).thenReturn(tenantExistsResult);
+        when(subdomainStatement.executeQuery()).thenReturn(subdomainResult);
+        when(tenantExistsResult.next()).thenReturn(false);
+        when(subdomainResult.next()).thenReturn(true);
+        when(subdomainResult.getString(1)).thenReturn("pixelpay-systems-limited");
+
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/accept-invite");
+        request.addHeader("X-Tenant-Slug", "cm");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        tenantResolutionFilter.doFilter(request, response, filterChain);
+
+        verify(filterChain).doFilter(request, response);
     }
 }
