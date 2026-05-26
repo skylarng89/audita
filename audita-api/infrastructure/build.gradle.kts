@@ -26,7 +26,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
     // AWS SDK v2 (S3-compatible file storage)
-    implementation(platform("software.amazon.awssdk:bom:2.44.12"))
+    implementation(platform("software.amazon.awssdk:bom:2.44.13"))
     implementation("software.amazon.awssdk:s3")
 
     // OWASP HTML Sanitizer — sanitise TipTap rich-text before persistence
