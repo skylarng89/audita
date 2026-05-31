@@ -652,3 +652,28 @@
 
 - `docker build -t audita-web:scan -f audita-web/Dockerfile audita-web` passes lockfile verification and full production build.
 - Previous `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` failure in web builder install step is eliminated.
+
+---
+
+## ADR-022: Security Audit Remediation Strategy (Sprint 14)
+
+**Date:** 2026-05-31
+**Status:** Accepted
+
+**Decision:** Address 52 audit findings via a prioritized 21-task sprint organized into 5 phases: Critical Security → High Auth → High Infrastructure → Medium Security → Performance & Architecture. All 3 critical findings are deployment blockers for v0.7.0.
+
+**Reasoning:**
+
+- Critical findings (unauthenticated setup, XSS, open redirect) are exploitable in production and must be resolved before any public release.
+- High-severity auth issues (missing rate limits, JWT irrevocability, SSO bypass) are attack surface that must close before HA deployment.
+- Infrastructure hardening (Docker port binding, healthchecks, DDL auto-update) prevents production misconfiguration.
+- Medium-severity items (N+1 queries, CSP, tenant isolation) improve defense-in-depth and scalability.
+- Component decomposition included to prevent further monolithic growth.
+
+**Trade-offs:**
+
+- Redis migration (SA14-016) deferred to Phase D — current single-instance deployment makes in-memory stores acceptable. Must be completed before horizontal scaling.
+- Component decomposition (SA14-021) is large-scope — may spill into a follow-up sprint if time-constrained.
+- 21 tasks is ambitious for one sprint — phases are ordered by priority so partial completion still delivers maximum security value.
+
+**Reference:** `memory-bank/docs/security-audit-2026-05-31.md`

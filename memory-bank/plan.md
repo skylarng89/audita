@@ -529,3 +529,81 @@ All Sprint 12 tasks completed. v0.6.0 released.
 
 - `git diff --check -- LICENSE README.md CONTRIBUTING.md LICENSE-APACHE` — clean.
 - Copy review: `social-media-assets/README.md` contains platform-specific posts ready for use.
+
+---
+
+## Sprint 14 — Security Audit Remediation (2026-05-31)
+
+### Sprint 14 Objectives
+
+1. Eliminate all critical and high-severity security vulnerabilities identified in the 2026-05-31 audit.
+2. Harden production infrastructure (Docker, database, CI/CD) against common misconfiguration attacks.
+3. Remediate N+1 query performance bottlenecks and enforce audit log immutability at the database layer.
+4. Decompose monolithic frontend components for long-term maintainability.
+
+### Sprint 14 Work Items
+
+**Phase A — Critical Security (3 tasks)**
+
+- SA14-001: Add setup-token guard on `/api/platform/v1/setup` endpoint.
+- SA14-002: Integrate DOMPurify for `v-html` rich-text sanitization.
+- SA14-003: Validate redirect targets are same-origin paths.
+
+**Phase B — High-Severity Auth & Session (4 tasks)**
+
+- SA14-004: Add rate limiting to super admin login path.
+- SA14-005: Implement JWT token versioning for revocability.
+- SA14-006: Enforce domain whitelist in SSO JIT-provisioning path.
+- SA14-007: Enable CSRF protection for cookie-scoped auth endpoints.
+
+**Phase C — High-Severity Infrastructure (4 tasks)**
+
+- SA14-008: Make idempotency key check-then-act atomic.
+- SA14-009: Fix `@Async` self-invocation in `AuditExportService`.
+- SA14-010: Set `JPA_DDL_AUTO=validate` for production profiles.
+- SA14-011: Harden Docker infrastructure (port binding, healthchecks, image pinning).
+
+**Phase D — Medium-Severity Security (5 tasks)**
+
+- SA14-012: Configure security response headers and CSP hardening.
+- SA14-013: Harden tenant isolation (context leaks, status validation, password reset scoping).
+- SA14-014: Prevent CSV injection and stream audit export output.
+- SA14-015: Fix exception handler information leakage and X-Forwarded-For hardening.
+- SA14-016: Migrate in-memory SSO state and rate limiting to Redis.
+
+**Phase E — Performance & Architecture (5 tasks)**
+
+- SA14-017: Remediate N+1 queries with batch fetching and EntityGraph.
+- SA14-018: Add Caffeine cache for tenant resolution.
+- SA14-019: Implement SSE exponential backoff and fix event listener leaks.
+- SA14-020: Enforce audit log immutability at database level.
+- SA14-021: Decompose monolithic components (CR detail, settings page).
+
+### Sprint 14 Delivery Phases
+
+1. **Phase A** (Critical): SA14-001 through SA14-003 — immediate deployment blockers.
+2. **Phase B** (Auth): SA14-004 through SA14-007 — auth system hardening.
+3. **Phase C** (Infra): SA14-008 through SA14-011 — infrastructure correctness.
+4. **Phase D** (Medium Security): SA14-012 through SA14-016 — defense-in-depth.
+5. **Phase E** (Perf/Arch): SA14-017 through SA14-021 — scalability and maintainability.
+
+### Sprint 14 Verification Gates
+
+- `cd audita-api && ./gradlew :api:test :infrastructure:test --no-daemon`
+- `cd audita-web && pnpm test && pnpm -s nuxi typecheck && pnpm build`
+- `docker compose config` — sanity check after compose hardening.
+- Security headers verified via `curl -I` against running API.
+- DOMPurify integration verified by XSS payload test suite.
+
+### Sprint 14 Exit Criteria
+
+1. All 3 critical findings resolved and regression-tested.
+2. All 12 high-severity findings resolved.
+3. N+1 queries eliminated on user list, CR list, comment list, and activity stream.
+4. Audit log table has DB-level immutability enforcement.
+5. Docker compose binds ports to localhost and includes healthchecks.
+6. CSP uses nonce-based `script-src` without `'unsafe-inline'`.
+
+### Sprint 14 Reference
+
+Full audit report: `memory-bank/docs/security-audit-2026-05-31.md`

@@ -1,5 +1,22 @@
 # Audita — Changelog
 
+## [0.6.6] — 2026-05-31
+
+### Added (Security Audit & Sprint 14 Planning — 2026-05-31)
+
+- **Full codebase security & architecture audit** completed across `audita-api`, `audita-web`, infrastructure, and CI/CD.
+  - 52 findings: 3 Critical, 12 High, 27 Medium, 12 Low.
+  - Full report: `memory-bank/docs/security-audit-2026-05-31.md`.
+- **Sprint 14 created** with 21 remediation tasks across 5 phases:
+  - Phase A (Critical): setup-token guard, DOMPurify XSS fix, redirect validation.
+  - Phase B (High Auth): super admin rate limiting, JWT revocability, SSO domain whitelist, CSRF.
+  - Phase C (High Infra): atomic idempotency, @Async fix, DDL auto-validate, Docker hardening.
+  - Phase D (Medium Security): security headers, tenant isolation, CSV injection, error leakage, Redis migration.
+  - Phase E (Perf/Arch): N+1 queries, tenant caching, SSE backoff, audit immutability, component decomposition.
+- ADR-022 recorded: audit remediation strategy and prioritization rationale.
+
+---
+
 ## [0.6.5] — 2026-05-25
 
 ### Fixed (CI + Container Hardening — 2026-05-25)

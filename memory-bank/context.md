@@ -1,8 +1,8 @@
 # Audita — Active Context
 
-**Last Updated:** 2026-05-25
-**Current Phase:** Public launch readiness — unified tenant baseline migration + replica-safe Flyway + CI stabilization
-**Active Sprint:** Post-Sprint 8 — CI + production tenant auth stabilization
+**Last Updated:** 2026-05-31
+**Current Phase:** Security audit remediation — Sprint 14 planning complete, ready for execution
+**Active Sprint:** Sprint 14 — Security Audit Remediation (21 tasks, 0 started)
 
 ---
 
@@ -42,7 +42,8 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 | Post-Sprint 6 | 3/3 | 3 | Web Docker policy parity + pnpm config cleanup | 2026-05-24 |
 | Post-Sprint 7 | 1/1 | 1 | Production: subdomain-based tenant resolution | 2026-05-25 |
 | Post-Sprint 8 | 1/1 | 1 | CI + production tenant auth stabilization | 2026-05-25 |
-| **TOTAL** | **249/249** | **249** | — | — |
+| Sprint 14 | 0/21 | 21 | Security Audit Remediation | — |
+| **TOTAL** | **249/270** | **270** | — | — |
 
 **Sprint 12: Launch Readiness** — All 6 tasks completed. v0.6.0 released.
 
@@ -145,52 +146,38 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 ## Current Blockers
 
 - **No active implementation blockers.**
+- **Sprint 14 ready to begin:** 21 tasks from security audit prioritized across 5 phases (Critical → High Auth → High Infra → Medium Security → Perf/Arch).
 - **Production note:** Deploy latest `audita-web` image containing slug-precedence hotfix (`auth.global.ts`, `plugins/auth.ts`, `tenant.ts`) to stop post-refresh logout/login regression.
 
 ---
 
-## Today's Work Summary (2026-05-25)
+## Today's Work Summary (2026-05-31)
 
-### CI Test Failures Fixed
-- **`tests/server/api-proxy.spec.ts`**: Removed `"x-forwarded-host"` from `ALLOWED_HEADERS` in `apiProxy.ts` — test expected this spoofable header to be stripped.
-- **`tests/middleware/tenant.spec.ts`**: Fixed tenant middleware (`middleware/tenant.ts`) to properly logout authenticated users when resolved tenant changes, matching test expectation.
-- **Verification**: `pnpm test` in `audita-web` passed: `14/14` test files, `47/47` tests.
+### Full Codebase Security & Architecture Audit
 
-### Container Log Analysis + Flyway Idempotency Hardening
-- Identified "Unknown tenant" pre-setup rejections as expected behavior for fresh containers.
-- **Flyway migration warnings** (`already exists, skipping`) fixed:
-  - `V3__create_groups.sql`: Changed from `CREATE TABLE IF NOT EXISTS groups` (which collided with V1) to `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` + `DO $$` constraint block.
-  - Added PostgreSQL advisory lock (`pg_try_advisory_lock`) to `TenantMigrationStartupRunner` to prevent concurrent migrations across container replicas.
-  - Added `audita.migration.startup.enabled` property (env var `MIGRATION_STARTUP_ENABLED`) for environments that want to disable startup migrations.
+- Conducted deep-scan audit across `audita-api` (Java 25 / Spring Boot 4), `audita-web` (Nuxt 3 / Vue 3), infrastructure, and CI/CD.
+- **52 unique findings** identified: 3 Critical, 12 High, 27 Medium, 12 Low.
+- **Critical findings:**
+  - `/api/platform/v1/setup` endpoint unauthenticated — first-run hijack risk.
+  - XSS via `v-html` without HTML sanitization (DOMPurify not integrated).
+  - Open redirect via unvalidated `redirect` query parameter in auth flows.
+- **High findings:** super admin login missing rate limiting, JWT tokens not revocable, SSO state not distributed, `@Async` self-invocation silently fails, idempotency not atomic, SSO bypasses domain whitelist, CSRF disabled with cookie-scoped refresh token, `JPA_DDL_AUTO=update` in production, unpinned Docker `:latest` tag, DB port exposed on all interfaces, broken healthcheck pointing to external DB.
+- **Medium findings:** hexagonal architecture violations, N+1 queries (5 locations), memory-bound exports, CSP `unsafe-inline`, tenant context leaks, CSV injection, in-memory rate limiting, exception handler information leakage.
+- Full report saved to `memory-bank/docs/security-audit-2026-05-31.md`.
 
-### Unified Tenant Baseline Migration (Public Launch Prep)
-- **Consolidated V1-V10** into single `V1__create_tenant_schema.sql` — complete schema + seed data + all indexes in one script.
-- **Deleted V2-V10** (`seed_roles_and_permissions`, `create_groups`, `add_refresh_token_context`, `add_audit_indexes`, `add_user_roles`, `add_idempotency_keys`, `add_audit_export_requests`, `ensure_refresh_tokens_table`, `repair_refresh_tokens_table`).
-- **Rationale**: No existing production data to migrate. Fresh public launch benefits from clean single-script provisioning. Future schema changes follow as V2, V3, etc.
-- **Files changed**: `V1__create_tenant_schema.sql` (rewritten), `TenantMigrationStartupRunner.java` (advisory lock + opt-out flag), `application.yml` (new property), 10 migration files deleted.
-- **Verification**: Frontend `pnpm test` 47/47 pass. Backend `:api:test` and `:infrastructure:test` (tenant tests) pass.
+### Sprint 14 Created
 
-### License Normalization — Switched to Apache 2.0
-- Replaced custom source-available `LICENSE` (Commons Clause restriction) with canonical **Apache License 2.0** text.
-- Updated `README.md` license section: now states "Apache 2.0" instead of "source-available / no-resale".
-- Updated `CONTRIBUTING.md` with explicit inbound=outbound contributor licensing statement.
-- Updated `LICENSE-APACHE` reference to point to canonical `LICENSE` without resale conditions.
-- **Rationale:** User decided true open source (allowing commercial redistribution) aligns better with project goals.
-
-### Social Media Launch Kit Prepared
-- Generated platform-specific copy for **LinkedIn, Twitter/X, Reddit, Hacker News**.
-- Tone: **playful/irreverent** (e.g., "Your change approval process is just a shared Google Sheet with extra steps").
-- CTA: **Star the GitHub repo** (`github.com/skylarng89/audita`).
-- Includes posting schedule, hashtag strategy, engagement tips, and asset pairing guide.
-- Image generation was attempted but discarded; user will provide their own platform screenshots.
-- All copy lives in `social-media-assets/README.md`.
+- 21 tasks organized into 5 phases: Critical Security (3), High Auth (4), High Infrastructure (4), Medium Security (5), Performance & Architecture (5).
+- Tasks added to `memory-bank/docs/tasks.md` with progress tracking updated.
+- Sprint plan added to `memory-bank/plan.md` with delivery phases, verification gates, and exit criteria.
 
 ---
 
 ## Next Actions
 
-1. Deploy latest `audita-web` build to production.
-2. Hard refresh browser/storage and verify login + refresh + settings-save flows remain authenticated.
-3. Verify CI remains green on `pnpm test` for middleware/proxy specs.
-4. Prepare v0.7.0 release candidate.
-5. Execute social media launch using copy from `social-media-assets/README.md` (playful/irreverent tone, star-the-repo CTA).
+1. **Begin Sprint 14 Phase A** — execute SA14-001 (setup-token guard), SA14-002 (DOMPurify), SA14-003 (redirect validation).
+2. Deploy latest `audita-web` build to production.
+3. Hard refresh browser/storage and verify login + refresh + settings-save flows remain authenticated.
+4. Verify CI remains green on `pnpm test` for middleware/proxy specs.
+5. Prepare v0.7.0 release candidate after Sprint 14 Phase A-C completion.
+6. Execute social media launch using copy from `social-media-assets/README.md` (playful/irreverent tone, star-the-repo CTA).
