@@ -61,6 +61,27 @@ public class ChangeRequestEntity {
     @Column(name = "is_sample", nullable = false)
     private boolean isSample = false;
 
+    @Column(name = "display_id")
+    private String displayId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "approval_status", nullable = false)
+    private ChangeRequestStatus approvalStatus = ChangeRequestStatus.DRAFT;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "completion_status", nullable = false)
+    private CompletionStatus completionStatus = CompletionStatus.IN_PROGRESS;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "workflow_mode", nullable = false)
+    private RequestWorkflowMode workflowMode = RequestWorkflowMode.APPROVAL_ONLY;
+
+    @Column(name = "request_department_id")
+    private UUID requestDepartmentId;
+
+    @Column(name = "destination_department_id")
+    private UUID destinationDepartmentId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private UserEntity createdBy;
@@ -89,6 +110,7 @@ public class ChangeRequestEntity {
                 "Only DRAFT change requests can be submitted. Current status: " + this.status);
         }
         this.status = ChangeRequestStatus.PENDING_APPROVAL;
+        this.approvalStatus = ChangeRequestStatus.PENDING_APPROVAL;
     }
 
     public void cancel() {
@@ -97,6 +119,7 @@ public class ChangeRequestEntity {
                 "Cannot cancel a closed change request. Current status: " + this.status);
         }
         this.status = ChangeRequestStatus.CANCELLED;
+        this.approvalStatus = ChangeRequestStatus.CANCELLED;
     }
 
     public void markApprovalLocked() { this.approvalLocked = true; }
@@ -125,12 +148,14 @@ public class ChangeRequestEntity {
                 .allMatch(a -> a.getStatus() == ApproverStatus.APPROVED);
         if (allRequiredApproved) {
             this.status = ChangeRequestStatus.APPROVED;
+            this.approvalStatus = ChangeRequestStatus.APPROVED;
             return;
         }
 
         // Single required approver who rejected → immediately closed
         if (required.size() == 1 && required.get(0).getStatus() == ApproverStatus.REJECTED) {
             this.status = ChangeRequestStatus.REJECTED;
+            this.approvalStatus = ChangeRequestStatus.REJECTED;
             return;
         }
 
@@ -139,6 +164,7 @@ public class ChangeRequestEntity {
                 .allMatch(a -> a.getStatus() == ApproverStatus.REJECTED);
         if (allRequiredRejected) {
             this.status = ChangeRequestStatus.REJECTED;
+            this.approvalStatus = ChangeRequestStatus.REJECTED;
         }
     }
 
@@ -178,4 +204,16 @@ public class ChangeRequestEntity {
     public List<CrApproverEntity> getApprovers() { return approvers; }
     public boolean isSample() { return isSample; }
     public void setSample(boolean sample) { isSample = sample; }
+    public String getDisplayId() { return displayId; }
+    public void setDisplayId(String displayId) { this.displayId = displayId; }
+    public ChangeRequestStatus getApprovalStatus() { return approvalStatus; }
+    public void setApprovalStatus(ChangeRequestStatus approvalStatus) { this.approvalStatus = approvalStatus; }
+    public CompletionStatus getCompletionStatus() { return completionStatus; }
+    public void setCompletionStatus(CompletionStatus completionStatus) { this.completionStatus = completionStatus; }
+    public RequestWorkflowMode getWorkflowMode() { return workflowMode; }
+    public void setWorkflowMode(RequestWorkflowMode workflowMode) { this.workflowMode = workflowMode; }
+    public UUID getRequestDepartmentId() { return requestDepartmentId; }
+    public void setRequestDepartmentId(UUID requestDepartmentId) { this.requestDepartmentId = requestDepartmentId; }
+    public UUID getDestinationDepartmentId() { return destinationDepartmentId; }
+    public void setDestinationDepartmentId(UUID destinationDepartmentId) { this.destinationDepartmentId = destinationDepartmentId; }
 }

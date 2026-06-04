@@ -607,3 +607,59 @@ All Sprint 12 tasks completed. v0.6.0 released.
 ### Sprint 14 Reference
 
 Full audit report: `memory-bank/docs/security-audit-2026-05-31.md`
+
+## Sprint 15 - Requests Workflow Expansion (2026-06-04)
+
+### Sprint 15 Objectives
+
+1. Introduce conditional request workflows (`APPROVAL_ONLY` and `DELIVERY_PIPELINE`) without breaking `/change-requests` compatibility.
+2. Add UAT and Deployment lifecycle with strict promotion and approval guards.
+3. Split request status model into `approvalStatus` and `completionStatus` while preserving existing request behavior.
+4. Add admin-managed departments and request ID prefix/sequence controls for immutable display IDs.
+
+### Sprint 15 Work Items
+
+- RW15-001 through RW15-004: Data model and migration foundation (display ID, dual statuses, departments, links, UAT/deployment tables).
+- RW15-005 through RW15-008: Core service/state-machine implementation and authorization guards.
+- RW15-009 through RW15-012: API/controller contract expansion with compatibility-safe DTOs.
+- RW15-013 through RW15-016: Admin settings and request create/edit UX for departments, prefix, and linked requests.
+- RW15-017 through RW15-020: Request detail UAT/deployment tabs, comments, approvals, promotion flow.
+- RW15-021 through RW15-024: Activity/audit parity, regression tests, and release hardening.
+
+### Sprint 15 Delivery Phases
+
+1. **Phase A (Data Contracts):** RW15-001 through RW15-004.
+2. **Phase B (Workflow Engine):** RW15-005 through RW15-008.
+3. **Phase C (API Surface):** RW15-009 through RW15-012.
+4. **Phase D (Frontend UX):** RW15-013 through RW15-020.
+5. **Phase E (Quality Gate):** RW15-021 through RW15-024.
+
+### Sprint 15 Verification Gates
+
+- `cd audita-api && ./gradlew :api:test :infrastructure:test --no-daemon`
+- `cd audita-web && pnpm test && pnpm -s nuxi typecheck && pnpm build`
+- API compatibility smoke checks for legacy `/api/v1/change-requests` consumers.
+- Migration replay check on fresh tenant bootstrap and existing tenant schema.
+
+### Sprint 15 Exit Criteria
+
+1. Requests support both workflow modes with documented transition guards.
+2. UAT can only be initiated after request approval is `APPROVED`.
+3. Deployment is only creatable via UAT promotion and UAT becomes read-only after promotion.
+4. Completion status rules enforced for both workflow modes.
+5. Department dropdowns are sourced from admin-managed master data only.
+6. Request display IDs use mutable prefix + immutable persisted value semantics.
+7. All UAT/Deployment events are written to both `activity_stream` and `audit_log`.
+
+### Sprint 15 Verification (Completed 2026-06-04)
+
+- `cd audita-api && ./gradlew :api:test --no-daemon` passes (all API module tests green).
+- `cd audita-api && ./gradlew :infrastructure:test --no-daemon` — 144/147 pass; 3 pre-existing `AuthServiceTest` Mockito stubbing failures (unrelated to Sprint 15).
+- `cd audita-web && pnpm test` — 185/185 tests pass across 26 test files.
+- `cd audita-web && pnpm -s nuxi typecheck` — 3 pre-existing errors in `setup.vue` and `session-restore.spec.ts` (unrelated to Sprint 15).
+- All 24 tasks (RW15-001 through RW15-024) completed via subagent-driven development with two-stage review (spec compliance + code quality).
+
+### Sprint 15 Reference
+
+Implementation spec: `memory-bank/docs/specs/2026-06-04-requests-conditional-workflow-design.md`
+Executable plan: `memory-bank/docs/plans/2026-06-04-sprint-15-requests-workflow-executable-plan.md`

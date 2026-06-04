@@ -5,12 +5,12 @@
         <p
           class="text-xs text-primary/70 uppercase tracking-[0.16em] font-semibold mb-1"
         >
-          Change Requests
+          Requests
         </p>
         <h1
           class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
         >
-          Create Change Request
+          New Request
         </h1>
       </div>
       <button class="btn-ghost btn-md" @click="navigateTo('/change-requests')">
@@ -33,7 +33,7 @@
         <!-- Title -->
         <div class="md:col-span-2">
           <p class="field-label">
-            Change Title <span class="text-danger">*</span>
+            Title <span class="text-danger">*</span>
           </p>
           <input
             v-model="form.title"
@@ -108,6 +108,37 @@
           <p v-if="errors.approvalType" class="field-error">
             {{ errors.approvalType }}
           </p>
+        </div>
+
+        <!-- Workflow Mode -->
+        <div>
+          <p class="field-label">Workflow Mode</p>
+          <select v-model="form.workflowMode" class="input mt-1">
+            <option value="APPROVAL_ONLY">Approval Only</option>
+            <option value="DELIVERY_PIPELINE">Delivery Pipeline</option>
+          </select>
+        </div>
+
+        <!-- Request Department -->
+        <div>
+          <p class="field-label">Request Department</p>
+          <select v-model="form.requestDepartmentId" class="input mt-1">
+            <option value="">— None —</option>
+            <option v-for="dept in activeDepartments" :key="dept.id" :value="dept.id">
+              {{ dept.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Destination Department -->
+        <div>
+          <p class="field-label">Destination Department</p>
+          <select v-model="form.destinationDepartmentId" class="input mt-1">
+            <option value="">— None —</option>
+            <option v-for="dept in activeDepartments" :key="dept.id" :value="dept.id">
+              {{ dept.name }}
+            </option>
+          </select>
         </div>
 
         <!-- Category -->
@@ -240,6 +271,13 @@
           <p class="field-hint">Press Enter or comma to add each system.</p>
         </div>
 
+        <!-- Linked Requests -->
+        <div class="md:col-span-2">
+          <p class="field-label">Linked Requests</p>
+          <CrRequestLinkPicker v-model="linkedRequestIds" />
+          <p class="field-hint">Search and select related change requests to link.</p>
+        </div>
+
         <!-- Description -->
         <div class="md:col-span-2">
           <p class="field-label">Scope and Description</p>
@@ -334,35 +372,31 @@
 </template>
 
 <script setup lang="ts">
+import type { Department } from "~/types";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import FlatPickr from "vue-flatpickr-component";
 import { buildRichTextExtensions } from "~/composables/richText";
 
 definePageMeta({ middleware: ["auth", "can-create-cr"] });
 
-useHead({ title: "Create Change Request — Audita" });
+useHead({ title: "New Request — Audita" });
 
-const { create, listCategories, uploadAttachment } = useChangeRequests();
+const { create, listCategories, listActiveDepartments, uploadAttachment, upsertLinks } = useChangeRequests();
 const { error: toastError } = useToast();
 
 const isSaving = ref(false);
 const errorMessage = ref("");
-
-const editor = useEditor({
-  content: "<p></p>",
-  extensions: buildRichTextExtensions("Describe scope, rollout plan, and risk controls..."),
-  editorProps: {
-    attributes: {
-      class: "prose dark:prose-invert max-w-none focus:outline-none",
-    },
-  },
-});
+const activeDepartments = ref<Department[]>([]);
+const linkedRequestIds = ref<string[]>([]);
 
 const form = reactive({
   title: "",
   priority: "" as string,
   riskLevel: "" as string,
   approvalType: "NON_LINEAR" as string,
+  workflowMode: "APPROVAL_ONLY" as string,
+  requestDepartmentId: "" as string,
+  destinationDepartmentId: "" as string,
   categories: [] as string[],
   scheduledStartDate: "",
   scheduledStartTime: "",
@@ -557,7 +591,12 @@ const endDatePickerConfig = computed(() => ({
 
 // Close dropdown when clicking outside
 onMounted(async () => {
-  allCategories.value = await listCategories().catch(() => []);
+  const [cats, depts] = await Promise.all([
+    listCategories().catch(() => [] as string[]),
+    listActiveDepartments().catch(() => [] as Department[]),
+  ]);
+  allCategories.value = cats;
+  activeDepartments.value = depts;
 
   document.addEventListener("click", (e) => {
     if (
@@ -659,6 +698,9 @@ async function createChangeRequest() {
       priority: form.priority,
       riskLevel: form.riskLevel,
       approvalType: form.approvalType,
+      workflowMode: form.workflowMode || "APPROVAL_ONLY",
+      requestDepartmentId: form.requestDepartmentId || null,
+      destinationDepartmentId: form.destinationDepartmentId || null,
       category: form.categories.length ? form.categories.join(", ") : null,
       scheduledStart:
         combineParts(
@@ -673,6 +715,18 @@ async function createChangeRequest() {
       affectedSystems: form.affectedSystems,
     };
     const created = await create(payload);
+    if (linkedRequestIds.value.length) {
+      try {
+        await upsertLinks(created.id, linkedRequestIds.value);
+      } catch (linkError: any) {
+        toastError(
+          resolveApiErrorMessage(
+            linkError,
+            "Change request created, but linked requests could not be saved.",
+          ),
+        );
+      }
+    }
     if (pendingAttachments.value.length) {
       try {
         await uploadPendingAttachments(created.id);

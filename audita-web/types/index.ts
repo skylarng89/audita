@@ -40,9 +40,13 @@ export type Priority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 export type RiskLevel = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 export type ApprovalType = "LINEAR" | "NON_LINEAR";
 export type ApproverStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type WorkflowMode = "APPROVAL_ONLY" | "DELIVERY_PIPELINE";
+export type CompletionStatus = "IN_PROGRESS" | "COMPLETED";
+export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED" | null;
 
 export interface ChangeRequest {
   id: string;
+  displayId: string | null;
   title: string;
   description: string | null;
   priority: Priority;
@@ -50,7 +54,12 @@ export interface ChangeRequest {
   category: string | null;
   status: CRStatus;
   approvalType: ApprovalType;
+  approvalStatus: string | null;
+  completionStatus: CompletionStatus | null;
   approvalLocked: boolean;
+  workflowMode: WorkflowMode | null;
+  requestDepartmentId: string | null;
+  destinationDepartmentId: string | null;
   scheduledStart: string | null;
   scheduledEnd: string | null;
   affectedSystems: string[];
@@ -61,6 +70,14 @@ export interface ChangeRequest {
   createdByFullName: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Department {
+  id: string;
+  name: string;
+  code: string | null;
+  isActive: boolean;
+  displayOrder: number;
 }
 
 export interface CrApprover {
@@ -99,6 +116,56 @@ export interface Attachment {
   uploaderId: string | null;
   uploaderName: string | null;
   createdAt: string;
+}
+
+// ── UAT ────────────────────────────────────────────────────────────────────────
+
+export type UatStatus = "DRAFT" | "APPROVED" | "REJECTED" | "PROMOTED";
+
+export interface UatApprover {
+  id: string;
+  userId: string;
+  userFullName: string;
+  userEmail: string;
+  isRequired: boolean;
+  status: string;
+  decidedAt: string | null;
+}
+
+export interface Uat {
+  id: string;
+  title: string;
+  details: string;
+  status: UatStatus;
+  readOnly: boolean;
+  approvers: UatApprover[];
+  createdBy: string | null;
+  createdByFullName: string | null;
+  createdAt: string;
+  updatedAt: string;
+  promotedAt: string | null;
+}
+
+// ── Deployment ────────────────────────────────────────────────────────────────
+
+export type DeploymentStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export interface DeploymentApprover {
+  id: string;
+  userId: string;
+  userFullName: string;
+  userEmail: string;
+  status: ApproverStatus;
+  decidedAt: string | null;
+  rejectionReason: string | null;
+}
+
+export interface Deployment {
+  id: string;
+  changeRequestId: string;
+  status: DeploymentStatus;
+  promotedAt: string;
+  approvers: DeploymentApprover[];
 }
 
 // ── Comments & Activity ───────────────────────────────────────────────────────

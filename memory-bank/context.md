@@ -1,7 +1,7 @@
 # Audita — Active Context
 
-**Last Updated:** 2026-05-31
-**Current Phase:** Security audit remediation — Sprint 14 planning complete, ready for execution
+**Last Updated:** 2026-06-04
+**Current Phase:** Sprint 15 complete - Requests Workflow Expansion delivered
 **Active Sprint:** Sprint 14 — Security Audit Remediation (21 tasks, 0 started)
 
 ---
@@ -43,7 +43,8 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 | Post-Sprint 7 | 1/1 | 1 | Production: subdomain-based tenant resolution | 2026-05-25 |
 | Post-Sprint 8 | 1/1 | 1 | CI + production tenant auth stabilization | 2026-05-25 |
 | Sprint 14 | 0/21 | 21 | Security Audit Remediation | — |
-| **TOTAL** | **249/270** | **270** | — | — |
+| Sprint 15 | 24/24 | 24 | Requests Workflow Expansion | 2026-06-04 |
+| **TOTAL** | **271/292** | **292** | — | — |
 
 **Sprint 12: Launch Readiness** — All 6 tasks completed. v0.6.0 released.
 
@@ -65,6 +66,7 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 - **Post-Sprint 2 polish complete (2026-05-22).** Approver UX polish: default Optional, per-approver Required/Optional toggle on saved list, creator excluded from candidates, dirty tracking + save prompt, reorder animations (`TransitionGroup` + CSS). Backend: `PATCH /{id}/approvers/{approverId}/requirement` endpoint. Activity stream: "Reordered 4 approvers" human-readable summary instead of raw "COUNT 4" field. CI: `.trivyignore` for CVE-2026-33671 (picomatch ReDoS in Node.js base image, not exploitable). 8/8 tasks.
 - **Post-Sprint 3 hotfix complete (2026-05-22).** Comment mentions now support live `@` autocomplete (backend user search endpoint + TipTap mention popup with keyboard support), mention emails deep-link directly to comment (`?commentId=`), CR detail auto-scroll/highlight targets comment anchor, auth middleware/login preserve redirect target after sign-in, Nuxt `xssValidator` disabled for `/api/**` proxy routes to prevent false-positive 400 rejects on mention markup, and backend comment sanitizer allowlists mention `span` attributes. 9/9 tasks.
 - **Post-Sprint 6 container scan reliability complete (2026-05-24).** Fixed web image build failure in CI/container scan path by copying `pnpm-workspace.yaml` before `pnpm install` so minimum release-age exclusions are available during lockfile policy validation. Cleaned pnpm config drift by moving deprecated `package.json#pnpm.supportedArchitectures` to `pnpm-workspace.yaml`. Runtime image remains hardened (`dhi.io/node:24`) with numeric non-root user. 3/3 tasks.
+- **Sprint 15 complete (2026-06-04).** Conditional Requests workflow delivered: `APPROVAL_ONLY` vs `DELIVERY_PIPELINE` modes, UAT and Deployment lifecycle with promotion gates, department master data, immutable display IDs with configurable prefix (`RQ-000001`), bidirectional request links, UAT/Deployment tabs with inline comments and approvals, activity/audit parity for all stage actions. 24/24 tasks completed via subagent-driven development.
 
 ---
 
@@ -146,12 +148,13 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 ## Current Blockers
 
 - **No active implementation blockers.**
-- **Sprint 14 ready to begin:** 21 tasks from security audit prioritized across 5 phases (Critical → High Auth → High Infra → Medium Security → Perf/Arch).
+- **Sprint 14 ready to begin:** 21 tasks from security audit prioritized across 5 phases (Critical -> High Auth -> High Infra -> Medium Security -> Perf/Arch).
+- **Sprint 15 ready to begin:** 24 tasks from Requests workflow expansion prioritized across 5 phases (Data -> Workflow -> API -> UI -> Quality).
 - **Production note:** Deploy latest `audita-web` image containing slug-precedence hotfix (`auth.global.ts`, `plugins/auth.ts`, `tenant.ts`) to stop post-refresh logout/login regression.
 
 ---
 
-## Today's Work Summary (2026-05-31)
+## Today's Work Summary (2026-06-04)
 
 ### Full Codebase Security & Architecture Audit
 
@@ -171,13 +174,22 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 - Tasks added to `memory-bank/docs/tasks.md` with progress tracking updated.
 - Sprint plan added to `memory-bank/plan.md` with delivery phases, verification gates, and exit criteria.
 
+### Requests Workflow Expansion Spec + Sprint Plan (2026-06-04)
+
+- Finalized architecture for conditional Requests workflow modes:
+  - `APPROVAL_ONLY` for non-technical business requests.
+  - `DELIVERY_PIPELINE` for Request -> UAT -> Deployment lifecycle.
+- Captured full implementation specification with coding guide and SQL/pseudocode examples in `memory-bank/docs/specs/2026-06-04-requests-conditional-workflow-design.md`.
+- Added Sprint 15 phased plan to `memory-bank/plan.md` with objectives, delivery phases, verification gates, and exit criteria.
+- Added Sprint 15 task breakdown to `memory-bank/docs/tasks.md` (24 tasks across 5 phases) and updated progress tracking totals.
+- Added executable subagent-ready implementation playbook to `memory-bank/docs/plans/2026-06-04-sprint-15-requests-workflow-executable-plan.md`.
+
 ---
 
 ## Next Actions
 
 1. **Begin Sprint 14 Phase A** — execute SA14-001 (setup-token guard), SA14-002 (DOMPurify), SA14-003 (redirect validation).
-2. Deploy latest `audita-web` build to production.
-3. Hard refresh browser/storage and verify login + refresh + settings-save flows remain authenticated.
-4. Verify CI remains green on `pnpm test` for middleware/proxy specs.
-5. Prepare v0.7.0 release candidate after Sprint 14 Phase A-C completion.
-6. Execute social media launch using copy from `social-media-assets/README.md` (playful/irreverent tone, star-the-repo CTA).
+2. Commit Sprint 15 changes and prepare v0.7.0 release candidate.
+3. Begin Sprint 14 Phase A in parallel if security debt remains release-critical (SA14-001 through SA14-003).
+4. Keep verification gates green: backend tests, frontend tests/typecheck/build after each phase.
+5. Prepare release strategy split: security patch release vs feature release depending on sprint ordering.

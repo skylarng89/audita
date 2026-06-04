@@ -677,3 +677,32 @@
 - 21 tasks is ambitious for one sprint — phases are ordered by priority so partial completion still delivers maximum security value.
 
 **Reference:** `memory-bank/docs/security-audit-2026-05-31.md`
+
+---
+
+## ADR-029: Conditional Requests Workflow with Compatibility-Mode Routing
+
+**Date:** 2026-06-04
+**Status:** Accepted
+
+**Decision:** Implement request processing with two explicit workflow modes:
+
+1. `APPROVAL_ONLY` for requests that end after approval.
+2. `DELIVERY_PIPELINE` for requests that require `Request -> UAT -> Deployment`.
+
+Retain existing API/route compatibility under `/change-requests` for this release while renaming UI labels and navigation text to "Requests".
+
+**Reasoning:**
+
+- Enterprise-wide usage spans both technical and non-technical departments; forcing UAT/Deployment for all requests creates unnecessary complexity for simple operational work.
+- A mode-driven workflow keeps governance strict for software delivery requests while preserving fast-path flow for standard approvals.
+- Compatibility-mode routing minimizes regression risk for current clients, deep links, tests, and downstream integrations.
+- The selected design supports immutable display IDs with configurable prefixes and enables consistent activity/audit traceability across all stages.
+
+**Trade-offs:**
+
+- Domain complexity increases: dual statuses (`approvalStatus`, `completionStatus`), workflow mode, and stage entities must be maintained.
+- Temporary terminology split exists internally (path names) vs externally (UI labels) until route alias migration is scheduled.
+- Additional authorization matrix complexity is required for delegated UAT/deployment actors.
+
+**Reference:** `memory-bank/docs/specs/2026-06-04-requests-conditional-workflow-design.md`

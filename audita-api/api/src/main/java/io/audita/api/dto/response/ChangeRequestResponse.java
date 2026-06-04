@@ -2,7 +2,9 @@ package io.audita.api.dto.response;
 
 import io.audita.domain.model.ApprovalType;
 import io.audita.domain.model.ChangeRequestStatus;
+import io.audita.domain.model.CompletionStatus;
 import io.audita.domain.model.Priority;
+import io.audita.domain.model.RequestWorkflowMode;
 import io.audita.domain.model.RiskLevel;
 import io.audita.infrastructure.persistence.entity.ChangeRequestEntity;
 
@@ -30,7 +32,13 @@ public record ChangeRequestResponse(
         String createdByEmail,
         String createdByFullName,
         OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
+        OffsetDateTime updatedAt,
+        String displayId,
+        ChangeRequestStatus approvalStatus,
+        CompletionStatus completionStatus,
+        RequestWorkflowMode workflowMode,
+        UUID requestDepartmentId,
+        UUID destinationDepartmentId
 ) {
     public static ChangeRequestResponse from(ChangeRequestEntity entity) {
         UUID createdById = entity.getCreatedBy() != null ? entity.getCreatedBy().getId() : null;
@@ -56,10 +64,16 @@ public record ChangeRequestResponse(
                 entity.getSlaDeadline(),
                 entity.isSlaBreached(),
                 createdById,
-                                createdByEmail,
-                                createdByFullName,
+                createdByEmail,
+                createdByFullName,
                 entity.getCreatedAt(),
-                entity.getUpdatedAt()
+                entity.getUpdatedAt(),
+                entity.getDisplayId(),
+                entity.getApprovalStatus(),
+                entity.getCompletionStatus(),
+                entity.getWorkflowMode(),
+                entity.getRequestDepartmentId(),
+                entity.getDestinationDepartmentId()
         );
     }
 }

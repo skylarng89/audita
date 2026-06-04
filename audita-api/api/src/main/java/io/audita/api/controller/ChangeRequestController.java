@@ -5,7 +5,9 @@ import io.audita.api.dto.request.AddApproverGroupRequest;
 import io.audita.api.dto.request.CreateChangeRequestRequest;
 import io.audita.api.dto.request.RejectChangeRequestRequest;
 import io.audita.api.dto.request.ReorderApproversRequest;
+import io.audita.api.dto.request.SetWorkflowModeRequest;
 import io.audita.api.dto.request.UpsertChangeRequestCustomFieldsRequest;
+import io.audita.api.dto.request.UpsertLinksRequest;
 import io.audita.api.dto.response.ActivityStreamResponse;
 import io.audita.api.dto.response.AttachmentResponse;
 import io.audita.api.dto.request.UpdateChangeRequestRequest;
@@ -14,12 +16,14 @@ import io.audita.api.dto.response.PageResponse;
 import io.audita.api.dto.response.ChangeRequestResponse;
 import io.audita.api.dto.response.ApproverCandidateResponse;
 import io.audita.api.dto.response.CrApproverResponse;
+import io.audita.api.dto.response.RequestLinkSearchResponse;
 import io.audita.api.security.UserPrincipal;
 import io.audita.domain.model.ApprovalType;
 import io.audita.domain.model.ChangeRequestStatus;
 import io.audita.domain.model.Priority;
 import io.audita.infrastructure.service.ChangeRequestService;
 import io.audita.infrastructure.service.IdempotencyService;
+import io.audita.infrastructure.service.RequestLinkService;
 import jakarta.validation.Valid;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Pageable;
@@ -46,11 +50,14 @@ public class ChangeRequestController {
 
     private final ChangeRequestService changeRequestService;
     private final IdempotencyService idempotencyService;
+    private final RequestLinkService requestLinkService;
 
     public ChangeRequestController(ChangeRequestService changeRequestService,
-                                   IdempotencyService idempotencyService) {
+                                   IdempotencyService idempotencyService,
+                                   RequestLinkService requestLinkService) {
         this.changeRequestService = changeRequestService;
         this.idempotencyService = idempotencyService;
+        this.requestLinkService = requestLinkService;
     }
 
     @PostMapping
@@ -78,7 +85,10 @@ public class ChangeRequestController {
                 req.scheduledStart(),
                 req.scheduledEnd(),
                 req.affectedSystems(),
-                createdById));
+                createdById,
+                req.workflowMode(),
+                req.requestDepartmentId(),
+                req.destinationDepartmentId()));
         idempotencyService.recordResource(createdById, OPERATION_CREATE, idempotencyKey, created.getId());
         return new ResponseEntity<>(ChangeRequestResponse.from(created), HttpStatus.CREATED);
     }
@@ -100,7 +110,10 @@ public class ChangeRequestController {
                 req.scheduledEnd(),
                 req.affectedSystems(),
                 principal.userId(),
-                principal.role())));
+                principal.role(),
+                req.workflowMode(),
+                req.requestDepartmentId(),
+                req.destinationDepartmentId())));
     }
 
     @PostMapping("/{id}/submit")
@@ -127,6 +140,23 @@ public class ChangeRequestController {
     public void cancel(@PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
         changeRequestService.cancel(id, principal.userId(), principal.role());
+    }
+
+    @PostMapping("/{id}/complete")
+    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    public ChangeRequestResponse complete(@PathVariable UUID id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ChangeRequestResponse.from(
+                changeRequestService.completeRequest(id, principal.userId(), principal.role()));
+    }
+
+    @PatchMapping("/{id}/workflow-mode")
+    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    public ChangeRequestResponse setWorkflowMode(@PathVariable UUID id,
+            @Valid @RequestBody SetWorkflowModeRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ChangeRequestResponse.from(
+                changeRequestService.setWorkflowMode(id, req.workflowMode(), principal.userId(), principal.role()));
     }
 
     @GetMapping
@@ -315,5 +345,30 @@ public class ChangeRequestController {
         headers.setContentLength(dl.sizeBytes());
 
         return new ResponseEntity<>(new InputStreamResource(dl.stream()), headers, HttpStatus.OK);
+    }
+
+    @GetMapping("/search")
+    @PreAuthorize("isAuthenticated()")
+    public List<RequestLinkSearchResponse> searchRequests(
+            @RequestParam(required = false) String query,
+            @RequestParam(defaultValue = "10") int limit) {
+        return requestLinkService.searchRequests(query, limit).stream()
+                .map(RequestLinkSearchResponse::from)
+                .toList();
+    }
+
+    @GetMapping("/{id}/links")
+    @PreAuthorize("isAuthenticated()")
+    public List<UUID> getLinkedRequests(@PathVariable UUID id) {
+        return requestLinkService.getLinkedRequests(id);
+    }
+
+    @PutMapping("/{id}/links")
+    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void upsertLinks(@PathVariable UUID id,
+            @Valid @RequestBody UpsertLinksRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        requestLinkService.upsertLinks(id, req.linkedRequestIds(), principal.userId());
     }
 }

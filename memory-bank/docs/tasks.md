@@ -4,7 +4,7 @@
 
 **Project:** Audita - Multi-Tenant ITIL/ITSM Change Management Platform
 **Version:** 0.6.3
-**Last Updated:** 2026-05-25
+**Last Updated:** 2026-06-04
 **Team Size:** 2-3 Developers
 
 ## Task Status Legend
@@ -394,6 +394,59 @@
 | SA14-020 | Enforce audit log immutability at database level | Medium | 🔴 Not Started | Developer 1 | `REVOKE UPDATE/DELETE`, trigger raising exception on mutation, `REQUIRES_NEW` propagation |
 | SA14-021 | Decompose monolithic components (CR detail, settings page) | Medium | 🔴 Not Started | Developer 2 | Extract `CrApproverPanel`, `CrCommentThread`, `CrActivityStream`, `SettingsGeneral`, `SettingsWorkflow`, etc. |
 
+## Sprint 15: Requests Workflow Expansion (Week 24)
+
+Execution plan: `memory-bank/docs/plans/2026-06-04-sprint-15-requests-workflow-executable-plan.md`
+
+### Phase A - Data Contracts
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| RW15-001 | Add tenant migration for request display ID and dual statuses | High | ✅ Completed | Developer 1 | Add `display_id`, `approval_status`, `completion_status`, `workflow_mode` columns with backfill strategy |
+| RW15-002 | Add department master table and request department foreign keys | High | ✅ Completed | Developer 1 | Create `departments` table + `request_department_id` and `destination_department_id` on requests |
+| RW15-003 | Add bidirectional request links schema with canonical pair uniqueness | High | ✅ Completed | Developer 1 | Add `request_links` with no-self-link constraint and ordered UUID uniqueness |
+| RW15-004 | Add UAT and deployment tables with approvers and comments | High | ✅ Completed | Developer 1 | Create `request_uat`, `request_deployments`, and stage-scoped approver/comment tables |
+
+### Phase B - Workflow Engine
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| RW15-005 | Implement immutable request display ID generator using org settings prefix/sequence | High | ✅ Completed | Developer 1 | Use `request.id_prefix` + `request.id_sequence`; persist generated display ID once |
+| RW15-006 | Implement request workflow mode guardrails for approval-only and delivery-pipeline modes | High | ✅ Completed | Developer 1 | Enforce mode-specific transitions for UAT/deployment/completion actions |
+| RW15-007 | Implement UAT lifecycle service with promotion guards and read-only lock after promotion | High | ✅ Completed | Developer 1 | Require parent request approval status `APPROVED`; required approvers gate promotion |
+| RW15-008 | Implement deployment lifecycle with auto-approver inheritance and done detection | High | ✅ Completed | Developer 1 | Merge main+UAT approvers with dedupe and required flag preservation |
+
+### Phase C - API Surface
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| RW15-009 | Expand request DTOs/controllers with approval and completion statuses | High | ✅ Completed | Developer 1 | Add compatibility-safe fields without breaking `/api/v1/change-requests` path |
+| RW15-010 | Add department admin endpoints under settings domain | High | ✅ Completed | Developer 1 | CRUD-like management for active/inactive/reorder department data |
+| RW15-011 | Add request link search and link upsert endpoints | Medium | ✅ Completed | Developer 1 | Query by display ID/title and save canonical bidirectional link sets |
+| RW15-012 | Add UAT/deployment endpoints for comments, approvals, and promotion | High | ✅ Completed | Developer 1 | Stage-scoped endpoints with explicit authorization rules |
+
+### Phase D - Frontend UX
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| RW15-013 | Rename UI copy/navigation labels from Change Requests to Requests | Medium | ✅ Completed | Developer 2 | Keep route compatibility but update labels/headings/buttons and menu entries |
+| RW15-014 | Add department and workflow mode fields to request create/edit surfaces | High | ✅ Completed | Developer 2 | Source department options from admin settings; no free text fallback |
+| RW15-015 | Add linked requests multi-search picker in request create/edit | High | ✅ Completed | Developer 2 | Search by display ID/title and render selected link chips |
+| RW15-016 | Add Approval Status and Completion Status columns to request list | High | ✅ Completed | Developer 2 | Keep existing filters and pagination behavior stable |
+| RW15-017 | Add UAT tab with initiate/edit forms and required/optional approver controls | High | ✅ Completed | Developer 2 | One UAT per request, inline form UX, and approver assignment flow |
+| RW15-018 | Add deployment tab rendering from promoted UAT only | High | ✅ Completed | Developer 2 | No direct deployment creation path in UI |
+| RW15-019 | Add stage comment and approval interactions for UAT and deployment | High | ✅ Completed | Developer 2 | Use stage-specific API contracts and keep mention UX parity |
+| RW15-020 | Refactor oversized request detail page into UAT/deployment focused components | Medium | ✅ Completed | Developer 2 | Extract `CrUatPanel`, `CrDeploymentPanel`, and completion status control components |
+
+### Phase E - Quality Gate
+
+| Task ID  | Task | Priority | Status | Assigned To | Notes |
+| -------- | ---- | -------- | ------ | ----------- | ----- |
+| RW15-021 | Emit activity stream events for all UAT and deployment actions | High | ✅ Completed | Developer 1 | Ensure stage events include request display ID and actor context |
+| RW15-022 | Emit audit trail entries for all UAT and deployment actions | High | ✅ Completed | Developer 1 | Mirror activity coverage with before/after payload where applicable |
+| RW15-023 | Add backend regression tests for workflow transitions and authorization matrix | High | ✅ Completed | Developer 1 | Cover approval-only vs delivery-pipeline, promotion guards, completion rules |
+| RW15-024 | Add frontend regression tests for requests tabs, status rendering, and linking UX | High | ✅ Completed | Developer 2 | Cover list dual-status columns, UAT/deployment tabs, and link search selection |
+
 ## Progress Tracking
 
 ### Overall Progress by Sprint
@@ -415,20 +468,21 @@
 | Sprint 12      | 6           | 0           | 0           | 6         | 100%       |
 | Sprint 13      | 8           | 0           | 0           | 8         | 100%       |
 | Sprint 14      | 21          | 21          | 0           | 0         | 0%         |
+| Sprint 15      | 24          | 0           | 0           | 24        | 100%       |
 | Post-Sprint 1  | 19          | 0           | 0           | 19        | 100%       |
 | Post-Sprint 2  | 8           | 0           | 0           | 8         | 100%       |
 | Post-Sprint 3  | 9           | 0           | 0           | 9         | 100%       |
 | Post-Sprint 4  | 6           | 0           | 0           | 6         | 100%       |
 | Post-Sprint 5  | 7           | 0           | 0           | 7         | 100%       |
 | Post-Sprint 6  | 3           | 0           | 0           | 3         | 100%       |
-| **TOTAL**      | **268**     | **21**      | **0**       | **247**   | **92%**    |
+| **TOTAL**      | **292**     | **21**      | **0**       | **271**   | **93%**    |
 
 ### Progress by Developer
 
 | Developer   | Assigned Tasks | Not Started | In Progress | Completed | Progress % |
 | ----------- | -------------- | ----------- | ----------- | --------- | ---------- |
-| Developer 1 | 142            | 13          | 0           | 129       | 91%        |
-| Developer 2 | 126            | 8           | 0           | 118       | 94%        |
+| Developer 1 | 156            | 13          | 0           | 143       | 92%        |
+| Developer 2 | 136            | 8           | 0           | 128       | 94%        |
 
 ## Recent Implementations
 

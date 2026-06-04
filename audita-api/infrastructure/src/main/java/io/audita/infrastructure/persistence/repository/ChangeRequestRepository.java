@@ -58,11 +58,16 @@ public interface ChangeRequestRepository extends JpaRepository<ChangeRequestEnti
            "AND cr.status = 'PENDING_APPROVAL'")
     List<ChangeRequestEntity> findSlaBreached(@Param("now") OffsetDateTime now);
 
-    // CRs approaching SLA warning threshold
-    @Query("SELECT cr FROM ChangeRequestEntity cr WHERE cr.slaDeadline IS NOT NULL " +
-           "AND cr.slaDeadline BETWEEN :now AND :warningAt " +
-           "AND cr.slaBreached = FALSE AND cr.status = 'PENDING_APPROVAL'")
-    List<ChangeRequestEntity> findSlaWarning(
-            @Param("now") OffsetDateTime now,
-            @Param("warningAt") OffsetDateTime warningAt);
+     // CRs approaching SLA warning threshold
+     @Query("SELECT cr FROM ChangeRequestEntity cr WHERE cr.slaDeadline IS NOT NULL " +
+            "AND cr.slaDeadline BETWEEN :now AND :warningAt " +
+            "AND cr.slaBreached = FALSE AND cr.status = 'PENDING_APPROVAL'")
+     List<ChangeRequestEntity> findSlaWarning(
+             @Param("now") OffsetDateTime now,
+             @Param("warningAt") OffsetDateTime warningAt);
+
+     @Query("SELECT cr FROM ChangeRequestEntity cr WHERE " +
+            "LOWER(cr.displayId) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(cr.title) LIKE LOWER(CONCAT('%', :query, '%'))")
+     List<ChangeRequestEntity> searchByDisplayIdOrTitle(@Param("query") String query, Pageable pageable);
 }
