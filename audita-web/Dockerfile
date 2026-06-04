@@ -4,7 +4,7 @@
 FROM dhi.io/node:24-dev AS builder
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@11.2.2 --activate
+RUN npm install -g pnpm@11.2.2
 
 COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./
 RUN --mount=type=cache,target=/pnpm/store,sharing=locked \
