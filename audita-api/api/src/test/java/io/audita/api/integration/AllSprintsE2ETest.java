@@ -710,6 +710,62 @@ class AllSprintsE2ETest {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // SPRINT 15 — Request Workflow Expansion
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    String s15CrId;
+
+    @Test @Order(80)
+    void s15_create_request_with_workflow_mode() throws Exception {
+        String body = json("""
+                {
+                  "title": "Sprint 15 Workflow Test",
+                  "description": "Testing workflowMode field",
+                  "priority": "MEDIUM",
+                  "riskLevel": "MEDIUM",
+                  "workflowMode": "DELIVERY_PIPELINE"
+                }
+                """);
+        var r = post("/api/v1/change-requests", orgSlug, body, requesterToken);
+        assertThat(r.statusCode())
+                .withFailMessage("Create CR failed: %s", r.body())
+                .isEqualTo(201);
+
+        JsonNode cr = mapper.readTree(r.body());
+        s15CrId = cr.get("id").asText();
+        assertThat(cr.get("displayId").asText()).isNotBlank();
+        assertThat(cr.get("workflowMode").asText()).isEqualTo("DELIVERY_PIPELINE");
+    }
+
+    @Test @Order(81)
+    void s15_verify_display_id_format() throws Exception {
+        var r = getWithToken("/api/v1/change-requests/" + s15CrId, orgSlug, requesterToken);
+        assertThat(r.statusCode())
+                .withFailMessage("Get CR failed: %s", r.body())
+                .isEqualTo(200);
+
+        JsonNode cr = mapper.readTree(r.body());
+        String displayId = cr.get("displayId").asText();
+        assertThat(displayId).matches("^[A-Z]+-\\d{6}$");
+    }
+
+    @Test @Order(82)
+    void s15_update_workflow_mode_in_draft() throws Exception {
+        String body = json("""
+                {
+                  "workflowMode": "APPROVAL_ONLY"
+                }
+                """);
+        var r = patchWithToken("/api/v1/change-requests/" + s15CrId, orgSlug, body, requesterToken);
+        assertThat(r.statusCode())
+                .withFailMessage("Update workflowMode failed: %s", r.body())
+                .isEqualTo(200);
+
+        JsonNode cr = mapper.readTree(r.body());
+        assertThat(cr.get("workflowMode").asText()).isEqualTo("APPROVAL_ONLY");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // HTTP helpers
     // ═══════════════════════════════════════════════════════════════════════════
 

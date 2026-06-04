@@ -6,7 +6,9 @@ import io.audita.domain.exception.InvalidStateTransitionException;
 import io.audita.domain.model.ApprovalType;
 import io.audita.domain.model.ApproverStatus;
 import io.audita.domain.model.ChangeRequestStatus;
+import io.audita.domain.model.CompletionStatus;
 import io.audita.domain.model.Priority;
+import io.audita.domain.model.RequestWorkflowMode;
 import io.audita.domain.model.RiskLevel;
 import io.audita.domain.model.UserStatus;
 import io.audita.infrastructure.persistence.entity.ActivityStreamEntity;
@@ -14,6 +16,7 @@ import io.audita.infrastructure.persistence.entity.AttachmentEntity;
 import io.audita.infrastructure.persistence.entity.ChangeRequestEntity;
 import io.audita.infrastructure.persistence.entity.ChangeRequestCustomFieldEntity;
 import io.audita.infrastructure.persistence.entity.CrApproverEntity;
+import io.audita.infrastructure.persistence.entity.OrgSettingEntity;
 import io.audita.infrastructure.persistence.entity.UserEntity;
 import io.audita.infrastructure.persistence.repository.ActivityStreamRepository;
 import io.audita.infrastructure.persistence.repository.AttachmentRepository;
@@ -60,6 +63,8 @@ public class ChangeRequestService {
     private static final String PAYLOAD_APPROVER_ID = "approverId";
     private static final String WORKFLOW_DEFAULT_APPROVER_USER_IDS_KEY = "workflow.default_approver_user_ids";
     private static final String WORKFLOW_DEFAULT_APPROVER_GROUP_IDS_KEY = "workflow.default_approver_group_ids";
+    private static final String REQUEST_ID_PREFIX_KEY = "request.id_prefix";
+    private static final String REQUEST_ID_SEQUENCE_KEY = "request.id_sequence";
 
     private final ChangeRequestRepository changeRequestRepository;
     private final CrApproverRepository crApproverRepository;
@@ -70,6 +75,7 @@ public class ChangeRequestService {
     private final AttachmentRepository attachmentRepository;
     private final UserRepository userRepository;
     private final OrgSettingRepository orgSettingRepository;
+    private final RequestDeploymentService deploymentService;
     private final AuditLogService auditLogService;
     private final HtmlSanitizer htmlSanitizer;
 
@@ -91,6 +97,7 @@ public class ChangeRequestService {
             AttachmentRepository attachmentRepository,
             UserRepository userRepository,
             OrgSettingRepository orgSettingRepository,
+            RequestDeploymentService deploymentService,
             AuditLogService auditLogService,
             HtmlSanitizer htmlSanitizer) {
         this.changeRequestRepository = changeRequestRepository;
@@ -102,6 +109,7 @@ public class ChangeRequestService {
         this.attachmentRepository = attachmentRepository;
         this.userRepository = userRepository;
         this.orgSettingRepository = orgSettingRepository;
+        this.deploymentService = deploymentService;
         this.auditLogService = auditLogService;
         this.htmlSanitizer = htmlSanitizer;
     }
@@ -122,6 +130,12 @@ public class ChangeRequestService {
         changeRequest.setScheduledEnd(request.scheduledEnd());
         changeRequest.setCreatedBy(createdBy);
         changeRequest.setAffectedSystems(normalizeAffectedSystems(request.affectedSystems()));
+        changeRequest.setDisplayId(generateDisplayId());
+        if (request.workflowMode() != null) {
+            changeRequest.setWorkflowMode(request.workflowMode());
+        }
+        changeRequest.setRequestDepartmentId(request.requestDepartmentId());
+        changeRequest.setDestinationDepartmentId(request.destinationDepartmentId());
         ChangeRequestEntity created = changeRequestRepository.save(changeRequest);
         ensureDefaultApprovers(created);
         logActivity(created, createdBy, "CR_CREATED", Map.of(PAYLOAD_STATUS, created.getStatus().name()));
@@ -169,6 +183,15 @@ public class ChangeRequestService {
         if (request.affectedSystems() != null) {
             current.setAffectedSystems(normalizeAffectedSystems(request.affectedSystems()));
         }
+        if (request.workflowMode() != null) {
+            current.setWorkflowMode(request.workflowMode());
+        }
+        if (request.requestDepartmentId() != null) {
+            current.setRequestDepartmentId(request.requestDepartmentId());
+        }
+        if (request.destinationDepartmentId() != null) {
+            current.setDestinationDepartmentId(request.destinationDepartmentId());
+        }
 
         ChangeRequestEntity updated = changeRequestRepository.save(current);
         logActivity(updated, updated.getCreatedBy(), "CR_UPDATED", Map.of(PAYLOAD_STATUS, updated.getStatus().name()));
@@ -206,6 +229,65 @@ public class ChangeRequestService {
         auditLogService.log("CR_CANCELLED", ENTITY_CHANGE_REQUEST, cancelled.getId(),
                 actorUserId, cancelled.getCreatedBy() != null ? cancelled.getCreatedBy().getEmail() : null,
                 Map.of(PAYLOAD_STATUS, "CANCELLED"), null);
+    }
+
+    public ChangeRequestEntity completeRequest(UUID requestId, UUID actorUserId, String actorRole) {
+        ChangeRequestEntity cr = getById(requestId);
+        assertCanMutate(cr, actorUserId, actorRole);
+
+        if (cr.getCompletionStatus() == CompletionStatus.COMPLETED) {
+            throw new InvalidStateTransitionException("Request is already completed.");
+        }
+
+        if (cr.getWorkflowMode() == RequestWorkflowMode.APPROVAL_ONLY) {
+            if (cr.getApprovalStatus() != ChangeRequestStatus.APPROVED) {
+                throw new InvalidStateTransitionException(
+                        "Approval-only requests must be approved before completion.");
+            }
+        } else if (cr.getWorkflowMode() == RequestWorkflowMode.DELIVERY_PIPELINE) {
+            if (cr.getApprovalStatus() != ChangeRequestStatus.APPROVED) {
+                throw new InvalidStateTransitionException(
+                        "Delivery pipeline requests must be approved before completion.");
+            }
+            if (!deploymentService.isDeploymentDone(requestId)) {
+                throw new InvalidStateTransitionException(
+                        "Deployment must be fully approved before the request can be completed.");
+            }
+        }
+
+        cr.setCompletionStatus(CompletionStatus.COMPLETED);
+        ChangeRequestEntity updated = changeRequestRepository.save(cr);
+        logActivity(updated, updated.getCreatedBy(), "REQ_COMPLETION_STATUS_CHANGED",
+                Map.of("completionStatus", "COMPLETED"));
+        auditLogService.log("REQ_COMPLETION_STATUS_CHANGED", ENTITY_CHANGE_REQUEST, updated.getId(),
+                actorUserId, resolveActorEmail(actorUserId),
+                Map.of("completionStatus", "COMPLETED", "workflowMode", updated.getWorkflowMode().name()), null);
+        initializeCreator(updated);
+        return updated;
+    }
+
+    public ChangeRequestEntity setWorkflowMode(UUID requestId, RequestWorkflowMode mode,
+            UUID actorUserId, String actorRole) {
+        if (mode == null) {
+            throw new InvalidRequestException("INVALID_INPUT", "Workflow mode is required.");
+        }
+        ChangeRequestEntity cr = getById(requestId);
+        assertCanMutate(cr, actorUserId, actorRole);
+
+        if (cr.getStatus() != ChangeRequestStatus.DRAFT) {
+            throw new InvalidStateTransitionException(
+                    "Workflow mode can only be changed while the request is in DRAFT status.");
+        }
+
+        cr.setWorkflowMode(mode);
+        ChangeRequestEntity updated = changeRequestRepository.save(cr);
+        logActivity(updated, updated.getCreatedBy(), "REQ_WORKFLOW_MODE_CHANGED",
+                Map.of("workflowMode", mode.name()));
+        auditLogService.log("REQ_WORKFLOW_MODE_CHANGED", ENTITY_CHANGE_REQUEST, updated.getId(),
+                actorUserId, resolveActorEmail(actorUserId),
+                Map.of("workflowMode", mode.name()), null);
+        initializeCreator(updated);
+        return updated;
     }
 
     @Transactional(readOnly = true)
@@ -695,7 +777,10 @@ public class ChangeRequestService {
             OffsetDateTime scheduledStart,
             OffsetDateTime scheduledEnd,
             List<String> affectedSystems,
-            UUID createdById) {
+            UUID createdById,
+            RequestWorkflowMode workflowMode,
+            UUID requestDepartmentId,
+            UUID destinationDepartmentId) {
     }
 
     public record UpdateRequest(UUID id,
@@ -709,7 +794,10 @@ public class ChangeRequestService {
             OffsetDateTime scheduledEnd,
             List<String> affectedSystems,
             UUID actorUserId,
-            String actorRole) {
+            String actorRole,
+            RequestWorkflowMode workflowMode,
+            UUID requestDepartmentId,
+            UUID destinationDepartmentId) {
     }
 
     private void ensurePendingApproval(ChangeRequestEntity changeRequest) {
@@ -1029,6 +1117,23 @@ public class ChangeRequestService {
 
     private String sanitizeRichText(String html) {
         return htmlSanitizer.sanitize(html);
+    }
+
+    private String generateDisplayId() {
+        String prefix = orgSettingRepository.findById(REQUEST_ID_PREFIX_KEY)
+                .map(OrgSettingEntity::getValue)
+                .orElse("RQ");
+        long sequence = orgSettingRepository.findById(REQUEST_ID_SEQUENCE_KEY)
+                .map(s -> {
+                    String v = s.getValue();
+                    if (v == null || v.isBlank()) return 0L;
+                    try { return Long.parseLong(v.trim()); }
+                    catch (NumberFormatException e) { return 0L; }
+                })
+                .orElse(0L);
+        long next = sequence + 1;
+        orgSettingRepository.save(new OrgSettingEntity(REQUEST_ID_SEQUENCE_KEY, Long.toString(next)));
+        return prefix + "-" + String.format("%06d", next);
     }
 
     private long resolveSlaHours(Priority priority) {

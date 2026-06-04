@@ -3,7 +3,7 @@
     <div class="flex items-start justify-between">
       <div>
         <p class="text-xs text-muted uppercase tracking-widest mb-1">
-          Change Request
+          Request
         </p>
         <h1
           class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
@@ -17,6 +17,14 @@
       <div class="flex items-center gap-2 flex-wrap">
         <CrStatusBadge :status="changeRequest.status" />
         <CrPriorityBadge :priority="changeRequest.priority" />
+        <CrCompletionStatusControl
+          :request-id="id"
+          :completion-status="changeRequest.completionStatus"
+          :approval-status="changeRequest.approvalStatus"
+          :workflow-mode="changeRequest.workflowMode"
+          :deployment-done="deploymentDone"
+          @completed="onMarkComplete"
+        />
         <button
           v-if="canEditCR && !isEditing"
           class="btn-ghost btn-md"
@@ -100,7 +108,7 @@
       <!-- ── Edit mode ──────────────────────────────────────────────── -->
       <template v-if="isEditing">
         <div class="card p-6 md:col-span-2 space-y-5">
-          <h3 class="font-semibold">Edit Change Request</h3>
+          <h3 class="font-semibold">Edit Request</h3>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Title -->
@@ -143,6 +151,38 @@
               <select v-model="editForm.approvalType" class="input mt-1">
                 <option value="LINEAR">Linear</option>
                 <option value="NON_LINEAR">Non-Linear</option>
+              </select>
+            </div>
+
+            <!-- Workflow Mode -->
+            <div>
+              <p class="field-label">Workflow Mode</p>
+              <select v-model="editForm.workflowMode" class="input mt-1">
+                <option value="">— Default —</option>
+                <option value="APPROVAL_ONLY">Approval Only</option>
+                <option value="DELIVERY_PIPELINE">Delivery Pipeline</option>
+              </select>
+            </div>
+
+            <!-- Request Department -->
+            <div>
+              <p class="field-label">Request Department</p>
+              <select v-model="editForm.requestDepartmentId" class="input mt-1">
+                <option value="">— None —</option>
+                <option v-for="dept in activeDepartments" :key="dept.id" :value="dept.id">
+                  {{ dept.name }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Destination Department -->
+            <div>
+              <p class="field-label">Destination Department</p>
+              <select v-model="editForm.destinationDepartmentId" class="input mt-1">
+                <option value="">— None —</option>
+                <option v-for="dept in activeDepartments" :key="dept.id" :value="dept.id">
+                  {{ dept.name }}
+                </option>
               </select>
             </div>
 
@@ -225,6 +265,16 @@
               <p class="field-hint">Press Enter or comma to add each system.</p>
             </div>
 
+            <!-- Linked Requests -->
+            <div class="md:col-span-2">
+              <p class="field-label">Linked Requests</p>
+              <CrRequestLinkPicker
+                v-model="editLinkedRequestIds"
+                :current-request-id="id"
+              />
+              <p class="field-hint">Search and select related change requests to link.</p>
+            </div>
+
             <!-- Description -->
             <div class="md:col-span-2">
               <p class="field-label">Description</p>
@@ -300,94 +350,13 @@
 
       <!-- ── Read-only view ─────────────────────────────────────────── -->
       <template v-else>
-        <div class="card p-5 md:col-span-2 shadow-card-hover">
-          <h2 class="font-semibold mb-2">Description</h2>
-          <div
-            v-if="changeRequest.description"
-            class="text-sm text-gray-700 dark:text-gray-300 rich-content"
-            v-html="renderedDescription"
-          />
-          <p v-else class="text-sm text-gray-700 dark:text-gray-300">
-            No description.
-          </p>
-        </div>
-
-        <div class="card p-5">
-          <h3 class="font-semibold mb-3">Details</h3>
-          <dl class="space-y-1.5 text-sm">
-            <div class="flex gap-2">
-              <dt class="text-muted w-32 shrink-0">Priority</dt>
-              <dd class="font-medium">{{ changeRequest.priority }}</dd>
-            </div>
-            <div class="flex gap-2">
-              <dt class="text-muted w-32 shrink-0">Risk Level</dt>
-              <dd class="font-medium">{{ changeRequest.riskLevel }}</dd>
-            </div>
-            <div class="flex gap-2">
-              <dt class="text-muted w-32 shrink-0">Approval Type</dt>
-              <dd class="font-medium">{{ changeRequest.approvalType }}</dd>
-            </div>
-            <div class="flex gap-2">
-              <dt class="text-muted w-32 shrink-0">Category</dt>
-              <dd class="font-medium">{{ changeRequest.category ?? "—" }}</dd>
-            </div>
-          </dl>
-        </div>
-
-        <div class="card p-5">
-          <h3 class="font-semibold mb-3">Scheduling</h3>
-          <dl class="space-y-1.5 text-sm">
-            <div class="flex gap-2">
-              <dt class="text-muted w-32 shrink-0">Start</dt>
-              <dd>{{ fmt(changeRequest.scheduledStart) }}</dd>
-            </div>
-            <div class="flex gap-2">
-              <dt class="text-muted w-32 shrink-0">End</dt>
-              <dd>{{ fmt(changeRequest.scheduledEnd) }}</dd>
-            </div>
-            <div class="flex gap-2">
-              <dt class="text-muted w-32 shrink-0">SLA Deadline</dt>
-              <dd>{{ fmt(changeRequest.slaDeadline) }}</dd>
-            </div>
-          </dl>
-        </div>
-
-        <div class="card p-5">
-          <h3 class="font-semibold mb-2">Impact</h3>
-          <ul class="list-disc ml-5 text-sm text-gray-700 dark:text-gray-300">
-            <li v-for="system in changeRequest.affectedSystems" :key="system">
-              {{ system }}
-            </li>
-            <li v-if="!changeRequest.affectedSystems.length">
-              No affected systems listed.
-            </li>
-          </ul>
-        </div>
-
-        <!-- Custom fields read-only -->
-        <div v-if="fieldDefinitions.length" class="card p-5 md:col-span-2">
-          <h3 class="font-semibold mb-3">Custom Fields</h3>
-          <dl class="space-y-2">
-            <div
-              v-for="def in fieldDefinitions"
-              :key="def.id"
-              class="grid grid-cols-[200px_1fr] gap-2 text-sm"
-            >
-              <dt class="text-muted font-medium">{{ def.label }}</dt>
-              <dd>
-                <template v-if="localFieldValues[def.id] === 'true'"
-                  >Yes</template
-                >
-                <template v-else-if="localFieldValues[def.id] === 'false'"
-                  >No</template
-                >
-                <template v-else>{{
-                  localFieldValues[def.id] || "—"
-                }}</template>
-              </dd>
-            </div>
-          </dl>
-        </div>
+        <CrRequestOverviewPanel
+          :change-request="changeRequest"
+          :custom-fields="customFields"
+          :field-definitions="fieldDefinitions"
+          :local-field-values="localFieldValues"
+          :linked-request-ids="linkedRequestIds"
+        />
 
         <!-- Workflow actions -->
         <div class="card p-5 md:col-span-2 flex flex-wrap gap-2">
@@ -813,6 +782,19 @@
       </div>
     </section>
 
+    <section v-else-if="tab === 'uat'" class="card p-5">
+      <CrUatPanel
+        :request-id="id"
+        :approval-status="changeRequest.approvalStatus"
+        :workflow-mode="changeRequest.workflowMode"
+        @updated="onUatUpdated"
+      />
+    </section>
+
+    <section v-else-if="tab === 'deployment'" class="card p-5">
+      <CrDeploymentPanel :request-id="id" />
+    </section>
+
     <section v-else class="card p-5 space-y-4">
       <h2 class="font-semibold">Comments</h2>
       <div class="space-y-3">
@@ -857,7 +839,7 @@
     <!-- Reject modal using AppModal for proper focus management -->
     <SharedAppModal
       :open="showReject"
-      title="Reject Change Request"
+      title="Reject Request"
       @close="showReject = false"
     >
       <div class="space-y-3">
@@ -932,6 +914,7 @@ import type {
   Comment,
   CrApprover,
   CustomFieldDefinition,
+  Department,
 } from "~/types";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import Mention from "@tiptap/extension-mention";
@@ -951,7 +934,7 @@ useHead(
   computed(() => ({
     title: changeRequest.value
       ? `${changeRequest.value.title} — Audita`
-      : "Change Request — Audita",
+      : "Request — Audita",
   })),
 );
 
@@ -983,6 +966,11 @@ const {
   listActivity,
   listComments,
   postComment,
+  listActiveDepartments,
+  getLinkedRequests,
+  upsertLinks,
+  markComplete,
+  getDeployment,
 } = useChangeRequests();
 
 const approvers = ref<CrApprover[]>([]);
@@ -992,8 +980,11 @@ const localFieldValues = ref<Record<string, string>>({});
 const attachments = ref<Attachment[]>([]);
 const activity = ref<ActivityEntry[]>([]);
 const comments = ref<Comment[]>([]);
+const activeDepartments = ref<Department[]>([]);
 const tab = ref<string>("details");
 const highlightedCommentId = ref<string | null>(null);
+const editLinkedRequestIds = ref<string[]>([]);
+const linkedRequestIds = ref<string[]>([]);
 
 type MentionPopupController = {
   update: (props: any) => void;
@@ -1141,9 +1132,6 @@ const canSeeApprovalActions = computed(() => {
   return approvers.value.some((approver) => approver.userId === auth.userId);
 });
 
-const renderedDescription = computed(() =>
-  normalizeRichTextHtml(changeRequest.value?.description),
-);
 const canCastVote = computed(() => {
   if (
     !changeRequest.value ||
@@ -1211,31 +1199,45 @@ const submitDisabledReason = computed(() => {
 });
 
 // ── Tab list with counts ────────────────────────────────────────────────────
-const crTabs = computed(() => [
-  { key: "details", label: "Details" },
-  { key: "approvers", label: "Approvers", count: approvers.value.length },
-  { key: "activity", label: "Activity", count: activity.value.length },
-  { key: "comments", label: "Comments", count: comments.value.length },
-]);
+const isDeliveryPipeline = computed(
+  () => changeRequest.value?.workflowMode === "DELIVERY_PIPELINE",
+);
 
-const tabKeys = ["details", "approvers", "activity", "comments"];
+const crTabs = computed(() => {
+  const tabs = [
+    { key: "details", label: "Details" },
+    { key: "approvers", label: "Approvers", count: approvers.value.length },
+  ];
+  if (isDeliveryPipeline.value) {
+    tabs.push({ key: "uat", label: "UAT" });
+    tabs.push({ key: "deployment", label: "Deployment" });
+  }
+  tabs.push(
+    { key: "activity", label: "Activity", count: activity.value.length },
+    { key: "comments", label: "Comments", count: comments.value.length },
+  );
+  return tabs;
+});
+
+const tabKeys = computed(() => crTabs.value.map((t) => t.key));
 
 function onTabKeyDown(e: KeyboardEvent, key: string) {
-  const idx = tabKeys.indexOf(key);
+  const keys = tabKeys.value;
+  const idx = keys.indexOf(key);
   if (e.key === "ArrowRight") {
     e.preventDefault();
-    const next = (idx + 1) % tabKeys.length;
-    tab.value = tabKeys[next];
+    const next = (idx + 1) % keys.length;
+    tab.value = keys[next];
   } else if (e.key === "ArrowLeft") {
     e.preventDefault();
-    const prev = (idx - 1 + tabKeys.length) % tabKeys.length;
-    tab.value = tabKeys[prev];
+    const prev = (idx - 1 + keys.length) % keys.length;
+    tab.value = keys[prev];
   } else if (e.key === "Home") {
     e.preventDefault();
-    tab.value = tabKeys[0];
+    tab.value = keys[0];
   } else if (e.key === "End") {
     e.preventDefault();
-    tab.value = tabKeys[tabKeys.length - 1];
+    tab.value = keys[keys.length - 1];
   }
 }
 
@@ -1321,6 +1323,9 @@ const editForm = reactive({
   priority: "",
   riskLevel: "",
   approvalType: "",
+  workflowMode: "",
+  requestDepartmentId: "",
+  destinationDepartmentId: "",
   category: "",
   scheduledStartDate: "",
   scheduledStartTime: "",
@@ -1421,6 +1426,9 @@ function enterEditMode() {
   editForm.priority = cr.priority;
   editForm.riskLevel = cr.riskLevel;
   editForm.approvalType = cr.approvalType;
+  editForm.workflowMode = cr.workflowMode ?? "";
+  editForm.requestDepartmentId = cr.requestDepartmentId ?? "";
+  editForm.destinationDepartmentId = cr.destinationDepartmentId ?? "";
   editForm.category = cr.category ?? "";
   if (cr.scheduledStart) {
     const s = new Date(cr.scheduledStart);
@@ -1440,6 +1448,7 @@ function enterEditMode() {
   }
   editForm.affectedSystems = cr.affectedSystems.slice();
   editEditor.value?.commands.setContent(cr.description ?? "");
+  editLinkedRequestIds.value = linkedRequestIds.value.slice();
   isEditing.value = true;
 }
 
@@ -1460,6 +1469,9 @@ async function saveEditAction() {
       priority: editForm.priority,
       riskLevel: editForm.riskLevel,
       approvalType: editForm.approvalType,
+      workflowMode: editForm.workflowMode || null,
+      requestDepartmentId: editForm.requestDepartmentId || null,
+      destinationDepartmentId: editForm.destinationDepartmentId || null,
       category: editForm.category.trim() || null,
       scheduledStart:
         combineParts(
@@ -1475,6 +1487,10 @@ async function saveEditAction() {
     };
     changeRequest.value = await update(id.value, payload);
     await saveCustomFieldsAction();
+    if (editLinkedRequestIds.value !== linkedRequestIds.value) {
+      await upsertLinks(id.value, editLinkedRequestIds.value);
+      linkedRequestIds.value = editLinkedRequestIds.value.slice();
+    }
     isEditing.value = false;
   } catch (err: unknown) {
     toastError(resolveApiErrorMessage(err, "Failed to save changes."));
@@ -1493,6 +1509,8 @@ async function loadAll() {
       attachmentList,
       activityList,
       commentList,
+      departmentList,
+      linkedIds,
     ] = await Promise.all([
       get(id.value),
       listApprovers(id.value),
@@ -1501,6 +1519,8 @@ async function loadAll() {
       listAttachments(id.value),
       listActivity(id.value),
       listComments(id.value),
+      listActiveDepartments().catch(() => [] as Department[]),
+      getLinkedRequests(id.value).catch(() => [] as string[]),
     ]);
     changeRequest.value = cr;
     approvers.value = approverList;
@@ -1510,12 +1530,15 @@ async function loadAll() {
     attachments.value = attachmentList;
     activity.value = activityList;
     comments.value = commentList;
+    activeDepartments.value = departmentList;
+    linkedRequestIds.value = linkedIds;
     const valueMap: Record<string, string> = {};
     for (const def of definitions) {
       const saved = savedFields.find((field) => field.fieldId === def.id);
       valueMap[def.id] = saved?.value ?? "";
     }
     localFieldValues.value = valueMap;
+    await loadDeploymentStatus();
   } catch (error: unknown) {
     toastError(
       extractErrorMessage(error, "Failed to load change request details."),
@@ -2119,6 +2142,33 @@ watch(showAddApprover, async (isOpen) => {
   }
   await loadApproverCandidates();
 });
+
+const deploymentDone = ref(false);
+
+async function loadDeploymentStatus() {
+  if (changeRequest.value?.workflowMode !== "DELIVERY_PIPELINE") return;
+  try {
+    const deployment = await getDeployment(id.value);
+    deploymentDone.value = deployment.status === "APPROVED";
+  } catch {
+    deploymentDone.value = false;
+  }
+}
+
+async function onMarkComplete() {
+  try {
+    changeRequest.value = await markComplete(id.value);
+    activity.value = await listActivity(id.value);
+  } catch (error: unknown) {
+    toastError(
+      extractErrorMessage(error, "Unable to mark this request as complete."),
+    );
+  }
+}
+
+async function onUatUpdated() {
+  activity.value = await listActivity(id.value);
+}
 </script>
 
 <style scoped>

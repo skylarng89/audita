@@ -377,3 +377,25 @@ Set `audita.storage.local.base-path=/tmp/audita-test-uploads` in `@SpringBootTes
   - `AppUserMenu.vue` → `SharedAppUserMenu`
   - `AppNotificationBell.vue` → `SharedAppNotificationBell`
   - `AppToastContainer.vue` → `SharedAppToastContainer`
+
+## Stage Service Pattern (2026-06-04)
+
+- Stage services (`RequestUatService`, `RequestDeploymentService`) follow the same dual-logging pattern as `ChangeRequestService`: every mutation logs to both `activityStreamRepository` (via `logActivity()` helper) and `auditLogService`.
+- Stage services inject `ChangeRequestRepository` to load the parent CR for `ActivityStreamEntity` FK.
+- Stage entities use plain UUID fields (not `@ManyToOne`) to keep unit tests simple without Spring context. FK integrity is enforced by migration SQL.
+- Stage approver entities include `approve()` and `reject(reason)` domain methods with state guards (only from `PENDING`).
+
+## Display ID Generation Pattern (2026-06-04)
+
+- Display IDs (`RQ-000001`) are generated once at creation and never mutated.
+- Prefix is read from `org_settings` key `request.id_prefix` (default `"RQ"`).
+- Sequence is read/incremented from `org_settings` key `request.id_sequence`.
+- Prefix changes only affect future records; existing `display_id` values are immutable.
+- Known TOCTOU risk on sequence read-modify-write — acceptable for low-volume use; harden with DB sequence or `SELECT FOR UPDATE` before production if concurrent creation is expected.
+
+## Bidirectional Link Canonicalization Pattern (2026-06-04)
+
+- `RequestLinkEntity.canonicalOrder(UUID a, UUID b)` returns `[smaller, larger]` using lexicographic string comparison.
+- Self-links rejected at both app layer (`IllegalArgumentException`) and DB layer (`CHECK` constraint).
+- Unique pair constraint (`uq_request_links_pair`) prevents duplicate links.
+- Repository `findByRequestIdAOrRequestIdB(id, id)` retrieves all links for a request in both directions.

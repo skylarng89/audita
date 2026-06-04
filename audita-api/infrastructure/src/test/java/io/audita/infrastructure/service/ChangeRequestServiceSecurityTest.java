@@ -128,7 +128,10 @@ class ChangeRequestServiceSecurityTest {
                 OffsetDateTime.now().plusHours(3),
                 List.of("db"),
                 requesterId,
-                "REQUESTER"));
+                "REQUESTER",
+                null,
+                null,
+                null));
     }
 
     @Test
@@ -264,6 +267,9 @@ class ChangeRequestServiceSecurityTest {
         created.setCreatedBy(owner);
 
         when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner));
+        when(orgSettingRepository.findById("request.id_prefix")).thenReturn(Optional.empty());
+        when(orgSettingRepository.findById("request.id_sequence")).thenReturn(Optional.empty());
+        when(orgSettingRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(changeRequestRepository.save(any(ChangeRequestEntity.class))).thenReturn(created);
         when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId)).thenReturn(List.of());
         when(userRepository.findByIdInAndStatusOrderByFullNameAsc(List.of(configuredUserId), UserStatus.ACTIVE))
@@ -285,7 +291,10 @@ class ChangeRequestServiceSecurityTest {
                 null,
                 null,
                 List.of("db"),
-                ownerId));
+                ownerId,
+                null,
+                null,
+                null));
 
         verify(crApproverRepository)
                 .saveAll(org.mockito.ArgumentMatchers
@@ -315,6 +324,9 @@ class ChangeRequestServiceSecurityTest {
         created.setCreatedBy(owner);
 
         when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner));
+        when(orgSettingRepository.findById("request.id_prefix")).thenReturn(Optional.empty());
+        when(orgSettingRepository.findById("request.id_sequence")).thenReturn(Optional.empty());
+        when(orgSettingRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(changeRequestRepository.save(any(ChangeRequestEntity.class))).thenReturn(created);
         when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId)).thenReturn(List.of());
         when(userRepository.findByIdInAndStatusOrderByFullNameAsc(List.of(configuredUserId), UserStatus.ACTIVE))
@@ -336,7 +348,10 @@ class ChangeRequestServiceSecurityTest {
                 null,
                 null,
                 List.of("db"),
-                ownerId));
+                ownerId,
+                null,
+                null,
+                null));
 
         verify(crApproverRepository)
                 .saveAll(org.mockito.ArgumentMatchers.argThat((List<CrApproverEntity> approvers) -> {
@@ -403,6 +418,160 @@ class ChangeRequestServiceSecurityTest {
 
         assertThat(ex.getErrorCode()).isEqualTo("APPROVER_DECISION_LOCKED");
         verify(crApproverRepository, never()).delete(any());
+    }
+
+    @Test
+    void createAssignsDefaultDisplayIdWhenNoPrefixSetting() {
+        UUID ownerId = UUID.randomUUID();
+        UUID changeRequestId = UUID.randomUUID();
+
+        UserEntity owner = new UserEntity("owner@example.com", "Owner User");
+        ReflectionTestUtils.setField(owner, "id", ownerId);
+
+        when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner));
+        when(orgSettingRepository.findById("request.id_prefix")).thenReturn(Optional.empty());
+        when(orgSettingRepository.findById("request.id_sequence")).thenReturn(Optional.empty());
+        when(orgSettingRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(changeRequestRepository.save(any(ChangeRequestEntity.class))).thenAnswer(inv -> {
+            ChangeRequestEntity cr = inv.getArgument(0);
+            ReflectionTestUtils.setField(cr, "id", changeRequestId);
+            return cr;
+        });
+        when(orgSettingRepository.findById("workflow.default_approver_user_ids"))
+                .thenReturn(Optional.empty());
+        when(orgSettingRepository.findById("workflow.default_approver_group_ids"))
+                .thenReturn(Optional.empty());
+
+        ChangeRequestEntity result = changeRequestService.create(new ChangeRequestService.CreateRequest(
+                "Test CR", "desc", Priority.MEDIUM, RiskLevel.MEDIUM,
+                null, null, null, null, null, ownerId, null, null, null));
+
+        assertThat(result.getDisplayId()).isEqualTo("RQ-000001");
+    }
+
+    @Test
+    void createUsesCustomPrefixFromOrgSettings() {
+        UUID ownerId = UUID.randomUUID();
+        UUID changeRequestId = UUID.randomUUID();
+
+        UserEntity owner = new UserEntity("owner@example.com", "Owner User");
+        ReflectionTestUtils.setField(owner, "id", ownerId);
+
+        when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner));
+        when(orgSettingRepository.findById("request.id_prefix"))
+                .thenReturn(Optional.of(new io.audita.infrastructure.persistence.entity.OrgSettingEntity(
+                        "request.id_prefix", "IT")));
+        when(orgSettingRepository.findById("request.id_sequence")).thenReturn(Optional.empty());
+        when(orgSettingRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(changeRequestRepository.save(any(ChangeRequestEntity.class))).thenAnswer(inv -> {
+            ChangeRequestEntity cr = inv.getArgument(0);
+            ReflectionTestUtils.setField(cr, "id", changeRequestId);
+            return cr;
+        });
+        when(orgSettingRepository.findById("workflow.default_approver_user_ids"))
+                .thenReturn(Optional.empty());
+        when(orgSettingRepository.findById("workflow.default_approver_group_ids"))
+                .thenReturn(Optional.empty());
+
+        ChangeRequestEntity result = changeRequestService.create(new ChangeRequestService.CreateRequest(
+                "Test CR", "desc", Priority.MEDIUM, RiskLevel.MEDIUM,
+                null, null, null, null, null, ownerId, null, null, null));
+
+        assertThat(result.getDisplayId()).isEqualTo("IT-000001");
+    }
+
+    @Test
+    void createIncrementsSequenceOnEachCreate() {
+        UUID ownerId = UUID.randomUUID();
+        UUID cr1Id = UUID.randomUUID();
+        UUID cr2Id = UUID.randomUUID();
+
+        UserEntity owner = new UserEntity("owner@example.com", "Owner User");
+        ReflectionTestUtils.setField(owner, "id", ownerId);
+
+        when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner));
+        when(orgSettingRepository.findById("request.id_prefix")).thenReturn(Optional.empty());
+        when(orgSettingRepository.findById("request.id_sequence"))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(new io.audita.infrastructure.persistence.entity.OrgSettingEntity(
+                        "request.id_sequence", "1")));
+        when(orgSettingRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(changeRequestRepository.save(any(ChangeRequestEntity.class)))
+                .thenAnswer(inv -> {
+                    ChangeRequestEntity cr = inv.getArgument(0);
+                    ReflectionTestUtils.setField(cr, "id", cr1Id);
+                    return cr;
+                })
+                .thenAnswer(inv -> {
+                    ChangeRequestEntity cr = inv.getArgument(0);
+                    ReflectionTestUtils.setField(cr, "id", cr2Id);
+                    return cr;
+                });
+        when(orgSettingRepository.findById("workflow.default_approver_user_ids"))
+                .thenReturn(Optional.empty());
+        when(orgSettingRepository.findById("workflow.default_approver_group_ids"))
+                .thenReturn(Optional.empty());
+
+        ChangeRequestService.CreateRequest req = new ChangeRequestService.CreateRequest(
+                "CR1", "desc", Priority.MEDIUM, RiskLevel.MEDIUM,
+                null, null, null, null, null, ownerId, null, null, null);
+
+        ChangeRequestEntity first = changeRequestService.create(req);
+        ChangeRequestEntity second = changeRequestService.create(req);
+
+        assertThat(first.getDisplayId()).isEqualTo("RQ-000001");
+        assertThat(second.getDisplayId()).isEqualTo("RQ-000002");
+    }
+
+    @Test
+    void createDoesNotMutateExistingDisplayIdWhenPrefixChanges() {
+        UUID ownerId = UUID.randomUUID();
+        UUID cr1Id = UUID.randomUUID();
+        UUID cr2Id = UUID.randomUUID();
+
+        UserEntity owner = new UserEntity("owner@example.com", "Owner User");
+        ReflectionTestUtils.setField(owner, "id", ownerId);
+
+        when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner));
+        when(orgSettingRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(changeRequestRepository.save(any(ChangeRequestEntity.class)))
+                .thenAnswer(inv -> {
+                    ChangeRequestEntity cr = inv.getArgument(0);
+                    ReflectionTestUtils.setField(cr, "id", cr1Id);
+                    return cr;
+                })
+                .thenAnswer(inv -> {
+                    ChangeRequestEntity cr = inv.getArgument(0);
+                    ReflectionTestUtils.setField(cr, "id", cr2Id);
+                    return cr;
+                });
+        when(orgSettingRepository.findById("workflow.default_approver_user_ids"))
+                .thenReturn(Optional.empty());
+        when(orgSettingRepository.findById("workflow.default_approver_group_ids"))
+                .thenReturn(Optional.empty());
+
+        when(orgSettingRepository.findById("request.id_prefix"))
+                .thenReturn(Optional.of(new io.audita.infrastructure.persistence.entity.OrgSettingEntity(
+                        "request.id_prefix", "OLD")))
+                .thenReturn(Optional.of(new io.audita.infrastructure.persistence.entity.OrgSettingEntity(
+                        "request.id_prefix", "NEW")));
+        when(orgSettingRepository.findById("request.id_sequence"))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(new io.audita.infrastructure.persistence.entity.OrgSettingEntity(
+                        "request.id_sequence", "1")));
+
+        ChangeRequestService.CreateRequest req = new ChangeRequestService.CreateRequest(
+                "CR", "desc", Priority.MEDIUM, RiskLevel.MEDIUM,
+                null, null, null, null, null, ownerId, null, null, null);
+
+        ChangeRequestEntity first = changeRequestService.create(req);
+        String firstDisplayId = first.getDisplayId();
+
+        ChangeRequestEntity second = changeRequestService.create(req);
+
+        assertThat(firstDisplayId).isEqualTo("OLD-000001");
+        assertThat(first.getDisplayId()).isEqualTo("OLD-000001");
+        assertThat(second.getDisplayId()).isEqualTo("NEW-000002");
     }
 
     private ChangeRequestEntity buildDraftChangeRequest(UUID ownerId) {

@@ -2,11 +2,13 @@ package io.audita.api.dto.request;
 
 import io.audita.domain.model.ApprovalType;
 import io.audita.domain.model.Priority;
+import io.audita.domain.model.RequestWorkflowMode;
 import io.audita.domain.model.RiskLevel;
 import jakarta.validation.constraints.Size;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
 
 public record UpdateChangeRequestRequest(
         @Size(max = 500) String title,
@@ -17,5 +19,8 @@ public record UpdateChangeRequestRequest(
         ApprovalType approvalType,
         OffsetDateTime scheduledStart,
         OffsetDateTime scheduledEnd,
-        List<String> affectedSystems
+        List<String> affectedSystems,
+        RequestWorkflowMode workflowMode,
+        UUID requestDepartmentId,
+        UUID destinationDepartmentId
 ) {}

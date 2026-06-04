@@ -1,5 +1,59 @@
 # Audita — Changelog
 
+## [0.7.0] — 2026-06-04
+
+### Added (Sprint 15 — Requests Workflow Expansion)
+
+- **Conditional workflow modes**: Requests now support `APPROVAL_ONLY` (simple approval flow) and `DELIVERY_PIPELINE` (Request → UAT → Deployment).
+- **Immutable display IDs**: Human-readable request references (`RQ-000001`) generated at creation time. Admin-configurable prefix; prefix changes only affect future requests.
+- **Department master data**: Admin-managed department list (CRUD + active/inactive) powering request/destination department dropdowns on create/edit forms.
+- **Bidirectional request links**: Link related requests with search picker; links are bidirectional and deduplicated.
+- **UAT lifecycle**: Initiate UAT on approved DELIVERY_PIPELINE requests, manage UAT approvers (required/optional), approve/reject UAT, promote to Deployment when all required approvers approve.
+- **Deployment lifecycle**: Auto-created from UAT promotion; inherits approvers from main request + UAT (deduplicated, required flags preserved); approve/reject with status guards.
+- **Stage comments**: Inline comment threads on UAT and Deployment tabs.
+- **Dual status model**: `Approval Status` (DRAFT → PENDING_APPROVAL → APPROVED/REJECTED/CANCELLED) and `Completion Status` (IN_PROGRESS → COMPLETED) tracked independently.
+- **New API endpoints**: `POST /{id}/complete`, `PATCH /{id}/workflow-mode`, `GET /search`, `GET/PUT /{id}/links`, full UAT CRUD at `/{requestId}/uat/*`, full Deployment at `/{requestId}/deployment/*`, department admin at `/settings/departments/*`.
+- **Authorization matrix**: Creator/Admin/Super Admin for completion; Requester+MainApprover allowed for UAT/Deployment actions after request approval; Auditors read-only.
+- **Activity + audit parity**: Every UAT/Deployment action logged to both `activity_stream` and `audit_log`.
+
+### Changed
+
+- **UI label rename**: "Change Requests" → "Requests" throughout navigation, headings, buttons, page titles. Routes remain `/change-requests` for backward compatibility.
+- **Request list table**: Now shows `Approval Status` and `Completion Status` columns; ID column displays `displayId` with `CHG-` fallback for legacy records.
+- **Request detail page**: Decomposed into `CrUatPanel`, `CrDeploymentPanel`, `CrCompletionStatusControl`, `CrRequestOverviewPanel` components; `[id].vue` reduced from 2279 to 2211 lines.
+- **Create/Edit forms**: Added workflow mode selector, request/destination department dropdowns, linked requests picker.
+
+### Technical
+
+- **V3 Flyway migration**: 10+ new tables/columns, all idempotent with CHECK constraints.
+- **New domain enums**: `RequestWorkflowMode`, `CompletionStatus`.
+- **New services**: `RequestUatService`, `RequestDeploymentService`, `DepartmentService`, `RequestLinkService`.
+- **New controllers**: `RequestUatController`, `RequestDeploymentController`, `DepartmentAdminController`.
+- **Test coverage**: 185 frontend tests (26 files), 144/147 backend infrastructure tests, all API module tests. 17-test authorization matrix regression suite.
+
+### Architecture Decision
+
+- ADR-029: Conditional Requests Workflow with Compatibility-Mode Routing — chose conditional workflow model over universal UAT/Deployment to avoid forcing technical workflow on non-technical departments.
+
+---
+
+## [0.6.6] — 2026-05-31
+
+### Added (Security Audit & Sprint 14 Planning — 2026-05-31)
+
+- **Full codebase security & architecture audit** completed across `audita-api`, `audita-web`, infrastructure, and CI/CD.
+  - 52 findings: 3 Critical, 12 High, 27 Medium, 12 Low.
+  - Full report: `memory-bank/docs/security-audit-2026-05-31.md`.
+- **Sprint 14 created** with 21 remediation tasks across 5 phases:
+  - Phase A (Critical): setup-token guard, DOMPurify XSS fix, redirect validation.
+  - Phase B (High Auth): super admin rate limiting, JWT revocability, SSO domain whitelist, CSRF.
+  - Phase C (High Infra): atomic idempotency, @Async fix, DDL auto-validate, Docker hardening.
+  - Phase D (Medium Security): security headers, tenant isolation, CSV injection, error leakage, Redis migration.
+  - Phase E (Perf/Arch): N+1 queries, tenant caching, SSE backoff, audit immutability, component decomposition.
+- ADR-022 recorded: audit remediation strategy and prioritization rationale.
+
+---
+
 ## [0.6.5] — 2026-05-25
 
 ### Fixed (CI + Container Hardening — 2026-05-25)

@@ -3,6 +3,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { CRStatus } from '~/types'
 
 const props = defineProps<{ status: CRStatus }>()

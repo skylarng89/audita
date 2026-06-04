@@ -43,7 +43,7 @@
         :active-class="
           sidebarCollapsed ? 'sidebar-link-rail-active' : 'sidebar-link-active'
         "
-        title="Change Requests"
+        title="Requests"
       >
         <svg
           class="w-4 h-4 shrink-0"
@@ -58,7 +58,7 @@
             d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
           />
         </svg>
-        <span v-if="!sidebarCollapsed">Change Requests</span>
+        <span v-if="!sidebarCollapsed">Requests</span>
       </NuxtLink>
 
       <NuxtLink
@@ -217,13 +217,13 @@
             d="M12 4v16m8-8H4"
           />
         </svg>
-        New Change
+        New Request
       </NuxtLink>
       <NuxtLink
         v-else-if="auth.canCreateCR"
         to="/change-requests/new"
         class="flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-xl bg-primary text-white hover:bg-primary-dark shadow-sm transition-colors"
-        title="New Change Request"
+        title="New Request"
       >
         <svg
           class="w-4 h-4"

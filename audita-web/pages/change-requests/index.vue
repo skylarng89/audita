@@ -13,7 +13,7 @@
         <h1
           class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
         >
-          Change Requests
+          Requests
         </h1>
         <p class="text-sm text-muted mt-1 max-w-lg">
           Managing and orchestrating infrastructure transitions with
@@ -32,7 +32,7 @@
           class="btn-primary btn-md shadow-lg shadow-primary/20"
           @click="navigateTo('/change-requests/new')"
         >
-          Create Change
+          New Request
         </button>
       </div>
     </div>
@@ -171,13 +171,19 @@
                 class="table-header px-6 py-4 text-left whitespace-nowrap min-w-[240px] w-[30%]"
                 scope="col"
               >
-                Change Title
+                Title
               </th>
               <th
                 class="table-header px-6 py-4 text-left whitespace-nowrap w-52"
                 scope="col"
               >
-                Status
+                Approval Status
+              </th>
+              <th
+                class="table-header px-6 py-4 text-left whitespace-nowrap w-40"
+                scope="col"
+              >
+                Completion
               </th>
               <th
                 class="table-header px-6 py-4 text-left whitespace-nowrap w-36"
@@ -229,6 +235,11 @@
                 </td>
                 <td class="px-6 py-4">
                   <div
+                    class="h-5 w-20 bg-border dark:bg-border-dark rounded-full"
+                  />
+                </td>
+                <td class="px-6 py-4">
+                  <div
                     class="h-5 w-16 bg-border dark:bg-border-dark rounded-full"
                   />
                 </td>
@@ -246,7 +257,7 @@
 
             <!-- Empty state -->
             <tr v-else-if="!crs.length">
-              <td colspan="7" class="px-4 py-16 text-center">
+              <td colspan="8" class="px-4 py-16 text-center">
                 <div class="flex flex-col items-center gap-3">
                   <div
                     class="w-14 h-14 rounded-2xl bg-surface-container-low dark:bg-slate-800 flex items-center justify-center"
@@ -267,7 +278,7 @@
                   </div>
                   <div>
                     <p class="text-sm font-semibold text-on-surface">
-                      No change requests found
+                      No requests found
                     </p>
                     <p class="text-xs text-muted mt-1">
                       {{
@@ -303,7 +314,7 @@
               <td class="px-6 py-4 whitespace-nowrap">
                 <span
                   class="font-mono text-xs text-primary font-semibold tracking-wide"
-                  >CHG-{{ cr.id.slice(0, 8).toUpperCase() }}</span
+                  >{{ cr.displayId || ('CHG-' + cr.id.slice(0, 8).toUpperCase()) }}</span
                 >
               </td>
               <td class="px-6 py-4 min-w-[240px]">
@@ -317,7 +328,10 @@
                 </p>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <CrStatusBadge :status="cr.status" />
+                <CrStatusBadge :status="(cr.approvalStatus as CRStatus) || cr.status" />
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <CrCompletionStatusBadge :status="cr.completionStatus || 'IN_PROGRESS'" />
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <CrPriorityBadge :priority="cr.priority" />
@@ -398,12 +412,12 @@
 </template>
 
 <script setup lang="ts">
-import type { ChangeRequest, Page } from "~/types";
+import type { ChangeRequest, CRStatus, Page } from "~/types";
 import { isPast, parseISO } from "date-fns";
 
 definePageMeta({ middleware: "auth" });
 
-useHead({ title: "Change Requests — Audita" });
+useHead({ title: "Requests — Audita" });
 
 const auth = useAuthStore();
 const { list } = useChangeRequests();
