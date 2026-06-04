@@ -3,7 +3,7 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 plugins {
     java
     id("org.springframework.boot") version "4.0.6" apply false
-    id("org.sonarqube") version "7.3.0.8198"
+    id("org.sonarqube") version "7.3.1.8318"
 }
 
 // Java 25 GA — Spring Boot 4.0.6 fully supports it.
