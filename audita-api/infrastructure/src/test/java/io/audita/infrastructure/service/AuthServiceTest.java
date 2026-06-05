@@ -86,9 +86,9 @@ class AuthServiceTest {
         @Test
         void login_success_returns_tokens() {
                 UserEntity user = activeUser("alice@acme.com", "StrongPass1!A");
-                when(userRepository.findByEmail("alice@acme.com")).thenReturn(Optional.of(user));
+                when(userRepository.findByEmailIgnoreCase("alice@acme.com")).thenReturn(Optional.of(user));
                 when(allowedDomainRepository.findByTenantSlug(TENANT)).thenReturn(List.of());
-                when(jwtService.issue(any(), any(), any(), any())).thenReturn("access-token");
+                when(jwtService.issue(any(), any(), any(), any(), any(), any())).thenReturn("access-token");
                 when(refreshTokenRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
                 AuthService.LoginResult result = authService.loginTenantUser(
@@ -101,7 +101,7 @@ class AuthServiceTest {
         @Test
         void login_domain_not_in_whitelist_throws() {
                 UserEntity user = activeUser("alice@other.com", "StrongPass1!A");
-                when(userRepository.findByEmail("alice@other.com")).thenReturn(Optional.of(user));
+                when(userRepository.findByEmailIgnoreCase("alice@other.com")).thenReturn(Optional.of(user));
                 when(allowedDomainRepository.findByTenantSlug(TENANT))
                                 .thenReturn(List.of(new TenantAllowedDomainEntity(null, "acme.com")));
 
@@ -124,7 +124,7 @@ class AuthServiceTest {
 
                 when(refreshTokenRepository.findByTokenHash(AuthService.sha256(raw)))
                                 .thenReturn(Optional.of(stored));
-                when(jwtService.issue(any(), any(), any(), any())).thenReturn("new-access");
+                when(jwtService.issue(any(), any(), any(), any(), any(), any())).thenReturn("new-access");
                 when(refreshTokenRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
                 AuthService.LoginResult result = authService.refreshToken(raw, CLIENT_IP, USER_AGENT);
@@ -146,7 +146,7 @@ class AuthServiceTest {
 
                 when(refreshTokenRepository.findByTokenHash(AuthService.sha256(raw)))
                                 .thenReturn(Optional.of(stored));
-                when(jwtService.issue(any(), any(), any(), any())).thenReturn("restored-access");
+                when(jwtService.issue(any(), any(), any(), any(), any(), any())).thenReturn("restored-access");
 
                 AuthService.LoginResult result = authService.restoreSession(raw, CLIENT_IP, USER_AGENT);
 
@@ -223,6 +223,46 @@ class AuthServiceTest {
         void logout_null_token_is_no_op() {
                 authService.logout(null);
                 verifyNoInteractions(refreshTokenRepository);
+        }
+
+        @Test
+        void login_is_case_insensitive() {
+                UserEntity user = activeUser("alice@acme.com", "StrongPass1!A");
+                when(userRepository.findByEmailIgnoreCase("alice@acme.com")).thenReturn(Optional.of(user));
+                when(allowedDomainRepository.findByTenantSlug(TENANT)).thenReturn(List.of());
+                when(jwtService.issue(any(), any(), any(), any(), any(), any())).thenReturn("access-token");
+                when(refreshTokenRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+                AuthService.LoginResult result = authService.loginTenantUser(
+                                "Alice@Acme.COM", "StrongPass1!A", TENANT, CLIENT_IP, USER_AGENT);
+
+                assertThat(result.accessToken()).isEqualTo("access-token");
+        }
+
+        @Test
+        void login_pending_user_gets_account_pending_error() {
+                UserEntity user = activeUser("alice@acme.com", "StrongPass1!A");
+                user.setStatus(UserStatus.PENDING);
+                when(userRepository.findByEmailIgnoreCase("alice@acme.com")).thenReturn(Optional.of(user));
+
+                DomainNotPermittedException ex = assertThrows(DomainNotPermittedException.class,
+                                () -> authService.loginTenantUser(
+                                                "alice@acme.com", "StrongPass1!A", TENANT, CLIENT_IP, USER_AGENT));
+                assertThat(ex.getErrorCode()).isEqualTo("ACCOUNT_PENDING");
+        }
+
+        @Test
+        void login_success_clears_rate_limit() {
+                UserEntity user = activeUser("alice@acme.com", "StrongPass1!A");
+                when(userRepository.findByEmailIgnoreCase("alice@acme.com")).thenReturn(Optional.of(user));
+                when(allowedDomainRepository.findByTenantSlug(TENANT)).thenReturn(List.of());
+                when(jwtService.issue(any(), any(), any(), any(), any(), any())).thenReturn("access-token");
+                when(refreshTokenRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+                for (int i = 0; i < 6; i++) {
+                        authService.loginTenantUser(
+                                        "alice@acme.com", "StrongPass1!A", TENANT, CLIENT_IP, USER_AGENT);
+                }
         }
 
         private UserEntity activeUser(String email, String rawPassword) {

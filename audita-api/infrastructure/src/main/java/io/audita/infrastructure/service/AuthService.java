@@ -88,29 +88,38 @@ public class AuthService implements AuthPort {
             String tenantSlug,
             String clientIp,
             String userAgent) {
-        // Rate limit: 5 attempts per 15 minutes per IP+email composite key
-        String rateLimitKey = "login:" + clientIp + ":" + email.toLowerCase();
-        enforceRateLimit(rateLimitKey, 5, Duration.ofMinutes(15), "TOO_MANY_ATTEMPTS",
+        String normalizedEmail = email.trim().toLowerCase();
+        String rateLimitKey = "login:" + clientIp + ":" + normalizedEmail;
+        checkRateLimit(rateLimitKey, 5, Duration.ofMinutes(15), "TOO_MANY_ATTEMPTS",
                 "Too many login attempts. Please try again in 15 minutes.");
 
-        UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new DomainNotPermittedException(
-                        "INVALID_CREDENTIALS", "Invalid email or password."));
+        UserEntity user = userRepository.findByEmailIgnoreCase(normalizedEmail)
+                .orElseThrow(() -> {
+                    recordFailedAttempt(rateLimitKey);
+                    return new DomainNotPermittedException(
+                            "INVALID_CREDENTIALS", "Invalid email or password.");
+                });
+
+        if (user.getStatus() == UserStatus.PENDING) {
+            recordFailedAttempt(rateLimitKey);
+            throw new DomainNotPermittedException("ACCOUNT_PENDING",
+                    "Your account is not yet active. Please accept your invite link first.");
+        }
 
         if (user.getStatus() == UserStatus.SUSPENDED) {
+            recordFailedAttempt(rateLimitKey);
             throw new DomainNotPermittedException("ACCOUNT_SUSPENDED",
                     "Your account has been suspended. Contact your administrator.");
         }
 
         if (!passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
+            recordFailedAttempt(rateLimitKey);
             throw new DomainNotPermittedException("INVALID_CREDENTIALS", "Invalid email or password.");
         }
 
-        // AUTH-009: Domain whitelist check — if any domains are configured for the
-        // tenant,
-        // the user's email domain must be in the list.
-        checkDomainWhitelist(email, tenantSlug);
+        checkDomainWhitelist(normalizedEmail, tenantSlug);
 
+        clearRateLimit(rateLimitKey);
         return issueTokensForUser(user, tenantSlug, clientIp, userAgent);
     }
 
@@ -168,14 +177,13 @@ public class AuthService implements AuthPort {
 
     @Override
     public void forgotPassword(String email) {
-        // Rate limit: 3 requests per hour per email (prevents token flooding / email
-        // bombing)
-        String rateLimitKey = "forgot:" + email.toLowerCase();
-        enforceRateLimit(rateLimitKey, 3, Duration.ofHours(1), "TOO_MANY_ATTEMPTS",
+        String normalizedEmail = email.trim().toLowerCase();
+        String rateLimitKey = "forgot:" + normalizedEmail;
+        checkRateLimit(rateLimitKey, 3, Duration.ofHours(1), "TOO_MANY_ATTEMPTS",
                 "Too many reset requests. Please try again in an hour.");
+        recordFailedAttempt(rateLimitKey);
 
-        // Always return success — prevents email enumeration
-        userRepository.findByEmail(email).ifPresent(user -> {
+        userRepository.findByEmailIgnoreCase(normalizedEmail).ifPresent(user -> {
             String rawToken = generateSecureToken();
             PasswordResetTokenEntity token = new PasswordResetTokenEntity(
                     user, sha256(rawToken), java.time.OffsetDateTime.now().plusHours(1));
@@ -351,12 +359,12 @@ public class AuthService implements AuthPort {
     }
 
     /**
-     * Sliding-window in-memory rate limiter.
-     * Evicts timestamps outside the window on each check.
+     * Sliding-window in-memory rate limiter — check only, does not record the attempt.
+     * Call {@link #recordFailedAttempt(String)} on failure, {@link #clearRateLimit(String)} on success.
      * Not distributed — suitable for single-instance deployment; replace with
      * Redis/Bucket4j for HA.
      */
-    private void enforceRateLimit(String key, int maxRequests, Duration window,
+    private void checkRateLimit(String key, int maxRequests, Duration window,
             String errorCode, String message) {
         Instant cutoff = Instant.now().minus(window);
         LinkedList<Instant> bucket = rateBuckets.computeIfAbsent(key, k -> new LinkedList<>());
@@ -365,7 +373,6 @@ public class AuthService implements AuthPort {
             if (bucket.size() >= maxRequests) {
                 throw new DomainNotPermittedException(errorCode, message);
             }
-            bucket.add(Instant.now());
         }
 
         if (rateLimitChecks.incrementAndGet() % 100 == 0) {
@@ -378,6 +385,17 @@ public class AuthService implements AuthPort {
                 }
             });
         }
+    }
+
+    private void recordFailedAttempt(String key) {
+        LinkedList<Instant> bucket = rateBuckets.computeIfAbsent(key, k -> new LinkedList<>());
+        synchronized (bucket) {
+            bucket.add(Instant.now());
+        }
+    }
+
+    private void clearRateLimit(String key) {
+        rateBuckets.remove(key);
     }
 
     private void validatePasswordStrength(String password) {
