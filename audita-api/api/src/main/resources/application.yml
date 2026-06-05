@@ -20,7 +20,7 @@ spring:
   # ── JPA / Hibernate ──────────────────────────────────────────────────────────
   jpa:
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO}
+      ddl-auto: validate
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategySnakeCaseImpl
     open-in-view: false
@@ -192,6 +192,9 @@ spring:
   config:
     activate:
       on-profile: dev
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
 
 audita:
   auth:
