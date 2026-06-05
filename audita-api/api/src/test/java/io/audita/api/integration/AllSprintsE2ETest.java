@@ -371,6 +371,9 @@ class AllSprintsE2ETest {
         // Verify via GET
         var userR2 = getWithToken("/api/v1/users/" + requesterUserId, orgSlug, adminToken);
         assertThat(mapper.readTree(userR2.body()).get("status").asText()).isEqualTo("ACTIVE");
+
+        // Refresh requester token — tokenVersion was incremented by deactivate+reactivate
+        requesterToken = loginAndGetToken(orgSlug, requesterEmail, requesterPassword);
     }
 
     @Test @Order(34)
