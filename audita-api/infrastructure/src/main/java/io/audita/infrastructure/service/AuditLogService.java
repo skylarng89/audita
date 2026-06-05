@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -40,11 +41,11 @@ public class AuditLogService implements AuditTrailPort {
     }
 
     /**
-     * Persists a single audit log entry. Silently swallows persistence
-     * errors so that a failing audit write never rolls back the caller's
-     * transaction — the caller must already be within a transaction.
+     * Persists a single audit log entry. Uses REQUIRES_NEW so the audit
+     * entry is committed independently of the caller's transaction,
+     * surviving any rollback in the business operation.
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void log(String actionType,
                     String entityType,
                     UUID entityId,

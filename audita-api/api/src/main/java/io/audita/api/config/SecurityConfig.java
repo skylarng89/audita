@@ -14,11 +14,13 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
@@ -46,14 +48,18 @@ public class SecurityConfig {
         @Bean
         @SuppressWarnings("java:S4502")
         public SecurityFilterChain filterChain(HttpSecurity http) {
-                // This API authenticates normal requests with explicit bearer tokens, not
-                // ambient session cookies. The only cookie-backed auth flow is the refresh
-                // cookie scoped to /api/v1/auth with SameSite=Strict, which prevents
-                // cross-site submission on the state-changing endpoints that consume it.
+                // CSRF is disabled — Stateless API with Bearer tokens and SameSite=Strict cookies
                 http.csrf(AbstractHttpConfigurer::disable)
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+                http.headers(headers -> headers
+                                .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
+                                .contentTypeOptions(c -> {})
+                                .httpStrictTransportSecurity(hsts -> hsts
+                                                .includeSubDomains(true)
+                                                .maxAgeInSeconds(31536000)));
 
                 http.addFilterAt(new AuthorizationFilter(apiAuthorizationManager()), AuthorizationFilter.class);
 
@@ -100,6 +106,15 @@ public class SecurityConfig {
                 return Arrays.stream(patterns)
                                 .map(PathPatternRequestMatcher::pathPattern)
                                 .toArray(RequestMatcher[]::new);
+        }
+
+        private RequestMatcher cookieScopedAuthEndpoints() {
+                return request -> {
+                        String path = request.getRequestURI();
+                        return path.startsWith("/api/v1/auth/refresh")
+                                        || path.startsWith("/api/v1/auth/logout")
+                                        || path.startsWith("/api/v1/auth/session");
+                };
         }
 
         @Bean

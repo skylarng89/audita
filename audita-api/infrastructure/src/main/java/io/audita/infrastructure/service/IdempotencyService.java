@@ -3,8 +3,9 @@ package io.audita.infrastructure.service;
 import io.audita.domain.exception.DomainNotPermittedException;
 import io.audita.infrastructure.persistence.entity.IdempotencyKeyEntity;
 import io.audita.infrastructure.persistence.repository.IdempotencyKeyRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ import java.util.regex.Pattern;
 @Transactional
 public class IdempotencyService {
 
+    private static final Logger log = LoggerFactory.getLogger(IdempotencyService.class);
     private static final Pattern IDEMPOTENCY_KEY_PATTERN = Pattern.compile("^[A-Za-z0-9._:-]{8,128}$");
 
     private final IdempotencyKeyRepository idempotencyKeyRepository;
@@ -28,14 +30,22 @@ public class IdempotencyService {
         this.idempotencyKeyRepository = idempotencyKeyRepository;
     }
 
-    @Transactional(readOnly = true)
-    public Optional<UUID> findResourceId(UUID userId, String operation, String rawKey) {
+    public Optional<UUID> claimIdempotencyKey(UUID userId, String operation, String rawKey) {
         String key = normalizeKey(rawKey);
         if (key == null) {
             return Optional.empty();
         }
 
         OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime expiresAt = now.plusHours(ttlHours);
+
+        idempotencyKeyRepository.deleteByExpiresAtBefore(now);
+
+        int inserted = idempotencyKeyRepository.tryClaimPlaceholder(userId, operation, key, expiresAt);
+        if (inserted > 0) {
+            return Optional.empty();
+        }
+
         return idempotencyKeyRepository
                 .findFirstByUserIdAndOperationAndIdempotencyKeyAndExpiresAtAfter(userId, operation, key, now)
                 .map(IdempotencyKeyEntity::getResourceId);
@@ -47,17 +57,9 @@ public class IdempotencyService {
             return;
         }
 
-        OffsetDateTime now = OffsetDateTime.now();
-        idempotencyKeyRepository.deleteByExpiresAtBefore(now);
-        try {
-            idempotencyKeyRepository.save(new IdempotencyKeyEntity(
-                    userId,
-                    operation,
-                    key,
-                    resourceId,
-                    now.plusHours(ttlHours)));
-        } catch (DataIntegrityViolationException ignored) {
-            // Duplicate key already recorded by a previous successful request.
+        int updated = idempotencyKeyRepository.updateResourceId(userId, operation, key, resourceId);
+        if (updated == 0) {
+            log.warn("Idempotency key placeholder not found for update userId={} operation={}", userId, operation);
         }
     }
 

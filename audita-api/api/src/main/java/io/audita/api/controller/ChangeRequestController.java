@@ -68,10 +68,10 @@ public class ChangeRequestController {
             @AuthenticationPrincipal UserPrincipal principal) {
 
         UUID createdById = principal.userId();
-        var existingResource = idempotencyService.findResourceId(createdById, OPERATION_CREATE, idempotencyKey);
-        if (existingResource.isPresent()) {
+        var claimed = idempotencyService.claimIdempotencyKey(createdById, OPERATION_CREATE, idempotencyKey);
+        if (claimed.isPresent()) {
             ChangeRequestResponse replay = ChangeRequestResponse.from(
-                    changeRequestService.getById(existingResource.get(), createdById, principal.role()));
+                    changeRequestService.getById(claimed.get(), createdById, principal.role()));
             return ResponseEntity.ok(replay);
         }
 
@@ -122,10 +122,10 @@ public class ChangeRequestController {
             @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey,
             @AuthenticationPrincipal UserPrincipal principal) {
         String operation = OPERATION_SUBMIT_PREFIX + id;
-        var existingResource = idempotencyService.findResourceId(principal.userId(), operation, idempotencyKey);
-        if (existingResource.isPresent()) {
+        var claimed = idempotencyService.claimIdempotencyKey(principal.userId(), operation, idempotencyKey);
+        if (claimed.isPresent()) {
             return ChangeRequestResponse.from(
-                    changeRequestService.getById(existingResource.get(), principal.userId(), principal.role()));
+                    changeRequestService.getById(claimed.get(), principal.userId(), principal.role()));
         }
 
         ChangeRequestResponse submitted = ChangeRequestResponse.from(

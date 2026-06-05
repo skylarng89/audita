@@ -10,7 +10,7 @@ public interface AuthPort {
             String clientIp,
             String userAgent);
 
-    LoginResult loginSuperAdmin(String email, String rawPassword);
+    LoginResult loginSuperAdmin(String email, String rawPassword, String clientIp);
 
     LoginResult restoreSession(String rawRefreshToken, String clientIp, String userAgent);
 
@@ -18,7 +18,7 @@ public interface AuthPort {
 
     void logout(String rawRefreshToken);
 
-    void forgotPassword(String email);
+    void forgotPassword(String email, String tenantSlug);
 
     void resetPassword(String rawToken, String newPassword);
 

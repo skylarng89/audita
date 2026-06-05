@@ -34,6 +34,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
@@ -61,6 +62,8 @@ class AuthServiceTest {
         JwtService jwtService;
         @Mock
         EmailService emailService;
+        @Mock
+        RateLimitService rateLimitService;
 
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(4);
 
@@ -88,7 +91,7 @@ class AuthServiceTest {
                 UserEntity user = activeUser("alice@acme.com", "StrongPass1!A");
                 when(userRepository.findByEmailIgnoreCase("alice@acme.com")).thenReturn(Optional.of(user));
                 when(allowedDomainRepository.findByTenantSlug(TENANT)).thenReturn(List.of());
-                when(jwtService.issue(any(), any(), any(), any(), any(), any())).thenReturn("access-token");
+                when(jwtService.issue(any(), any(), any(), any(), any(), any(), anyInt())).thenReturn("access-token");
                 when(refreshTokenRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
                 AuthService.LoginResult result = authService.loginTenantUser(
@@ -124,7 +127,7 @@ class AuthServiceTest {
 
                 when(refreshTokenRepository.findByTokenHash(AuthService.sha256(raw)))
                                 .thenReturn(Optional.of(stored));
-                when(jwtService.issue(any(), any(), any(), any(), any(), any())).thenReturn("new-access");
+                when(jwtService.issue(any(), any(), any(), any(), any(), any(), anyInt())).thenReturn("new-access");
                 when(refreshTokenRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
                 AuthService.LoginResult result = authService.refreshToken(raw, CLIENT_IP, USER_AGENT);
@@ -146,7 +149,7 @@ class AuthServiceTest {
 
                 when(refreshTokenRepository.findByTokenHash(AuthService.sha256(raw)))
                                 .thenReturn(Optional.of(stored));
-                when(jwtService.issue(any(), any(), any(), any(), any(), any())).thenReturn("restored-access");
+                when(jwtService.issue(any(), any(), any(), any(), any(), any(), anyInt())).thenReturn("restored-access");
 
                 AuthService.LoginResult result = authService.restoreSession(raw, CLIENT_IP, USER_AGENT);
 
@@ -230,7 +233,7 @@ class AuthServiceTest {
                 UserEntity user = activeUser("alice@acme.com", "StrongPass1!A");
                 when(userRepository.findByEmailIgnoreCase("alice@acme.com")).thenReturn(Optional.of(user));
                 when(allowedDomainRepository.findByTenantSlug(TENANT)).thenReturn(List.of());
-                when(jwtService.issue(any(), any(), any(), any(), any(), any())).thenReturn("access-token");
+                when(jwtService.issue(any(), any(), any(), any(), any(), any(), anyInt())).thenReturn("access-token");
                 when(refreshTokenRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
                 AuthService.LoginResult result = authService.loginTenantUser(
@@ -256,7 +259,7 @@ class AuthServiceTest {
                 UserEntity user = activeUser("alice@acme.com", "StrongPass1!A");
                 when(userRepository.findByEmailIgnoreCase("alice@acme.com")).thenReturn(Optional.of(user));
                 when(allowedDomainRepository.findByTenantSlug(TENANT)).thenReturn(List.of());
-                when(jwtService.issue(any(), any(), any(), any(), any(), any())).thenReturn("access-token");
+                when(jwtService.issue(any(), any(), any(), any(), any(), any(), anyInt())).thenReturn("access-token");
                 when(refreshTokenRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
                 for (int i = 0; i < 6; i++) {

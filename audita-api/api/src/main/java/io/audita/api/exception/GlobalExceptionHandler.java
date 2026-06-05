@@ -136,10 +136,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ProblemDetail handleUnreadableRequest(HttpMessageNotReadableException ex) {
-        String causeMessage = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
+        log.warn("Malformed request body", ex);
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(
-            HttpStatus.BAD_REQUEST,
-            causeMessage == null || causeMessage.isBlank() ? "Failed to read request" : causeMessage);
+            HttpStatus.BAD_REQUEST, "Malformed request body");
         detail.setTitle("Bad Request");
         detail.setType(URI.create("https://audita.io/errors/bad-request"));
         return detail;

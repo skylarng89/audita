@@ -1,5 +1,8 @@
 package io.audita.api.security;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import io.audita.infrastructure.persistence.entity.UserEntity;
+import io.audita.infrastructure.persistence.repository.UserRepository;
 import io.audita.infrastructure.security.JwtService;
 import io.audita.infrastructure.tenant.TenantContext;
 import io.jsonwebtoken.Claims;
@@ -15,18 +18,24 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import javax.sql.DataSource;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Validates the Bearer token on every request.
  * On success: populates SecurityContext + TenantContext.
- * On failure: continues the filter chain unauthenticated (Spring Security
- * handles 401).
+ * On failure: continues the filter chain unauthenticated (Spring Security handles 401).
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -34,9 +43,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtService jwtService;
+    private final UserRepository userRepository;
+    private final DataSource dataSource;
 
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    // Cache active tenant slugs (TTL 60s) to avoid DB queries on every request
+    private final com.github.benmanes.caffeine.cache.Cache<String, Boolean> activeTenants =
+            Caffeine.newBuilder()
+                    .expireAfterWrite(60, TimeUnit.SECONDS)
+                    .maximumSize(10_000)
+                    .build();
+
+    public JwtAuthenticationFilter(JwtService jwtService, UserRepository userRepository, DataSource dataSource) {
         this.jwtService = jwtService;
+        this.userRepository = userRepository;
+        this.dataSource = dataSource;
     }
 
     @Override
@@ -69,11 +89,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String tenantSlug = claims.get("tenantSlug", String.class);
         if (tenantSlug != null && !tenantSlug.isBlank()) {
             tenantSlug = tenantSlug.toLowerCase(Locale.ROOT);
+            if (!isTenantActive(tenantSlug)) {
+                log.warn("Rejected request: tenant {} is not active", tenantSlug);
+                chain.doFilter(request, response);
+                return;
+            }
         }
 
         logBootstrapAuthenticated(bootstrapRequest, request, role, tenantSlug);
 
         UserPrincipal principal = resolvePrincipal(userId, email, role, roles, permissions, tenantSlug);
+
+        // Token version validation for tenant users (not Super Admin)
+        // Must run AFTER TenantContext is set by resolvePrincipal
+        if (!"SUPER_ADMIN".equals(role)) {
+            Integer tokenTv = claims.get("tv", Integer.class);
+            int expectedTv = tokenTv != null ? tokenTv : 0;
+            Optional<UserEntity> userOpt = userRepository.findById(userId);
+            if (userOpt.isEmpty() || userOpt.get().getTokenVersion() != expectedTv) {
+                chain.doFilter(request, response);
+                return;
+            }
+        }
 
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                 principal, null, principal.getAuthorities());
@@ -121,6 +158,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .toList();
         }
         return Collections.emptyList();
+    }
+
+    private boolean isTenantActive(String slug) {
+        Boolean cached = activeTenants.getIfPresent(slug);
+        if (cached != null) {
+            return cached;
+        }
+        boolean active = queryTenantActive(slug);
+        activeTenants.put(slug, active);
+        return active;
+    }
+
+    private boolean queryTenantActive(String slug) {
+        String sql = "SELECT status FROM public.tenants WHERE slug = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, slug);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    String status = resultSet.getString(1);
+                    return "ACTIVE".equals(status);
+                }
+                return false;
+            }
+        } catch (SQLException ex) {
+            log.error("Tenant active status query failed for slug={}", slug, ex);
+            return false;
+        }
     }
 
     private void logBootstrapWithoutToken(boolean bootstrapRequest, HttpServletRequest request) {

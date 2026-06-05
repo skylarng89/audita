@@ -57,7 +57,8 @@ public class AuthController {
         String resolvedTenantSlug = resolveTenantSlug(tenantSlug);
         LoginResult result;
         if (resolvedTenantSlug == null) {
-            result = authService.loginSuperAdmin(request.email(), request.password());
+            String clientIp = resolveClientIp(servletRequest);
+            result = authService.loginSuperAdmin(request.email(), request.password(), clientIp);
         } else {
             String clientIp = resolveClientIp(servletRequest);
             String userAgent = servletRequest.getHeader(USER_AGENT_HEADER);
@@ -126,8 +127,9 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(
-            @Valid @RequestBody ForgotPasswordRequest request) {
-        authService.forgotPassword(request.email());
+            @Valid @RequestBody ForgotPasswordRequest request,
+            @RequestHeader(value = "X-Tenant-Slug") String tenantSlug) {
+        authService.forgotPassword(request.email(), tenantSlug);
         return ResponseEntity.ok(Map.of(MESSAGE_KEY,
                 "If that email is registered, a reset link has been sent."));
     }

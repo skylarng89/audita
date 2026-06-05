@@ -49,6 +49,9 @@ public class UserEntity {
     @Column(name = "is_sample", nullable = false)
     private boolean isSample = false;
 
+    @Column(name = "token_version", nullable = false)
+    private int tokenVersion = 0;
+
     protected UserEntity() {
     }
 
@@ -142,5 +145,13 @@ public class UserEntity {
 
     public void setSample(boolean sample) {
         isSample = sample;
+    }
+
+    public int getTokenVersion() {
+        return tokenVersion;
+    }
+
+    public void setTokenVersion(int tokenVersion) {
+        this.tokenVersion = tokenVersion;
     }
 }

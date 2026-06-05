@@ -73,7 +73,15 @@ public class PlatformBootstrapController {
      * in one atomic operation. Replaces the multi-step bootstrap + tenant provisioning flow.
      */
     @PostMapping("/setup")
-    public ResponseEntity<Map<String, String>> setup(@Valid @RequestBody SetupRequest request) {
+    public ResponseEntity<Map<String, String>> setup(
+            @Valid @RequestBody SetupRequest request,
+            @RequestHeader(value = "X-Setup-Token", required = false) String providedSetupToken) {
+        if (setupToken != null && !setupToken.isBlank() && !setupToken.equals(providedSetupToken)) {
+            if (log.isWarnEnabled()) {
+                log.warn("Setup rejected due to invalid setup token: orgName={}", request.orgName());
+            }
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid setup token.");
+        }
         if (log.isInfoEnabled()) {
             String emailDomain = extractDomain(request.email());
             log.info("Single-tenant setup attempt: orgName={} slug={} emailDomain={}",

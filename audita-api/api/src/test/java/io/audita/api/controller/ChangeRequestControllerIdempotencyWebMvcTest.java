@@ -81,7 +81,7 @@ class ChangeRequestControllerIdempotencyWebMvcTest {
 
         ChangeRequestEntity existing = changeRequest(changeRequestId, userId, "Replay me");
 
-        when(idempotencyService.findResourceId(eq(userId), eq("cr:create"), eq(key)))
+        when(idempotencyService.claimIdempotencyKey(eq(userId), eq("cr:create"), eq(key)))
                 .thenReturn(Optional.of(changeRequestId));
         when(changeRequestService.getById(changeRequestId, userId, "REQUESTER")).thenReturn(existing);
 
@@ -119,7 +119,7 @@ class ChangeRequestControllerIdempotencyWebMvcTest {
 
         ChangeRequestEntity created = changeRequest(changeRequestId, userId, "New CR");
 
-        when(idempotencyService.findResourceId(eq(userId), eq("cr:create"), eq(key)))
+        when(idempotencyService.claimIdempotencyKey(eq(userId), eq("cr:create"), eq(key)))
                 .thenReturn(Optional.empty());
         when(changeRequestService.create(any())).thenReturn(created);
 
@@ -160,7 +160,7 @@ class ChangeRequestControllerIdempotencyWebMvcTest {
         created.setRequestDepartmentId(reqDeptId);
         created.setDestinationDepartmentId(destDeptId);
 
-        when(idempotencyService.findResourceId(eq(userId), eq("cr:create"), eq(key)))
+        when(idempotencyService.claimIdempotencyKey(eq(userId), eq("cr:create"), eq(key)))
                 .thenReturn(Optional.empty());
         when(changeRequestService.create(any())).thenReturn(created);
 

@@ -15,8 +15,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import jakarta.servlet.http.Cookie;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -50,7 +51,7 @@ class AuthControllerWebMvcTest {
 
         @Test
         void login_scopes_refresh_cookie_to_auth_routes() throws Exception {
-                when(authPort.loginSuperAdmin("owner@audita.io", "StrongPass1!A"))
+                when(authPort.loginSuperAdmin(eq("owner@audita.io"), eq("StrongPass1!A"), any()))
                                 .thenReturn(new AuthPort.LoginResult(
                                                 "access-token",
                                                 "refresh-token",
@@ -94,7 +95,7 @@ class AuthControllerWebMvcTest {
                 ReflectionTestUtils.setField(secureController, "refreshCookieSecure", true);
                 MockMvc secureMockMvc = MockMvcBuilders.standaloneSetup(secureController).build();
 
-                when(authPort.loginSuperAdmin("owner@audita.io", "StrongPass1!A"))
+                when(authPort.loginSuperAdmin(eq("owner@audita.io"), eq("StrongPass1!A"), any()))
                                 .thenReturn(new AuthPort.LoginResult(
                                                 "access-token",
                                                 "refresh-token",

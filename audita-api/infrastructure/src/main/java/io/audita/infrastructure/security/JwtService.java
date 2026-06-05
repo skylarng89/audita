@@ -45,7 +45,7 @@ public class JwtService {
     }
 
     public String issue(UUID userId, String email, String role, String tenantSlug) {
-        return issue(userId, email, role, List.of(role), List.of(), tenantSlug);
+        return issue(userId, email, role, List.of(role), List.of(), tenantSlug, 0);
     }
 
     public String issue(UUID userId,
@@ -54,6 +54,16 @@ public class JwtService {
             List<String> roles,
             List<String> permissions,
             String tenantSlug) {
+        return issue(userId, email, role, roles, permissions, tenantSlug, 0);
+    }
+
+    public String issue(UUID userId,
+            String email,
+            String role,
+            List<String> roles,
+            List<String> permissions,
+            String tenantSlug,
+            int tokenVersion) {
         Instant now = Instant.now();
         Map<String, Object> claims = new LinkedHashMap<>();
         claims.put("email", email);
@@ -61,6 +71,7 @@ public class JwtService {
         claims.put("roles", roles == null ? List.of(role) : new ArrayList<>(roles));
         claims.put("permissions", permissions == null ? List.of() : new ArrayList<>(permissions));
         claims.put("tenantSlug", tenantSlug != null ? tenantSlug : "");
+        claims.put("tv", tokenVersion);
 
         return Jwts.builder()
                 .subject(userId.toString())

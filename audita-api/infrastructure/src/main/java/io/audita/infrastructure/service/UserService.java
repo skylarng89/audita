@@ -134,6 +134,7 @@ public class UserService {
             Set<RoleEntity> assignedRoles = resolveRoles(roleId, roleIds, false);
             user.setRoles(new LinkedHashSet<>(assignedRoles));
             user.setRole(resolveEffectiveRole(assignedRoles));
+            user.setTokenVersion(user.getTokenVersion() + 1);
         }
 
         return userRepository.save(user);
@@ -156,6 +157,7 @@ public class UserService {
         }
 
         user.setStatus(UserStatus.SUSPENDED);
+        user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
         log.info("User deactivated: id={} by={}", id, requesterId);
     }
@@ -167,6 +169,7 @@ public class UserService {
                     "User is not suspended and cannot be reactivated.");
         }
         user.setStatus(UserStatus.ACTIVE);
+        user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
         log.info("User reactivated: id={}", id);
     }
