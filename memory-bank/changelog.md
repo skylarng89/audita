@@ -35,6 +35,14 @@
 
 - ADR-029: Conditional Requests Workflow with Compatibility-Mode Routing — chose conditional workflow model over universal UAT/Deployment to avoid forcing technical workflow on non-technical departments.
 
+### Fixed
+
+- **Dockerfile corepack permission denied (exit 126)**: `dhi.io/node:24-dev` base image ships a conflicting `/usr/bin/pnpm` binary. `corepack prepare` creates a shim at the same path with wrong permissions. Fixed by replacing `corepack enable && corepack prepare` with `npm install -g pnpm@X.Y.Z` in both `Dockerfile` and `Dockerfile.dev`.
+- **Auth rate limiter counted successful logins**: `enforceRateLimit()` added timestamp before credential verification, so 5 successful logins within 15 minutes locked the user out. Fixed by splitting into `checkRateLimit()`/`recordFailedAttempt()`/`clearRateLimit()` — only failures count, success resets the counter.
+- **Case-sensitive email lookup in login**: `findByEmail()` was case-sensitive; admin could invite `User@Example.com` but user typing `user@example.com` got `INVALID_CREDENTIALS`. Fixed by using `findByEmailIgnoreCase()` with email normalization at both invite and login time.
+- **No PENDING status guard in login**: Users who hadn't accepted their invite got misleading `INVALID_CREDENTIALS` instead of clear `ACCOUNT_PENDING` message. Added explicit PENDING status check.
+- **Pre-existing test stub mismatch**: `jwtService.issue()` stubs used 4 `any()` matchers but method takes 6 arguments. Fixed all stubs to use 6 matchers.
+
 ---
 
 ## [0.6.6] — 2026-05-31

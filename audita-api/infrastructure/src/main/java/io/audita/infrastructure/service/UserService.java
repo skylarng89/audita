@@ -84,7 +84,9 @@ public class UserService {
      * Idempotent on email: if user exists in PENDING state, re-sends the invite.
      */
     public UserEntity inviteUser(String email, String fullName, UUID roleId, List<UUID> roleIds, UUID invitedByUserId) {
-        if (userRepository.existsByEmail(email)) {
+        String normalizedEmail = email.trim().toLowerCase();
+
+        if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             throw new DomainNotPermittedException("EMAIL_TAKEN",
                     "A user with this email already exists in this organisation.");
         }
@@ -94,7 +96,7 @@ public class UserService {
 
         UserEntity invitedBy = userRepository.findById(invitedByUserId).orElse(null);
 
-        UserEntity user = new UserEntity(email, fullName);
+        UserEntity user = new UserEntity(normalizedEmail, fullName);
         user.setRole(effectiveRole);
         user.setRoles(new LinkedHashSet<>(assignedRoles));
         user.setStatus(UserStatus.PENDING);
@@ -106,15 +108,14 @@ public class UserService {
         inviteTokenRepository.save(new InviteTokenEntity(user, tokenHash,
                 OffsetDateTime.now().plusHours(inviteExpiryHours)));
 
-        // Resolve tenant name for the email (falls back gracefully if not found)
         String tenantSlug = TenantContext.getCurrentTenant();
         String orgName = tenantRepository.findBySlug(tenantSlug)
                 .map(TenantEntity::getName)
                 .orElse(tenantSlug);
 
-        emailService.sendInviteEmail(email, fullName, rawToken, orgName, tenantSlug);
+        emailService.sendInviteEmail(normalizedEmail, fullName, rawToken, orgName, tenantSlug);
         log.info("User invited: email={} roles={} tenant={}",
-                email,
+                normalizedEmail,
                 assignedRoles.stream().map(RoleEntity::getName).sorted().toList(),
                 tenantSlug);
         return user;
