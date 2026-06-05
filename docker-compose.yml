@@ -12,12 +12,12 @@ services:
     volumes:
       - db_data:/var/lib/postgresql
     ports:
-      - "7432:5432"
+      - "127.0.0.1:7432:5432"
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "PGPASSWORD=${DB_PASSWORD} psql -U ${DB_USERNAME} -d ${DB_NAME} -h ${DB_HOST} -p ${DB_PORT} -c 'SELECT 1'",
+          "PGPASSWORD=${DB_PASSWORD} psql -U ${DB_USERNAME} -d ${DB_NAME} -h localhost -p 5432 -c 'SELECT 1'",
         ]
       interval: 10s
       timeout: 5s
@@ -47,7 +47,7 @@ services:
 
   # ── Spring Boot API ──
   api:
-    image: skylarng89/audita-api:latest
+    image: skylarng89/audita-api:v0.7.0
     restart: unless-stopped
     depends_on:
       db:
@@ -116,16 +116,33 @@ services:
       - SETGID
     security_opt:
       - no-new-privileges:true
+    # Healthcheck: the hardened JVM image has no shell, curl, or wget.
+    # API health should be monitored at the orchestrator level (Kubernetes,
+    # Docker Swarm, Nomad) via the actuator /actuator/health endpoint.
+    # Docker compose native healthcheck is not feasible with this image.
 
   # ── Nuxt 3 Frontend ──
   web:
     build:
       context: ./audita-web
       dockerfile: Dockerfile
-    image: skylarng89/audita-web:latest
+    image: skylarng89/audita-web:v0.7.0
     restart: unless-stopped
     depends_on:
-      - api
+      api:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:3000/', function(r){process.exit(r.statusCode===200?0:1)}).on('error', function(){process.exit(1)})",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     environment:
       NUXT_PUBLIC_API_BASE: ${APP_BASE_PATH}
       NUXT_API_INTERNAL_BASE: ${APP_INTERNAL_BASE_PATH}
