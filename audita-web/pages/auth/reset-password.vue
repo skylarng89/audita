@@ -91,22 +91,7 @@
             </button>
           </div>
           <!-- Strength bar -->
-          <div class="flex gap-1 mt-1.5" aria-hidden="true">
-            <div
-              v-for="i in 4"
-              :key="i"
-              class="h-1 flex-1 rounded-full transition-colors"
-              :class="strengthColor(i)"
-            />
-          </div>
-          <!-- Screen-reader strength announcement -->
-          <p
-            class="text-xs text-muted mt-1"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            Password strength: {{ strengthLabel }}
-          </p>
+          <SharedPasswordStrengthMeter :password="form.password" />
         </div>
 
         <div class="mb-6">
@@ -222,30 +207,6 @@ const showPassword = ref(false);
 const showConfirm = ref(false);
 
 const token = computed(() => route.query.token as string | undefined);
-
-const strengthScore = computed(() => {
-  const p = form.password;
-  if (!p) return 0;
-  let score = 0;
-  if (p.length >= 8) score++;
-  if (p.length >= 12) score++;
-  if (/[A-Z]/.test(p) && /\d/.test(p)) score++;
-  if (/[^A-Za-z0-9]/.test(p)) score++;
-  return score;
-});
-
-const strengthLabel = computed(() => {
-  const labels = ["", "Weak", "Fair", "Good", "Strong"];
-  return labels[strengthScore.value] ?? "";
-});
-
-function strengthColor(bar: number) {
-  if (bar > strengthScore.value) return "bg-border dark:bg-border-dark";
-  if (strengthScore.value <= 1) return "bg-danger";
-  if (strengthScore.value === 2) return "bg-warning";
-  if (strengthScore.value === 3) return "bg-info";
-  return "bg-success";
-}
 
 async function handleSubmit() {
   error.value = "";

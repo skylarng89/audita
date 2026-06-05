@@ -426,19 +426,7 @@
 
 <script setup lang="ts">
 const auth = useAuthStore();
-
-const isDark = ref(false);
-
-function toggleDark() {
-  isDark.value = !isDark.value;
-  if (isDark.value) {
-    document.documentElement.classList.add("dark");
-    localStorage.setItem("color-scheme", "dark");
-  } else {
-    document.documentElement.classList.remove("dark");
-    localStorage.setItem("color-scheme", "light");
-  }
-}
+const { isDark, initTheme, toggle: toggleDark } = useTheme();
 
 const mobileNavOpen = ref(false);
 
@@ -449,13 +437,7 @@ function onEsc(e: KeyboardEvent) {
 }
 
 onMounted(() => {
-  // Sync with persisted preference or system preference
-  const stored = localStorage.getItem("color-scheme");
-  const prefersDark = globalThis.matchMedia(
-    "(prefers-color-scheme: dark)",
-  ).matches;
-  isDark.value = stored ? stored === "dark" : prefersDark;
-  document.documentElement.classList.toggle("dark", isDark.value);
+  initTheme();
   void loadTenantTimezoneFromSettings();
   globalThis.addEventListener("keydown", onEsc);
 });

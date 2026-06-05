@@ -183,28 +183,10 @@
       </div>
     </section>
 
-    <section class="card p-5 shadow-card-hover">
-      <h2 class="text-lg font-semibold">Workflow Defaults</h2>
-      <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <label class="field-label" for="approval-type-default"
-            >Default Approval Type</label
-          >
-          <select
-            id="approval-type-default"
-            v-model="settings.workflowDefaults.approvalTypeDefault"
-            class="input"
-          >
-            <option value="LINEAR">Linear</option>
-            <option value="NON_LINEAR">Non-linear</option>
-          </select>
-        </div>
-        <div class="rounded-lg border border-border/70 bg-surface-container-low p-3 text-sm text-muted dark:border-border-dark dark:bg-slate-900/50">
-          Configured default approver users and groups are always auto-added to
-          new change requests.
-        </div>
-      </div>
-    </section>
+    <AdminSettingsWorkflow
+      :model-value="settings.workflowDefaults"
+      @update:approval-type-default="settings.workflowDefaults.approvalTypeDefault = $event as 'LINEAR' | 'NON_LINEAR'"
+    />
 
     <section class="card p-5 shadow-card-hover space-y-4">
       <h2 class="text-lg font-semibold">Default Approver Sources</h2>
@@ -294,71 +276,14 @@
       </div>
     </section>
 
-    <section class="card p-5 shadow-card-hover">
-      <h2 class="text-lg font-semibold">SLA Defaults</h2>
-      <p class="text-sm text-muted mt-1">
-        Configure default SLA deadlines per priority and warning threshold.
-      </p>
-      <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div>
-          <label class="field-label" for="sla-low">Low (hours)</label>
-          <input
-            id="sla-low"
-            v-model.number="settings.slaDefaults.lowHours"
-            type="number"
-            min="1"
-            max="720"
-            class="input"
-          />
-        </div>
-        <div>
-          <label class="field-label" for="sla-medium">Medium (hours)</label>
-          <input
-            id="sla-medium"
-            v-model.number="settings.slaDefaults.mediumHours"
-            type="number"
-            min="1"
-            max="720"
-            class="input"
-          />
-        </div>
-        <div>
-          <label class="field-label" for="sla-high">High (hours)</label>
-          <input
-            id="sla-high"
-            v-model.number="settings.slaDefaults.highHours"
-            type="number"
-            min="1"
-            max="720"
-            class="input"
-          />
-        </div>
-        <div>
-          <label class="field-label" for="sla-critical">Critical (hours)</label>
-          <input
-            id="sla-critical"
-            v-model.number="settings.slaDefaults.criticalHours"
-            type="number"
-            min="1"
-            max="720"
-            class="input"
-          />
-        </div>
-        <div>
-          <label class="field-label" for="sla-warning"
-            >Warning Before (hours)</label
-          >
-          <input
-            id="sla-warning"
-            v-model.number="settings.slaDefaults.warningBeforeHours"
-            type="number"
-            min="1"
-            max="168"
-            class="input"
-          />
-        </div>
-      </div>
-    </section>
+    <AdminSettingsSla
+      :model-value="settings.slaDefaults"
+      @update:low-hours="settings.slaDefaults.lowHours = $event"
+      @update:medium-hours="settings.slaDefaults.mediumHours = $event"
+      @update:high-hours="settings.slaDefaults.highHours = $event"
+      @update:critical-hours="settings.slaDefaults.criticalHours = $event"
+      @update:warning-before-hours="settings.slaDefaults.warningBeforeHours = $event"
+    />
 
     <section class="card p-5 shadow-card-hover">
       <h2 class="text-lg font-semibold">Audit Export Defaults</h2>

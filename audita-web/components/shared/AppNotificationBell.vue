@@ -84,6 +84,12 @@ const api = useApi();
 const open = ref(false);
 const bellRef = ref<HTMLElement | null>(null);
 
+function onOutsideClick(e: Event) {
+  if (bellRef.value && !bellRef.value.contains(e.target as Node)) {
+    open.value = false;
+  }
+}
+
 async function handleClick(n: Notification) {
   if (!n.isRead) {
     await api(`/api/v1/notifications/${n.id}/read`, { method: "PATCH" });
@@ -108,11 +114,11 @@ onMounted(() => {
       // Notification hydration is best-effort.
     });
 
-  document.addEventListener("click", (e) => {
-    if (bellRef.value && !bellRef.value.contains(e.target as Node)) {
-      open.value = false;
-    }
-  });
+  document.addEventListener("click", onOutsideClick);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("click", onOutsideClick);
 });
 </script>
 

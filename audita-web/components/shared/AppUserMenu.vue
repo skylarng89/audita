@@ -36,7 +36,7 @@
         </div>
 
         <button
-          @click="toggleDark"
+          @click="toggleDarkAction"
           class="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container-low dark:hover:bg-slate-700 flex items-center justify-between transition-colors"
         >
           {{ isDark ? "Light Mode" : "Dark Mode" }}
@@ -69,10 +69,16 @@
 <script setup lang="ts">
 const auth = useAuthStore();
 const { logout } = useAuth();
+const { isDark, initTheme, toggle: toggleDark } = useTheme();
 
 const open = ref(false);
-const isDark = ref(false);
 const menuRef = ref<HTMLElement | null>(null);
+
+function onOutsideClick(e: Event) {
+  if (menuRef.value && !menuRef.value.contains(e.target as Node)) {
+    open.value = false;
+  }
+}
 
 const initials = computed(() =>
   (auth.fullName ?? "U")
@@ -83,10 +89,8 @@ const initials = computed(() =>
     .toUpperCase(),
 );
 
-function toggleDark() {
-  isDark.value = !isDark.value;
-  document.documentElement.classList.toggle("dark", isDark.value);
-  localStorage.setItem("color-scheme", isDark.value ? "dark" : "light");
+function toggleDarkAction() {
+  toggleDark();
   open.value = false;
 }
 
@@ -97,19 +101,12 @@ async function handleLogout() {
 
 // Close on outside click
 onMounted(() => {
-  document.addEventListener("click", (e) => {
-    if (menuRef.value && !menuRef.value.contains(e.target as Node)) {
-      open.value = false;
-    }
-  });
+  document.addEventListener("click", onOutsideClick);
+  initTheme();
+});
 
-  // Restore persisted preference or system preference
-  const saved = localStorage.getItem("color-scheme");
-  const prefersDark = globalThis.matchMedia(
-    "(prefers-color-scheme: dark)",
-  ).matches;
-  isDark.value = saved ? saved === "dark" : prefersDark;
-  document.documentElement.classList.toggle("dark", isDark.value);
+onUnmounted(() => {
+  document.removeEventListener("click", onOutsideClick);
 });
 </script>
 

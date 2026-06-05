@@ -2129,6 +2129,8 @@ function scrollToCommentAfterLoad(commentId: string) {
       clearInterval(timer);
     }
   }, 200);
+
+  onBeforeUnmount(() => clearInterval(timer));
 }
 
 watch(
