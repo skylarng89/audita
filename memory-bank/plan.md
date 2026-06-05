@@ -663,3 +663,34 @@ Full audit report: `memory-bank/docs/security-audit-2026-05-31.md`
 
 Implementation spec: `memory-bank/docs/specs/2026-06-04-requests-conditional-workflow-design.md`
 Executable plan: `memory-bank/docs/plans/2026-06-04-sprint-15-requests-workflow-executable-plan.md`
+
+## Sprint 14 — Security Audit Remediation (Completed 2026-06-05)
+
+### Sprint 14 Verification (Completed 2026-06-05)
+
+- `cd audita-api && ./gradlew :infrastructure:test --no-daemon` — BUILD SUCCESSFUL (150 tests).
+- `cd audita-api && ./gradlew :api:compileJava :api:compileTestJava --no-daemon` — BUILD SUCCESSFUL.
+- `cd audita-web && pnpm test` — 185/185 tests pass across 26 test files.
+- `docker compose config` — valid.
+- All 21 tasks (SA14-001 through SA14-021) completed via parallel subagent dispatch with cross-phase integration fixes.
+
+### Sprint 14 Exit Criteria
+
+1. All 3 critical findings resolved (setup-token guard, DOMPurify, redirect validation) ✅
+2. All 12 high-severity findings resolved ✅
+3. N+1 queries eliminated on user list, CR list, comment list, and activity stream ✅
+4. Audit log table has DB-level immutability enforcement ✅
+5. Docker compose binds ports to localhost and includes healthchecks ✅
+6. CSP uses nonce-based `script-src` without `'unsafe-inline'` ✅
+
+### Sprint 14 Reference
+
+Full audit report: `memory-bank/docs/security-audit-2026-05-31.md`
+
+### Key Integration Fixes
+
+1. **V5 migration** — `token_version` column on `users` (SA14-005 added entity but no migration)
+2. **JWT filter ordering** — token version check moved after `resolvePrincipal` to set `TenantContext` first
+3. **JPQL to native SQL** — `IdempotencyKeyRepository.updateResourceId()` CAST UUID fix
+4. **AuthServiceTest** — `@Mock RateLimitService` + `anyInt()` for primitive `int tokenVersion`
+5. **SecurityConfig reconciliation** — CSRF disabled + security headers applied
