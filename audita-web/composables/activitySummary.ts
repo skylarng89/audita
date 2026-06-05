@@ -1,5 +1,19 @@
 import type { ActivityEntry } from "~/types";
 
+function formatEnumLabel(value: string | null | undefined) {
+  if (!value) return "\u2014";
+  const normalized = value.replace(/^CR_/, "CHANGE_REQUEST_");
+  return normalized
+    .split("_")
+    .filter(Boolean)
+    .map((segment) => {
+      if (segment === "CHANGE") return "Change";
+      if (segment === "REQUEST") return "Request";
+      return segment.charAt(0) + segment.slice(1).toLowerCase();
+    })
+    .join(" ");
+}
+
 export function buildActivitySummary(
   event: Pick<ActivityEntry, "actionType" | "payload">,
 ) {
@@ -47,4 +61,41 @@ export function buildActivitySummary(
   }
 
   return null;
+}
+
+export function formatActivityAction(actionType: string) {
+  return formatEnumLabel(actionType);
+}
+
+export function formatActivityBadge(actionType: string) {
+  return actionType.startsWith("CR_") ? "Workflow" : "Event";
+}
+
+function formatActivityValue(value: unknown) {
+  if (value === null || value === undefined || value === "") {
+    return "\u2014";
+  }
+  if (typeof value === "string") {
+    return value.includes("_") ? formatEnumLabel(value) : value;
+  }
+  return String(value);
+}
+
+export function activityFields(event: ActivityEntry) {
+  if (!event.payload) {
+    return [];
+  }
+  return Object.entries(event.payload)
+    .filter(
+      ([key, value]) =>
+        !key.endsWith("Id") &&
+        key !== "reason" &&
+        key !== "count" &&
+        value !== null &&
+        value !== undefined,
+    )
+    .map(([key, value]) => ({
+      label: formatEnumLabel(key),
+      value: formatActivityValue(value),
+    }));
 }

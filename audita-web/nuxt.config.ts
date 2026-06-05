@@ -18,7 +18,7 @@ export default defineNuxtConfig({
 
   security: {
     csrf: false,
-    nonce: false,
+    nonce: true,
     headers: {
       contentSecurityPolicy: {
         "default-src": ["'self'"],
@@ -28,10 +28,10 @@ export default defineNuxtConfig({
         "object-src": ["'none'"],
         "img-src": ["'self'", "'data:'", "blob:", "https:"],
         "font-src": ["'self'", "'data:'", "https://fonts.gstatic.com"],
-        "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        "script-src": ["'self'", "'unsafe-inline'"],
+        "style-src": ["'self'", "'nonce-{{nonce}}'", "https://fonts.googleapis.com"],
+        "script-src": ["'self'", "'nonce-{{nonce}}'"],
         "script-src-attr": ["'none'"],
-        "connect-src": ["'self'", "https:", "wss:", "ws:"],
+        "connect-src": ["'self'"],
         "upgrade-insecure-requests": true,
       },
       referrerPolicy: "no-referrer",

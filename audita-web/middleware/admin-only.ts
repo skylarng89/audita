@@ -1,8 +1,8 @@
-import { useAuthStore } from "~/stores/auth";
+import type { UserRole } from "~/types"
 
 export default defineNuxtRouteMiddleware(() => {
-  const auth = useAuthStore();
-  if (auth.role !== "Admin" && auth.role !== "SUPER_ADMIN") {
-    return navigateTo("/dashboard");
+  const { isAllowed, redirect } = useRoleGuard(["Admin", "SUPER_ADMIN"] as UserRole[])
+  if (!isAllowed.value) {
+    return redirect()
   }
-});
+})
