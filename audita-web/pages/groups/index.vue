@@ -239,6 +239,10 @@ const { data, pending, refresh } = await useAsyncData(
 const groups = computed<Group[]>(() => data.value?.content ?? [])
 const total = computed(() => data.value?.totalElements ?? groups.value.length)
 
+onMounted(() => {
+  refresh()
+})
+
 function onPageChange(nextPage: number) {
   page.value = nextPage
 }
