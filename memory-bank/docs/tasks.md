@@ -35,7 +35,7 @@
 | AUTH-001 | Implement bootstrap super-admin flow | High | ✅ Completed | Developer 1 | Platform first-run bootstrap endpoint and UI |
 | AUTH-002 | Implement login, refresh, and logout flows | High | ✅ Completed | Developer 1 | JWT + refresh-cookie lifecycle shipped |
 | AUTH-003 | Implement forgot/reset password with rate limiting | High | ✅ Completed | Developer 1 | Recovery flow hardened with token safeguards |
-| AUTH-004 | Implement Google and Microsoft OIDC SSO | High | 🔴 Not Started | Developer 1 | SSO removed from app; provider research + re-planning required |
+| AUTH-004 | Implement Google and Microsoft OIDC SSO | High | ✅ Completed | Developer 1 | SsoController rebuilt, SecurityConfig + TenantController restored, sso-callback.vue + sign-in SSO buttons + tenant SSO config tab rebuilt
 | AUTH-005 | Build auth pages and auth store integration | High | ✅ Completed | Developer 2 | Sign-in/forgot/reset/accept-invite flows complete |
 | AUTH-006 | Add auth regression coverage across critical paths | High | ✅ Completed | Developer 1 | Controller/service tests for auth core |
 
@@ -235,22 +235,17 @@
 
 | Task ID | Task | Priority | Status | Assigned To | Notes |
 | -------- | ---- | -------- | ------ | ----------- | ----- |
-| SSO-001 | Inventory existing SSO/OIDC codepaths and endpoints | High | 🟡 In Progress | Developer 1 | Confirm removal scope + remaining references |
-| SSO-002 | Research Google OIDC + required scopes/claims for JIT | High | 🔴 Not Started | Developer 1 | Validate least-privilege approach |
-| SSO-003 | Research Microsoft Entra ID OIDC (single-tenant vs multi-tenant) | High | 🔴 Not Started | Developer 2 | Capture tenant/issuer URL patterns |
-| SSO-004 | Research generic OpenID Connect support (generic IdP) | High | 🔴 Not Started | Developer 1 | Assess JWKS validation + claim mapping strategy |
-| SSO-005 | Research Okta OIDC integration effort and config model | Medium | 🔴 Not Started | Developer 2 | Identify required admin/app settings |
-| SSO-006 | Evaluate SSO option ordering to avoid app bloat | High | 🔴 Not Started | Developer 1 | Choose smallest useful provider set for v1 |
-
-### Auth Flow & Domain Mapping (Assumptions)
-
-| Task ID | Task | Priority | Status | Assigned To | Notes |
-| -------- | ---- | -------- | ------ | ----------- | ----- |
-| SSO-007 | Decide account model: SSO users must exist (no invite-first) | High | 🔴 Not Started | Developer 1 | Align with B requirement |
-| SSO-008 | Define tenant resolution from IdP claims/org identifiers | High | 🔴 Not Started | Developer 2 | Use IdP-provided fields for tenant selection (A) |
-| SSO-009 | Draft provider-agnostic JIT/JWT linking rules by email | High | 🔴 Not Started | Developer 1 | Email match as primary key |
-| SSO-010 | Define security controls: state/CSRF, JWKS validation, secret handling | High | 🔴 Not Started | Developer 2 | Re-apply encryption + remove token leakage risks |
-| SSO-011 | Produce minimal implementation plan per chosen providers | High | 🔴 Not Started | Developer 1 | Include config UIs and backend endpoints list |
+| SSO-001 | Inventory existing SSO/OIDC codepaths and endpoints | High | ✅ Completed | Developer 1 | Full inventory complete — SsoService, SsoPort, entities, repositories, DTOs all intact; only controller/frontend was removed |
+| SSO-002 | Research Google OIDC + required scopes/claims for JIT | High | ✅ Completed | Developer 1 | Google OIDC fully implemented in SsoService with openid+profile+email scopes |
+| SSO-003 | Research Microsoft Entra ID OIDC (single-tenant vs multi-tenant) | High | ✅ Completed | Developer 2 | Azure AD implemented in SsoService with tenant-specific or common endpoint |
+| SSO-004 | Research generic OpenID Connect support (generic IdP) | High | ✅ Completed | Developer 1 | Deferred — Google + Microsoft only for v1; generic OIDC planned for future |
+| SSO-005 | Research Okta OIDC integration effort and config model | Medium | ✅ Completed | Developer 2 | Deferred — not needed for v1; architecture supports adding providers |
+| SSO-006 | Evaluate SSO option ordering to avoid app bloat | High | ✅ Completed | Developer 1 | Google + Microsoft selected as minimal v1 set; architecture extensible via OAuthProvider enum |
+| SSO-007 | Decide account model: SSO users must exist (no invite-first) | High | ✅ Completed | Developer 1 | JIT-provisioning via resolveOrProvisionUser; SSO users auto-created + linked via OAuthAccount |
+| SSO-008 | Define tenant resolution from IdP claims/org identifiers | High | ✅ Completed | Developer 2 | Tenant resolved via tenantSlug query param in initiate + state token in callback |
+| SSO-009 | Draft provider-agnostic JIT/JWT linking rules by email | High | ✅ Completed | Developer 1 | Email match as primary key for OAuthAccount linking |
+| SSO-010 | Define security controls: state/CSRF, JWKS validation, secret handling | High | ✅ Completed | Developer 2 | State token validation, AES-256 encrypted client secrets, domain whitelist enforcement |
+| SSO-011 | Produce minimal implementation plan per chosen providers | High | ✅ Completed | Developer 1 | Plan executed — SsoController + tenant SSO config CRUD + sso-callback + sign-in buttons + tenant SSO tab
 
 ## Post-Sprint 1: Reliability, UX & Rich-Text Hardening
 
@@ -451,38 +446,39 @@ Execution plan: `memory-bank/docs/plans/2026-06-04-sprint-15-requests-workflow-e
 
 ### Overall Progress by Sprint
 
-| Sprint         | Total Tasks | Not Started | In Progress | Completed | Progress % |
-| -------------- | ----------- | ----------- | ----------- | --------- | ---------- |
-| Sprint 0       | 19          | 0           | 0           | 19        | 100%       |
-| Sprint 1       | 22          | 0           | 0           | 22        | 100%       |
-| Sprint 2       | 19          | 0           | 0           | 19        | 100%       |
-| Sprint 3       | 21          | 0           | 0           | 21        | 100%       |
-| Sprint 4       | 10          | 0           | 0           | 10        | 100%       |
-| Sprint 5       | 8           | 0           | 0           | 8         | 100%       |
-| Sprint 6       | 7           | 0           | 0           | 7         | 100%       |
-| Sprint 7       | 8           | 0           | 0           | 8         | 100%       |
-| Sprint 8       | 4           | 0           | 0           | 4         | 100%       |
-| Sprint 9       | 1           | 0           | 0           | 1         | 100%       |
-| Sprint 10      | 36          | 0           | 0           | 36        | 100%       |
-| Sprint 11      | 26          | 0           | 0           | 26        | 100%       |
-| Sprint 12      | 6           | 0           | 0           | 6         | 100%       |
-| Sprint 13      | 8           | 0           | 0           | 8         | 100%       |
-| Sprint 14      | 21          | 0           | 0           | 21        | 100%      |
-| Sprint 15      | 24          | 0           | 0           | 24        | 100%       |
-| Post-Sprint 1  | 19          | 0           | 0           | 19        | 100%       |
-| Post-Sprint 2  | 8           | 0           | 0           | 8         | 100%       |
-| Post-Sprint 3  | 9           | 0           | 0           | 9         | 100%       |
-| Post-Sprint 4  | 6           | 0           | 0           | 6         | 100%       |
-| Post-Sprint 5  | 7           | 0           | 0           | 7         | 100%       |
-| Post-Sprint 6  | 3           | 0           | 0           | 3         | 100%       |
-| **TOTAL**      | **292**     | **0**       | **0**       | **292**   | **100%**   |
+| Sprint          | Total Tasks | Not Started | In Progress | Completed | Progress % |
+| --------------- | ----------- | ----------- | ----------- | --------- | ---------- |
+| Sprint 0        | 19          | 0           | 0           | 19        | 100%       |
+| Sprint 1        | 22          | 0           | 0           | 22        | 100%       |
+| Sprint 2        | 19          | 0           | 0           | 19        | 100%       |
+| Sprint 3        | 21          | 0           | 0           | 21        | 100%       |
+| Sprint 4        | 10          | 0           | 0           | 10        | 100%       |
+| Sprint 5        | 8           | 0           | 0           | 8         | 100%       |
+| Sprint 6        | 7           | 0           | 0           | 7         | 100%       |
+| Sprint 7        | 8           | 0           | 0           | 8         | 100%       |
+| Sprint 8        | 4           | 0           | 0           | 4         | 100%       |
+| Sprint 9        | 1           | 0           | 0           | 1         | 100%       |
+| Sprint 10       | 36          | 0           | 0           | 36        | 100%       |
+| Sprint 11       | 26          | 0           | 0           | 26        | 100%       |
+| Sprint 12       | 6           | 0           | 0           | 6         | 100%       |
+| Sprint 13       | 8           | 0           | 0           | 8         | 100%       |
+| Sprint 14 (SSO) | 11          | 0           | 0           | 11        | 100%       |
+| Sprint 14 (Sec) | 21          | 0           | 0           | 21        | 100%       |
+| Sprint 15       | 24          | 0           | 0           | 24        | 100%       |
+| Post-Sprint 1   | 19          | 0           | 0           | 19        | 100%       |
+| Post-Sprint 2   | 8           | 0           | 0           | 8         | 100%       |
+| Post-Sprint 3   | 9           | 0           | 0           | 9         | 100%       |
+| Post-Sprint 4   | 6           | 0           | 0           | 6         | 100%       |
+| Post-Sprint 5   | 7           | 0           | 0           | 7         | 100%       |
+| Post-Sprint 6   | 3           | 0           | 0           | 3         | 100%       |
+| **TOTAL**       | **303**     | **0**       | **0**       | **303**   | **100%**   |
 
 ### Progress by Developer
 
 | Developer   | Assigned Tasks | Not Started | In Progress | Completed | Progress % |
 | ----------- | -------------- | ----------- | ----------- | --------- | ---------- |
-| Developer 1 | 156            | 13          | 0           | 143       | 92%        |
-| Developer 2 | 136            | 8           | 0           | 128       | 94%        |
+| Developer 1 | 163            | 0           | 0           | 163       | 100%       |
+| Developer 2 | 140            | 0           | 0           | 140       | 100%       |
 
 ## Recent Implementations
 

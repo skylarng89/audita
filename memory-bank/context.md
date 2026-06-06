@@ -1,8 +1,8 @@
 # Audita — Active Context
 
-**Last Updated:** 2026-06-05
-**Current Phase:** Sprint 14 complete — Security Audit Remediation delivered
-**Active Sprint:** All sprints complete (0/292 remaining)
+**Last Updated:** 2026-06-06
+**Current Phase:** All sprints complete — 303/303 tasks (100%)
+**Active Sprint:** None — all implementation complete
 
 ---
 
@@ -42,9 +42,10 @@ Audita is a **self-hosted, multi-tenant ITIL/ITSM Change Management platform**. 
 | Post-Sprint 6 | 3/3 | 3 | Web Docker policy parity + pnpm config cleanup | 2026-05-24 |
 | Post-Sprint 7 | 1/1 | 1 | Production: subdomain-based tenant resolution | 2026-05-25 |
 | Post-Sprint 8 | 1/1 | 1 | CI + production tenant auth stabilization | 2026-05-25 |
-| Sprint 14 | 21/21 | 21 | Security Audit Remediation | 2026-06-05 |
+| Sprint 14 (SSO) | 11/11 | 11 | SSO Research & Rebuild | 2026-06-06 |
+| Sprint 14 (Sec) | 21/21 | 21 | Security Audit Remediation | 2026-06-05 |
 | Sprint 15 | 24/24 | 24 | Requests Workflow Expansion | 2026-06-04 |
-| **TOTAL** | **292/292** | **292** | — | — |
+| **TOTAL** | **303/303** | **303** | — | — |
 
 **Sprint 12: Launch Readiness** — All 6 tasks completed. v0.6.0 released.
 

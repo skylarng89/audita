@@ -123,7 +123,45 @@
       </div>
     </div>
 
-    <!-- SSO intentionally removed (not implemented yet) -->
+    <!-- SSO Configuration -->
+    <div v-if="activeTab === 'sso'" class="space-y-4">
+      <div v-for="provider in ['GOOGLE', 'MICROSOFT']" :key="provider"
+        class="card p-5 shadow-card-hover">
+        <h3 class="font-semibold mb-4">{{ provider === 'GOOGLE' ? 'Google' : 'Microsoft Azure AD' }}</h3>
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs font-semibold text-muted uppercase tracking-wide">Client ID</label>
+            <input
+              v-model="ssoForms[provider].clientId"
+              type="text"
+              class="input mt-1"
+              :placeholder="provider === 'GOOGLE' ? 'google-client-id.apps.googleusercontent.com' : 'azure-app-client-id'"
+            />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-muted uppercase tracking-wide">Client Secret</label>
+            <input
+              v-model="ssoForms[provider].clientSecret"
+              type="password"
+              class="input mt-1"
+              placeholder="••••••••"
+            />
+          </div>
+          <div v-if="provider === 'MICROSOFT'">
+            <label class="text-xs font-semibold text-muted uppercase tracking-wide">Tenant ID</label>
+            <input
+              v-model="ssoForms[provider].msTenantId"
+              type="text"
+              class="input mt-1"
+              placeholder="common or tenant-id"
+            />
+          </div>
+          <button @click="saveSso(provider)" class="btn-primary btn-sm">
+            Save SSO Config
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -152,6 +190,7 @@ const activeTab = ref("overview");
 const tabs = [
   { key: "overview", label: "Overview" },
   { key: "domains", label: "Domain Whitelist" },
+  { key: "sso", label: "SSO Configuration" },
 ];
 
 const { data: tenant, refresh: refreshTenant } = await useAsyncData<Tenant>(
@@ -170,6 +209,10 @@ const domains = computed(() => domainData.value ?? []);
 
 const newDomain = ref("");
 
+const ssoForms = reactive<Record<string, { clientId: string; clientSecret: string; msTenantId: string }>>({
+  GOOGLE: { clientId: "", clientSecret: "", msTenantId: "" },
+  MICROSOFT: { clientId: "", clientSecret: "", msTenantId: "" },
+});
 
 async function addDomain() {
   if (!newDomain.value.trim()) return;
@@ -210,6 +253,24 @@ async function activateTenant() {
     body: { status: "ACTIVE" },
   });
   refreshTenant();
+}
+
+async function saveSso(provider: string) {
+  const form = ssoForms[provider];
+  try {
+    await api(`/api/platform/v1/tenants/${tenantId}/sso`, {
+      method: "PUT",
+      body: {
+        provider,
+        clientId: form.clientId,
+        clientSecret: form.clientSecret,
+        msTenantId: provider === "MICROSOFT" ? form.msTenantId : null,
+      },
+    });
+    toastSuccess(`${provider === "GOOGLE" ? "Google" : "Microsoft"} SSO configuration saved.`);
+  } catch (error: unknown) {
+    toastError(resolveApiErrorMessage(error, "Failed to save SSO configuration."));
+  }
 }
 
 function formatDate(iso: string) {
