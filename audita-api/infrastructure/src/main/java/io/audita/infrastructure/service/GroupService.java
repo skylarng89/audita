@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -21,18 +23,23 @@ public class GroupService {
     private final GroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
 
     public GroupService(GroupRepository groupRepository,
                         GroupMemberRepository groupMemberRepository,
-                        UserRepository userRepository) {
+                        UserRepository userRepository,
+                        AuditLogService auditLogService) {
         this.groupRepository = groupRepository;
         this.groupMemberRepository = groupMemberRepository;
         this.userRepository = userRepository;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional(readOnly = true)
     public Page<GroupEntity> listGroups(Pageable pageable) {
-        return groupRepository.findAll(pageable);
+        Page<GroupEntity> page = groupRepository.findAll(pageable);
+        page.getContent().forEach(g -> g.setMemberCount((int) groupMemberRepository.countByGroupId(g.getId())));
+        return page;
     }
 
     @Transactional(readOnly = true)
@@ -42,6 +49,10 @@ public class GroupService {
     }
 
     public GroupEntity createGroup(String name, String description, UUID createdByUserId) {
+        return createGroup(name, description, createdByUserId, List.of());
+    }
+
+    public GroupEntity createGroup(String name, String description, UUID createdByUserId, List<UUID> memberIds) {
         if (groupRepository.existsByName(name)) {
             throw new DomainNotPermittedException("NAME_TAKEN",
                     "A group named '" + name + "' already exists.");
@@ -49,7 +60,13 @@ public class GroupService {
 
         UserEntity createdBy = userRepository.findById(createdByUserId).orElse(null);
         GroupEntity group = new GroupEntity(name, description, createdBy);
-        return groupRepository.save(group);
+        group = groupRepository.save(group);
+
+        if (memberIds != null && !memberIds.isEmpty()) {
+            addMembers(group.getId(), memberIds);
+        }
+
+        return group;
     }
 
     public GroupEntity updateGroup(UUID id, String name, String description) {
@@ -72,15 +89,24 @@ public class GroupService {
 
     public void deleteGroup(UUID id) {
         GroupEntity group = getGroup(id);
+
+        List<GroupMemberEntity> members = groupMemberRepository.findAllByGroupId(id);
+        if (!members.isEmpty()) {
+            groupMemberRepository.deleteAll(members);
+            log.info("Unassigned {} members from group id={} name={}", members.size(), id, group.getName());
+        }
+
         groupRepository.delete(group);
-        log.info("Group deleted: id={} name={}", id, group.getName());
+        log.info("Deleted group id={} name={}", id, group.getName());
+
+        auditLogService.log("GROUP_DELETED", "group", id, null, null, null, null);
     }
 
     // ── Members ────────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public Page<GroupMemberEntity> listMembers(UUID groupId, Pageable pageable) {
-        getGroup(groupId); // ensure group exists
+        getGroup(groupId);
         return groupMemberRepository.findByGroupId(groupId, pageable);
     }
 
@@ -105,5 +131,34 @@ public class GroupService {
         }
         groupMemberRepository.deleteByGroupIdAndUserId(groupId, userId);
         log.info("Member removed: groupId={} userId={}", groupId, userId);
+    }
+
+    public List<GroupMemberEntity> addMembers(UUID groupId, List<UUID> userIds) {
+        GroupEntity group = getGroup(groupId);
+        List<GroupMemberEntity> added = new ArrayList<>();
+
+        for (UUID userId : userIds) {
+            if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, userId)) {
+                UserEntity user = userRepository.findById(userId)
+                        .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "User not found: " + userId));
+                GroupMemberEntity member = new GroupMemberEntity(group, user);
+                added.add(groupMemberRepository.save(member));
+            }
+        }
+
+        if (!added.isEmpty()) {
+            log.info("Added {} members to group id={}", added.size(), groupId);
+            auditLogService.log("GROUP_MEMBERS_ADDED", "group", groupId, null, null, null, null);
+        }
+
+        return added;
+    }
+
+    public void removeMembers(UUID groupId, List<UUID> userIds) {
+        for (UUID userId : userIds) {
+            groupMemberRepository.deleteByGroupIdAndUserId(groupId, userId);
+        }
+        log.info("Removed {} members from group id={}", userIds.size(), groupId);
+        auditLogService.log("GROUP_MEMBERS_REMOVED", "group", groupId, null, null, null, null);
     }
 }

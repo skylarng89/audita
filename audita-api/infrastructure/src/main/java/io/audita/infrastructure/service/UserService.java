@@ -45,17 +45,20 @@ public class UserService {
     private final InviteTokenRepository inviteTokenRepository;
     private final TenantRepository tenantRepository;
     private final EmailService emailService;
+    private final GroupService groupService;
 
     public UserService(UserRepository userRepository,
             RoleRepository roleRepository,
             InviteTokenRepository inviteTokenRepository,
             TenantRepository tenantRepository,
-            EmailService emailService) {
+            EmailService emailService,
+            GroupService groupService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.inviteTokenRepository = inviteTokenRepository;
         this.tenantRepository = tenantRepository;
         this.emailService = emailService;
+        this.groupService = groupService;
     }
 
     // ── List / Get ─────────────────────────────────────────────────────────────
@@ -83,7 +86,7 @@ public class UserService {
      * email.
      * Idempotent on email: if user exists in PENDING state, re-sends the invite.
      */
-    public UserEntity inviteUser(String email, String fullName, UUID roleId, List<UUID> roleIds, UUID invitedByUserId) {
+    public UserEntity inviteUser(String email, String fullName, UUID roleId, List<UUID> roleIds, List<UUID> groupIds, UUID invitedByUserId) {
         String normalizedEmail = email.trim().toLowerCase();
 
         if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
@@ -118,6 +121,13 @@ public class UserService {
                 normalizedEmail,
                 assignedRoles.stream().map(RoleEntity::getName).sorted().toList(),
                 tenantSlug);
+
+        if (groupIds != null && !groupIds.isEmpty()) {
+            for (UUID groupId : groupIds) {
+                groupService.addMember(groupId, user.getId());
+            }
+        }
+
         return user;
     }
 
@@ -266,7 +276,20 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public List<MentionCandidate> searchUsers(String query, int limit) {
+    public List<UserEntity> searchUsers(String query, int limit) {
+        String trimmed = query == null ? "" : query.trim();
+        int cappedLimit = Math.max(1, Math.min(limit, 50));
+        List<UserEntity> users = userRepository.searchByEmailOrName(trimmed,
+                org.springframework.data.domain.PageRequest.of(0, cappedLimit));
+        users.forEach(user -> {
+            Hibernate.initialize(user.getRole());
+            Hibernate.initialize(user.getRoles());
+        });
+        return users;
+    }
+
+    @Transactional(readOnly = true)
+    public List<MentionCandidate> searchMentionCandidates(String query, int limit) {
         String trimmed = query == null ? "" : query.trim();
         int cappedLimit = Math.max(1, Math.min(limit, 25));
 

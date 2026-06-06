@@ -27,6 +27,9 @@ public class GroupEntity {
     @Column(name = "is_sample", nullable = false)
     private boolean isSample = false;
 
+    @Transient
+    private int memberCount = 0;
+
     protected GroupEntity() {}
 
     public GroupEntity(String name, String description, UserEntity createdBy) {
@@ -44,4 +47,6 @@ public class GroupEntity {
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public boolean isSample() { return isSample; }
     public void setSample(boolean sample) { isSample = sample; }
+    public int getMemberCount() { return memberCount; }
+    public void setMemberCount(int memberCount) { this.memberCount = memberCount; }
 }

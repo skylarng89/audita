@@ -11,5 +11,6 @@ public record InviteUserRequest(
                 @NotBlank @Email String email,
                 @NotBlank @Size(max = 255) String fullName,
                 UUID roleId,
-                List<UUID> roleIds) {
+                List<UUID> roleIds,
+                List<UUID> groupIds) {
 }

@@ -32,6 +32,11 @@ public interface GroupMemberRepository extends JpaRepository<GroupMemberEntity, 
 
     void deleteByGroupIdAndUserId(UUID groupId, UUID userId);
 
+    long countByGroupId(UUID groupId);
+
+    @Query("SELECT m FROM GroupMemberEntity m WHERE m.group.id = :groupId")
+    List<GroupMemberEntity> findAllByGroupId(@Param("groupId") UUID groupId);
+
     @Modifying
     @Query("DELETE FROM GroupMemberEntity gm WHERE gm.isSample = true")
     long deleteByIsSampleTrue();

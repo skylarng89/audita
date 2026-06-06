@@ -1,5 +1,6 @@
 package io.audita.api.controller;
 
+import io.audita.api.dto.request.BatchMembersRequest;
 import io.audita.api.dto.request.CreateGroupRequest;
 import io.audita.api.dto.request.GroupMemberRequest;
 import io.audita.api.dto.response.GroupResponse;
@@ -43,9 +44,9 @@ public class GroupController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<GroupResponse> createGroup(@Valid @RequestBody CreateGroupRequest req,
-                                                     @AuthenticationPrincipal UserDetails principal) {
+                                                      @AuthenticationPrincipal UserDetails principal) {
         UUID createdById = UUID.fromString(principal.getUsername());
-        var group = groupService.createGroup(req.name(), req.description(), createdById);
+        var group = groupService.createGroup(req.name(), req.description(), createdById, req.memberIds());
         return ResponseEntity.status(HttpStatus.CREATED).body(GroupResponse.from(group));
     }
 
@@ -85,5 +86,19 @@ public class GroupController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeMember(@PathVariable UUID id, @PathVariable UUID userId) {
         groupService.removeMember(id, userId);
+    }
+
+    @PostMapping("/{id}/members/batch")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void addMembers(@PathVariable UUID id, @Valid @RequestBody BatchMembersRequest req) {
+        groupService.addMembers(id, req.userIds());
+    }
+
+    @DeleteMapping("/{id}/members/batch")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeMembers(@PathVariable UUID id, @Valid @RequestBody BatchMembersRequest req) {
+        groupService.removeMembers(id, req.userIds());
     }
 }

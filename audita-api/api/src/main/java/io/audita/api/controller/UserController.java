@@ -16,7 +16,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -46,7 +45,7 @@ public class UserController {
     public ResponseEntity<UserResponse> inviteUser(@Valid @RequestBody InviteUserRequest req,
             @AuthenticationPrincipal UserDetails principal) {
         UUID invitedById = UUID.fromString(principal.getUsername());
-        var user = userService.inviteUser(req.email(), req.fullName(), req.roleId(), req.roleIds(), invitedById);
+        var user = userService.inviteUser(req.email(), req.fullName(), req.roleId(), req.roleIds(), req.groupIds(), invitedById);
         return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(user));
     }
 
@@ -87,15 +86,11 @@ public class UserController {
 
     @GetMapping("/search")
     @PreAuthorize("isAuthenticated()")
-    public List<Map<String, Object>> searchUsers(
-            @RequestParam(required = false, defaultValue = "") String q,
-            @RequestParam(defaultValue = "10") int limit) {
-        return userService.searchUsers(q, limit).stream()
-                .map(c -> Map.<String, Object>of(
-                        "id", c.id().toString(),
-                        "fullName", c.fullName(),
-                        "email", c.email(),
-                        "role", c.role() != null ? c.role() : ""))
+    public List<UserResponse> searchUsers(
+            @RequestParam(defaultValue = "") String query,
+            @RequestParam(defaultValue = "20") int limit) {
+        return userService.searchUsers(query, limit).stream()
+                .map(UserResponse::from)
                 .toList();
     }
 }
