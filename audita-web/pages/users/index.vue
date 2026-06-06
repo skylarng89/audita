@@ -173,6 +173,67 @@
           </select>
         </div>
 
+        <div>
+          <label
+            class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted"
+            >Groups</label
+          >
+          <div
+            class="input min-h-[2.5rem] flex flex-wrap gap-1 cursor-text"
+            @click="groupDropdownOpen = true"
+          >
+            <span
+              v-for="gid in inviteForm.groupIds"
+              :key="gid"
+              class="inline-flex items-center gap-1 rounded bg-primary/10 text-primary text-xs px-2 py-0.5"
+            >
+              {{ availableGroups.find((g) => g.id === gid)?.name ?? gid }}
+              <button
+                type="button"
+                class="hover:text-danger leading-none"
+                @click.stop="
+                  inviteForm.groupIds = inviteForm.groupIds.filter(
+                    (id) => id !== gid,
+                  )
+                "
+              >
+                ×
+              </button>
+            </span>
+            <span
+              v-if="!inviteForm.groupIds.length"
+              class="text-sm text-muted self-center"
+              >Select groups…</span
+            >
+          </div>
+          <div
+            v-if="groupDropdownOpen"
+            class="mt-1 border border-border dark:border-border-dark rounded-lg shadow-lg max-h-48 overflow-y-auto bg-white dark:bg-slate-800"
+          >
+            <div
+              v-for="group in availableGroups"
+              :key="group.id"
+              class="flex items-center gap-2 px-3 py-2 text-sm hover:bg-primary/10 cursor-pointer"
+              @click="toggleGroup(group.id)"
+            >
+              <input
+                type="checkbox"
+                :checked="inviteForm.groupIds.includes(group.id)"
+                class="rounded"
+                @click.stop
+                @change="toggleGroup(group.id)"
+              />
+              <span>{{ group.name }}</span>
+            </div>
+            <div
+              v-if="!availableGroups.length"
+              class="px-3 py-2 text-sm text-muted"
+            >
+              No groups available.
+            </div>
+          </div>
+        </div>
+
         <div class="flex justify-end gap-2 pt-2">
           <button
             type="button"
@@ -193,6 +254,8 @@
 </template>
 
 <script setup lang="ts">
+import type { Group } from "~/types"
+
 definePageMeta({
   layout: "default",
   middleware: ["role"],
@@ -232,11 +295,20 @@ const loadError = ref("");
 const showInviteModal = ref(false);
 const inviteError = ref("");
 const inviting = ref(false);
-const inviteForm = reactive({
+const inviteForm = reactive<{
+  email: string
+  fullName: string
+  roleId: string
+  groupIds: string[]
+}>({
   email: "",
   fullName: "",
   roleId: "",
+  groupIds: [],
 });
+
+const availableGroups = ref<Group[]>([]);
+const groupDropdownOpen = ref(false);
 
 const { data, pending, refresh } = await useAsyncData<UserPayload>(
   "users-index-page",
@@ -323,13 +395,18 @@ async function inviteUser() {
   inviting.value = true;
 
   try {
+    const body: Record<string, unknown> = {
+      email: inviteForm.email,
+      fullName: inviteForm.fullName,
+      roleId: inviteForm.roleId,
+    }
+    if (inviteForm.groupIds.length) {
+      body.groupIds = inviteForm.groupIds
+    }
+
     await api("/api/v1/users/invite", {
       method: "POST",
-      body: {
-        email: inviteForm.email,
-        fullName: inviteForm.fullName,
-        roleId: inviteForm.roleId,
-      },
+      body,
     });
 
     toastSuccess("Invite sent.");
@@ -337,11 +414,33 @@ async function inviteUser() {
     inviteForm.email = "";
     inviteForm.fullName = "";
     inviteForm.roleId = "";
+    inviteForm.groupIds = [];
+    groupDropdownOpen.value = false;
     refresh();
   } catch (err: unknown) {
     inviteError.value = resolveApiErrorMessage(err, "Failed to send invite.");
   } finally {
     inviting.value = false;
+  }
+}
+
+function toggleGroup(groupId: string) {
+  const idx = inviteForm.groupIds.indexOf(groupId)
+  if (idx === -1) {
+    inviteForm.groupIds.push(groupId)
+  } else {
+    inviteForm.groupIds.splice(idx, 1)
+  }
+}
+
+async function loadAvailableGroups() {
+  try {
+    const res = await api<{ content?: Group[] }>("/api/v1/groups", {
+      query: { page: 0, size: 100 },
+    })
+    availableGroups.value = res.content ?? []
+  } catch {
+    availableGroups.value = []
   }
 }
 
@@ -397,4 +496,13 @@ async function cancelInvite(id: string) {
     toastError(resolveApiErrorMessage(error, "Failed to cancel invite."));
   }
 }
+
+watch(showInviteModal, (open) => {
+  if (open && !availableGroups.value.length) {
+    loadAvailableGroups()
+  }
+  if (!open) {
+    groupDropdownOpen.value = false
+  }
+})
 </script>

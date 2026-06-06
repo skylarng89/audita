@@ -261,6 +261,34 @@ export interface SlaPolicy {
   warningBeforeHours: number | null;
 }
 
+// ── Groups ─────────────────────────────────────────────────────────────────────
+
+export interface Group {
+  id: string
+  name: string
+  description?: string
+  memberCount: number
+  createdAt: string
+}
+
+export interface CreateGroupRequest {
+  name: string
+  description?: string
+  memberIds?: string[]
+}
+
+export interface BatchMembersRequest {
+  userIds: string[]
+}
+
+export interface UserSearchResult {
+  id: string
+  email: string
+  fullName: string
+  role: string
+  status: string
+}
+
 // ── Tenant (Super Admin) ──────────────────────────────────────────────────────
 
 export interface Tenant {
