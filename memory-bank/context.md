@@ -155,48 +155,61 @@ Advanced features (SLA, custom fields, audit export, full admin config, RBAC exp
 
 ---
 
-## Today's Work Summary (2026-06-05)
+## Today's Work Summary (2026-06-06)
 
-### Sprint 14 Delivered — Security Audit Remediation (21/21 tasks)
+### SSO Rebuild — 12 tasks completed
 
-All 21 security remediation tasks completed across 5 phases:
+The SSO service layer (SsoService, SsoPort, OAuth entities, repositories, DTOs) was fully intact — only controller endpoints and frontend UI were deleted in commit `004dc62`. Rebuilt:
 
-- **Phase A (Critical):** Setup-token guard on `/setup` endpoint, DOMPurify XSS sanitization for `v-html`, `isSafeRedirect()` same-origin validation.
-- **Phase B (Auth):** Rate limiting on super admin login, JWT token versioning for revocability, SSO domain whitelist enforcement in JIT-provisioning, CSRF defense-in-depth architecture.
-- **Phase C (Infra):** Atomic idempotency key claim with INSERT ON CONFLICT, `@Async` self-invocation fix (extracted `AuditExportAsyncService`), `JPA_DDL_AUTO=validate` production guard, Docker hardening (localhost port binding, pinned images, healthchecks).
-- **Phase D (Medium Security):** Security response headers (HSTS, frame-options, content-type-options), CSP nonce-based `script-src`, tenant status validation in JWT filter, SSO tenant context try/finally cleanup, CSV injection prevention with formula prefix, `StreamingResponseBody` audit export, generic exception messages, `RateLimitService` + `SsoStateStore` interfaces for Redis migration path.
-- **Phase E (Perf/Arch):** N+1 query remediation with `@EntityGraph` + `@BatchSize(20)`, audit log DB-level immutability (triggers + REVOKE), `REQUIRES_NEW` propagation, SSE exponential backoff (1s→60s with jitter), event listener cleanup (`useEventListener` composable), component decomposition (`CrApproverPanel`, `CrCommentThread`, `CrActivityStream`, `SettingsWorkflow`, `SettingsSla`, `PasswordStrengthMeter`, `useTheme`, `useRoleGuard`).
+- **SsoController.java** (new) — Google/Microsoft initiate, callback, and exchange endpoints
+- **SecurityConfig** — restored `permitAll` for `/api/v1/auth/oauth/**`
+- **TenantController** — restored SSO config GET/PUT/DELETE
+- **sso-callback.vue** (new) — exchanges OAuth code via URL hash, role-based redirect
+- **sign-in.vue** — Google + Microsoft SSO buttons with "Or Authorized SSO" divider
+- **tenant detail page** — SSO Configuration tab with per-provider form cards
+- All 11 SSO research tasks (SSO-001 through SSO-011) marked completed
 
-**Key fixes applied during integration:**
-- `token_version` column migration created (V5__add_token_version.sql)
-- JWT filter token version check moved AFTER `resolvePrincipal` to ensure `TenantContext` is set
-- `IdempotencyKeyRepository.updateResourceId()` converted from broken JPQL CAST to native SQL
-- CSRF reverted to disabled (SameSite=Strict already provides primary mitigation)
-- Security headers added to `SecurityFilterChain`
-- Setup token guard applied to `/setup` endpoint
+### Groups Feature Overhaul — 14 tasks completed
 
-**Verification:**
-- `./gradlew :infrastructure:test` — BUILD SUCCESSFUL (150 tests)
-- `./gradlew :api:compileJava` — BUILD SUCCESSFUL
-- `cd audita-web && pnpm test` — 185/185 pass (26 files)
-- `docker compose config` — valid
-- E2E integration tests have pre-existing s3_create_change_request failures (present before Sprint 14)
+Complete rewrite: unified page, wizard creation, member management, invite integration, delete safety.
 
-### Files Changed (57+ modified + 14 new)
+**Backend:**
+- `GET /api/v1/users/search` — new endpoint for member picker
+- `GroupResponse` + `memberCount` field
+- `GroupService.deleteGroup()` — unassigns members before delete + audit log
+- `GroupService.addMembers()`/`removeMembers()` — batch operations
+- `GroupController` — batch members endpoints, create with members
+- `InviteUserRequest` + `groupIds` — invite with group assignment
 
-**Backend — New files:** `AuditExportAsyncService`, `RateLimitService`, `InMemoryRateLimitService`, `SsoStateStore`, `InMemorySsoStateStore`, `DdlAutoValidationConfig`, `V4__audit_log_immutability.sql`, `V5__add_token_version.sql`
+**Frontend:**
+- Single `/groups` page — admin CRUD + member panel + delete confirmation
+- `/groups/new` — 3-step wizard (Details → Members → Review)
+- Member management — debounced user search + batch add/remove
+- Delete flow — name-match confirmation modal
+- Invite modal — group multi-select dropdown
+- `useGroups()`, `useUserSearch()`, `useUsers()` composables
 
-**Backend — Modified:** `AuthService`, `JwtService`, `SsoService`, `AuditExportService`, `AuditLogService`, `UserService`, `IdempotencyService`, `JwtAuthenticationFilter`, `SecurityConfig`, `PlatformBootstrapController`, `AuthController`, `GlobalExceptionHandler`, `ChangeRequestController`, `UserEntity`, `RoleEntity`, `CommentEntity`, `ChangeRequestEntity`, `UserRepository`, `CommentRepository`, `ActivityStreamRepository`, `IdempotencyKeyRepository`, `application.yml`, `.env.example`, `docker-compose.yml`, `docker-compose.local.yml`
+### Post-Session Fixes
 
-**Frontend — New files:** `utils/security.ts`, `components/cr/CrApproverPanel.vue`, `components/cr/CrCommentThread.vue`, `components/cr/CrActivityStream.vue`, `components/admin/SettingsWorkflow.vue`, `components/admin/SettingsSla.vue`, `components/shared/PasswordStrengthMeter.vue`, `composables/useTheme.ts`, `composables/useRoleGuard.ts`, `composables/useEventListener.ts`
+- **E2E test fix** — `s2_deactivate_and_reactivate_user` increments `tokenVersion` (SA14-005), causing stale `requesterToken`. Fixed by re-login after reactivation. All 110 API tests pass.
+- **Groups list refresh** — `onMounted(() => refresh())` invalidates stale `useAsyncData` cache after group creation
+- **Page loader** — `NuxtLoadingIndicator` increased to 3px, throttle disabled for instant visibility
 
-**Frontend — Modified:** `richText.ts`, `useAuth.ts`, `middleware/auth.ts`, `pages/auth/sign-in.vue`, `nuxt.config.ts`, `package.json`, `AppNotificationBell.vue`, `AppUserMenu.vue`, `layouts/default.vue`, `middleware/admin-only.ts`, `pages/admin/settings/index.vue`, `pages/change-requests/[id].vue`, `pages/auth/reset-password.vue`, `plugins/sse.client.ts`, `stores/notifications.ts`
+### Previous Work (2026-06-05)
 
----
+Sprint 14 Security Audit Remediation — 21 tasks across 5 phases. See `sessions/2026-06-05.md`.
+
+## Verification (Current)
+
+| Gate | Result |
+|------|--------|
+| Backend tests (infra + api) | BUILD SUCCESSFUL |
+| Frontend tests | 185/185 pass (26 files) |
+| Frontend build | Complete |
+| Docker compose config | Valid |
 
 ## Next Actions
 
-1. **Cut v0.7.0 release** — combine Sprint 15 (Requests Workflow) + Sprint 14 (Security Remediation).
-2. **Investigate E2E test failures** — s3_create_change_request cascade, pre-existing before Sprint 14.
-3. **Production deployment** — harden remaining infra checks (Redis for SSO state, distributed rate limiting).
-4. **User testing** — gather feedback on UAT/Deployment workflow and new security controls.
+1. **Cut v0.7.0 release** — combine all sprint work (Groups, SSO, Security, Requests Workflow).
+2. **Production deployment** — Redis for SSO state, distributed rate limiting.
+3. **User testing** — gather feedback on new Groups workflow, UAT/Deployment, SSO.
