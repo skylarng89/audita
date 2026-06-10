@@ -29,7 +29,7 @@
     "@tiptap/vue-3": "^3.23.6",
     "date-fns": "^4.4.0",
     "flatpickr": "^4.6.13",
-    "nuxt": "^4.4.6",
+    "nuxt": "^4.4.8",
     "nuxt-security": "^2.6.0",
     "pinia": "^3.0.4",
     "tippy.js": "^6.3.7",
