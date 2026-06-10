@@ -15,6 +15,12 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.util.Base64;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 @RestController
 @RequestMapping("/api/v1/auth/oauth")
@@ -32,6 +38,9 @@ public class SsoController {
 
     @Value("${audita.auth.cookie-path:/api/v1/auth}")
     private String refreshCookiePath;
+
+    @Value("${audita.auth.refresh-cookie-encryption-key}")
+    private String refreshCookieEncryptionKeyBase64;
 
     public SsoController(SsoPort ssoService) {
         this.ssoService = ssoService;
@@ -101,14 +110,41 @@ public class SsoController {
         return ResponseEntity.ok(response);
     }
 
+    private static final String COOKIE_ENCRYPTION_ALGORITHM = "AES/GCM/NoPadding";
+    private static final int GCM_TAG_LENGTH_BITS = 128;
+    private static final int GCM_NONCE_LENGTH_BYTES = 12;
+
     private void setRefreshCookie(HttpServletResponse response, String rawToken) {
-        Cookie cookie = new Cookie(REFRESH_COOKIE, rawToken);
+        Cookie cookie = new Cookie(REFRESH_COOKIE, encryptRefreshToken(rawToken));
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
         cookie.setPath(refreshCookiePath);
         cookie.setAttribute("SameSite", "Lax");
         cookie.setMaxAge((int) (refreshExpiryDays * 24 * 60 * 60));
         response.addCookie(cookie);
+    }
+
+    private String encryptRefreshToken(String rawToken) {
+        try {
+            byte[] keyBytes = Base64.getDecoder().decode(refreshCookieEncryptionKeyBase64);
+            SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
+
+            byte[] nonce = new byte[GCM_NONCE_LENGTH_BYTES];
+            SecureRandom secureRandom = new SecureRandom();
+            secureRandom.nextBytes(nonce);
+
+            Cipher cipher = Cipher.getInstance(COOKIE_ENCRYPTION_ALGORITHM);
+            cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(GCM_TAG_LENGTH_BITS, nonce));
+
+            byte[] ciphertext = cipher.doFinal(rawToken.getBytes(StandardCharsets.UTF_8));
+            byte[] payload = new byte[nonce.length + ciphertext.length];
+            System.arraycopy(nonce, 0, payload, 0, nonce.length);
+            System.arraycopy(ciphertext, 0, payload, nonce.length, ciphertext.length);
+
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(payload);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to encrypt refresh token for cookie storage.", e);
+        }
     }
 
     private void redirect(HttpServletResponse response, String url) throws IOException {
