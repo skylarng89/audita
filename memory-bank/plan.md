@@ -694,3 +694,74 @@ Full audit report: `memory-bank/docs/security-audit-2026-05-31.md`
 3. **JPQL to native SQL** — `IdempotencyKeyRepository.updateResourceId()` CAST UUID fix
 4. **AuthServiceTest** — `@Mock RateLimitService` + `anyInt()` for primitive `int tokenVersion`
 5. **SecurityConfig reconciliation** — CSRF disabled + security headers applied
+
+## Groups Feature Overhaul (Completed 2026-06-06)
+
+### Objectives
+
+1. Merge `/groups` and `/admin/groups` into a single page with conditional admin controls
+2. Add wizard-based group creation flow at `/groups/new` (Details → Members → Review)
+3. Add search-based member management with batch add/remove
+4. Enforce delete safety: unassign members before group deletion
+5. Add group assignment during user invite
+6. Add member count to group list responses
+
+### Work Items
+
+- BE-001: User search endpoint `GET /api/v1/users/search?query=&limit=20`
+- BE-002: `GroupResponse` + `memberCount`; `@Transient` on `GroupEntity`
+- BE-003: `GroupService.deleteGroup()` — unassign members first + audit log
+- BE-004: `GroupService.addMembers()`/`removeMembers()` batch operations
+- BE-005: `GroupService.createGroup()` with optional `memberIds`
+- BE-006: `InviteUserRequest` + `groupIds`; `UserService.inviteUser()` auto-assigns
+- BE-007: `GroupController` batch endpoints (`POST/DELETE /{id}/members/batch`)
+- FE-001: Unified `/groups` page — admin CRUD + member panel + delete confirmation
+- FE-002: `/groups/new` — 3-step creation wizard with sticky progress bar
+- FE-003: Member management panel — debounced user search + batch add/remove
+- FE-004: Delete confirmation modal with name-match verification
+- FE-005: Invite modal group multi-select
+- FE-006: Types (`Group`, `CreateGroupRequest`, `UserSearchResult`) + composables (`useGroups`, `useUserSearch`, `useUsers`)
+
+### Verification
+
+- `./gradlew :infrastructure:test :api:test` — BUILD SUCCESSFUL
+- `pnpm test` — 185/185 pass
+- `pnpm build` — complete
+
+## SSO Rebuild (Completed 2026-06-06)
+
+### Context
+
+The SSO service layer (SsoService, SsoPort, SsoStateStore, entities, repositories, DTOs) was fully intact from the original implementation. Only the controller, SecurityConfig entries, TenantController SSO endpoints, and frontend UI were removed in commit `004dc62`.
+
+### Work Items
+
+- SSO-BE-001: Rebuild `SsoController.java` — Google/Microsoft initiate, callback, exchange
+- SSO-BE-002: Restore `SecurityConfig` permitAll for `/api/v1/auth/oauth/**`
+- SSO-BE-003: Restore `TenantController` SSO config GET/PUT/DELETE
+- SSO-FE-001: Rebuild `sso-callback.vue` — code exchange via URL hash, role-based redirect
+- SSO-FE-002: Add Google + Microsoft SSO buttons to `sign-in.vue`
+- SSO-FE-003: Add SSO Configuration tab to tenant detail page
+- SSO-DOC-001 through 011: Mark SSO research/planning tasks completed
+
+### Verification
+
+- `./gradlew :api:compileJava` — BUILD SUCCESSFUL
+- `pnpm test` — 185/185 pass
+- `pnpm build` — complete
+
+## E2E Test Fix (2026-06-06)
+
+### Token Version Staleness
+
+SA14-005 introduced `tokenVersion` increment on user deactivate/reactivate. The E2E test `s2_deactivate_and_reactivate_user` bumps version but doesn't refresh the JWT afterward, causing `s3_create_change_request` to fail with 403.
+
+**Fix:** Added `requesterToken = loginAndGetToken(...)` after reactivation in `AllSprintsE2ETest.java:374`.
+
+### Groups List Refresh
+
+`useAsyncData("groups-index-page")` cached stale empty data when navigating from `/groups/new` to `/groups`. Fixed with `onMounted(() => refresh())` in `pages/groups/index.vue`.
+
+### Page Loader
+
+`NuxtLoadingIndicator` in `app.vue` — increased height to 3px, throttle disabled (`:throttle="0"`) for instant visibility on navigation.

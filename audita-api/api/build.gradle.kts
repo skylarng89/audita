@@ -9,9 +9,9 @@ dependencies {
         implementation("org.apache.tomcat.embed:tomcat-embed-el:11.0.22")
         implementation("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.22")
 
-        implementation("io.netty:netty-codec-compression:4.2.14.Final")
-        implementation("io.netty:netty-codec-http:4.2.14.Final")
-        implementation("io.netty:netty-codec-http2:4.2.14.Final")
+        implementation("io.netty:netty-codec-compression:4.2.15.Final")
+        implementation("io.netty:netty-codec-http:4.2.15.Final")
+        implementation("io.netty:netty-codec-http2:4.2.15.Final")
     }
 
     implementation(project(":domain"))
