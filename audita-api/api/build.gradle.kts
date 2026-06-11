@@ -54,6 +54,7 @@ dependencies {
     testImplementation("org.flywaydb:flyway-core")
     testImplementation("org.testcontainers:junit-jupiter:1.21.4")
     testImplementation("org.testcontainers:postgresql:1.21.4")
+    testImplementation("com.fasterxml.jackson.core:jackson-databind")
 }
 
 tasks.withType<Test> {
