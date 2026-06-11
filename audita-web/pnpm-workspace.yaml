@@ -29,3 +29,14 @@ minimumReleaseAgeExclude:
   - tinyexec@1.2.2
   - tinyglobby@0.2.9
   - tinyrainbow@1.2.0
+  - '@types/node@25.9.3'
+  - '@vue/compiler-core@3.5.38'
+  - '@vue/compiler-dom@3.5.38'
+  - '@vue/compiler-sfc@3.5.38'
+  - '@vue/compiler-ssr@3.5.38'
+  - '@vue/reactivity@3.5.38'
+  - '@vue/runtime-core@3.5.38'
+  - '@vue/runtime-dom@3.5.38'
+  - '@vue/server-renderer@3.5.38'
+  - '@vue/shared@3.5.38'
+  - vue@3.5.38
