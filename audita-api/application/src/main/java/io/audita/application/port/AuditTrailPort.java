@@ -24,6 +24,8 @@ public interface AuditTrailPort {
                                LocalDate from,
                                LocalDate to);
 
+    IntegrityResult verifyIntegrity();
+
     public record AuditLogEntry(
             UUID id,
             UUID actorId,
@@ -35,6 +37,14 @@ public interface AuditTrailPort {
             Map<String, Object> payload,
             String ipAddress,
             OffsetDateTime createdAt
+    ) {
+    }
+
+    public record IntegrityResult(
+            boolean tampered,
+            long totalRecords,
+            long verifiableRecords,
+            List<UUID> tamperedRecordIds
     ) {
     }
 }
