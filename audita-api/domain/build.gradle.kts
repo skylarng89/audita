@@ -1,6 +1,6 @@
 // Domain module — pure business logic. No Spring, no infrastructure, no Lombok.
 dependencies {
-    implementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.6"))
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:4.1.0"))
 
     implementation("jakarta.validation:jakarta.validation-api")
 
