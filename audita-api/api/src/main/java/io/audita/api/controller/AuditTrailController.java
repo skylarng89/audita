@@ -64,6 +64,17 @@ public class AuditTrailController {
                 AuditLogResponse::from);
     }
 
+    @GetMapping(value = "/verify")
+    public ResponseEntity<Map<String, Object>> verifyIntegrity() {
+        AuditTrailPort.IntegrityResult result = auditTrailPort.verifyIntegrity();
+        Map<String, Object> response = Map.of(
+                "tampered", result.tampered(),
+                "totalRecords", result.totalRecords(),
+                "verifiableRecords", result.verifiableRecords(),
+                "tamperedRecordIds", result.tamperedRecordIds());
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping(value = "/export.csv", produces = "text/csv")
     public ResponseEntity<byte[]> exportCsv(
             @RequestParam(required = false) String actorEmail,

@@ -39,11 +39,18 @@ public class AuditLogEntity {
     @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
+    private Long chainIndex;
+
+    private byte[] recordHash;
+
+    private byte[] previousHash;
+
     protected AuditLogEntity() {}
 
     public AuditLogEntity(UUID actorId, String actorEmail, String actionType,
                           String entityType, UUID entityId,
-                          Map<String, Object> payload, String ipAddress) {
+                          Map<String, Object> payload, String ipAddress,
+                          Long chainIndex, byte[] recordHash, byte[] previousHash) {
         this.actorId = actorId;
         this.actorEmail = actorEmail;
         this.actionType = actionType;
@@ -51,6 +58,9 @@ public class AuditLogEntity {
         this.entityId = entityId;
         this.payload = payload;
         this.ipAddress = ipAddress;
+        this.chainIndex = chainIndex;
+        this.recordHash = recordHash;
+        this.previousHash = previousHash;
     }
 
     public UUID getId() { return id; }
@@ -62,4 +72,7 @@ public class AuditLogEntity {
     public Map<String, Object> getPayload() { return payload; }
     public String getIpAddress() { return ipAddress; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
+    public Long getChainIndex() { return chainIndex; }
+    public byte[] getRecordHash() { return recordHash; }
+    public byte[] getPreviousHash() { return previousHash; }
 }
