@@ -1,8 +1,8 @@
 // API module — REST controllers, security config, application entry point.
 // The only module that produces a runnable Spring Boot fat jar.
 dependencies {
-    implementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.6"))
-    annotationProcessor(platform("org.springframework.boot:spring-boot-dependencies:4.0.6"))
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:4.1.0"))
+    annotationProcessor(platform("org.springframework.boot:spring-boot-dependencies:4.1.0"))
 
     constraints {
         implementation("org.apache.tomcat.embed:tomcat-embed-core:11.0.22")
