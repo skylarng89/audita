@@ -2,7 +2,7 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 plugins {
     java
-    id("org.springframework.boot") version "4.0.6" apply false
+    id("org.springframework.boot") version "4.1.0" apply false
     id("org.sonarqube") version "7.3.1.8318"
 }
 
