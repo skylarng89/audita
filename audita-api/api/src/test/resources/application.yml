@@ -4,12 +4,24 @@ spring:
   mail:
     host: localhost
     port: 1025
+    username: test
+    password: test
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
 
 audita:
   cors:
     allowed-origins: http://localhost:3000
   jwt:
     secret: test-jwt-secret-at-least-32-chars-long-1234
+    expiry-seconds: 3600
+    stream-expiry-seconds: 300
+  refresh-token:
+    expiry-days: 30
   encryption:
     key: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
   sso:
@@ -17,3 +29,27 @@ audita:
     frontend-base-url: http://localhost:3000
   app:
     base-url: http://localhost:3000
+  security:
+    trust-forwarded-headers: false
+  bootstrap:
+    setup-token: test-bootstrap-token
+  upload:
+    max-size-bytes: 10485760
+    allowed-mime-types: application/pdf,image/png,image/jpeg,text/plain
+  mail:
+    from: test@audita.test
+    from-name: Audita Test
+  invite:
+    expiry-hours: 48
+  audit:
+    export:
+      storage-path: /tmp/audita-test-uploads/exports
+  storage:
+    backend: local
+    local:
+      base-path: /tmp/audita-test-uploads
+    s3:
+      bucket: test-bucket
+      region: us-east-1
+      access-key: test-access-key
+      secret-key: test-secret-key
