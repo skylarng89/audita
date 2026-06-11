@@ -1,7 +1,7 @@
 // Application module — use cases and application services.
 // Depends only on domain. No infrastructure imports.
 dependencies {
-    implementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.6"))
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:4.1.0"))
 
     implementation(project(":domain"))
 
