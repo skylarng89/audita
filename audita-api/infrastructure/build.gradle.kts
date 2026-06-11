@@ -4,7 +4,7 @@ plugins {
 
 // Infrastructure module — database, email, file storage, security utilities, tenant wiring.
 dependencies {
-    implementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.6"))
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:4.1.0"))
 
     // Exposed because :api compiles against infrastructure types annotated with jakarta.persistence.*
     api("jakarta.persistence:jakarta.persistence-api")
@@ -26,7 +26,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
     // AWS SDK v2 (S3-compatible file storage)
-    implementation(platform("software.amazon.awssdk:bom:2.46.3"))
+    implementation(platform("software.amazon.awssdk:bom:2.46.8"))
     implementation("software.amazon.awssdk:s3")
 
     // OWASP HTML Sanitizer — sanitise TipTap rich-text before persistence
