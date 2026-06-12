@@ -12,12 +12,18 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Attach trigger for UPDATE
+-- Attach trigger for UPDATE. The existence check is scoped to the current schema
+-- (current_schema()) because pg_trigger is shared across all schemas and tests
+-- create multiple tenant schemas in the same database.
 DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM pg_trigger
-        WHERE tgname = 'audit_log_no_update'
+        SELECT 1 FROM pg_trigger t
+        JOIN pg_class c ON t.tgrelid = c.oid
+        JOIN pg_namespace n ON c.relnamespace = n.oid
+        WHERE t.tgname = 'audit_log_no_update'
+          AND c.relname = 'audit_log'
+          AND n.nspname = current_schema()
     ) THEN
         CREATE TRIGGER audit_log_no_update
             BEFORE UPDATE ON audit_log
@@ -27,12 +33,16 @@ BEGIN
 END
 $$;
 
--- Attach trigger for DELETE
+-- Attach trigger for DELETE. Same schema-scoped existence check.
 DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM pg_trigger
-        WHERE tgname = 'audit_log_no_delete'
+        SELECT 1 FROM pg_trigger t
+        JOIN pg_class c ON t.tgrelid = c.oid
+        JOIN pg_namespace n ON c.relnamespace = n.oid
+        WHERE t.tgname = 'audit_log_no_delete'
+          AND c.relname = 'audit_log'
+          AND n.nspname = current_schema()
     ) THEN
         CREATE TRIGGER audit_log_no_delete
             BEFORE DELETE ON audit_log
