@@ -12,9 +12,11 @@ ALTER TABLE audit_log
     ADD COLUMN IF NOT EXISTS previous_hash BYTEA;
 
 -- Backfill chain_index for existing rows (ordered by creation time).
--- Existing rows will have NULL record_hash and previous_hash — the
--- verification logic treats NULL hashes as "pre-chain, unverifiable"
--- rather than "tampered".
+-- V4 installed an append-only UPDATE trigger — temporarily disable it so
+-- the backfill can write to existing rows. The trigger is re-enabled
+-- immediately after the backfill completes.
+ALTER TABLE audit_log DISABLE TRIGGER audit_log_no_update;
+
 WITH ordered AS (
     SELECT id, ROW_NUMBER() OVER (ORDER BY created_at ASC) AS rn
     FROM audit_log
@@ -24,6 +26,8 @@ UPDATE audit_log al
 SET chain_index = ordered.rn
 FROM ordered
 WHERE al.id = ordered.id;
+
+ALTER TABLE audit_log ENABLE TRIGGER audit_log_no_update;
 
 -- Create a sequence for new rows so chain_index is atomic and gapless
 -- within a transaction boundary. We start beyond the max existing index.
