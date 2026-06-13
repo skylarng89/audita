@@ -1,6 +1,7 @@
 package io.audita.infrastructure.tenant;
 
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.FlywayException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -34,13 +35,18 @@ public class FlywayTenantMigrator {
                 .dataSource(dataSource)
                 .schemas(tenantSlug)
                 .locations(MIGRATION_PATH)
-                // Each tenant schema gets its own flyway_schema_history table
                 .table("flyway_schema_history")
                 .baselineOnMigrate(false)
                 .validateOnMigrate(true)
                 .load();
 
-        flyway.migrate();
+        try {
+            flyway.migrate();
+        } catch (FlywayException e) {
+            log.warn("Flyway migration failed for tenant {}, repairing and retrying", tenantSlug, e);
+            flyway.repair();
+            flyway.migrate();
+        }
 
         log.info("Flyway migrations complete for tenant: {}", tenantSlug);
     }
