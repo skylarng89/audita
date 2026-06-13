@@ -24,17 +24,58 @@ SET approval_status = status
 WHERE approval_status = 'DRAFT' AND status <> 'DRAFT';
 
 -- CHECK constraints enforce enum boundaries at the database level.
-ALTER TABLE change_requests
-    ADD CONSTRAINT chk_approval_status
-    CHECK (approval_status IN ('DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'CANCELLED'));
+-- Wrapped in DO blocks because ALTER TABLE ... ADD CONSTRAINT does not
+-- support IF NOT EXISTS in PostgreSQL.
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint c
+        JOIN pg_class t ON c.conrelid = t.oid
+        JOIN pg_namespace n ON t.relnamespace = n.oid
+        WHERE c.conname = 'chk_approval_status'
+          AND t.relname = 'change_requests'
+          AND n.nspname = current_schema()
+    ) THEN
+        ALTER TABLE change_requests
+            ADD CONSTRAINT chk_approval_status
+            CHECK (approval_status IN ('DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'CANCELLED'));
+    END IF;
+END
+$$;
 
-ALTER TABLE change_requests
-    ADD CONSTRAINT chk_completion_status
-    CHECK (completion_status IN ('IN_PROGRESS', 'COMPLETED'));
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint c
+        JOIN pg_class t ON c.conrelid = t.oid
+        JOIN pg_namespace n ON t.relnamespace = n.oid
+        WHERE c.conname = 'chk_completion_status'
+          AND t.relname = 'change_requests'
+          AND n.nspname = current_schema()
+    ) THEN
+        ALTER TABLE change_requests
+            ADD CONSTRAINT chk_completion_status
+            CHECK (completion_status IN ('IN_PROGRESS', 'COMPLETED'));
+    END IF;
+END
+$$;
 
-ALTER TABLE change_requests
-    ADD CONSTRAINT chk_workflow_mode
-    CHECK (workflow_mode IN ('APPROVAL_ONLY', 'DELIVERY_PIPELINE'));
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint c
+        JOIN pg_class t ON c.conrelid = t.oid
+        JOIN pg_namespace n ON t.relnamespace = n.oid
+        WHERE c.conname = 'chk_workflow_mode'
+          AND t.relname = 'change_requests'
+          AND n.nspname = current_schema()
+    ) THEN
+        ALTER TABLE change_requests
+            ADD CONSTRAINT chk_workflow_mode
+            CHECK (workflow_mode IN ('APPROVAL_ONLY', 'DELIVERY_PIPELINE'));
+    END IF;
+END
+$$;
 
 -- Index on display_id for lookup by human-readable reference.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_change_requests_display_id
