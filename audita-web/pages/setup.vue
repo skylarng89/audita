@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="w-full">
     <!-- Logo -->
     <div class="flex justify-center mb-8">
       <img

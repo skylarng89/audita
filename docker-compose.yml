@@ -47,7 +47,7 @@ services:
 
   # ── Spring Boot API ──
   api:
-    image: skylarng89/audita-api:v0.7.0
+    image: skylarng89/audita-api:1.0.0
     restart: unless-stopped
     depends_on:
       db:
@@ -127,7 +127,7 @@ services:
     build:
       context: ./audita-web
       dockerfile: Dockerfile
-    image: skylarng89/audita-web:v0.7.0
+    image: skylarng89/audita-web:1.0.0
     restart: unless-stopped
     depends_on:
       api:
@@ -147,6 +147,7 @@ services:
     environment:
       NUXT_PUBLIC_API_BASE: ${APP_BASE_PATH}
       NUXT_API_INTERNAL_BASE: ${APP_INTERNAL_BASE_PATH}
+      NUXT_PUBLIC_APP_VERSION: ${APP_VERSION:-latest}
     ports:
       - "7001:3000"
     deploy:

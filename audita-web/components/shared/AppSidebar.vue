@@ -245,6 +245,12 @@
           <p class="text-[11px] text-muted">Documentation</p>
           <p class="text-[11px] text-muted">Support</p>
         </div>
+        <p
+          v-if="appVersion"
+          class="text-[10px] text-muted text-center mt-1"
+        >
+          v{{ appVersion }}
+        </p>
       </template>
 
       <button
@@ -274,6 +280,8 @@
 
 <script setup lang="ts">
 const auth = useAuthStore();
+const config = useRuntimeConfig();
+const appVersion = config.public.appVersion as string;
 
 const sidebarCollapsed = useState("sidebarCollapsed", () => false);
 

@@ -37,7 +37,7 @@ See [LICENSE](LICENSE) for full terms.
 | ---------- | ------------------------------------------------ | ------------------ |
 | audita-api | Java 25 + Spring Boot 4 (hexagonal architecture) | 7080 -> 8080       |
 | audita-web | Nuxt 3 + Vue 3 + Tailwind CSS                    | 7000 -> 3000       |
-| db         | PostgreSQL 17                                    | 7432 -> 5432       |
+| db         | PostgreSQL 17+                                   | 7432 -> 5432       |
 | mailhog    | MailHog (dev email capture)                      | 7025 SMTP, 8025 UI |
 
 Tenant model:
@@ -52,9 +52,7 @@ audita/
 ├── audita-api/                  # Backend modules: domain, application, infrastructure, api
 ├── audita-web/                  # Nuxt frontend
 ├── docker-compose.yml           # Local full-stack runtime
-├── .github/workflows/           # CI and release automation
-├── docs/                        # Product and engineering docs
-└── memory-bank/                 # Working project context and decision logs
+└──.github/workflows/            # CI and release automation
 ```
 
 ## Requirements
@@ -192,8 +190,7 @@ Important frontend variables:
 
 Versioning model:
 
-- Semantic Versioning tags with a v prefix (example: v0.1.0)
-- v0.x series while APIs are still evolving rapidly
+- Semantic Versioning tags without a v prefix (example: 1.0.0)
 - One release tag per dev -> main merge
 
 Historical commits already pushed:
@@ -205,11 +202,11 @@ Recommended bootstrap command sequence:
 
 ```bash
 # choose the milestone commit you want as first release baseline
-git tag -a v0.1.0 <commit-sha> -m "Release v0.1.0"
-git push origin v0.1.0
+git tag -a 1.0.0 <commit-sha> -m "Release 1.0.0"
+git push origin 1.0.0
 ```
 
-For additional historical milestones, repeat with v0.2.0, v0.3.0, and so on
+For additional historical milestones, repeat with 1.1.0, 2.0.0, and so on
 only at meaningful cut points.
 
 ## CI and Docker publishing
@@ -223,7 +220,7 @@ Behavior:
 - When dev is merged into main, CI verifies the merged code, then:
   - computes next SemVer tag from existing tags
   - builds and pushes audita-api and audita-web Docker images
-  - tags images as latest, vX.Y.Z, vX.Y, and `sha-<git-sha>`
+  - tags images as latest, X.Y.Z, X.Y, and `sha-<git-sha>`
   - creates or reuses git tag and publishes a GitHub release
 
 Published Docker Hub images:
@@ -233,7 +230,7 @@ Published Docker Hub images:
 | API     | [skylarng89/audita-api](https://hub.docker.com/r/skylarng89/audita-api) |
 | Web     | [skylarng89/audita-web](https://hub.docker.com/r/skylarng89/audita-web) |
 
-Image tags per release: `latest`, `vX.Y.Z`, `vX.Y`, `sha-<git-sha>`
+Image tags per release: `latest`, `X.Y.Z`, `X.Y`, `sha-<git-sha>`
 
 Required GitHub secrets:
 
@@ -279,12 +276,3 @@ This project is **not** a SOC 2/ISO/PCI/HIPAA attestation. Customers are respons
 White-labeling and custom development are available. Contact: `support@upperloftcreations.com`.
 
 Users can raise issues via GitHub, and maintainers welcome pull requests.
-
-## Project documents
-
-- [docs/PRD.md](docs/PRD.md)
-- [docs/SRS.md](docs/SRS.md)
-- [docs/USER_FLOW.md](docs/USER_FLOW.md)
-- [memory-bank/decisions.md](memory-bank/decisions.md)
-- [memory-bank/tech-stack.md](memory-bank/tech-stack.md)
-- [memory-bank/docs/tasks.md](memory-bank/docs/tasks.md)

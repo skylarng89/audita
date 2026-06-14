@@ -68,6 +68,7 @@ export default defineNuxtConfig({
       apiBase: process.env.NUXT_PUBLIC_API_BASE ?? "",
       apiContractVersion:
         process.env.NUXT_PUBLIC_API_CONTRACT_VERSION ?? "2026-05-12-auth-v2",
+      appVersion: process.env.NUXT_PUBLIC_APP_VERSION ?? "",
     },
   },
 

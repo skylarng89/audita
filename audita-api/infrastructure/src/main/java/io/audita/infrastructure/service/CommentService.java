@@ -39,6 +39,7 @@ public class CommentService {
     private final ActivityStreamRepository activityStreamRepository;
     private final NotificationService notificationService;
     private final EmailService emailService;
+    private final MentionNotifier mentionNotifier;
     private final PolicyFactory htmlPolicy = Sanitizers.FORMATTING
             .and(Sanitizers.BLOCKS)
             .and(Sanitizers.LINKS)
@@ -54,7 +55,8 @@ public class CommentService {
             UserRepository userRepository,
             ActivityStreamRepository activityStreamRepository,
             NotificationService notificationService,
-            EmailService emailService) {
+            EmailService emailService,
+            MentionNotifier mentionNotifier) {
         this.changeRequestRepository = changeRequestRepository;
         this.commentRepository = commentRepository;
         this.commentMentionRepository = commentMentionRepository;
@@ -62,6 +64,7 @@ public class CommentService {
         this.activityStreamRepository = activityStreamRepository;
         this.notificationService = notificationService;
         this.emailService = emailService;
+        this.mentionNotifier = mentionNotifier;
     }
 
     @Transactional(readOnly = true)
@@ -81,24 +84,12 @@ public class CommentService {
         UserEntity author = userRepository.findById(authorId)
                 .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Comment author not found."));
 
-        Set<UserEntity> mentionedUsers = resolveMentionedUsers(rawBody.trim(), authorId);
+        Set<UserEntity> mentionedUsers = mentionNotifier.processMentions(rawBody.trim(), authorId,
+                changeRequest.getTitle(), "/change-requests/" + changeRequest.getId());
         String sanitisedBody = htmlPolicy.sanitize(rawBody.trim());
         CommentEntity comment = commentRepository.save(new CommentEntity(changeRequest, author, sanitisedBody));
         for (UserEntity user : mentionedUsers) {
             commentMentionRepository.save(new CommentMentionEntity(comment, user));
-            notificationService.createAndPush(
-                    user.getId(),
-                    "MENTION",
-                    author.getFullName() + " mentioned you",
-                    "In change request: " + changeRequest.getTitle(),
-                    "/change-requests/" + changeRequest.getId());
-            emailService.sendMentionEmail(
-                    user.getEmail(),
-                    user.getFullName(),
-                    changeRequest.getTitle(),
-                    changeRequest.getId().toString(),
-                    comment.getId().toString(),
-                    author.getFullName());
         }
 
         activityStreamRepository.save(new ActivityStreamEntity(

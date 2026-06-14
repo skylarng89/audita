@@ -294,16 +294,16 @@ jobs:
         run: |
           git fetch --tags --force
 
-          latest_tag="$(git tag -l 'v*' --sort=-v:refname | head -n 1)"
+          latest_tag="$(git tag -l '[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1)"
           current_sha="$(git rev-parse HEAD)"
 
           if [[ -z "$latest_tag" ]]; then
-            version="v0.1.0"
+            version="1.0.0"
           else
             tagged_sha="$(git rev-list -n 1 "$latest_tag")"
             if [[ "$tagged_sha" == "$current_sha" ]]; then
               version="$latest_tag"
-            elif [[ "$latest_tag" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            elif [[ "$latest_tag" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
               major="${BASH_REMATCH[1]}"
               minor="${BASH_REMATCH[2]}"
               patch="${BASH_REMATCH[3]}"
@@ -322,21 +322,21 @@ jobs:
               fi
 
               if [[ "$has_breaking" == "true" ]]; then
-                version="v$((major + 1)).0.0"
+                version="$((major + 1)).0.0"
               elif [[ "$has_feat" == "true" ]]; then
-                version="v${major}.$((minor + 1)).0"
+                version="${major}.$((minor + 1)).0"
               else
-                version="v${major}.${minor}.$((patch + 1))"
+                version="${major}.${minor}.$((patch + 1))"
               fi
             else
-              version="v0.1.0"
+              version="1.0.0"
             fi
           fi
 
-          if [[ "$version" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
-            major_minor="v${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+          if [[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            major_minor="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
           else
-            major_minor="v0.1"
+            major_minor="0.1"
           fi
 
           echo "version=${version}" >> "$GITHUB_OUTPUT"
@@ -369,6 +369,8 @@ jobs:
           context: ./audita-web
           file: ./audita-web/Dockerfile
           push: true
+          build-args: |
+            APP_VERSION=${{ steps.version.outputs.version }}
           tags: |
             ${{ steps.images.outputs.web_image }}:latest
             ${{ steps.images.outputs.web_image }}:${{ steps.version.outputs.version }}
