@@ -60,6 +60,9 @@ export default defineNuxtConfig({
 
   vite: {
     plugins: [tailwindcss()],
+    esbuild: {
+      drop: [],
+    },
   },
 
   runtimeConfig: {

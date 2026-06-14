@@ -1,5 +1,8 @@
 <template>
   <div class="space-y-6">
+    <div style="background:#dc2626;color:#fff;padding:5px 12px;font-size:12px;font-family:monospace;border-radius:6px;white-space:pre-wrap;word-break:break-all">
+      DEBUG | pending={{ pending }} | groups.length={{ groups.length }} | data.contentLength={{ data?.content?.length ?? 'null' }} | totalElements={{ data?.totalElements ?? 'null' }} | loadError={{ loadError || 'none' }}
+    </div>
     <div class="flex items-center justify-between">
       <div>
         <p
