@@ -110,16 +110,105 @@ public class EmailService {
 
     @Async
     public void sendAuditExportReadyEmail(String toEmail,
-                                          String downloadUrl,
-                                          OffsetDateTime expiresAt,
-                                          LocalDate from,
-                                          LocalDate to) {
+                                           String downloadUrl,
+                                           OffsetDateTime expiresAt,
+                                           LocalDate from,
+                                           LocalDate to) {
         Context ctx = new Context();
         ctx.setVariable("downloadUrl", downloadUrl);
         ctx.setVariable("expiresAt", expiresAt);
         ctx.setVariable("from", from);
         ctx.setVariable("to", to);
         send(toEmail, "Your audit export is ready", "email/audit-export-ready", ctx);
+    }
+
+    // Simplified overload used by MentionNotifier for generic resource mentions
+    @Async
+    public void sendMentionEmail(String toEmail, String recipientName,
+                                  String resourceTitle, String resourceLink) {
+        Context ctx = new Context();
+        ctx.setVariable("recipientName", recipientName);
+        ctx.setVariable("crTitle", resourceTitle);
+        ctx.setVariable("crLink", resourceLink);
+        ctx.setVariable("commenterName", "Someone");
+        send(toEmail, "Someone mentioned you in: " + resourceTitle, "email/mention", ctx);
+    }
+
+    @Async
+    public void sendUatApprovalRequestEmail(String toEmail, String approverName,
+                                             String crTitle, String uatId) {
+        Context ctx = new Context();
+        ctx.setVariable("approverName", approverName);
+        ctx.setVariable("crTitle", crTitle);
+        ctx.setVariable("uatLink", appBaseUrl + "/change-requests/" + uatId);
+        send(toEmail, "Your UAT review is needed: " + crTitle, "email/uat-approval-request", ctx);
+    }
+
+    @Async
+    public void sendUatApprovalDecisionEmail(String toEmail, String recipientName,
+                                              String crTitle, String uatId,
+                                              String decision, String deciderName) {
+        Context ctx = new Context();
+        ctx.setVariable("recipientName", recipientName);
+        ctx.setVariable("crTitle", crTitle);
+        ctx.setVariable("uatLink", appBaseUrl + "/change-requests/" + uatId);
+        ctx.setVariable("decision", decision);
+        ctx.setVariable("deciderName", deciderName);
+        send(toEmail, "UAT decision: " + crTitle + " was " + decision.toLowerCase(), "email/uat-approval-decision", ctx);
+    }
+
+    @Async
+    public void sendDeploymentApprovalRequestEmail(String toEmail, String approverName,
+                                                    String crTitle, String deploymentId) {
+        Context ctx = new Context();
+        ctx.setVariable("approverName", approverName);
+        ctx.setVariable("crTitle", crTitle);
+        ctx.setVariable("deploymentLink", appBaseUrl + "/change-requests/" + deploymentId);
+        send(toEmail, "Your deployment review is needed: " + crTitle, "email/deployment-approval-request", ctx);
+    }
+
+    @Async
+    public void sendDeploymentApprovalDecisionEmail(String toEmail, String recipientName,
+                                                     String crTitle, String deploymentId,
+                                                     String decision, String deciderName) {
+        Context ctx = new Context();
+        ctx.setVariable("recipientName", recipientName);
+        ctx.setVariable("crTitle", crTitle);
+        ctx.setVariable("deploymentLink", appBaseUrl + "/change-requests/" + deploymentId);
+        ctx.setVariable("decision", decision);
+        ctx.setVariable("deciderName", deciderName);
+        send(toEmail, "Deployment decision: " + crTitle + " was " + decision.toLowerCase(), "email/deployment-approval-decision", ctx);
+    }
+
+    @Async
+    public void sendSlaWarningEmail(String toEmail, String recipientName,
+                                     String crTitle, String crId) {
+        Context ctx = new Context();
+        ctx.setVariable("recipientName", recipientName);
+        ctx.setVariable("crTitle", crTitle);
+        ctx.setVariable("crLink", appBaseUrl + "/change-requests/" + crId);
+        send(toEmail, "SLA Warning: " + crTitle, "email/sla-warning", ctx);
+    }
+
+    @Async
+    public void sendCrCancelledEmail(String toEmail, String recipientName,
+                                      String crTitle, String crId, String cancelledByName) {
+        Context ctx = new Context();
+        ctx.setVariable("recipientName", recipientName);
+        ctx.setVariable("crTitle", crTitle);
+        ctx.setVariable("crLink", appBaseUrl + "/change-requests/" + crId);
+        ctx.setVariable("cancelledByName", cancelledByName);
+        send(toEmail, "Change request cancelled: " + crTitle, "email/cr-cancelled", ctx);
+    }
+
+    @Async
+    public void sendCrCompletedEmail(String toEmail, String recipientName,
+                                      String crTitle, String crId) {
+        Context ctx = new Context();
+        ctx.setVariable("recipientName", recipientName);
+        ctx.setVariable("crTitle", crTitle);
+        ctx.setVariable("crLink", appBaseUrl + "/change-requests/" + crId);
+        send(toEmail, "Change request completed: " + crTitle, "email/cr-completed", ctx);
     }
 
     private void send(String to, String subject, String template, Context ctx) {

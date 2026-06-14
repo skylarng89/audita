@@ -232,16 +232,20 @@ const loadError = ref("")
 
 const { data, pending, refresh } = await useAsyncData(
   "groups-index-page",
-  () => fetchGroups(page.value, pageSize).catch(() => null),
+  async () => {
+    loadError.value = ""
+    try {
+      return await fetchGroups(page.value, pageSize)
+    } catch (err: unknown) {
+      loadError.value = resolveApiErrorMessage(err, "Failed to load groups.")
+      return { content: [], totalElements: 0, totalPages: 0, size: pageSize, number: 0 }
+    }
+  },
   { watch: [page] },
 )
 
 const groups = computed<Group[]>(() => data.value?.content ?? [])
 const total = computed(() => data.value?.totalElements ?? groups.value.length)
-
-onMounted(() => {
-  refresh()
-})
 
 function onPageChange(nextPage: number) {
   page.value = nextPage

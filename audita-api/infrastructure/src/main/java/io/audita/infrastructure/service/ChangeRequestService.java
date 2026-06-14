@@ -78,6 +78,8 @@ public class ChangeRequestService {
     private final RequestDeploymentService deploymentService;
     private final AuditLogService auditLogService;
     private final HtmlSanitizer htmlSanitizer;
+    private final NotificationService notificationService;
+    private final EmailService emailService;
 
     @Value("${audita.storage.local.base-path:/data/uploads}")
     private String storageBasePath;
@@ -99,7 +101,9 @@ public class ChangeRequestService {
             OrgSettingRepository orgSettingRepository,
             RequestDeploymentService deploymentService,
             AuditLogService auditLogService,
-            HtmlSanitizer htmlSanitizer) {
+            HtmlSanitizer htmlSanitizer,
+            NotificationService notificationService,
+            EmailService emailService) {
         this.changeRequestRepository = changeRequestRepository;
         this.crApproverRepository = crApproverRepository;
         this.groupRepository = groupRepository;
@@ -112,6 +116,8 @@ public class ChangeRequestService {
         this.deploymentService = deploymentService;
         this.auditLogService = auditLogService;
         this.htmlSanitizer = htmlSanitizer;
+        this.notificationService = notificationService;
+        this.emailService = emailService;
     }
 
     public ChangeRequestEntity create(CreateRequest request) {
@@ -215,6 +221,15 @@ public class ChangeRequestService {
         auditLogService.log("CR_SUBMITTED", ENTITY_CHANGE_REQUEST, submitted.getId(),
                 actorUserId, submitted.getCreatedBy() != null ? submitted.getCreatedBy().getEmail() : null,
                 Map.of(PAYLOAD_STATUS, "PENDING_APPROVAL"), null);
+        List<CrApproverEntity> submitApprovers = crApproverRepository.findByChangeRequestIdOrderByPositionAsc(submitted.getId());
+        for (CrApproverEntity approver : submitApprovers) {
+            notificationService.createAndPush(approver.getUser().getId(), "APPROVAL_REQUESTED",
+                    "Approval needed: " + submitted.getTitle(),
+                    "Your review is needed for this change request.",
+                    "/change-requests/" + submitted.getId());
+            emailService.sendApprovalRequestEmail(approver.getUser().getEmail(),
+                    approver.getUser().getFullName(), submitted.getTitle(), submitted.getId().toString());
+        }
         initializeCreator(submitted);
         return submitted;
     }
@@ -229,6 +244,17 @@ public class ChangeRequestService {
         auditLogService.log("CR_CANCELLED", ENTITY_CHANGE_REQUEST, cancelled.getId(),
                 actorUserId, cancelled.getCreatedBy() != null ? cancelled.getCreatedBy().getEmail() : null,
                 Map.of(PAYLOAD_STATUS, "CANCELLED"), null);
+        List<CrApproverEntity> cancelApprovers = crApproverRepository.findByChangeRequestIdOrderByPositionAsc(cancelled.getId());
+        for (CrApproverEntity approver : cancelApprovers) {
+            notificationService.createAndPush(approver.getUser().getId(), "CR_CANCELLED",
+                    "Request cancelled: " + cancelled.getTitle(),
+                    "This change request has been cancelled.",
+                    "/change-requests/" + cancelled.getId());
+            emailService.sendCrCancelledEmail(approver.getUser().getEmail(),
+                    approver.getUser().getFullName(), cancelled.getTitle(),
+                    cancelled.getId().toString(),
+                    cancelled.getCreatedBy() != null ? cancelled.getCreatedBy().getFullName() : "Someone");
+        }
     }
 
     public ChangeRequestEntity completeRequest(UUID requestId, UUID actorUserId, String actorRole) {
@@ -262,6 +288,15 @@ public class ChangeRequestService {
         auditLogService.log("REQ_COMPLETION_STATUS_CHANGED", ENTITY_CHANGE_REQUEST, updated.getId(),
                 actorUserId, resolveActorEmail(actorUserId),
                 Map.of("completionStatus", "COMPLETED", "workflowMode", updated.getWorkflowMode().name()), null);
+        List<CrApproverEntity> completeApprovers = crApproverRepository.findByChangeRequestIdOrderByPositionAsc(updated.getId());
+        for (CrApproverEntity approver : completeApprovers) {
+            notificationService.createAndPush(approver.getUser().getId(), "CR_COMPLETED",
+                    "Request completed: " + updated.getTitle(),
+                    "This change request has been completed.",
+                    "/change-requests/" + updated.getId());
+            emailService.sendCrCompletedEmail(approver.getUser().getEmail(),
+                    approver.getUser().getFullName(), updated.getTitle(), updated.getId().toString());
+        }
         initializeCreator(updated);
         return updated;
     }
@@ -380,6 +415,12 @@ public class ChangeRequestService {
                 actorUserId, resolveActorEmail(actorUserId),
                 Map.of(PAYLOAD_APPROVER_ID, created.getId().toString(), "userId", userId.toString(), "isRequired", isRequired),
                 null);
+        notificationService.createAndPush(user.getId(), "APPROVER_ADDED",
+                "Added as approver: " + changeRequest.getTitle(),
+                "You have been added as an approver.",
+                "/change-requests/" + changeRequestId);
+        emailService.sendApprovalRequestEmail(user.getEmail(), user.getFullName(),
+                changeRequest.getTitle(), changeRequestId.toString());
         return crApproverRepository.findWithUserAndRolesById(created.getId())
                 .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "Approver not found."));
     }
@@ -428,6 +469,14 @@ public class ChangeRequestService {
                 actorUserId, resolveActorEmail(actorUserId),
                 Map.of("groupId", groupId.toString(), PAYLOAD_COUNT, saved.size(), "isRequired", isRequired),
                 null);
+        for (CrApproverEntity a : saved) {
+            notificationService.createAndPush(a.getUser().getId(), "APPROVER_ADDED",
+                    "Added as approver: " + changeRequest.getTitle(),
+                    "You have been added as an approver via group.",
+                    "/change-requests/" + changeRequestId);
+            emailService.sendApprovalRequestEmail(a.getUser().getEmail(), a.getUser().getFullName(),
+                    changeRequest.getTitle(), changeRequestId.toString());
+        }
         Set<UUID> savedIds = saved.stream().map(CrApproverEntity::getId).collect(java.util.stream.Collectors.toSet());
         return crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId).stream()
                 .filter(a -> savedIds.contains(a.getId()))
@@ -595,6 +644,15 @@ public class ChangeRequestService {
                 actorUserId, actor.getEmail(),
                 Map.of(PAYLOAD_APPROVER_ID, approver.getId().toString(), PAYLOAD_STATUS, updated.getStatus().name()),
                 null);
+        if (updated.getCreatedBy() != null) {
+            notificationService.createAndPush(updated.getCreatedBy().getId(), "APPROVAL_DECIDED",
+                    actor.getFullName() + " approved " + updated.getTitle(),
+                    "The change request has been approved.",
+                    "/change-requests/" + updated.getId());
+            emailService.sendApprovalDecisionEmail(updated.getCreatedBy().getEmail(),
+                    updated.getCreatedBy().getFullName(), updated.getTitle(),
+                    updated.getId().toString(), "approved", actor.getFullName());
+        }
         initializeCreator(updated);
         return updated;
     }
@@ -628,6 +686,15 @@ public class ChangeRequestService {
                 actorUserId, actor.getEmail(),
                 Map.of(PAYLOAD_APPROVER_ID, approver.getId().toString(), PAYLOAD_STATUS, updated.getStatus().name()),
                 null);
+        if (updated.getCreatedBy() != null) {
+            notificationService.createAndPush(updated.getCreatedBy().getId(), "APPROVAL_DECIDED",
+                    actor.getFullName() + " rejected " + updated.getTitle(),
+                    "The change request has been rejected. Reason: " + (reason != null ? reason : "No reason provided"),
+                    "/change-requests/" + updated.getId());
+            emailService.sendApprovalDecisionEmail(updated.getCreatedBy().getEmail(),
+                    updated.getCreatedBy().getFullName(), updated.getTitle(),
+                    updated.getId().toString(), "rejected", actor.getFullName());
+        }
         initializeCreator(updated);
         return updated;
     }

@@ -42,6 +42,9 @@ public class RequestUatService {
     private final RequestDeploymentService deploymentService;
     private final AuditLogService auditLogService;
     private final ActivityStreamRepository activityStreamRepository;
+    private final NotificationService notificationService;
+    private final EmailService emailService;
+    private final MentionNotifier mentionNotifier;
 
     public RequestUatService(ChangeRequestRepository changeRequestRepository,
             RequestUatRepository requestUatRepository,
@@ -50,7 +53,10 @@ public class RequestUatService {
             UserRepository userRepository,
             RequestDeploymentService deploymentService,
             AuditLogService auditLogService,
-            ActivityStreamRepository activityStreamRepository) {
+            ActivityStreamRepository activityStreamRepository,
+            NotificationService notificationService,
+            EmailService emailService,
+            MentionNotifier mentionNotifier) {
         this.changeRequestRepository = changeRequestRepository;
         this.requestUatRepository = requestUatRepository;
         this.requestUatApproverRepository = requestUatApproverRepository;
@@ -59,6 +65,9 @@ public class RequestUatService {
         this.deploymentService = deploymentService;
         this.auditLogService = auditLogService;
         this.activityStreamRepository = activityStreamRepository;
+        this.notificationService = notificationService;
+        this.emailService = emailService;
+        this.mentionNotifier = mentionNotifier;
     }
 
     public RequestUatEntity createUat(UUID requestId, String title, String details,
@@ -153,6 +162,15 @@ public class RequestUatService {
         UserEntity actor = userRepository.findById(actorUserId).orElse(null);
         logActivity(cr, actor, "UAT_APPROVER_ADDED",
                 Map.of("approverUserId", userId.toString(), "isRequired", isRequired));
+        notificationService.createAndPush(userId, "UAT_APPROVER_ADDED",
+                "Added as UAT approver: " + cr.getTitle(),
+                "You have been added as a UAT approver.",
+                "/change-requests/" + cr.getId());
+        UserEntity addedUser = userRepository.findById(userId).orElse(null);
+        if (addedUser != null) {
+            emailService.sendUatApprovalRequestEmail(addedUser.getEmail(), addedUser.getFullName(),
+                    cr.getTitle(), uat.getId().toString());
+        }
         return saved;
     }
 
@@ -169,6 +187,16 @@ public class RequestUatService {
         ChangeRequestEntity cr = loadRequest(uat.getRequestId());
         UserEntity actor = userRepository.findById(actorUserId).orElse(null);
         logActivity(cr, actor, "UAT_APPROVED", Map.of());
+        if (cr.getCreatedBy() != null) {
+            notificationService.createAndPush(cr.getCreatedBy().getId(), "UAT_APPROVAL_DECIDED",
+                    actor.getFullName() + " approved UAT: " + cr.getTitle(),
+                    "A UAT approver has approved.",
+                    "/change-requests/" + cr.getId());
+            emailService.sendUatApprovalDecisionEmail(cr.getCreatedBy().getEmail(),
+                    cr.getCreatedBy().getFullName(), cr.getTitle(),
+                    uat.getId().toString(), "approved",
+                    actor != null ? actor.getFullName() : "Someone");
+        }
     }
 
     public void rejectUat(UUID uatId, UUID actorUserId, String reason) {
@@ -184,6 +212,16 @@ public class RequestUatService {
         ChangeRequestEntity cr = loadRequest(uat.getRequestId());
         UserEntity actor = userRepository.findById(actorUserId).orElse(null);
         logActivity(cr, actor, "UAT_REJECTED", Map.of("reason", reason));
+        if (cr.getCreatedBy() != null) {
+            notificationService.createAndPush(cr.getCreatedBy().getId(), "UAT_APPROVAL_DECIDED",
+                    actor.getFullName() + " rejected UAT: " + cr.getTitle(),
+                    "A UAT approver has rejected. Reason: " + (reason != null ? reason : "No reason provided"),
+                    "/change-requests/" + cr.getId());
+            emailService.sendUatApprovalDecisionEmail(cr.getCreatedBy().getEmail(),
+                    cr.getCreatedBy().getFullName(), cr.getTitle(),
+                    uat.getId().toString(), "rejected",
+                    actor != null ? actor.getFullName() : "Someone");
+        }
     }
 
     public RequestUatEntity promoteToDeployment(UUID uatId, UUID actorUserId, String actorRole) {
@@ -259,6 +297,7 @@ public class RequestUatService {
         ChangeRequestEntity cr = loadRequest(uat.getRequestId());
         UserEntity actor = userRepository.findById(authorId).orElse(null);
         logActivity(cr, actor, "UAT_COMMENT_ADDED", Map.of("commentId", saved.getId().toString()));
+        mentionNotifier.processMentions(body, authorId, cr.getTitle(), "/change-requests/" + uat.getRequestId());
         return saved;
     }
 

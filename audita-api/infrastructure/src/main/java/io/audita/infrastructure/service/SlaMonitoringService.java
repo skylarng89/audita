@@ -141,6 +141,13 @@ public class SlaMonitoringService {
                         cr.getTitle(),
                         cr.getId().toString()
                 );
+            } else if ("SLA_WARNING".equals(type)) {
+                emailService.sendSlaWarningEmail(
+                        recipient.getEmail(),
+                        recipient.getFullName(),
+                        cr.getTitle(),
+                        cr.getId().toString()
+                );
             }
         }
     }

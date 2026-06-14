@@ -2,6 +2,7 @@
 
 # ── Build stage ─────────────────────────────────────────────────────────────────
 FROM dhi.io/node:24-dev AS builder
+ARG APP_VERSION
 WORKDIR /app
 
 RUN npm install -g pnpm@11.2.2
@@ -29,4 +30,5 @@ COPY --from=builder --chown=65532:65532 /app/.output ./
 USER 65532:65532
 EXPOSE 3000
 ENV NODE_ENV=production
+ENV NUXT_PUBLIC_APP_VERSION=${APP_VERSION}
 CMD ["node", "server/index.mjs"]

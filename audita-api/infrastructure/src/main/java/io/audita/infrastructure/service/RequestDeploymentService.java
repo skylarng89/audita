@@ -45,6 +45,9 @@ public class RequestDeploymentService {
     private final AuditLogService auditLogService;
     private final ActivityStreamRepository activityStreamRepository;
     private final ChangeRequestRepository changeRequestRepository;
+    private final NotificationService notificationService;
+    private final EmailService emailService;
+    private final MentionNotifier mentionNotifier;
 
     public RequestDeploymentService(RequestDeploymentRepository deploymentRepository,
             RequestDeploymentApproverRepository deploymentApproverRepository,
@@ -54,7 +57,10 @@ public class RequestDeploymentService {
             UserRepository userRepository,
             AuditLogService auditLogService,
             ActivityStreamRepository activityStreamRepository,
-            ChangeRequestRepository changeRequestRepository) {
+            ChangeRequestRepository changeRequestRepository,
+            NotificationService notificationService,
+            EmailService emailService,
+            MentionNotifier mentionNotifier) {
         this.deploymentRepository = deploymentRepository;
         this.deploymentApproverRepository = deploymentApproverRepository;
         this.deploymentCommentRepository = deploymentCommentRepository;
@@ -64,6 +70,9 @@ public class RequestDeploymentService {
         this.auditLogService = auditLogService;
         this.activityStreamRepository = activityStreamRepository;
         this.changeRequestRepository = changeRequestRepository;
+        this.notificationService = notificationService;
+        this.emailService = emailService;
+        this.mentionNotifier = mentionNotifier;
     }
 
     public RequestDeploymentEntity createFromPromotion(UUID requestId, UUID uatId, UUID actorUserId) {
@@ -120,6 +129,20 @@ public class RequestDeploymentService {
         logActivity(cr, actor, "DEPLOYMENT_CREATED",
                 Map.of("requestId", requestId.toString(), "uatId", uatId.toString()));
 
+        for (ApproverSource src : mergedApprovers.values()) {
+            notificationService.createAndPush(src.userId, "DEPLOYMENT_APPROVAL_REQUESTED",
+                    "Deployment review needed: " + (cr != null ? cr.getTitle() : "Change Request"),
+                    "Your review is needed for this deployment.",
+                    "/change-requests/" + requestId);
+            UserEntity approverUser = userRepository.findById(src.userId).orElse(null);
+            if (approverUser != null) {
+                emailService.sendDeploymentApprovalRequestEmail(approverUser.getEmail(),
+                        approverUser.getFullName(),
+                        cr != null ? cr.getTitle() : "Change Request",
+                        saved.getId().toString());
+            }
+        }
+
         return saved;
     }
 
@@ -153,6 +176,16 @@ public class RequestDeploymentService {
         ChangeRequestEntity cr = changeRequestRepository.findById(deployment.getRequestId()).orElse(null);
         UserEntity actor = userRepository.findById(actorUserId).orElse(null);
         logActivity(cr, actor, "DEPLOYMENT_APPROVED", Map.of());
+        if (cr != null && cr.getCreatedBy() != null) {
+            notificationService.createAndPush(cr.getCreatedBy().getId(), "DEPLOYMENT_APPROVAL_DECIDED",
+                    actor.getFullName() + " approved deployment: " + cr.getTitle(),
+                    "A deployment approver has approved.",
+                    "/change-requests/" + cr.getId());
+            emailService.sendDeploymentApprovalDecisionEmail(cr.getCreatedBy().getEmail(),
+                    cr.getCreatedBy().getFullName(), cr.getTitle(),
+                    deploymentId.toString(), "approved",
+                    actor != null ? actor.getFullName() : "Someone");
+        }
     }
 
     public void rejectDeployment(UUID deploymentId, UUID actorUserId, String reason) {
@@ -175,6 +208,16 @@ public class RequestDeploymentService {
         ChangeRequestEntity cr = changeRequestRepository.findById(deployment.getRequestId()).orElse(null);
         UserEntity actor = userRepository.findById(actorUserId).orElse(null);
         logActivity(cr, actor, "DEPLOYMENT_REJECTED", Map.of("reason", reason));
+        if (cr != null && cr.getCreatedBy() != null) {
+            notificationService.createAndPush(cr.getCreatedBy().getId(), "DEPLOYMENT_APPROVAL_DECIDED",
+                    actor.getFullName() + " rejected deployment: " + cr.getTitle(),
+                    "A deployment approver has rejected. Reason: " + (reason != null ? reason : "No reason provided"),
+                    "/change-requests/" + cr.getId());
+            emailService.sendDeploymentApprovalDecisionEmail(cr.getCreatedBy().getEmail(),
+                    cr.getCreatedBy().getFullName(), cr.getTitle(),
+                    deploymentId.toString(), "rejected",
+                    actor != null ? actor.getFullName() : "Someone");
+        }
     }
 
     @Transactional(readOnly = true)
@@ -205,6 +248,7 @@ public class RequestDeploymentService {
         ChangeRequestEntity cr = changeRequestRepository.findById(deployment.getRequestId()).orElse(null);
         UserEntity actor = userRepository.findById(authorId).orElse(null);
         logActivity(cr, actor, "DEPLOYMENT_COMMENT_ADDED", Map.of("commentId", saved.getId().toString()));
+        mentionNotifier.processMentions(body, authorId, cr.getTitle(), "/change-requests/" + deployment.getRequestId());
         return saved;
     }
 

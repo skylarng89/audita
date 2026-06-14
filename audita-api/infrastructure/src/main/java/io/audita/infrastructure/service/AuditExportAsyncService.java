@@ -34,6 +34,7 @@ public class AuditExportAsyncService {
     private final AuditTrailPort auditTrailPort;
     private final AuditExportRequestRepository auditExportRequestRepository;
     private final EmailService emailService;
+    private final NotificationService notificationService;
 
     @Value("${audita.app.base-url:http://localhost:3000}")
     private String appBaseUrl;
@@ -44,10 +45,12 @@ public class AuditExportAsyncService {
     public AuditExportAsyncService(
             AuditTrailPort auditTrailPort,
             AuditExportRequestRepository auditExportRequestRepository,
-            EmailService emailService) {
+            EmailService emailService,
+            NotificationService notificationService) {
         this.auditTrailPort = auditTrailPort;
         this.auditExportRequestRepository = auditExportRequestRepository;
         this.emailService = emailService;
+        this.notificationService = notificationService;
     }
 
     @Async
@@ -94,6 +97,14 @@ public class AuditExportAsyncService {
                     expiresAt,
                     request.getDateFrom(),
                     request.getDateTo());
+            if (request.getRequestedByUserId() != null) {
+                notificationService.createAndPush(
+                        request.getRequestedByUserId(),
+                        "AUDIT_EXPORT_READY",
+                        "Audit export ready",
+                        "Your audit trail export from " + request.getDateFrom() + " to " + request.getDateTo() + " is ready.",
+                        "/admin/audit-trail");
+            }
         } catch (Exception error) {
             log.error("Failed generating audit export requestId={} tenant={}", exportRequestId, tenantSlug, error);
             auditExportRequestRepository.findById(exportRequestId).ifPresent(request -> {
