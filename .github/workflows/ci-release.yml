@@ -118,7 +118,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v6 # v6
+        uses: actions/checkout@v6
 
       - name: Build API image for scanning
         run: docker build -t audita-api:scan -f audita-api/Dockerfile audita-api
@@ -395,7 +395,7 @@ jobs:
           fi
 
       - name: Download SBOM artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: sbom-artifacts
           path: release-artifacts
