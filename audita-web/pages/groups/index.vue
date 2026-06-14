@@ -214,17 +214,18 @@
 </template>
 
 <script setup lang="ts">
-import type { Group, User, UserSearchResult } from "~/types"
+import type { Group, Page, User, UserSearchResult } from "~/types"
 import { formatDateInTenantTimezone } from "~/composables/timezone"
 
-definePageMeta({ middleware: ["auth"] })
+definePageMeta({ layout: "default", middleware: ["auth"] })
 
 useHead({ title: "Groups — Audita" })
 
 const auth = useAuthStore()
 const { success: toastSuccess, error: toastError } = useToast()
-const { fetchGroups, deleteGroup, fetchGroupMembers, addGroupMembers, removeGroupMembers } = useGroups()
+const { deleteGroup, fetchGroupMembers, addGroupMembers, removeGroupMembers } = useGroups()
 const { searchUsers } = useUserSearch()
+const api = useApi()
 
 const page = ref(1)
 const pageSize = 20
@@ -235,10 +236,12 @@ const { data, pending, refresh } = await useAsyncData(
   async () => {
     loadError.value = ""
     try {
-      return await fetchGroups(page.value, pageSize)
+      return (await api(
+        `/api/v1/groups?page=${page.value - 1}&size=${pageSize}`,
+      )) as Page<Group>
     } catch (err: unknown) {
       loadError.value = resolveApiErrorMessage(err, "Failed to load groups.")
-      return { content: [], totalElements: 0, totalPages: 0, size: pageSize, number: 0 }
+      return { content: [], totalElements: 0, totalPages: 0, size: pageSize, number: 0 } as Page<Group>
     }
   },
   { watch: [page] },
