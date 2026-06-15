@@ -3,6 +3,7 @@ package io.audita.infrastructure.service;
 import io.audita.domain.exception.DomainNotPermittedException;
 import io.audita.infrastructure.persistence.entity.*;
 import io.audita.infrastructure.persistence.repository.*;
+import io.audita.infrastructure.tenant.RequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -11,7 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -63,7 +66,7 @@ public class GroupService {
         group = groupRepository.save(group);
 
         if (memberIds != null && !memberIds.isEmpty()) {
-            addMembers(group.getId(), memberIds);
+            addMembers(group.getId(), memberIds, createdByUserId);
         }
 
         return group;
@@ -87,7 +90,7 @@ public class GroupService {
         return groupRepository.save(group);
     }
 
-    public void deleteGroup(UUID id) {
+    public void deleteGroup(UUID id, UUID actorUserId) {
         GroupEntity group = getGroup(id);
 
         List<GroupMemberEntity> members = groupMemberRepository.findAllByGroupId(id);
@@ -99,7 +102,10 @@ public class GroupService {
         groupRepository.delete(group);
         log.info("Deleted group id={} name={}", id, group.getName());
 
-        auditLogService.log("GROUP_DELETED", "group", id, null, null, null, null);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("groupName", group.getName());
+        auditLogService.log("GROUP_DELETED", "group", id, actorUserId,
+                resolveActorEmail(actorUserId), payload, RequestContext.getCurrentIp());
     }
 
     // ── Members ────────────────────────────────────────────────────────────────
@@ -133,7 +139,7 @@ public class GroupService {
         log.info("Member removed: groupId={} userId={}", groupId, userId);
     }
 
-    public List<GroupMemberEntity> addMembers(UUID groupId, List<UUID> userIds) {
+    public List<GroupMemberEntity> addMembers(UUID groupId, List<UUID> userIds, UUID actorUserId) {
         GroupEntity group = getGroup(groupId);
         List<GroupMemberEntity> added = new ArrayList<>();
 
@@ -148,17 +154,35 @@ public class GroupService {
 
         if (!added.isEmpty()) {
             log.info("Added {} members to group id={}", added.size(), groupId);
-            auditLogService.log("GROUP_MEMBERS_ADDED", "group", groupId, null, null, null, null);
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("userIds", userIds.stream().map(UUID::toString).toList());
+            payload.put("count", added.size());
+            auditLogService.log("GROUP_MEMBERS_ADDED", "group", groupId, actorUserId,
+                    resolveActorEmail(actorUserId), payload, RequestContext.getCurrentIp());
         }
 
         return added;
     }
 
-    public void removeMembers(UUID groupId, List<UUID> userIds) {
+    public void removeMembers(UUID groupId, List<UUID> userIds, UUID actorUserId) {
         for (UUID userId : userIds) {
             groupMemberRepository.deleteByGroupIdAndUserId(groupId, userId);
         }
         log.info("Removed {} members from group id={}", userIds.size(), groupId);
-        auditLogService.log("GROUP_MEMBERS_REMOVED", "group", groupId, null, null, null, null);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("userIds", userIds.stream().map(UUID::toString).toList());
+        payload.put("count", userIds.size());
+        auditLogService.log("GROUP_MEMBERS_REMOVED", "group", groupId, actorUserId,
+                resolveActorEmail(actorUserId), payload, RequestContext.getCurrentIp());
     }
+
+    private
+        String resolveActorEmail(UUID actorUserId) {
+            if (actorUserId == null) {
+                return null;
+            }
+            return userRepository.findById(actorUserId)
+                    .map(UserEntity::getEmail)
+                    .orElse(null);
+        }
 }
