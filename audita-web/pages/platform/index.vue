@@ -83,6 +83,8 @@
 <script setup lang="ts">
 definePageMeta({ layout: "platform" });
 
+import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
+
 const api = useApi();
 
 interface Tenant {
@@ -119,6 +121,9 @@ const { data: healthData } = await useAsyncData<PlatformHealth>(
       method: "GET",
     }) as Promise<PlatformHealth>,
 );
+
+const { hide: hideLoading } = useLoadingOverlay();
+watch(pending, (val) => { if (!val) hideLoading(); });
 
 const recentTenants = computed(() => data.value?.content ?? []);
 const health = computed(() => ({

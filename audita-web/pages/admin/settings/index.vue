@@ -621,6 +621,7 @@ import {
   isSettingsDirty,
   validateSlaDefaults,
 } from "~/composables/adminSettingsForm";
+import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
 
 definePageMeta({ middleware: ["auth", "admin-only"] });
 
@@ -690,6 +691,7 @@ interface GroupLookupResponse {
   description: string | null;
 }
 
+const { hide: hideLoading } = useLoadingOverlay();
 const pending = ref(false);
 const errorMessage = ref("");
 const savingSettings = ref(false);
@@ -833,6 +835,7 @@ async function loadSettings() {
       settings.autoApproverDefaults,
       settings.auditDefaults,
     );
+    hideLoading();
   } catch (error: unknown) {
     errorMessage.value = "Unable to load settings right now.";
     toastError(
