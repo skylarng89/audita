@@ -1,4 +1,4 @@
-<script setup lang="ts" generic="T extends Record<string, unknown>">
+<script setup lang="ts" generic="T">
 export interface TableColumn<Row = Record<string, unknown>> {
   key: string;
   label: string;
