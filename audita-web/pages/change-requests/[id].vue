@@ -920,6 +920,7 @@ import { EditorContent, useEditor } from "@tiptap/vue-3";
 import Mention from "@tiptap/extension-mention";
 import tippy from "tippy.js";
 import FlatPickr from "vue-flatpickr-component";
+import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
 import {
   buildRichTextExtensions,
   normalizeRichTextHtml,
@@ -940,6 +941,7 @@ useHead(
 
 const { error: toastError } = useToast();
 const auth = useAuthStore();
+const { hide: hideLoading } = useLoadingOverlay();
 const api = useApi();
 
 const route = useRoute();
@@ -1539,6 +1541,7 @@ async function loadAll() {
     }
     localFieldValues.value = valueMap;
     await loadDeploymentStatus();
+    hideLoading();
   } catch (error: unknown) {
     toastError(
       extractErrorMessage(error, "Failed to load change request details."),

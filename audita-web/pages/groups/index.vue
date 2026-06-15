@@ -213,6 +213,7 @@
 
 <script setup lang="ts">
 import type { Group, Page, User, UserSearchResult } from "~/types"
+import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
 import { formatDateInTenantTimezone } from "~/composables/timezone"
 
 definePageMeta({ layout: "default", middleware: ["auth"] })
@@ -223,6 +224,7 @@ const auth = useAuthStore()
 const { success: toastSuccess, error: toastError } = useToast()
 const { deleteGroup, fetchGroupMembers, addGroupMembers, removeGroupMembers } = useGroups()
 const { searchUsers } = useUserSearch()
+const { hide: hideLoading } = useLoadingOverlay();
 const api = useApi()
 
 const page = ref(1)
@@ -244,6 +246,8 @@ const { data, pending, refresh } = await useAsyncData(
   },
   { watch: [page] },
 )
+
+watch(pending, (val) => { if (!val) hideLoading(); });
 
 const groups = computed<Group[]>(() => data.value?.content ?? [])
 const total = computed(() => data.value?.totalElements ?? groups.value.length)

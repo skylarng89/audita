@@ -141,6 +141,19 @@
           </select>
         </div>
 
+        <p
+          v-if="!activeDepartments.length"
+          class="field-hint col-span-full"
+        >
+          No active departments available. Create departments in
+          <NuxtLink
+            to="/admin/settings"
+            class="underline text-primary hover:text-primary/80"
+          >
+            Organization Settings
+          </NuxtLink>.
+        </p>
+
         <!-- Category -->
         <div class="relative" ref="categoryWrapperRef">
           <p class="field-label">Category</p>
@@ -388,6 +401,18 @@ const isSaving = ref(false);
 const errorMessage = ref("");
 const activeDepartments = ref<Department[]>([]);
 const linkedRequestIds = ref<string[]>([]);
+
+const editor = useEditor({
+  extensions: buildRichTextExtensions(
+    "Describe scope, rollout plan, and risk controls...",
+  ),
+  editorProps: {
+    attributes: {
+      class:
+        "prose dark:prose-invert max-w-none focus:outline-none min-h-[8rem]",
+    },
+  },
+});
 
 const form = reactive({
   title: "",

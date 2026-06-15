@@ -254,7 +254,8 @@
 </template>
 
 <script setup lang="ts">
-import type { Group } from "~/types"
+import type { Group } from "~/types";
+import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
 
 definePageMeta({
   layout: "default",
@@ -266,6 +267,7 @@ useHead({ title: "Users — Audita" });
 
 const api = useApi();
 const auth = useAuthStore();
+const { hide: hideLoading } = useLoadingOverlay();
 const { success: toastSuccess, error: toastError } = useToast();
 
 interface UserRow {
@@ -339,6 +341,8 @@ const { data, pending, refresh } = await useAsyncData<UserPayload>(
   },
   { watch: [page] },
 );
+
+watch(pending, (val) => { if (!val) hideLoading(); });
 
 const { data: rolesData } = await useAsyncData<Role[]>(
   "users-roles",

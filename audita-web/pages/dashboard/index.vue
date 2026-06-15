@@ -231,6 +231,7 @@
 
 <script setup lang="ts">
 import type { ChangeRequest, Notification } from "~/types";
+import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
 import { formatDistanceToNow, parseISO } from "date-fns";
 
 definePageMeta({ middleware: "auth" });
@@ -240,6 +241,7 @@ useHead({ title: "Dashboard — Audita" });
 const api = useApi();
 const auth = useAuthStore();
 const { list } = useChangeRequests();
+const { hide: hideLoading } = useLoadingOverlay();
 const { error: toastError } = useToast();
 
 interface DashboardSummaryResponse {
@@ -283,6 +285,7 @@ async function load() {
 
     pendingCRs.value = pendingPage.content;
     recentActivity.value = notifications;
+    hideLoading();
   } catch (error: unknown) {
     toastError(resolveApiErrorMessage(error, "Failed to load dashboard data."));
   }
