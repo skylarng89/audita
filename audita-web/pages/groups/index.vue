@@ -25,40 +25,37 @@
     </div>
 
     <div class="card shadow-card-hover">
-      <!-- DEBUG: pending={{ pending }} groups={{ groups.length }} dataKeys={{ Object.keys(data ?? {}).join(',') }} -->
-      <AppTable
-        :columns="columns"
-        :data="groups"
-        :loading="pending"
-        row-key="id"
-        empty-message="No groups yet."
-      >
-        <template #cell-description="{ value }">
-          <span class="text-sm text-muted">{{ value || "—" }}</span>
-        </template>
-        <template #cell-memberCount="{ value }">
-          <span class="text-sm">{{ value ?? 0 }}</span>
-        </template>
-        <template #cell-createdAt="{ value }">
-          <span class="text-sm text-muted">{{ formatDate(value) }}</span>
-        </template>
-        <template v-if="auth.isAdmin" #cell-actions="{ row }">
-          <div class="flex gap-2">
-            <button
-              class="text-xs text-primary hover:underline"
-              @click.stop="toggleMemberPanel(row)"
-            >
-              Manage Members
-            </button>
-            <button
-              class="text-xs text-danger hover:underline"
-              @click.stop="openDeleteConfirm(row)"
-            >
-              Delete
-            </button>
-          </div>
-        </template>
-      </AppTable>
+      <div class="w-full overflow-x-auto">
+        <table class="w-full min-w-[980px] table-auto divide-y divide-border dark:divide-border-dark">
+          <thead>
+            <tr>
+              <th v-for="col in columns" :key="col.key" scope="col" class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-muted whitespace-nowrap">{{ col.label }}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border dark:divide-border-dark">
+            <template v-if="pending">
+              <tr v-for="i in 5" :key="i" class="animate-pulse">
+                <td v-for="col in columns" :key="col.key" class="px-6 py-4"><div class="h-4 rounded bg-gray-200 dark:bg-slate-700" /></td>
+              </tr>
+            </template>
+            <tr v-else-if="groups.length === 0">
+              <td :colspan="columns.length" class="px-6 py-12 text-center text-sm text-muted">No groups yet.</td>
+            </tr>
+            <tr v-for="row in groups" :key="row.id" class="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
+              <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-middle">{{ row.name }}</td>
+              <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-middle text-muted">{{ row.description || "—" }}</td>
+              <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-middle">{{ row.memberCount ?? 0 }}</td>
+              <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-middle text-muted">{{ formatDate(row.createdAt) }}</td>
+              <td v-if="auth.isAdmin" class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-middle">
+                <div class="flex gap-2">
+                  <button class="text-xs text-primary hover:underline" @click.stop="toggleMemberPanel(row)">Manage Members</button>
+                  <button class="text-xs text-danger hover:underline" @click.stop="openDeleteConfirm(row)">Delete</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <div
         v-if="total > pageSize"
