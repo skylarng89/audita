@@ -18,9 +18,22 @@ export default defineNuxtConfig({
 
   security: {
     csrf: false,
-    nonce: false,
+    nonce: true,
     headers: {
-      contentSecurityPolicy: false,
+      contentSecurityPolicy: {
+        "default-src": ["'self'"],
+        "base-uri": ["'none'"],
+        "form-action": ["'self'"],
+        "frame-ancestors": ["'none'"],
+        "object-src": ["'none'"],
+        "img-src": ["'self'", "'data:'", "blob:", "https:"],
+        "font-src": ["'self'", "'data:'", "https://fonts.gstatic.com"],
+        "style-src": ["'self'", "'nonce-{{nonce}}'", "https://fonts.googleapis.com"],
+        "script-src": ["'self'", "'nonce-{{nonce}}'"],
+        "script-src-attr": ["'unsafe-hashes'"],
+        "connect-src": ["'self'"],
+        "upgrade-insecure-requests": true,
+      },
       referrerPolicy: "no-referrer",
       strictTransportSecurity: {
         maxAge: 15552000,
@@ -47,9 +60,6 @@ export default defineNuxtConfig({
 
   vite: {
     plugins: [tailwindcss()],
-    esbuild: {
-      drop: [],
-    },
   },
 
   runtimeConfig: {
