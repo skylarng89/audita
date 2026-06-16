@@ -29,6 +29,8 @@ export default defineNuxtConfig({
         "img-src": ["'self'", "'data:'", "blob:", "https:"],
         "font-src": ["'self'", "'data:'", "https://fonts.gstatic.com"],
         "style-src": ["'self'", "'nonce-{{nonce}}'", "https://fonts.googleapis.com"],
+        "style-src-elem": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        "style-src-attr": ["'unsafe-inline'"],
         "script-src": ["'self'", "'nonce-{{nonce}}'"],
         "script-src-attr": ["'unsafe-hashes'"],
         "connect-src": ["'self'"],

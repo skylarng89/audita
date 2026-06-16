@@ -164,24 +164,24 @@
               </select>
             </div>
 
-            <!-- Request Department -->
+            <!-- Request Group -->
             <div>
-              <p class="field-label">Request Department</p>
-              <select v-model="editForm.requestDepartmentId" class="input mt-1">
+              <p class="field-label">Request Group</p>
+              <select v-model="editForm.requestGroupId" class="input mt-1">
                 <option value="">— None —</option>
-                <option v-for="dept in activeDepartments" :key="dept.id" :value="dept.id">
-                  {{ dept.name }}
+                <option v-for="group in activeGroups" :key="group.id" :value="group.id">
+                  {{ group.name }}
                 </option>
               </select>
             </div>
 
-            <!-- Destination Department -->
+            <!-- Destination Group -->
             <div>
-              <p class="field-label">Destination Department</p>
-              <select v-model="editForm.destinationDepartmentId" class="input mt-1">
+              <p class="field-label">Destination Group</p>
+              <select v-model="editForm.destinationGroupId" class="input mt-1">
                 <option value="">— None —</option>
-                <option v-for="dept in activeDepartments" :key="dept.id" :value="dept.id">
-                  {{ dept.name }}
+                <option v-for="group in activeGroups" :key="group.id" :value="group.id">
+                  {{ group.name }}
                 </option>
               </select>
             </div>
@@ -914,7 +914,7 @@ import type {
   Comment,
   CrApprover,
   CustomFieldDefinition,
-  Department,
+  Group,
 } from "~/types";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import Mention from "@tiptap/extension-mention";
@@ -968,7 +968,7 @@ const {
   listActivity,
   listComments,
   postComment,
-  listActiveDepartments,
+  listActiveGroups,
   getLinkedRequests,
   upsertLinks,
   markComplete,
@@ -982,7 +982,7 @@ const localFieldValues = ref<Record<string, string>>({});
 const attachments = ref<Attachment[]>([]);
 const activity = ref<ActivityEntry[]>([]);
 const comments = ref<Comment[]>([]);
-const activeDepartments = ref<Department[]>([]);
+const activeGroups = ref<Group[]>([]);
 const tab = ref<string>("details");
 const highlightedCommentId = ref<string | null>(null);
 const editLinkedRequestIds = ref<string[]>([]);
@@ -1326,8 +1326,8 @@ const editForm = reactive({
   riskLevel: "",
   approvalType: "",
   workflowMode: "",
-  requestDepartmentId: "",
-  destinationDepartmentId: "",
+  requestGroupId: "",
+  destinationGroupId: "",
   category: "",
   scheduledStartDate: "",
   scheduledStartTime: "",
@@ -1429,8 +1429,8 @@ function enterEditMode() {
   editForm.riskLevel = cr.riskLevel;
   editForm.approvalType = cr.approvalType;
   editForm.workflowMode = cr.workflowMode ?? "";
-  editForm.requestDepartmentId = cr.requestDepartmentId ?? "";
-  editForm.destinationDepartmentId = cr.destinationDepartmentId ?? "";
+  editForm.requestGroupId = cr.requestGroupId ?? "";
+  editForm.destinationGroupId = cr.destinationGroupId ?? "";
   editForm.category = cr.category ?? "";
   if (cr.scheduledStart) {
     const s = new Date(cr.scheduledStart);
@@ -1472,8 +1472,8 @@ async function saveEditAction() {
       riskLevel: editForm.riskLevel,
       approvalType: editForm.approvalType,
       workflowMode: editForm.workflowMode || null,
-      requestDepartmentId: editForm.requestDepartmentId || null,
-      destinationDepartmentId: editForm.destinationDepartmentId || null,
+      requestGroupId: editForm.requestGroupId || null,
+      destinationGroupId: editForm.destinationGroupId || null,
       category: editForm.category.trim() || null,
       scheduledStart:
         combineParts(
@@ -1511,7 +1511,7 @@ async function loadAll() {
       attachmentList,
       activityList,
       commentList,
-      departmentList,
+      groupList,
       linkedIds,
     ] = await Promise.all([
       get(id.value),
@@ -1521,7 +1521,7 @@ async function loadAll() {
       listAttachments(id.value),
       listActivity(id.value),
       listComments(id.value),
-      listActiveDepartments().catch(() => [] as Department[]),
+      listActiveGroups().catch(() => [] as Group[]),
       getLinkedRequests(id.value).catch(() => [] as string[]),
     ]);
     changeRequest.value = cr;
@@ -1532,7 +1532,7 @@ async function loadAll() {
     attachments.value = attachmentList;
     activity.value = activityList;
     comments.value = commentList;
-    activeDepartments.value = departmentList;
+    activeGroups.value = groupList;
     linkedRequestIds.value = linkedIds;
     const valueMap: Record<string, string> = {};
     for (const def of definitions) {
@@ -1546,6 +1546,7 @@ async function loadAll() {
     toastError(
       extractErrorMessage(error, "Failed to load change request details."),
     );
+    hideLoading();
   }
 }
 

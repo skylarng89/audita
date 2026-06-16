@@ -164,7 +164,7 @@
               <span class="text-xs text-muted">{{ approver.status }}</span>
             </div>
           </div>
-          <div v-if="!uat.approvers.length" class="text-sm text-muted">
+          <div v-if="!uat.approvers?.length" class="text-sm text-muted">
             No approvers added yet.
           </div>
         </div>
@@ -262,6 +262,7 @@ const {
   createUat,
   updateUat,
   addUatApprover,
+  listUatApprovers,
   promoteUat,
   searchApproverCandidates,
   listUatComments,
@@ -366,6 +367,13 @@ async function loadUat() {
   loading.value = true;
   try {
     uat.value = await getUat(props.requestId);
+    if (uat.value && !uat.value.approvers?.length) {
+      try {
+        uat.value.approvers = await listUatApprovers(props.requestId);
+      } catch {
+        uat.value.approvers = [];
+      }
+    }
   } catch {
     uat.value = null;
   } finally {

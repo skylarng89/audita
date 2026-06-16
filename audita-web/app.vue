@@ -7,20 +7,15 @@
 
 <script setup lang="ts">
 const route = useRoute();
-const { show, hide } = useLoadingOverlay();
-
-let showTimer: ReturnType<typeof setTimeout> | null = null;
+const { triggerShow, hide } = useLoadingOverlay();
 
 watch(
   () => route.fullPath,
-  () => {
-    showTimer = setTimeout(() => show(), 200);
-  },
+  () => triggerShow(),
 );
 
 onMounted(() => {
   document.getElementById("app-loader")?.remove();
-  clearTimeout(showTimer ?? undefined);
   hide();
 });
 </script>

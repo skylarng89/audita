@@ -460,6 +460,8 @@ async function fetchPage(pageIndex: number) {
     currentPage.value = pageIndex;
     hideLoading();
     liveAnnouncement.value = `Loaded ${nextPage.totalElements} change requests.`;
+  } catch {
+    hideLoading();
   } finally {
     isLoading.value = false;
   }
