@@ -168,6 +168,8 @@
 <script setup lang="ts">
 definePageMeta({ layout: "platform" });
 
+import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
+
 const api = useApi();
 const route = useRoute();
 const { success: toastSuccess, error: toastError } = useToast();
@@ -193,7 +195,7 @@ const tabs = [
   { key: "sso", label: "SSO Configuration" },
 ];
 
-const { data: tenant, refresh: refreshTenant } = await useAsyncData<Tenant>(
+const { data: tenant, pending, refresh: refreshTenant } = await useAsyncData<Tenant>(
   `tenant-${tenantId}`,
   () => api(`/api/platform/v1/tenants/${tenantId}`) as Promise<Tenant>,
 );
@@ -205,6 +207,10 @@ const { data: domainData, refresh: refreshDomains } = await useAsyncData<
   () =>
     api(`/api/platform/v1/tenants/${tenantId}/domains`) as Promise<Domain[]>,
 );
+
+const { hide: hideLoading } = useLoadingOverlay();
+watch(pending, (val) => { if (!val) hideLoading(); });
+
 const domains = computed(() => domainData.value ?? []);
 
 const newDomain = ref("");
