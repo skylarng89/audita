@@ -33,7 +33,11 @@ public class GroupController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public PageResponse<GroupResponse> listGroups(@PageableDefault(size = 20) Pageable pageable) {
+    public PageResponse<GroupResponse> listGroups(@PageableDefault(size = 20) Pageable pageable,
+                                                   @RequestParam(required = false) Boolean active) {
+        if (active != null && active) {
+            return PageResponse.from(groupService.listActiveGroups(pageable), GroupResponse::from);
+        }
         return PageResponse.from(groupService.listGroups(pageable), GroupResponse::from);
     }
 
@@ -48,7 +52,7 @@ public class GroupController {
     public ResponseEntity<GroupResponse> createGroup(@Valid @RequestBody CreateGroupRequest req,
                                                       @AuthenticationPrincipal UserDetails principal) {
         UUID createdById = UUID.fromString(principal.getUsername());
-        var group = groupService.createGroup(req.name(), req.description(), createdById, req.memberIds());
+        var group = groupService.createGroup(req.name(), req.description(), createdById, req.isActive(), req.displayOrder(), req.memberIds());
         return ResponseEntity.status(HttpStatus.CREATED).body(GroupResponse.from(group));
     }
 

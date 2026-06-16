@@ -8,6 +8,7 @@ import io.audita.api.dto.response.RequestUatApproverResponse;
 import io.audita.api.dto.response.RequestUatResponse;
 import io.audita.api.dto.response.StageCommentResponse;
 import io.audita.api.security.UserPrincipal;
+import io.audita.infrastructure.persistence.entity.RequestUatApproverEntity;
 import io.audita.infrastructure.persistence.entity.RequestUatCommentEntity;
 import io.audita.infrastructure.persistence.entity.RequestUatEntity;
 import io.audita.infrastructure.persistence.entity.UserEntity;
@@ -39,7 +40,13 @@ public class RequestUatController {
     public RequestUatResponse get(@PathVariable UUID requestId) {
         RequestUatEntity uat = requestUatService.getByRequestId(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "UAT not found"));
-        return RequestUatResponse.from(uat);
+        List<RequestUatApproverEntity> approverEntities = requestUatService.listApprovers(uat.getId());
+        Map<UUID, UserEntity> approverUsers = requestUatService.loadApproverUsers(approverEntities);
+        List<RequestUatApproverResponse> approverResponses = approverEntities.stream()
+                .map(a -> RequestUatApproverResponse.from(a, approverUsers.get(a.getUserId())))
+                .toList();
+        String createdByFullName = requestUatService.resolveUserFullName(uat.getCreatedBy());
+        return RequestUatResponse.from(uat, createdByFullName, approverResponses);
     }
 
     @PostMapping
@@ -51,7 +58,10 @@ public class RequestUatController {
         RequestUatEntity created = requestUatService.createUat(
                 requestId, req.title(), req.details(),
                 principal.userId(), principal.role());
-        return new ResponseEntity<>(RequestUatResponse.from(created), HttpStatus.CREATED);
+        String createdByFullName = requestUatService.resolveUserFullName(created.getCreatedBy());
+        return new ResponseEntity<>(
+                RequestUatResponse.from(created, createdByFullName, List.of()),
+                HttpStatus.CREATED);
     }
 
     @PatchMapping
@@ -65,7 +75,25 @@ public class RequestUatController {
         RequestUatEntity updated = requestUatService.updateUat(
                 uat.getId(), req.title(), req.details(),
                 principal.userId(), principal.role());
-        return RequestUatResponse.from(updated);
+        List<RequestUatApproverEntity> approverEntities = requestUatService.listApprovers(updated.getId());
+        Map<UUID, UserEntity> approverUsers = requestUatService.loadApproverUsers(approverEntities);
+        List<RequestUatApproverResponse> approverResponses = approverEntities.stream()
+                .map(a -> RequestUatApproverResponse.from(a, approverUsers.get(a.getUserId())))
+                .toList();
+        String createdByFullName = requestUatService.resolveUserFullName(updated.getCreatedBy());
+        return RequestUatResponse.from(updated, createdByFullName, approverResponses);
+    }
+
+    @GetMapping("/approvers")
+    @PreAuthorize("isAuthenticated()")
+    public List<RequestUatApproverResponse> listApprovers(@PathVariable UUID requestId) {
+        RequestUatEntity uat = requestUatService.getByRequestId(requestId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "UAT not found"));
+        List<RequestUatApproverEntity> approverEntities = requestUatService.listApprovers(uat.getId());
+        Map<UUID, UserEntity> approverUsers = requestUatService.loadApproverUsers(approverEntities);
+        return approverEntities.stream()
+                .map(a -> RequestUatApproverResponse.from(a, approverUsers.get(a.getUserId())))
+                .toList();
     }
 
     @PostMapping("/approvers")
@@ -114,7 +142,13 @@ public class RequestUatController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "UAT not found"));
         RequestUatEntity promoted = requestUatService.promoteToDeployment(
                 uat.getId(), principal.userId(), principal.role());
-        return RequestUatResponse.from(promoted);
+        List<RequestUatApproverEntity> approverEntities = requestUatService.listApprovers(promoted.getId());
+        Map<UUID, UserEntity> approverUsers = requestUatService.loadApproverUsers(approverEntities);
+        List<RequestUatApproverResponse> approverResponses = approverEntities.stream()
+                .map(a -> RequestUatApproverResponse.from(a, approverUsers.get(a.getUserId())))
+                .toList();
+        String createdByFullName = requestUatService.resolveUserFullName(promoted.getCreatedBy());
+        return RequestUatResponse.from(promoted, createdByFullName, approverResponses);
     }
 
     @GetMapping("/comments")

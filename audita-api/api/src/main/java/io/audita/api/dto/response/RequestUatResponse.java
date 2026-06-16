@@ -1,8 +1,10 @@
 package io.audita.api.dto.response;
 
+import io.audita.infrastructure.persistence.entity.RequestUatApproverEntity;
 import io.audita.infrastructure.persistence.entity.RequestUatEntity;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public record RequestUatResponse(
@@ -13,8 +15,10 @@ public record RequestUatResponse(
         String status,
         boolean readOnly,
         UUID createdBy,
+        String createdByFullName,
         OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
+        OffsetDateTime updatedAt,
+        List<RequestUatApproverResponse> approvers
 ) {
     public static RequestUatResponse from(RequestUatEntity entity) {
         return new RequestUatResponse(
@@ -25,8 +29,27 @@ public record RequestUatResponse(
                 entity.getStatus(),
                 entity.isReadOnly(),
                 entity.getCreatedBy(),
+                null,
                 entity.getCreatedAt(),
-                entity.getUpdatedAt()
+                entity.getUpdatedAt(),
+                List.of()
+        );
+    }
+
+    public static RequestUatResponse from(RequestUatEntity entity, String createdByFullName,
+            List<RequestUatApproverResponse> approvers) {
+        return new RequestUatResponse(
+                entity.getId(),
+                entity.getRequestId(),
+                entity.getTitle(),
+                entity.getDetails(),
+                entity.getStatus(),
+                entity.isReadOnly(),
+                entity.getCreatedBy(),
+                createdByFullName,
+                entity.getCreatedAt(),
+                entity.getUpdatedAt(),
+                approvers
         );
     }
 }

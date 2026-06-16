@@ -24,5 +24,7 @@ public record CreateChangeRequestRequest(
                 List<String> affectedSystems,
                 RequestWorkflowMode workflowMode,
                 UUID requestDepartmentId,
-                UUID destinationDepartmentId) {
+                UUID destinationDepartmentId,
+                UUID requestGroupId,
+                UUID destinationGroupId) {
 }

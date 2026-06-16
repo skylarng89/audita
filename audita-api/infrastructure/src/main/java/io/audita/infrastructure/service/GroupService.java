@@ -46,16 +46,23 @@ public class GroupService {
     }
 
     @Transactional(readOnly = true)
+    public Page<GroupEntity> listActiveGroups(Pageable pageable) {
+        Page<GroupEntity> page = groupRepository.findAllByIsActiveTrue(pageable);
+        page.getContent().forEach(g -> g.setMemberCount((int) groupMemberRepository.countByGroupId(g.getId())));
+        return page;
+    }
+
+    @Transactional(readOnly = true)
     public GroupEntity getGroup(UUID id) {
         return groupRepository.findById(id)
                 .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Group not found."));
     }
 
     public GroupEntity createGroup(String name, String description, UUID createdByUserId) {
-        return createGroup(name, description, createdByUserId, List.of());
+        return createGroup(name, description, createdByUserId, true, 0, List.of());
     }
 
-    public GroupEntity createGroup(String name, String description, UUID createdByUserId, List<UUID> memberIds) {
+    public GroupEntity createGroup(String name, String description, UUID createdByUserId, boolean isActive, int displayOrder, List<UUID> memberIds) {
         if (groupRepository.existsByName(name)) {
             throw new DomainNotPermittedException("NAME_TAKEN",
                     "A group named '" + name + "' already exists.");
@@ -63,6 +70,8 @@ public class GroupService {
 
         UserEntity createdBy = userRepository.findById(createdByUserId).orElse(null);
         GroupEntity group = new GroupEntity(name, description, createdBy);
+        group.setActive(isActive);
+        group.setDisplayOrder(displayOrder);
         group = groupRepository.save(group);
 
         if (memberIds != null && !memberIds.isEmpty()) {

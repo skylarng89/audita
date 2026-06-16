@@ -283,6 +283,24 @@ public class RequestUatService {
     }
 
     @Transactional(readOnly = true)
+    public Map<UUID, UserEntity> loadApproverUsers(List<RequestUatApproverEntity> approvers) {
+        List<UUID> userIds = approvers.stream()
+                .map(RequestUatApproverEntity::getUserId)
+                .distinct()
+                .toList();
+        return userRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(UserEntity::getId, u -> u));
+    }
+
+    @Transactional(readOnly = true)
+    public String resolveUserFullName(UUID userId) {
+        if (userId == null) return null;
+        return userRepository.findById(userId)
+                .map(UserEntity::getFullName)
+                .orElse(null);
+    }
+
+    @Transactional(readOnly = true)
     public List<RequestUatCommentEntity> listComments(UUID uatId) {
         return requestUatCommentRepository.findByUatIdOrderByCreatedAtDesc(uatId);
     }
