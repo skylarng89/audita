@@ -417,13 +417,7 @@ public class TenantService implements OnboardingPort, TenantSettingsPort {
     }
 
     private void saveSetting(String key, String value) {
-        OrgSettingEntity existing = orgSettingRepository.findById(key).orElse(null);
-        if (existing == null) {
-            orgSettingRepository.save(new OrgSettingEntity(key, value));
-        } else {
-            existing.setValue(value);
-            orgSettingRepository.save(existing);
-        }
+        orgSettingRepository.save(new OrgSettingEntity(key, value));
     }
 
     private String readSetting(String key) {

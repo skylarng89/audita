@@ -621,6 +621,7 @@ import {
   isSettingsDirty,
   validateSlaDefaults,
 } from "~/composables/adminSettingsForm";
+import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
 
 definePageMeta({ middleware: ["auth", "admin-only"] });
 
@@ -690,6 +691,7 @@ interface GroupLookupResponse {
   description: string | null;
 }
 
+const { hide: hideLoading } = useLoadingOverlay();
 const pending = ref(false);
 const errorMessage = ref("");
 const savingSettings = ref(false);
@@ -833,11 +835,13 @@ async function loadSettings() {
       settings.autoApproverDefaults,
       settings.auditDefaults,
     );
+    hideLoading();
   } catch (error: unknown) {
     errorMessage.value = "Unable to load settings right now.";
     toastError(
       resolveApiErrorMessage(error, "Failed to load organization settings."),
     );
+    hideLoading();
   } finally {
     pending.value = false;
   }
@@ -860,7 +864,7 @@ async function saveSettings() {
     settings.workflowDefaults.requireDefaultApprovers = true;
     const normalizedTimezone = normalizeTimezone(settings.timezone);
     settings.timezone = normalizedTimezone;
-    await api<TenantAdminSettingsResponse>("/api/v1/settings", {
+    const patched = await api<TenantAdminSettingsResponse>("/api/v1/settings", {
       method: "PATCH",
       body: buildSettingsPatchPayload(
         {
@@ -874,6 +878,11 @@ async function saveSettings() {
         settings.auditDefaults,
       ),
     });
+    settings.slaDefaults.lowHours = patched.slaDefaults.lowHours;
+    settings.slaDefaults.mediumHours = patched.slaDefaults.mediumHours;
+    settings.slaDefaults.highHours = patched.slaDefaults.highHours;
+    settings.slaDefaults.criticalHours = patched.slaDefaults.criticalHours;
+    settings.slaDefaults.warningBeforeHours = patched.slaDefaults.warningBeforeHours;
     setTenantTimezone(normalizedTimezone);
     settingsSnapshot.value = createSettingsSnapshot(
       {

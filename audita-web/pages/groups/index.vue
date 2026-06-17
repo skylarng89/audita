@@ -1,8 +1,5 @@
 <template>
   <div class="space-y-6">
-    <div style="background:#dc2626;color:#fff;padding:5px 12px;font-size:12px;font-family:monospace;border-radius:6px;white-space:pre-wrap;word-break:break-all">
-      DEBUG | pending={{ pending }} | groups.length={{ groups.length }} | data.contentLength={{ data?.content?.length ?? 'null' }} | totalElements={{ data?.totalElements ?? 'null' }} | loadError={{ loadError || 'none' }}
-    </div>
     <div class="flex items-center justify-between">
       <div>
         <p
@@ -216,6 +213,7 @@
 
 <script setup lang="ts">
 import type { Group, Page, User, UserSearchResult } from "~/types"
+import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
 import { formatDateInTenantTimezone } from "~/composables/timezone"
 
 definePageMeta({ layout: "default", middleware: ["auth"] })
@@ -226,6 +224,7 @@ const auth = useAuthStore()
 const { success: toastSuccess, error: toastError } = useToast()
 const { deleteGroup, fetchGroupMembers, addGroupMembers, removeGroupMembers } = useGroups()
 const { searchUsers } = useUserSearch()
+const { hide: hideLoading } = useLoadingOverlay();
 const api = useApi()
 
 const page = ref(1)
@@ -237,11 +236,9 @@ const { data, pending, refresh } = await useAsyncData(
   async () => {
     loadError.value = ""
     try {
-      const result = (await api(
+      return (await api(
         `/api/v1/groups?page=${page.value - 1}&size=${pageSize}`,
       )) as Page<Group>
-      console.log("[groups] API response:", new Date().toISOString(), result)
-      return result
     } catch (err: unknown) {
       loadError.value = resolveApiErrorMessage(err, "Failed to load groups.")
       return { content: [], totalElements: 0, totalPages: 0, size: pageSize, number: 0 } as Page<Group>
@@ -250,12 +247,10 @@ const { data, pending, refresh } = await useAsyncData(
   { watch: [page] },
 )
 
+watch(pending, (val) => { if (!val) hideLoading(); });
+
 const groups = computed<Group[]>(() => data.value?.content ?? [])
 const total = computed(() => data.value?.totalElements ?? groups.value.length)
-
-watch(data, (val) => {
-  console.log("[groups] data ref:", new Date().toISOString(), "contentLength:", val?.content?.length, "totalElements:", val?.totalElements, "raw:", val)
-}, { immediate: true })
 
 function onPageChange(nextPage: number) {
   page.value = nextPage

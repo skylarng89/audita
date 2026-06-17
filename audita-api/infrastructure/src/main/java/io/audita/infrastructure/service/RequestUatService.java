@@ -17,6 +17,7 @@ import io.audita.infrastructure.persistence.repository.RequestUatApproverReposit
 import io.audita.infrastructure.persistence.repository.RequestUatCommentRepository;
 import io.audita.infrastructure.persistence.repository.RequestUatRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
+import io.audita.infrastructure.tenant.RequestContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -96,8 +97,8 @@ public class RequestUatService {
 
         RequestUatEntity saved = requestUatRepository.save(uat);
         auditLogService.log("UAT_CREATED", ENTITY_UAT, saved.getId(),
-                actorUserId, null,
-                Map.of("requestId", requestId.toString(), "title", title), null);
+                actorUserId, resolveActorEmail(actorUserId),
+                Map.of("requestId", requestId.toString(), "title", title), RequestContext.getCurrentIp());
         UserEntity actor = userRepository.findById(actorUserId).orElse(null);
         logActivity(cr, actor, "UAT_CREATED",
                 Map.of("requestId", requestId.toString(), "title", title));
@@ -124,8 +125,8 @@ public class RequestUatService {
 
         RequestUatEntity saved = requestUatRepository.save(uat);
         auditLogService.log("UAT_UPDATED", ENTITY_UAT, saved.getId(),
-                actorUserId, null,
-                Map.of("requestId", uat.getRequestId().toString()), null);
+                actorUserId, resolveActorEmail(actorUserId),
+                Map.of("requestId", uat.getRequestId().toString()), RequestContext.getCurrentIp());
         UserEntity actor = userRepository.findById(actorUserId).orElse(null);
         logActivity(cr, actor, "UAT_UPDATED",
                 Map.of("requestId", uat.getRequestId().toString()));
@@ -157,8 +158,8 @@ public class RequestUatService {
 
         RequestUatApproverEntity saved = requestUatApproverRepository.save(approver);
         auditLogService.log("UAT_APPROVER_ADDED", ENTITY_UAT, uatId,
-                actorUserId, null,
-                Map.of("approverUserId", userId.toString(), "isRequired", isRequired), null);
+                actorUserId, resolveActorEmail(actorUserId),
+                Map.of("approverUserId", userId.toString(), "isRequired", isRequired), RequestContext.getCurrentIp());
         UserEntity actor = userRepository.findById(actorUserId).orElse(null);
         logActivity(cr, actor, "UAT_APPROVER_ADDED",
                 Map.of("approverUserId", userId.toString(), "isRequired", isRequired));
@@ -183,7 +184,8 @@ public class RequestUatService {
         approver.approve();
         requestUatApproverRepository.save(approver);
         auditLogService.log("UAT_APPROVED", ENTITY_UAT, uatId,
-                actorUserId, null, Map.of(), null);
+                actorUserId, resolveActorEmail(actorUserId),
+                Map.of("approverUserId", actorUserId.toString(), "status", "APPROVED"), RequestContext.getCurrentIp());
         ChangeRequestEntity cr = loadRequest(uat.getRequestId());
         UserEntity actor = userRepository.findById(actorUserId).orElse(null);
         logActivity(cr, actor, "UAT_APPROVED", Map.of());
@@ -208,7 +210,8 @@ public class RequestUatService {
         approver.reject(reason);
         requestUatApproverRepository.save(approver);
         auditLogService.log("UAT_REJECTED", ENTITY_UAT, uatId,
-                actorUserId, null, Map.of("reason", reason), null);
+                actorUserId, resolveActorEmail(actorUserId),
+                Map.of("reason", reason), RequestContext.getCurrentIp());
         ChangeRequestEntity cr = loadRequest(uat.getRequestId());
         UserEntity actor = userRepository.findById(actorUserId).orElse(null);
         logActivity(cr, actor, "UAT_REJECTED", Map.of("reason", reason));
@@ -261,8 +264,8 @@ public class RequestUatService {
         deploymentService.createFromPromotion(uat.getRequestId(), uatId, actorUserId);
 
         auditLogService.log("UAT_PROMOTED", ENTITY_UAT, saved.getId(),
-                actorUserId, null,
-                Map.of("requestId", uat.getRequestId().toString()), null);
+                actorUserId, resolveActorEmail(actorUserId),
+                Map.of("requestId", uat.getRequestId().toString()), RequestContext.getCurrentIp());
         UserEntity actor = userRepository.findById(actorUserId).orElse(null);
         logActivity(cr, actor, "UAT_PROMOTED",
                 Map.of("requestId", uat.getRequestId().toString()));
@@ -280,6 +283,24 @@ public class RequestUatService {
     }
 
     @Transactional(readOnly = true)
+    public Map<UUID, UserEntity> loadApproverUsers(List<RequestUatApproverEntity> approvers) {
+        List<UUID> userIds = approvers.stream()
+                .map(RequestUatApproverEntity::getUserId)
+                .distinct()
+                .toList();
+        return userRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(UserEntity::getId, u -> u));
+    }
+
+    @Transactional(readOnly = true)
+    public String resolveUserFullName(UUID userId) {
+        if (userId == null) return null;
+        return userRepository.findById(userId)
+                .map(UserEntity::getFullName)
+                .orElse(null);
+    }
+
+    @Transactional(readOnly = true)
     public List<RequestUatCommentEntity> listComments(UUID uatId) {
         return requestUatCommentRepository.findByUatIdOrderByCreatedAtDesc(uatId);
     }
@@ -291,9 +312,9 @@ public class RequestUatService {
         RequestUatEntity uat = loadUat(uatId);
         RequestUatCommentEntity saved = requestUatCommentRepository.save(new RequestUatCommentEntity(uatId, authorId, body));
         auditLogService.log("UAT_COMMENT_ADDED", ENTITY_UAT, uatId,
-                authorId, null,
+                authorId, resolveActorEmail(authorId),
                 Map.of("requestId", uat.getRequestId().toString(), "commentId", saved.getId().toString()),
-                null);
+                RequestContext.getCurrentIp());
         ChangeRequestEntity cr = loadRequest(uat.getRequestId());
         UserEntity actor = userRepository.findById(authorId).orElse(null);
         logActivity(cr, actor, "UAT_COMMENT_ADDED", Map.of("commentId", saved.getId().toString()));
@@ -337,6 +358,11 @@ public class RequestUatService {
         }
         throw new DomainNotPermittedException("FORBIDDEN",
                 "You are not allowed to modify this UAT record.");
+    }
+
+    private String resolveActorEmail(UUID actorUserId) {
+        if (actorUserId == null) return null;
+        return userRepository.findById(actorUserId).map(UserEntity::getEmail).orElse(null);
     }
 
     private void logActivity(ChangeRequestEntity changeRequest, UserEntity actor,

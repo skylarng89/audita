@@ -6,6 +6,8 @@ import io.audita.api.dto.request.GroupMemberRequest;
 import io.audita.api.dto.response.GroupResponse;
 import io.audita.api.dto.response.PageResponse;
 import io.audita.api.dto.response.UserResponse;
+import io.audita.api.security.CurrentUser;
+import io.audita.api.security.UserPrincipal;
 import io.audita.infrastructure.service.GroupService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
@@ -31,7 +33,11 @@ public class GroupController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public PageResponse<GroupResponse> listGroups(@PageableDefault(size = 20) Pageable pageable) {
+    public PageResponse<GroupResponse> listGroups(@PageableDefault(size = 20) Pageable pageable,
+                                                   @RequestParam(required = false) Boolean active) {
+        if (active != null && active) {
+            return PageResponse.from(groupService.listActiveGroups(pageable), GroupResponse::from);
+        }
         return PageResponse.from(groupService.listGroups(pageable), GroupResponse::from);
     }
 
@@ -46,7 +52,7 @@ public class GroupController {
     public ResponseEntity<GroupResponse> createGroup(@Valid @RequestBody CreateGroupRequest req,
                                                       @AuthenticationPrincipal UserDetails principal) {
         UUID createdById = UUID.fromString(principal.getUsername());
-        var group = groupService.createGroup(req.name(), req.description(), createdById, req.memberIds());
+        var group = groupService.createGroup(req.name(), req.description(), createdById, req.isActive(), req.displayOrder(), req.memberIds());
         return ResponseEntity.status(HttpStatus.CREATED).body(GroupResponse.from(group));
     }
 
@@ -60,8 +66,8 @@ public class GroupController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteGroup(@PathVariable UUID id) {
-        groupService.deleteGroup(id);
+    public void deleteGroup(@PathVariable UUID id, @CurrentUser UserPrincipal user) {
+        groupService.deleteGroup(id, user.userId());
     }
 
     @GetMapping("/{id}/members")
@@ -91,14 +97,16 @@ public class GroupController {
     @PostMapping("/{id}/members/batch")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void addMembers(@PathVariable UUID id, @Valid @RequestBody BatchMembersRequest req) {
-        groupService.addMembers(id, req.userIds());
+    public void addMembers(@PathVariable UUID id, @Valid @RequestBody BatchMembersRequest req,
+                           @CurrentUser UserPrincipal user) {
+        groupService.addMembers(id, req.userIds(), user.userId());
     }
 
     @DeleteMapping("/{id}/members/batch")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeMembers(@PathVariable UUID id, @Valid @RequestBody BatchMembersRequest req) {
-        groupService.removeMembers(id, req.userIds());
+    public void removeMembers(@PathVariable UUID id, @Valid @RequestBody BatchMembersRequest req,
+                              @CurrentUser UserPrincipal user) {
+        groupService.removeMembers(id, req.userIds(), user.userId());
     }
 }

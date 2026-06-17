@@ -1,5 +1,6 @@
 package io.audita.api.security;
 
+import io.audita.infrastructure.tenant.RequestContext;
 import io.audita.infrastructure.tenant.TenantContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -124,10 +125,13 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
                     request.getMethod(), request.getRequestURI());
         }
 
+        RequestContext.setCurrentIp(extractClientIp(request));
+
         try {
             chain.doFilter(request, response);
         } finally {
             TenantContext.clear();
+            RequestContext.clear();
         }
     }
 
@@ -187,5 +191,16 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
             log.error("Tenant slug validation query failed", ex);
             throw new AccessDeniedException("Tenant validation failed.");
         }
+    }
+
+    /**
+     * Extracts the client IP from the request, respecting proxy forwarding headers.
+     */
+    static String extractClientIp(HttpServletRequest request) {
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }

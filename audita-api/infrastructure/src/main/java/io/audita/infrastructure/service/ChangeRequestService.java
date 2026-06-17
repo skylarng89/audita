@@ -28,6 +28,7 @@ import io.audita.infrastructure.persistence.repository.GroupMemberRepository;
 import io.audita.infrastructure.persistence.repository.OrgSettingRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
 import io.audita.infrastructure.security.HtmlSanitizer;
+import io.audita.infrastructure.tenant.RequestContext;
 import io.audita.infrastructure.tenant.TenantContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -142,12 +143,14 @@ public class ChangeRequestService {
         }
         changeRequest.setRequestDepartmentId(request.requestDepartmentId());
         changeRequest.setDestinationDepartmentId(request.destinationDepartmentId());
+        changeRequest.setRequestGroupId(request.requestGroupId());
+        changeRequest.setDestinationGroupId(request.destinationGroupId());
         ChangeRequestEntity created = changeRequestRepository.save(changeRequest);
         ensureDefaultApprovers(created);
         logActivity(created, createdBy, "CR_CREATED", Map.of(PAYLOAD_STATUS, created.getStatus().name()));
         auditLogService.log("CR_CREATED", ENTITY_CHANGE_REQUEST, created.getId(),
                 createdBy.getId(), createdBy.getEmail(),
-                Map.of("title", created.getTitle(), "priority", created.getPriority().name()), null);
+                Map.of("title", created.getTitle(), "priority", created.getPriority().name()), RequestContext.getCurrentIp());
         initializeCreator(created);
         return created;
     }
@@ -198,6 +201,12 @@ public class ChangeRequestService {
         if (request.destinationDepartmentId() != null) {
             current.setDestinationDepartmentId(request.destinationDepartmentId());
         }
+        if (request.requestGroupId() != null) {
+            current.setRequestGroupId(request.requestGroupId());
+        }
+        if (request.destinationGroupId() != null) {
+            current.setDestinationGroupId(request.destinationGroupId());
+        }
 
         ChangeRequestEntity updated = changeRequestRepository.save(current);
         logActivity(updated, updated.getCreatedBy(), "CR_UPDATED", Map.of(PAYLOAD_STATUS, updated.getStatus().name()));
@@ -220,7 +229,7 @@ public class ChangeRequestService {
                 Map.of(PAYLOAD_STATUS, submitted.getStatus().name()));
         auditLogService.log("CR_SUBMITTED", ENTITY_CHANGE_REQUEST, submitted.getId(),
                 actorUserId, submitted.getCreatedBy() != null ? submitted.getCreatedBy().getEmail() : null,
-                Map.of(PAYLOAD_STATUS, "PENDING_APPROVAL"), null);
+                Map.of(PAYLOAD_STATUS, "PENDING_APPROVAL"), RequestContext.getCurrentIp());
         List<CrApproverEntity> submitApprovers = crApproverRepository.findByChangeRequestIdOrderByPositionAsc(submitted.getId());
         for (CrApproverEntity approver : submitApprovers) {
             notificationService.createAndPush(approver.getUser().getId(), "APPROVAL_REQUESTED",
@@ -243,7 +252,7 @@ public class ChangeRequestService {
                 Map.of(PAYLOAD_STATUS, cancelled.getStatus().name()));
         auditLogService.log("CR_CANCELLED", ENTITY_CHANGE_REQUEST, cancelled.getId(),
                 actorUserId, cancelled.getCreatedBy() != null ? cancelled.getCreatedBy().getEmail() : null,
-                Map.of(PAYLOAD_STATUS, "CANCELLED"), null);
+                Map.of(PAYLOAD_STATUS, "CANCELLED"), RequestContext.getCurrentIp());
         List<CrApproverEntity> cancelApprovers = crApproverRepository.findByChangeRequestIdOrderByPositionAsc(cancelled.getId());
         for (CrApproverEntity approver : cancelApprovers) {
             notificationService.createAndPush(approver.getUser().getId(), "CR_CANCELLED",
@@ -287,7 +296,7 @@ public class ChangeRequestService {
                 Map.of("completionStatus", "COMPLETED"));
         auditLogService.log("REQ_COMPLETION_STATUS_CHANGED", ENTITY_CHANGE_REQUEST, updated.getId(),
                 actorUserId, resolveActorEmail(actorUserId),
-                Map.of("completionStatus", "COMPLETED", "workflowMode", updated.getWorkflowMode().name()), null);
+                Map.of("completionStatus", "COMPLETED", "workflowMode", updated.getWorkflowMode().name()), RequestContext.getCurrentIp());
         List<CrApproverEntity> completeApprovers = crApproverRepository.findByChangeRequestIdOrderByPositionAsc(updated.getId());
         for (CrApproverEntity approver : completeApprovers) {
             notificationService.createAndPush(approver.getUser().getId(), "CR_COMPLETED",
@@ -320,7 +329,7 @@ public class ChangeRequestService {
                 Map.of("workflowMode", mode.name()));
         auditLogService.log("REQ_WORKFLOW_MODE_CHANGED", ENTITY_CHANGE_REQUEST, updated.getId(),
                 actorUserId, resolveActorEmail(actorUserId),
-                Map.of("workflowMode", mode.name()), null);
+                Map.of("workflowMode", mode.name()), RequestContext.getCurrentIp());
         initializeCreator(updated);
         return updated;
     }
@@ -414,7 +423,7 @@ public class ChangeRequestService {
         auditLogService.log("CR_APPROVER_ADDED", ENTITY_CHANGE_REQUEST, changeRequestId,
                 actorUserId, resolveActorEmail(actorUserId),
                 Map.of(PAYLOAD_APPROVER_ID, created.getId().toString(), "userId", userId.toString(), "isRequired", isRequired),
-                null);
+                RequestContext.getCurrentIp());
         notificationService.createAndPush(user.getId(), "APPROVER_ADDED",
                 "Added as approver: " + changeRequest.getTitle(),
                 "You have been added as an approver.",
@@ -468,7 +477,7 @@ public class ChangeRequestService {
         auditLogService.log("CR_APPROVER_GROUP_ADDED", ENTITY_CHANGE_REQUEST, changeRequestId,
                 actorUserId, resolveActorEmail(actorUserId),
                 Map.of("groupId", groupId.toString(), PAYLOAD_COUNT, saved.size(), "isRequired", isRequired),
-                null);
+                RequestContext.getCurrentIp());
         for (CrApproverEntity a : saved) {
             notificationService.createAndPush(a.getUser().getId(), "APPROVER_ADDED",
                     "Added as approver: " + changeRequest.getTitle(),
@@ -503,7 +512,7 @@ public class ChangeRequestService {
                 Map.of(PAYLOAD_APPROVER_ID, approverId.toString()));
         auditLogService.log("CR_APPROVER_REMOVED", ENTITY_CHANGE_REQUEST, changeRequestId,
                 actorUserId, resolveActorEmail(actorUserId),
-                Map.of(PAYLOAD_APPROVER_ID, approverId.toString()), null);
+                Map.of(PAYLOAD_APPROVER_ID, approverId.toString()), RequestContext.getCurrentIp());
         resequenceApprovers(changeRequestId);
     }
 
@@ -538,7 +547,7 @@ public class ChangeRequestService {
                 Map.of(PAYLOAD_COUNT, saved.size()));
         auditLogService.log("CR_APPROVERS_REORDERED", ENTITY_CHANGE_REQUEST, changeRequestId,
                 actorUserId, resolveActorEmail(actorUserId),
-                Map.of(PAYLOAD_COUNT, saved.size()), null);
+                Map.of(PAYLOAD_COUNT, saved.size()), RequestContext.getCurrentIp());
         return saved;
     }
 
@@ -564,7 +573,7 @@ public class ChangeRequestService {
         auditLogService.log("CR_APPROVER_REQUIREMENT_CHANGED", ENTITY_CHANGE_REQUEST, changeRequestId,
                 actorUserId, resolveActorEmail(actorUserId),
                 Map.of(PAYLOAD_APPROVER_ID, approverId.toString(), "isRequired", isRequired),
-                null);
+                RequestContext.getCurrentIp());
         return crApproverRepository.findWithUserAndRolesById(approverId)
                 .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "Approver not found."));
     }
@@ -643,7 +652,7 @@ public class ChangeRequestService {
         auditLogService.log("CR_APPROVED", ENTITY_CHANGE_REQUEST, updated.getId(),
                 actorUserId, actor.getEmail(),
                 Map.of(PAYLOAD_APPROVER_ID, approver.getId().toString(), PAYLOAD_STATUS, updated.getStatus().name()),
-                null);
+                RequestContext.getCurrentIp());
         if (updated.getCreatedBy() != null) {
             notificationService.createAndPush(updated.getCreatedBy().getId(), "APPROVAL_DECIDED",
                     actor.getFullName() + " approved " + updated.getTitle(),
@@ -684,8 +693,8 @@ public class ChangeRequestService {
                 reason, PAYLOAD_STATUS, updated.getStatus().name()));
         auditLogService.log("CR_REJECTED", ENTITY_CHANGE_REQUEST, updated.getId(),
                 actorUserId, actor.getEmail(),
-                Map.of(PAYLOAD_APPROVER_ID, approver.getId().toString(), PAYLOAD_STATUS, updated.getStatus().name()),
-                null);
+                Map.of(PAYLOAD_APPROVER_ID, approver.getId().toString(), PAYLOAD_STATUS, updated.getStatus().name(), "reason", reason),
+                RequestContext.getCurrentIp());
         if (updated.getCreatedBy() != null) {
             notificationService.createAndPush(updated.getCreatedBy().getId(), "APPROVAL_DECIDED",
                     actor.getFullName() + " rejected " + updated.getTitle(),
@@ -847,7 +856,9 @@ public class ChangeRequestService {
             UUID createdById,
             RequestWorkflowMode workflowMode,
             UUID requestDepartmentId,
-            UUID destinationDepartmentId) {
+            UUID destinationDepartmentId,
+            UUID requestGroupId,
+            UUID destinationGroupId) {
     }
 
     public record UpdateRequest(UUID id,
@@ -864,7 +875,9 @@ public class ChangeRequestService {
             String actorRole,
             RequestWorkflowMode workflowMode,
             UUID requestDepartmentId,
-            UUID destinationDepartmentId) {
+            UUID destinationDepartmentId,
+            UUID requestGroupId,
+            UUID destinationGroupId) {
     }
 
     private void ensurePendingApproval(ChangeRequestEntity changeRequest) {

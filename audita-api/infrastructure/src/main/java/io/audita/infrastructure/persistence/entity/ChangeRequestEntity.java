@@ -82,6 +82,12 @@ public class ChangeRequestEntity {
     @Column(name = "destination_department_id")
     private UUID destinationDepartmentId;
 
+    @Column(name = "request_group_id")
+    private UUID requestGroupId;
+
+    @Column(name = "destination_group_id")
+    private UUID destinationGroupId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private UserEntity createdBy;
@@ -216,4 +222,8 @@ public class ChangeRequestEntity {
     public void setRequestDepartmentId(UUID requestDepartmentId) { this.requestDepartmentId = requestDepartmentId; }
     public UUID getDestinationDepartmentId() { return destinationDepartmentId; }
     public void setDestinationDepartmentId(UUID destinationDepartmentId) { this.destinationDepartmentId = destinationDepartmentId; }
+    public UUID getRequestGroupId() { return requestGroupId; }
+    public void setRequestGroupId(UUID requestGroupId) { this.requestGroupId = requestGroupId; }
+    public UUID getDestinationGroupId() { return destinationGroupId; }
+    public void setDestinationGroupId(UUID destinationGroupId) { this.destinationGroupId = destinationGroupId; }
 }

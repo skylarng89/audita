@@ -19,6 +19,7 @@ import io.audita.infrastructure.persistence.repository.RequestDeploymentCommentR
 import io.audita.infrastructure.persistence.repository.RequestDeploymentRepository;
 import io.audita.infrastructure.persistence.repository.RequestUatApproverRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
+import io.audita.infrastructure.tenant.RequestContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -121,8 +122,8 @@ public class RequestDeploymentService {
         }
 
         auditLogService.log("DEPLOYMENT_CREATED", ENTITY_DEPLOYMENT, saved.getId(),
-                actorUserId, null,
-                Map.of("requestId", requestId.toString(), "uatId", uatId.toString()), null);
+                actorUserId, resolveActorEmail(actorUserId),
+                Map.of("requestId", requestId.toString(), "uatId", uatId.toString()), RequestContext.getCurrentIp());
 
         ChangeRequestEntity cr = changeRequestRepository.findById(requestId).orElse(null);
         UserEntity actor = userRepository.findById(actorUserId).orElse(null);
@@ -171,7 +172,8 @@ public class RequestDeploymentService {
         }
 
         auditLogService.log("DEPLOYMENT_APPROVED", ENTITY_DEPLOYMENT, deploymentId,
-                actorUserId, null, Map.of(), null);
+                actorUserId, resolveActorEmail(actorUserId),
+                Map.of("approverUserId", actorUserId.toString(), "status", "APPROVED"), RequestContext.getCurrentIp());
 
         ChangeRequestEntity cr = changeRequestRepository.findById(deployment.getRequestId()).orElse(null);
         UserEntity actor = userRepository.findById(actorUserId).orElse(null);
@@ -203,7 +205,8 @@ public class RequestDeploymentService {
         deploymentRepository.save(deployment);
 
         auditLogService.log("DEPLOYMENT_REJECTED", ENTITY_DEPLOYMENT, deploymentId,
-                actorUserId, null, Map.of("reason", reason), null);
+                actorUserId, resolveActorEmail(actorUserId),
+                Map.of("reason", reason), RequestContext.getCurrentIp());
 
         ChangeRequestEntity cr = changeRequestRepository.findById(deployment.getRequestId()).orElse(null);
         UserEntity actor = userRepository.findById(actorUserId).orElse(null);
@@ -242,9 +245,9 @@ public class RequestDeploymentService {
         RequestDeploymentEntity deployment = loadDeployment(deploymentId);
         RequestDeploymentCommentEntity saved = deploymentCommentRepository.save(new RequestDeploymentCommentEntity(deploymentId, authorId, body));
         auditLogService.log("DEPLOYMENT_COMMENT_ADDED", ENTITY_DEPLOYMENT, deploymentId,
-                authorId, null,
+                authorId, resolveActorEmail(authorId),
                 Map.of("requestId", deployment.getRequestId().toString(), "commentId", saved.getId().toString()),
-                null);
+                RequestContext.getCurrentIp());
         ChangeRequestEntity cr = changeRequestRepository.findById(deployment.getRequestId()).orElse(null);
         UserEntity actor = userRepository.findById(authorId).orElse(null);
         logActivity(cr, actor, "DEPLOYMENT_COMMENT_ADDED", Map.of("commentId", saved.getId().toString()));
@@ -278,6 +281,11 @@ public class RequestDeploymentService {
         return deploymentApproverRepository.findByDeploymentIdAndUserId(deploymentId, userId)
                 .orElseThrow(() -> new DomainNotPermittedException("NOT_APPROVER",
                         "You are not an approver on this deployment."));
+    }
+
+    private String resolveActorEmail(UUID actorUserId) {
+        if (actorUserId == null) return null;
+        return userRepository.findById(actorUserId).map(UserEntity::getEmail).orElse(null);
     }
 
     private void logActivity(ChangeRequestEntity changeRequest, UserEntity actor,

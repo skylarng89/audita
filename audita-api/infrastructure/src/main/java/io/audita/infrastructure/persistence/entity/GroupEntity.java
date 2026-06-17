@@ -27,6 +27,12 @@ public class GroupEntity {
     @Column(name = "is_sample", nullable = false)
     private boolean isSample = false;
 
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
+
+    @Column(name = "display_order", nullable = false)
+    private int displayOrder = 0;
+
     @Transient
     private int memberCount = 0;
 
@@ -47,6 +53,10 @@ public class GroupEntity {
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public boolean isSample() { return isSample; }
     public void setSample(boolean sample) { isSample = sample; }
+    public boolean isActive() { return isActive; }
+    public void setActive(boolean active) { isActive = active; }
+    public int getDisplayOrder() { return displayOrder; }
+    public void setDisplayOrder(int displayOrder) { this.displayOrder = displayOrder; }
     public int getMemberCount() { return memberCount; }
     public void setMemberCount(int memberCount) { this.memberCount = memberCount; }
 }

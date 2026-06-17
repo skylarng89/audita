@@ -1,22 +1,22 @@
-<script setup lang="ts" generic="T">
-export interface TableColumn<Row = Record<string, unknown>> {
+<script setup lang="ts">
+interface TableColumn {
   key: string;
   label: string;
   class?: string;
   headerClass?: string;
-  render?: (row: Row) => string;
+  render?: (row: Record<string, unknown>) => string;
 }
 
 const props = defineProps<{
-  columns: TableColumn<T>[];
-  data: T[];
+  columns: TableColumn[];
+  data: Record<string, unknown>[];
   loading?: boolean;
   emptyMessage?: string;
-  rowKey?: keyof T;
+  rowKey?: string;
 }>();
 
 defineEmits<{
-  rowClick: [row: T];
+  rowClick: [row: Record<string, unknown>];
 }>();
 
 const skeletonRows = Array.from({ length: 5 });

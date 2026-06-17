@@ -30,7 +30,7 @@ public class DepartmentService {
         return repository.findByIsActiveTrueOrderByDisplayOrderAscNameAsc();
     }
 
-    public DepartmentEntity create(String name, String code, boolean isActive, int displayOrder) {
+    public DepartmentEntity create(String name, String code, Boolean isActive, int displayOrder) {
         if (repository.existsByName(name)) {
             throw new InvalidRequestException("DUPLICATE_NAME", "Department name already exists.");
         }
@@ -42,7 +42,7 @@ public class DepartmentService {
         return repository.save(entity);
     }
 
-    public DepartmentEntity update(UUID id, String name, String code, boolean isActive, int displayOrder) {
+    public DepartmentEntity update(UUID id, String name, String code, Boolean isActive, int displayOrder) {
         DepartmentEntity entity = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Department", id));
         if (!entity.getName().equals(name) && repository.existsByName(name)) {

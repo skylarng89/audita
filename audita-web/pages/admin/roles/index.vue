@@ -45,6 +45,8 @@
 </template>
 
 <script setup lang="ts">
+import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
+
 definePageMeta({ middleware: ["auth", "admin-only"] });
 
 const api = useApi();
@@ -62,9 +64,15 @@ interface Role {
   permissions: Permission[];
 }
 
+const { hide: hideLoading } = useLoadingOverlay();
+
 const { data, pending } = await useAsyncData<Role[]>(
   "roles-list",
   () => api("/api/v1/roles") as Promise<Role[]>,
 );
 const roles = computed(() => data.value ?? []);
+
+watch(pending, (val) => {
+  if (!val) hideLoading();
+});
 </script>
