@@ -27,6 +27,9 @@ public class RequestUatEntity {
     @Column(name = "read_only", nullable = false)
     private boolean readOnly = false;
 
+    @Column(name = "requester_signed_off", nullable = false)
+    private boolean requesterSignedOff = false;
+
     @Column(name = "created_by")
     private UUID createdBy;
 
@@ -54,6 +57,8 @@ public class RequestUatEntity {
     public void setStatus(String status) { this.status = status; }
     public boolean isReadOnly() { return readOnly; }
     public void setReadOnly(boolean readOnly) { this.readOnly = readOnly; }
+    public boolean isRequesterSignedOff() { return requesterSignedOff; }
+    public void setRequesterSignedOff(boolean requesterSignedOff) { this.requesterSignedOff = requesterSignedOff; }
     public UUID getCreatedBy() { return createdBy; }
     public void setCreatedBy(UUID createdBy) { this.createdBy = createdBy; }
     public OffsetDateTime getCreatedAt() { return createdAt; }

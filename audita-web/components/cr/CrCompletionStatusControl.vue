@@ -30,8 +30,8 @@ defineEmits<{
 const canMarkComplete = computed(() => {
   if (props.completionStatus === "COMPLETED") return false;
   if (props.approvalStatus !== "APPROVED") return false;
-  if (props.workflowMode !== "DELIVERY_PIPELINE") return false;
-  if (!props.deploymentDone) return false;
-  return true;
+  if (props.workflowMode === "APPROVAL_ONLY") return true;
+  if (props.workflowMode === "DELIVERY_PIPELINE" && props.deploymentDone) return true;
+  return false;
 });
 </script>

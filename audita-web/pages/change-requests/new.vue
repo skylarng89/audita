@@ -389,6 +389,7 @@ import type { Group } from "~/types";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import FlatPickr from "vue-flatpickr-component";
 import { buildRichTextExtensions } from "~/composables/richText";
+import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
 
 definePageMeta({ middleware: ["auth", "can-create-cr"] });
 
@@ -396,6 +397,7 @@ useHead({ title: "New Request — Audita" });
 
 const { create, listCategories, listActiveGroups, uploadAttachment, upsertLinks } = useChangeRequests();
 const { error: toastError } = useToast();
+const { hide: hideLoading } = useLoadingOverlay();
 
 const isSaving = ref(false);
 const errorMessage = ref("");
@@ -616,12 +618,16 @@ const endDatePickerConfig = computed(() => ({
 
 // Close dropdown when clicking outside
 onMounted(async () => {
-  const [cats, groups] = await Promise.all([
-    listCategories().catch(() => [] as string[]),
-    listActiveGroups().catch(() => [] as Group[]),
-  ]);
-  allCategories.value = cats;
-  activeGroups.value = groups;
+  try {
+    const [cats, groups] = await Promise.all([
+      listCategories().catch(() => [] as string[]),
+      listActiveGroups().catch(() => [] as Group[]),
+    ]);
+    allCategories.value = cats;
+    activeGroups.value = groups;
+  } finally {
+    hideLoading();
+  }
 
   document.addEventListener("click", (e) => {
     if (

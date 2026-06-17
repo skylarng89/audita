@@ -36,7 +36,8 @@ export function useChangeRequests() {
   }
 
   async function listActiveGroups(): Promise<Group[]> {
-    return api<Group[]>("/api/v1/groups?active=true");
+    const page = await api<{ content: Group[] }>("/api/v1/groups?active=true");
+    return page.content ?? [];
   }
 
   async function list(params?: {
@@ -349,6 +350,17 @@ export function useChangeRequests() {
     return api<UatApprover[]>(`/api/v1/change-requests/${requestId}/uat/approvers`);
   }
 
+  async function updateUatApproverRequirement(
+    requestId: string,
+    approverId: string,
+    isRequired: boolean,
+  ): Promise<UatApprover> {
+    return api<UatApprover>(
+      `/api/v1/change-requests/${requestId}/uat/approvers/${approverId}/requirement`,
+      { method: "PATCH", query: { isRequired } },
+    );
+  }
+
   async function approveUat(requestId: string): Promise<void> {
     await api(`/api/v1/change-requests/${requestId}/uat/approve`, {
       method: "POST",
@@ -425,6 +437,7 @@ export function useChangeRequests() {
     updateUat,
     addUatApprover,
     listUatApprovers,
+    updateUatApproverRequirement,
     approveUat,
     rejectUat,
     promoteUat,

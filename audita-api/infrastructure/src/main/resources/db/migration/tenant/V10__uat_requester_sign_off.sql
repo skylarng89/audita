@@ -1,0 +1,2 @@
+ALTER TABLE request_uat
+    ADD COLUMN IF NOT EXISTS requester_signed_off BOOLEAN NOT NULL DEFAULT FALSE;
