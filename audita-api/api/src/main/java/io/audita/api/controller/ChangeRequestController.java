@@ -88,7 +88,9 @@ public class ChangeRequestController {
                 createdById,
                 req.workflowMode(),
                 req.requestDepartmentId(),
-                req.destinationDepartmentId()));
+                req.destinationDepartmentId(),
+                req.requestGroupId(),
+                req.destinationGroupId()));
         idempotencyService.recordResource(createdById, OPERATION_CREATE, idempotencyKey, created.getId());
         return new ResponseEntity<>(ChangeRequestResponse.from(created), HttpStatus.CREATED);
     }
@@ -113,7 +115,9 @@ public class ChangeRequestController {
                 principal.role(),
                 req.workflowMode(),
                 req.requestDepartmentId(),
-                req.destinationDepartmentId())));
+                req.destinationDepartmentId(),
+                req.requestGroupId(),
+                req.destinationGroupId())));
     }
 
     @PostMapping("/{id}/submit")
