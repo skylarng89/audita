@@ -19,6 +19,7 @@ export default defineNuxtConfig({
   security: {
     csrf: false,
     nonce: true,
+    rateLimiter: false,
     headers: {
       contentSecurityPolicy: {
         "default-src": ["'self'"],
