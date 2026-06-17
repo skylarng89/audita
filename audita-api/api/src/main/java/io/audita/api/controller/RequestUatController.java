@@ -110,6 +110,20 @@ public class RequestUatController {
         return new ResponseEntity<>(RequestUatApproverResponse.from(created), HttpStatus.CREATED);
     }
 
+    @PatchMapping("/approvers/{approverId}/requirement")
+    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    public RequestUatApproverResponse updateApproverRequirement(
+            @PathVariable UUID requestId,
+            @PathVariable UUID approverId,
+            @RequestParam boolean isRequired,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        var updated = requestUatService.updateApproverRequirement(
+                requestId, approverId, isRequired,
+                principal.userId(), principal.role());
+        Map<UUID, UserEntity> approverUsers = requestUatService.loadApproverUsers(List.of(updated));
+        return RequestUatApproverResponse.from(updated, approverUsers.get(updated.getUserId()));
+    }
+
     @PostMapping("/approve")
     @PreAuthorize("isAuthenticated() and !hasRole('AUDITOR')")
     @ResponseStatus(HttpStatus.NO_CONTENT)

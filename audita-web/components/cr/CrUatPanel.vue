@@ -155,7 +155,19 @@
               <p class="text-xs text-muted">{{ approver.userEmail }}</p>
             </div>
             <div class="flex items-center gap-2">
+              <button
+                v-if="canManage && !uat.readOnly"
+                type="button"
+                class="text-xs px-2 py-1 rounded-md shrink-0 transition-colors"
+                :class="approver.isRequired
+                  ? 'bg-primary/15 text-primary hover:bg-primary/25'
+                  : 'bg-surface-container-high text-muted hover:bg-surface-container'"
+                @click="toggleUatApproverRequirement(approver.id, approver.isRequired)"
+              >
+                {{ approver.isRequired ? "Required" : "Optional" }}
+              </button>
               <span
+                v-else
                 class="text-xs px-2 py-1 rounded-md"
                 :class="approver.isRequired ? 'bg-primary/15 text-primary' : 'bg-surface-container-high text-muted'"
               >
@@ -177,6 +189,54 @@
           @click="showPromoteConfirm = true"
         >
           {{ isPromoting ? "Promoting…" : "Promote to Deployment" }}
+        </button>
+      </div>
+
+      <div v-if="currentApprover" class="border-t border-border dark:border-border-dark pt-4 mt-4">
+        <p class="text-sm font-medium mb-2">Your Sign-Off</p>
+        <div class="flex flex-wrap gap-2">
+          <button
+            class="btn-success btn-md"
+            :disabled="isApproving"
+            @click="doApprove"
+          >
+            {{ isApproving ? "Signing off…" : "Sign-Off" }}
+          </button>
+          <button
+            class="btn-danger-ghost btn-md"
+            :disabled="isRejecting"
+            @click="showRejectForm = true"
+          >
+            {{ isRejecting ? "Rejecting…" : "Reject" }}
+          </button>
+        </div>
+        <div v-if="showRejectForm" class="mt-2 flex gap-2">
+          <input
+            v-model="rejectionReason"
+            class="input flex-1"
+            placeholder="Reason for rejection"
+            @keydown.enter="doReject"
+          />
+          <button class="btn-danger btn-md" :disabled="!rejectionReason.trim()" @click="doReject">
+            Confirm
+          </button>
+          <button class="btn-ghost btn-md" @click="showRejectForm = false; rejectionReason = ''">
+            Cancel
+          </button>
+        </div>
+      </div>
+
+      <div v-if="canRequesterSignOff" class="border-t border-border dark:border-border-dark pt-4 mt-4">
+        <p class="text-sm font-medium mb-2">Requester Sign-Off</p>
+        <p class="text-xs text-muted mb-2">
+          Sign-off to acknowledge your satisfaction with the UAT results.
+        </p>
+        <button
+          class="btn-success btn-md"
+          :disabled="isSigningOff"
+          @click="doRequesterSignOff"
+        >
+          {{ isSigningOff ? "Signing off…" : "Sign-Off" }}
         </button>
       </div>
 
@@ -267,6 +327,9 @@ const {
   searchApproverCandidates,
   listUatComments,
   postUatComment,
+  approveUat,
+  rejectUat,
+  updateUatApproverRequirement,
 } = useChangeRequests();
 
 const uat = ref<Uat | null>(null);
@@ -312,6 +375,19 @@ const isUatAvailable = computed(
 const canManage = computed(() => {
   if (auth.role === "Auditor") return false;
   return auth.isSuperAdmin || auth.role === "Admin" || (uat.value?.createdBy === auth.userId);
+});
+
+const currentApprover = computed(() => {
+  if (!uat.value) return null;
+  return uat.value.approvers.find(
+    (a) => a.userId === auth.userId && a.status === 'PENDING'
+  );
+});
+
+const canRequesterSignOff = computed(() => {
+  if (!uat.value || uat.value.readOnly) return false;
+  if (auth.role === 'Auditor') return false;
+  return uat.value.createdBy === auth.userId;
 });
 
 const statusClass = computed(() => {
@@ -361,6 +437,69 @@ function formatEnumLabel(value: string) {
 
 function normalizeHtml(html: string | null | undefined) {
   return normalizeRichTextHtml(html);
+}
+
+const isApproving = ref(false);
+const isRejecting = ref(false);
+const showRejectForm = ref(false);
+const rejectionReason = ref("");
+const isSigningOff = ref(false);
+
+async function toggleUatApproverRequirement(approverId: string, currentRequired: boolean) {
+  const newVal = !currentRequired;
+  try {
+    const updated = await updateUatApproverRequirement(props.requestId, approverId, newVal);
+    if (uat.value) {
+      const idx = uat.value.approvers.findIndex((a) => a.id === approverId);
+      if (idx >= 0) {
+        uat.value.approvers[idx] = { ...uat.value.approvers[idx], ...updated };
+      }
+    }
+  } catch (err: unknown) {
+    toastError(resolveApiErrorMessage(err, "Failed to update approver requirement."));
+  }
+}
+
+async function doApprove() {
+  isApproving.value = true;
+  try {
+    await approveUat(props.requestId);
+    await loadUat();
+    emit("updated");
+  } catch (err: unknown) {
+    toastError(resolveApiErrorMessage(err, "Failed to sign off on UAT."));
+  } finally {
+    isApproving.value = false;
+  }
+}
+
+async function doReject() {
+  if (!rejectionReason.value.trim()) return;
+  isRejecting.value = true;
+  try {
+    await rejectUat(props.requestId, rejectionReason.value.trim());
+    showRejectForm.value = false;
+    rejectionReason.value = "";
+    await loadUat();
+    emit("updated");
+  } catch (err: unknown) {
+    toastError(resolveApiErrorMessage(err, "Failed to reject UAT."));
+  } finally {
+    isRejecting.value = false;
+  }
+}
+
+async function doRequesterSignOff() {
+  isSigningOff.value = true;
+  try {
+    await approveUat(props.requestId);
+    await loadUat();
+    emit("updated");
+  } catch (err: unknown) {
+    toastError(resolveApiErrorMessage(err, "Failed to sign off on UAT."));
+  } finally {
+    isSigningOff.value = false;
+  }
 }
 
 async function loadUat() {

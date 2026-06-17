@@ -175,18 +175,62 @@ public class RequestUatService {
         return saved;
     }
 
+    public RequestUatApproverEntity updateApproverRequirement(UUID requestId,
+            UUID approverId, boolean isRequired, UUID actorUserId, String actorRole) {
+        RequestUatEntity uat = getByRequestId(requestId)
+                .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "UAT not found"));
+        ChangeRequestEntity cr = loadRequest(uat.getRequestId());
+        assertCanMutate(cr, actorUserId, actorRole);
+
+        if (uat.isReadOnly()) {
+            throw new InvalidStateTransitionException("Cannot update approvers on a read-only UAT.");
+        }
+
+        RequestUatApproverEntity approver = requestUatApproverRepository.findById(approverId)
+                .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Approver not found."));
+        if (!approver.getUatId().equals(uat.getId())) {
+            throw new DomainNotPermittedException("NOT_FOUND", "Approver not found on this UAT.");
+        }
+
+        approver.setRequired(isRequired);
+        requestUatApproverRepository.save(approver);
+        auditLogService.log("UAT_APPROVER_REQUIREMENT_CHANGED", ENTITY_UAT, uat.getId(),
+                actorUserId, resolveActorEmail(actorUserId),
+                Map.of("approverId", approverId.toString(), "isRequired", isRequired),
+                RequestContext.getCurrentIp());
+        UserEntity actor = userRepository.findById(actorUserId).orElse(null);
+        logActivity(cr, actor, "UAT_APPROVER_REQUIREMENT_CHANGED",
+                Map.of("approverId", approverId.toString(), "isRequired", isRequired));
+        return approver;
+    }
+
     public void approveUat(UUID uatId, UUID actorUserId) {
         RequestUatEntity uat = loadUat(uatId);
         if (uat.isReadOnly()) {
             throw new InvalidStateTransitionException("UAT is already promoted; approvals are locked.");
         }
+        ChangeRequestEntity cr = loadRequest(uat.getRequestId());
+
+        // CR requester can sign-off without being a listed approver
+        if (cr.getCreatedBy() != null && cr.getCreatedBy().getId().equals(actorUserId)) {
+            uat.setRequesterSignedOff(true);
+            requestUatRepository.save(uat);
+            auditLogService.log("UAT_REQUESTER_SIGNED_OFF", ENTITY_UAT, uat.getId(),
+                    actorUserId, resolveActorEmail(actorUserId),
+                    Map.of("requestId", cr.getId().toString()),
+                    RequestContext.getCurrentIp());
+            UserEntity actor = userRepository.findById(actorUserId).orElse(null);
+            logActivity(cr, actor, "UAT_REQUESTER_SIGNED_OFF",
+                    Map.of("requestId", cr.getId().toString()));
+            return;
+        }
+
         RequestUatApproverEntity approver = loadApprover(uatId, actorUserId);
         approver.approve();
         requestUatApproverRepository.save(approver);
         auditLogService.log("UAT_APPROVED", ENTITY_UAT, uatId,
                 actorUserId, resolveActorEmail(actorUserId),
                 Map.of("approverUserId", actorUserId.toString(), "status", "APPROVED"), RequestContext.getCurrentIp());
-        ChangeRequestEntity cr = loadRequest(uat.getRequestId());
         UserEntity actor = userRepository.findById(actorUserId).orElse(null);
         logActivity(cr, actor, "UAT_APPROVED", Map.of());
         if (cr.getCreatedBy() != null) {
@@ -236,6 +280,11 @@ public class RequestUatService {
             throw new InvalidStateTransitionException("UAT is already promoted.");
         }
 
+        if (!uat.isRequesterSignedOff()) {
+            throw new InvalidStateTransitionException(
+                    "The requester must sign-off on the UAT before promotion.");
+        }
+
         List<RequestUatApproverEntity> approvers =
                 requestUatApproverRepository.findByUatIdOrderByPositionAsc(uatId);
 
@@ -243,17 +292,13 @@ public class RequestUatService {
                 .filter(RequestUatApproverEntity::isRequired)
                 .toList();
 
-        if (required.isEmpty()) {
-            throw new InvalidStateTransitionException(
-                    "At least one required approver must be assigned before promotion.");
-        }
-
-        boolean allRequiredApproved = required.stream()
-                .allMatch(a -> a.getStatus() == ApproverStatus.APPROVED);
-
-        if (!allRequiredApproved) {
-            throw new InvalidStateTransitionException(
-                    "All required UAT approvers must approve before promotion.");
+        if (!required.isEmpty()) {
+            boolean allRequiredApproved = required.stream()
+                    .allMatch(a -> a.getStatus() == ApproverStatus.APPROVED);
+            if (!allRequiredApproved) {
+                throw new InvalidStateTransitionException(
+                        "All required UAT approvers must approve before promotion.");
+            }
         }
 
         uat.setReadOnly(true);
