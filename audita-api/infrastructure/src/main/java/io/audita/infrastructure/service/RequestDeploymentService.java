@@ -234,6 +234,16 @@ public class RequestDeploymentService {
     }
 
     @Transactional(readOnly = true)
+    public Map<UUID, UserEntity> loadApproverUsers(List<RequestDeploymentApproverEntity> approvers) {
+        List<UUID> userIds = approvers.stream()
+                .map(RequestDeploymentApproverEntity::getUserId)
+                .distinct()
+                .toList();
+        return userRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(UserEntity::getId, u -> u));
+    }
+
+    @Transactional(readOnly = true)
     public List<RequestDeploymentCommentEntity> listComments(UUID deploymentId) {
         return deploymentCommentRepository.findByDeploymentIdOrderByCreatedAtDesc(deploymentId);
     }

@@ -1293,7 +1293,7 @@ const availableCandidates = computed(() =>
   approverCandidates.value.filter(
     (c) =>
       c.kind === "GROUP" ||
-      (!existingApproverIds.value.has(c.id) && c.id !== auth.userId),
+      (!existingApproverIds.value.has(c.id) && c.id !== auth.userId && c.role !== "Auditor"),
   ),
 );
 

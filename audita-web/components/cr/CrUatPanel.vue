@@ -173,7 +173,15 @@
               >
                 {{ approver.isRequired ? "Required" : "Optional" }}
               </span>
-              <span class="text-xs text-muted">{{ approver.status }}</span>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-xs px-2 py-0.5 rounded-md font-medium" :class="approverStatusClass(approver.status)">
+                  {{ formatEnumLabel(approver.status) }}
+                </span>
+                <span v-if="approver.decidedAt" class="text-xs text-muted">{{ approver.decidedAt }}</span>
+              </div>
+              <div v-if="approver.rejectionReason" class="text-xs text-danger mt-1">
+                {{ approver.rejectionReason }}
+              </div>
             </div>
           </div>
           <div v-if="!uat.approvers?.length" class="text-sm text-muted">
@@ -238,6 +246,13 @@
         >
           {{ isSigningOff ? "Signing off…" : "Sign-Off" }}
         </button>
+      </div>
+
+      <div v-if="uat?.requesterSignedOff" class="border-t border-border dark:border-border-dark pt-4 mt-4">
+        <div class="flex items-center gap-2">
+          <span class="text-xs px-2 py-1 rounded-md bg-success/15 text-success font-medium">Signed Off ✓</span>
+          <span class="text-xs text-muted">Requester has acknowledged the UAT results.</span>
+        </div>
       </div>
 
       <div class="card p-5 space-y-4">
@@ -387,6 +402,7 @@ const currentApprover = computed(() => {
 const canRequesterSignOff = computed(() => {
   if (!uat.value || uat.value.readOnly) return false;
   if (auth.role === 'Auditor') return false;
+  if (uat.value.requesterSignedOff) return false;
   return uat.value.createdBy === auth.userId;
 });
 
@@ -414,7 +430,7 @@ const existingApproverUserIds = computed(() => {
 
 const filteredApproverCandidates = computed(() => {
   const available = approverCandidates.value.filter(
-    (c) => c.kind === "USER" && !existingApproverUserIds.value.has(c.id) && c.id !== auth.userId,
+    (c) => c.kind === "USER" && !existingApproverUserIds.value.has(c.id) && c.id !== auth.userId && c.role !== "Auditor",
   );
   const q = approverSearchQuery.value.trim().toLowerCase();
   if (!q) return available;
@@ -426,6 +442,14 @@ const filteredApproverCandidates = computed(() => {
 });
 
 const selectedApproverCandidateIds = computed(() => Object.keys(pendingApproverIds.value));
+
+function approverStatusClass(status: string) {
+  switch (status) {
+    case "APPROVED": return "bg-success/15 text-success";
+    case "REJECTED": return "bg-danger/15 text-danger";
+    default: return "bg-warning/15 text-warning";
+  }
+}
 
 function formatEnumLabel(value: string) {
   return value

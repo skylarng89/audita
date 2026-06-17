@@ -130,7 +130,8 @@ export interface UatApprover {
   userFullName: string;
   userEmail: string;
   isRequired: boolean;
-  status: string;
+  status: ApproverStatus;
+  rejectionReason: string | null;
   decidedAt: string | null;
 }
 
@@ -140,6 +141,7 @@ export interface Uat {
   details: string;
   status: UatStatus;
   readOnly: boolean;
+  requesterSignedOff: boolean;
   approvers: UatApprover[];
   createdBy: string | null;
   createdByFullName: string | null;
@@ -150,7 +152,7 @@ export interface Uat {
 
 // ── Deployment ────────────────────────────────────────────────────────────────
 
-export type DeploymentStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type DeploymentStatus = "PENDING_APPROVAL" | "APPROVED" | "REJECTED";
 
 export interface DeploymentApprover {
   id: string;
@@ -164,7 +166,7 @@ export interface DeploymentApprover {
 
 export interface Deployment {
   id: string;
-  changeRequestId: string;
+  requestId: string;
   status: DeploymentStatus;
   promotedAt: string;
   approvers: DeploymentApprover[];

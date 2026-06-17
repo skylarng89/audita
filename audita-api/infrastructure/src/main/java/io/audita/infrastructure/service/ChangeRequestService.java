@@ -49,6 +49,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.UUID;
 
 @Service
@@ -411,6 +412,11 @@ public class ChangeRequestService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "User not found."));
 
+        if (user.getRoles().stream().anyMatch(r -> "AUDITOR".equalsIgnoreCase(r.getName()))) {
+            throw new DomainNotPermittedException("FORBIDDEN",
+                    "Users with the Auditor role cannot be added as approvers.");
+        }
+
         if (crApproverRepository.findByChangeRequestIdAndUserId(changeRequestId, userId).isPresent()) {
             throw new DomainNotPermittedException("DUPLICATE_APPROVER", "User is already an approver on this CR.");
         }
@@ -604,16 +610,19 @@ public class ChangeRequestService {
 
         List<ApproverCandidate> candidates = new java.util.ArrayList<>();
         userMatches.forEach(user -> {
-            String roleName = user.getRoles().stream()
+            Set<String> roleNames = user.getRoles().stream()
                     .map(io.audita.infrastructure.persistence.entity.RoleEntity::getName)
-                    .findFirst()
-                    .orElse(null);
+                    .collect(Collectors.toSet());
+            if (roleNames.stream().anyMatch(r -> "AUDITOR".equalsIgnoreCase(r))) {
+                return;
+            }
+            String displayRole = roleNames.stream().findFirst().orElse(null);
             candidates.add(new ApproverCandidate(
                     user.getId(),
                     "USER",
                     user.getFullName(),
                     user.getEmail(),
-                    roleName));
+                    displayRole));
         });
         groupMatches.forEach(group -> candidates.add(new ApproverCandidate(
                 group.getId(),
