@@ -217,7 +217,7 @@ describe("CrCompletionStatusControl", () => {
     expect(wrapper.find("button").exists()).toBe(false);
   });
 
-  it("hides 'Mark Complete' when not delivery pipeline", () => {
+  it("shows 'Mark Complete' when approval-only and approved", () => {
     const wrapper = mount(CrCompletionStatusControl, {
       props: {
         requestId: "cr-1",
@@ -228,7 +228,7 @@ describe("CrCompletionStatusControl", () => {
       },
       global: completionControlGlobal,
     });
-    expect(wrapper.find("button").exists()).toBe(false);
+    expect(wrapper.find("button").exists()).toBe(true);
   });
 
   it("emits 'completed' when Mark Complete is clicked", async () => {
