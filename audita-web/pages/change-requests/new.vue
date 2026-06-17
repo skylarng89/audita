@@ -119,33 +119,33 @@
           </select>
         </div>
 
-        <!-- Request Department -->
+        <!-- Request Group -->
         <div>
-          <p class="field-label">Request Department</p>
-          <select v-model="form.requestDepartmentId" class="input mt-1">
+          <p class="field-label">Request Group</p>
+          <select v-model="form.requestGroupId" class="input mt-1">
             <option value="">— None —</option>
-            <option v-for="dept in activeDepartments" :key="dept.id" :value="dept.id">
-              {{ dept.name }}
+            <option v-for="group in activeGroups" :key="group.id" :value="group.id">
+              {{ group.name }}
             </option>
           </select>
         </div>
 
-        <!-- Destination Department -->
+        <!-- Destination Group -->
         <div>
-          <p class="field-label">Destination Department</p>
-          <select v-model="form.destinationDepartmentId" class="input mt-1">
+          <p class="field-label">Destination Group</p>
+          <select v-model="form.destinationGroupId" class="input mt-1">
             <option value="">— None —</option>
-            <option v-for="dept in activeDepartments" :key="dept.id" :value="dept.id">
-              {{ dept.name }}
+            <option v-for="group in activeGroups" :key="group.id" :value="group.id">
+              {{ group.name }}
             </option>
           </select>
         </div>
 
         <p
-          v-if="!activeDepartments.length"
+          v-if="!activeGroups.length"
           class="field-hint col-span-full"
         >
-          No active departments available. Create departments in
+          No active groups available. Create groups in
           <NuxtLink
             to="/admin/settings"
             class="underline text-primary hover:text-primary/80"
@@ -385,7 +385,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Department } from "~/types";
+import type { Group } from "~/types";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import FlatPickr from "vue-flatpickr-component";
 import { buildRichTextExtensions } from "~/composables/richText";
@@ -394,12 +394,12 @@ definePageMeta({ middleware: ["auth", "can-create-cr"] });
 
 useHead({ title: "New Request — Audita" });
 
-const { create, listCategories, listActiveDepartments, uploadAttachment, upsertLinks } = useChangeRequests();
+const { create, listCategories, listActiveGroups, uploadAttachment, upsertLinks } = useChangeRequests();
 const { error: toastError } = useToast();
 
 const isSaving = ref(false);
 const errorMessage = ref("");
-const activeDepartments = ref<Department[]>([]);
+const activeGroups = ref<Group[]>([]);
 const linkedRequestIds = ref<string[]>([]);
 
 const editor = useEditor({
@@ -420,8 +420,8 @@ const form = reactive({
   riskLevel: "" as string,
   approvalType: "NON_LINEAR" as string,
   workflowMode: "APPROVAL_ONLY" as string,
-  requestDepartmentId: "" as string,
-  destinationDepartmentId: "" as string,
+  requestGroupId: "" as string,
+  destinationGroupId: "" as string,
   categories: [] as string[],
   scheduledStartDate: "",
   scheduledStartTime: "",
@@ -616,12 +616,12 @@ const endDatePickerConfig = computed(() => ({
 
 // Close dropdown when clicking outside
 onMounted(async () => {
-  const [cats, depts] = await Promise.all([
+  const [cats, groups] = await Promise.all([
     listCategories().catch(() => [] as string[]),
-    listActiveDepartments().catch(() => [] as Department[]),
+    listActiveGroups().catch(() => [] as Group[]),
   ]);
   allCategories.value = cats;
-  activeDepartments.value = depts;
+  activeGroups.value = groups;
 
   document.addEventListener("click", (e) => {
     if (
@@ -724,8 +724,8 @@ async function createChangeRequest() {
       riskLevel: form.riskLevel,
       approvalType: form.approvalType,
       workflowMode: form.workflowMode || "APPROVAL_ONLY",
-      requestDepartmentId: form.requestDepartmentId || null,
-      destinationDepartmentId: form.destinationDepartmentId || null,
+      requestGroupId: form.requestGroupId || null,
+      destinationGroupId: form.destinationGroupId || null,
       category: form.categories.length ? form.categories.join(", ") : null,
       scheduledStart:
         combineParts(

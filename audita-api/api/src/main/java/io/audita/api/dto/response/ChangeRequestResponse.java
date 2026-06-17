@@ -38,7 +38,9 @@ public record ChangeRequestResponse(
         CompletionStatus completionStatus,
         RequestWorkflowMode workflowMode,
         UUID requestDepartmentId,
-        UUID destinationDepartmentId
+        UUID destinationDepartmentId,
+        UUID requestGroupId,
+        UUID destinationGroupId
 ) {
     public static ChangeRequestResponse from(ChangeRequestEntity entity) {
         UUID createdById = entity.getCreatedBy() != null ? entity.getCreatedBy().getId() : null;
@@ -73,7 +75,9 @@ public record ChangeRequestResponse(
                 entity.getCompletionStatus(),
                 entity.getWorkflowMode(),
                 entity.getRequestDepartmentId(),
-                entity.getDestinationDepartmentId()
+                entity.getDestinationDepartmentId(),
+                entity.getRequestGroupId(),
+                entity.getDestinationGroupId()
         );
     }
 }

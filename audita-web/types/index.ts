@@ -60,6 +60,8 @@ export interface ChangeRequest {
   workflowMode: WorkflowMode | null;
   requestDepartmentId: string | null;
   destinationDepartmentId: string | null;
+  requestGroupId: string | null;
+  destinationGroupId: string | null;
   scheduledStart: string | null;
   scheduledEnd: string | null;
   affectedSystems: string[];
@@ -267,6 +269,8 @@ export interface Group {
   id: string
   name: string
   description?: string
+  isActive: boolean
+  displayOrder: number
   memberCount: number
   createdAt: string
 }

@@ -841,6 +841,7 @@ async function loadSettings() {
     toastError(
       resolveApiErrorMessage(error, "Failed to load organization settings."),
     );
+    hideLoading();
   } finally {
     pending.value = false;
   }
@@ -863,7 +864,7 @@ async function saveSettings() {
     settings.workflowDefaults.requireDefaultApprovers = true;
     const normalizedTimezone = normalizeTimezone(settings.timezone);
     settings.timezone = normalizedTimezone;
-    await api<TenantAdminSettingsResponse>("/api/v1/settings", {
+    const patched = await api<TenantAdminSettingsResponse>("/api/v1/settings", {
       method: "PATCH",
       body: buildSettingsPatchPayload(
         {
@@ -877,6 +878,11 @@ async function saveSettings() {
         settings.auditDefaults,
       ),
     });
+    settings.slaDefaults.lowHours = patched.slaDefaults.lowHours;
+    settings.slaDefaults.mediumHours = patched.slaDefaults.mediumHours;
+    settings.slaDefaults.highHours = patched.slaDefaults.highHours;
+    settings.slaDefaults.criticalHours = patched.slaDefaults.criticalHours;
+    settings.slaDefaults.warningBeforeHours = patched.slaDefaults.warningBeforeHours;
     setTenantTimezone(normalizedTimezone);
     settingsSnapshot.value = createSettingsSnapshot(
       {

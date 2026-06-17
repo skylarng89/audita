@@ -10,8 +10,10 @@ import type {
   Department,
   Deployment,
   DeploymentApprover,
+  Group,
   Page,
   Uat,
+  UatApprover,
 } from "~/types";
 
 export type ChangeRequestSearchResult = {
@@ -31,6 +33,10 @@ export function useChangeRequests() {
 
   async function listActiveDepartments(): Promise<Department[]> {
     return api<Department[]>("/api/v1/settings/departments/active");
+  }
+
+  async function listActiveGroups(): Promise<Group[]> {
+    return api<Group[]>("/api/v1/groups?active=true");
   }
 
   async function list(params?: {
@@ -339,6 +345,10 @@ export function useChangeRequests() {
     });
   }
 
+  async function listUatApprovers(requestId: string): Promise<UatApprover[]> {
+    return api<UatApprover[]>(`/api/v1/change-requests/${requestId}/uat/approvers`);
+  }
+
   async function approveUat(requestId: string): Promise<void> {
     await api(`/api/v1/change-requests/${requestId}/uat/approve`, {
       method: "POST",
@@ -383,6 +393,7 @@ export function useChangeRequests() {
   return {
     listCategories,
     listActiveDepartments,
+    listActiveGroups,
     list,
     get,
     create,
@@ -413,6 +424,7 @@ export function useChangeRequests() {
     createUat,
     updateUat,
     addUatApprover,
+    listUatApprovers,
     approveUat,
     rejectUat,
     promoteUat,

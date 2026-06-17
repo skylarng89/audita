@@ -143,6 +143,8 @@ public class ChangeRequestService {
         }
         changeRequest.setRequestDepartmentId(request.requestDepartmentId());
         changeRequest.setDestinationDepartmentId(request.destinationDepartmentId());
+        changeRequest.setRequestGroupId(request.requestGroupId());
+        changeRequest.setDestinationGroupId(request.destinationGroupId());
         ChangeRequestEntity created = changeRequestRepository.save(changeRequest);
         ensureDefaultApprovers(created);
         logActivity(created, createdBy, "CR_CREATED", Map.of(PAYLOAD_STATUS, created.getStatus().name()));
@@ -198,6 +200,12 @@ public class ChangeRequestService {
         }
         if (request.destinationDepartmentId() != null) {
             current.setDestinationDepartmentId(request.destinationDepartmentId());
+        }
+        if (request.requestGroupId() != null) {
+            current.setRequestGroupId(request.requestGroupId());
+        }
+        if (request.destinationGroupId() != null) {
+            current.setDestinationGroupId(request.destinationGroupId());
         }
 
         ChangeRequestEntity updated = changeRequestRepository.save(current);
@@ -848,7 +856,9 @@ public class ChangeRequestService {
             UUID createdById,
             RequestWorkflowMode workflowMode,
             UUID requestDepartmentId,
-            UUID destinationDepartmentId) {
+            UUID destinationDepartmentId,
+            UUID requestGroupId,
+            UUID destinationGroupId) {
     }
 
     public record UpdateRequest(UUID id,
@@ -865,7 +875,9 @@ public class ChangeRequestService {
             String actorRole,
             RequestWorkflowMode workflowMode,
             UUID requestDepartmentId,
-            UUID destinationDepartmentId) {
+            UUID destinationDepartmentId,
+            UUID requestGroupId,
+            UUID destinationGroupId) {
     }
 
     private void ensurePendingApproval(ChangeRequestEntity changeRequest) {

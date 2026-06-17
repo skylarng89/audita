@@ -288,6 +288,7 @@ async function load() {
     hideLoading();
   } catch (error: unknown) {
     toastError(resolveApiErrorMessage(error, "Failed to load dashboard data."));
+    hideLoading();
   }
 }
 
