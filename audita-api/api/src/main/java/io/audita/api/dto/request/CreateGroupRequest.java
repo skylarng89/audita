@@ -11,5 +11,5 @@ public record CreateGroupRequest(
         @Size(max = 1000) String description,
         List<UUID> memberIds,
         Boolean isActive,
-        int displayOrder
+        Integer displayOrder
 ) {}
