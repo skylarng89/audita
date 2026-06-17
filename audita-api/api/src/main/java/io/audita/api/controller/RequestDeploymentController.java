@@ -3,8 +3,10 @@ package io.audita.api.controller;
 import io.audita.api.dto.request.CreateCommentRequest;
 import io.audita.api.dto.request.RejectChangeRequestRequest;
 import io.audita.api.dto.response.RequestDeploymentResponse;
+import io.audita.api.dto.response.RequestDeploymentResponse.DeploymentApproverResponse;
 import io.audita.api.dto.response.StageCommentResponse;
 import io.audita.api.security.UserPrincipal;
+import io.audita.infrastructure.persistence.entity.RequestDeploymentApproverEntity;
 import io.audita.infrastructure.persistence.entity.RequestDeploymentCommentEntity;
 import io.audita.infrastructure.persistence.entity.RequestDeploymentEntity;
 import io.audita.infrastructure.persistence.entity.UserEntity;
@@ -36,7 +38,25 @@ public class RequestDeploymentController {
     public RequestDeploymentResponse get(@PathVariable UUID requestId) {
         RequestDeploymentEntity deployment = requestDeploymentService.getByRequestId(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deployment not found"));
-        return RequestDeploymentResponse.from(deployment);
+        List<RequestDeploymentApproverEntity> approverEntities =
+                requestDeploymentService.listApprovers(deployment.getId());
+        Map<UUID, UserEntity> approverUsers =
+                requestDeploymentService.loadApproverUsers(approverEntities);
+        return RequestDeploymentResponse.from(deployment, approverEntities, approverUsers);
+    }
+
+    @GetMapping("/approvers")
+    @PreAuthorize("isAuthenticated()")
+    public List<DeploymentApproverResponse> listApprovers(@PathVariable UUID requestId) {
+        RequestDeploymentEntity deployment = requestDeploymentService.getByRequestId(requestId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deployment not found"));
+        List<RequestDeploymentApproverEntity> approverEntities =
+                requestDeploymentService.listApprovers(deployment.getId());
+        Map<UUID, UserEntity> approverUsers =
+                requestDeploymentService.loadApproverUsers(approverEntities);
+        return approverEntities.stream()
+                .map(a -> DeploymentApproverResponse.from(a, approverUsers.get(a.getUserId())))
+                .toList();
     }
 
     @PostMapping("/approve")

@@ -34,7 +34,7 @@
         </div>
       </dl>
 
-      <div v-if="deployment.approvers.length" class="space-y-2">
+      <div v-if="deployment.approvers?.length" class="space-y-2">
         <h3 class="font-medium text-sm">Approvers</h3>
         <div
           v-for="approver in deployment.approvers"
@@ -185,9 +185,9 @@ const deploymentCommentEditor = useEditor({
 });
 
 const canAct = computed(() => {
-  if (!deployment.value || deployment.value.status !== "PENDING") return false;
+  if (!deployment.value || deployment.value.status !== "PENDING_APPROVAL") return false;
   if (auth.isSuperAdmin || auth.role === "Admin") return true;
-  return deployment.value.approvers.some(
+  return deployment.value.approvers?.some(
     (a) => a.userId === auth.userId && a.status === "PENDING",
   );
 });

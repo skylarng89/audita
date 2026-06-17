@@ -15,6 +15,7 @@ interface AuthState {
   role: UserRole | null;
   tenantSlug: string | null;
   sessionInitialized: boolean;
+  loggingOut: boolean;
 }
 
 interface AuthMutationOptions {
@@ -74,6 +75,7 @@ export const useAuthStore = defineStore("auth", {
     role: null,
     tenantSlug: null,
     sessionInitialized: false,
+    loggingOut: false,
   }),
 
   getters: {
@@ -149,20 +151,26 @@ export const useAuthStore = defineStore("auth", {
 
     // Called by the API plugin on 401 responses
     async logout(options: AuthMutationOptions = {}) {
+      if (this.loggingOut) return;
+      this.loggingOut = true;
       try {
-        const headers: Record<string, string> = {};
-        if (this.tenantSlug) {
-          headers["X-Tenant-Slug"] = this.tenantSlug;
+        try {
+          const headers: Record<string, string> = {};
+          if (this.tenantSlug) {
+            headers["X-Tenant-Slug"] = this.tenantSlug;
+          }
+          await $fetch("/api/v1/auth/logout", {
+            method: "POST",
+            headers,
+          });
+        } catch (error) {
+          console.error("Logout API failed", error);
         }
-        await $fetch("/api/v1/auth/logout", {
-          method: "POST",
-          headers,
-        });
-      } catch (error) {
-        console.error("Logout API failed", error);
+        this.clearAuth({ broadcast: options.broadcast ?? true });
+        await navigateTo("/auth/sign-in");
+      } finally {
+        this.loggingOut = false;
       }
-      this.clearAuth({ broadcast: options.broadcast ?? true });
-      await navigateTo("/auth/sign-in");
     },
   },
 });

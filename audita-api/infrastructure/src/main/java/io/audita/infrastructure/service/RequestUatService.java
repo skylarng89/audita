@@ -149,6 +149,13 @@ public class RequestUatService {
                     "User is already an approver on this UAT.");
         }
 
+        UserEntity targetUser = userRepository.findById(userId)
+                .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "User not found."));
+        if (targetUser.getRoles().stream().anyMatch(r -> "AUDITOR".equalsIgnoreCase(r.getName()))) {
+            throw new DomainNotPermittedException("FORBIDDEN",
+                    "Users with the Auditor role cannot be added as UAT approvers.");
+        }
+
         int position = requestUatApproverRepository.countByUatId(uatId) + 1;
         RequestUatApproverEntity approver = new RequestUatApproverEntity();
         approver.setUatId(uatId);
