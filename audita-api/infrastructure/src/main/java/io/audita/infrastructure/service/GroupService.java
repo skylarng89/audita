@@ -62,7 +62,7 @@ public class GroupService {
         return createGroup(name, description, createdByUserId, true, 0, List.of());
     }
 
-    public GroupEntity createGroup(String name, String description, UUID createdByUserId, boolean isActive, int displayOrder, List<UUID> memberIds) {
+    public GroupEntity createGroup(String name, String description, UUID createdByUserId, Boolean isActive, int displayOrder, List<UUID> memberIds) {
         if (groupRepository.existsByName(name)) {
             throw new DomainNotPermittedException("NAME_TAKEN",
                     "A group named '" + name + "' already exists.");
@@ -70,7 +70,7 @@ public class GroupService {
 
         UserEntity createdBy = userRepository.findById(createdByUserId).orElse(null);
         GroupEntity group = new GroupEntity(name, description, createdBy);
-        group.setActive(isActive);
+        group.setActive(isActive != null ? isActive : true);
         group.setDisplayOrder(displayOrder);
         group = groupRepository.save(group);
 
