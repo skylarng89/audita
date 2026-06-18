@@ -14,7 +14,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin/custom-fields")
-@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+@PreAuthorize("@authz.hasPermission(authentication, 'settings.manage')")
 public class CustomFieldAdminController {
 
     private final CustomFieldAdminPort customFieldAdminPort;

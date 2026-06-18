@@ -4,10 +4,12 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -71,6 +73,28 @@ public record UserPrincipal(
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;
+    }
+
+    /**
+     * Returns the actor's permission codes as a mutable set, lowercased and
+     * ready for service-layer checks. Super Admin (who carries the {@code *}
+     * wildcard authority but an empty permission list) is granted
+     * {@code cr.view.all} so the ownership-bypass paths in the service layer
+     * fire correctly.
+     */
+    public Set<String> effectivePermissions() {
+        Set<String> perms = new HashSet<>();
+        if (permissions != null) {
+            for (String p : permissions) {
+                if (p != null && !p.isBlank()) {
+                    perms.add(p.trim().toLowerCase(Locale.ROOT));
+                }
+            }
+        }
+        if (isSuperAdmin) {
+            perms.add("cr.view.all");
+        }
+        return perms;
     }
 
     @Override

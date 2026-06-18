@@ -495,7 +495,7 @@ public class SampleDataService implements SampleDataPort {
 
     private void addApprover(ChangeRequestEntity cr, UserEntity user, boolean isRequired,
             int position, ApproverStatus status, OffsetDateTime decidedAt) {
-        CrApproverEntity approver = new CrApproverEntity(cr, user, isRequired, position, false);
+        CrApproverEntity approver = new CrApproverEntity(cr, user, position);
         approver.setSample(true);
         approver.setStatus(status);
         approver.setDecidedAt(decidedAt);

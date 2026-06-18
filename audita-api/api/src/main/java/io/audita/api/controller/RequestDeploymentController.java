@@ -32,7 +32,7 @@ public class RequestDeploymentController {
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public RequestDeploymentResponse get(@PathVariable UUID requestId) {
         RequestDeploymentEntity deployment = requestDeploymentService.getDeploymentWithAssignee(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deployment not found"));
@@ -42,7 +42,7 @@ public class RequestDeploymentController {
     }
 
     @PostMapping("/assignee")
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.manage_participants')")
     public RequestDeploymentResponse assignDeployer(
             @PathVariable UUID requestId,
             @Valid @RequestBody AssignDeployerRequest req,
@@ -55,7 +55,7 @@ public class RequestDeploymentController {
     }
 
     @PostMapping("/complete")
-    @PreAuthorize("isAuthenticated() and !hasRole('AUDITOR')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'deployment.execute')")
     public RequestDeploymentResponse complete(
             @PathVariable UUID requestId,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -67,7 +67,7 @@ public class RequestDeploymentController {
     }
 
     @GetMapping("/comments")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public List<StageCommentResponse> listComments(@PathVariable UUID requestId) {
         RequestDeploymentEntity deployment = requestDeploymentService.getByRequestId(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deployment not found"));
@@ -80,7 +80,7 @@ public class RequestDeploymentController {
     }
 
     @PostMapping("/comments")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public ResponseEntity<StageCommentResponse> createComment(
             @PathVariable UUID requestId,
             @Valid @RequestBody CreateCommentRequest req,

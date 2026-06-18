@@ -30,7 +30,7 @@ public class DepartmentAdminController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'groups.manage')")
     public List<DepartmentResponse> listAll() {
         return departmentService.listAll().stream()
                 .map(DepartmentResponse::from)
@@ -46,7 +46,7 @@ public class DepartmentAdminController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'groups.manage')")
     @ResponseStatus(HttpStatus.CREATED)
     public DepartmentResponse create(@Valid @RequestBody UpsertDepartmentRequest request) {
         return DepartmentResponse.from(
@@ -54,7 +54,7 @@ public class DepartmentAdminController {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'groups.manage')")
     public DepartmentResponse update(@PathVariable UUID id,
                                      @Valid @RequestBody UpsertDepartmentRequest request) {
         return DepartmentResponse.from(
@@ -62,7 +62,7 @@ public class DepartmentAdminController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'groups.manage')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deactivate(@PathVariable UUID id) {
         departmentService.deactivate(id);

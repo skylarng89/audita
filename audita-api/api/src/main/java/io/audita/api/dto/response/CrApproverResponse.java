@@ -12,12 +12,10 @@ public record CrApproverResponse(
         String userEmail,
         String userFullName,
         String userRole,
-        boolean isRequired,
         int position,
         ApproverStatus status,
         String rejectionReason,
-        OffsetDateTime decidedAt,
-        boolean isAdHoc
+        OffsetDateTime decidedAt
 ) {
     public static CrApproverResponse from(CrApproverEntity entity) {
         String roleName = entity.getUser().getRoles().stream()
@@ -30,12 +28,10 @@ public record CrApproverResponse(
                 entity.getUser().getEmail(),
                 entity.getUser().getFullName(),
                 roleName,
-                entity.isRequired(),
                 entity.getPosition(),
                 entity.getStatus(),
                 entity.getRejectionReason(),
-                entity.getDecidedAt(),
-                entity.isAdHoc()
+                entity.getDecidedAt()
         );
     }
 }
