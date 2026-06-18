@@ -21,6 +21,10 @@ export default defineEventHandler((event) => {
 
   event.node.req.headers = sanitizeProxyHeaders(event.node.req.headers) as typeof event.node.req.headers;
 
+  if (url.pathname === "/api/platform/v1/setup" || url.pathname === "/api/platform/v1/bootstrap") {
+    event.node.req.headers["x-setup-token"] = config.setupToken as string;
+  }
+
   const target = buildProxyTarget(base, url.pathname, url.search);
 
   return proxyRequest(event, target);
