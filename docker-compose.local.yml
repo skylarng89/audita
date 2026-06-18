@@ -8,6 +8,7 @@ services:
       dockerfile: Dockerfile
     container_name: audita-api
     restart: unless-stopped
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
     environment:
       DATABASE_URL: ${DB_URL}
       DATABASE_USERNAME: ${DB_USERNAME}
@@ -47,6 +48,7 @@ services:
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
     volumes:
+      - ./logs:/tmp/logs
       - audita_uploads:/data/uploads
     ports:
       - "7080:8080"
