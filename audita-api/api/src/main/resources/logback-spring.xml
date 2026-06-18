@@ -19,9 +19,9 @@
        MDC context (tenant_id|user_id|request_id) included per line.
   ═══════════════════════════════════════════════════════════ -->
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${LOG_FILE:-/data/logs/audita-api.log}</file>
+    <file>${LOG_FILE:-/tmp/logs/audita-api.log}</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-      <fileNamePattern>/data/logs/audita-api-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+      <fileNamePattern>/tmp/logs/audita-api-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
       <maxFileSize>${LOG_FILE_MAX_SIZE:-50MB}</maxFileSize>
       <maxHistory>${LOG_FILE_MAX_HISTORY:-30}</maxHistory>
       <totalSizeCap>${LOG_FILE_TOTAL_SIZE_CAP:-1GB}</totalSizeCap>
