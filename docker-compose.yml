@@ -49,6 +49,7 @@ services:
   api:
     image: skylarng89/audita-api:1.0.0
     restart: unless-stopped
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
     depends_on:
       db:
         condition: service_healthy
@@ -91,8 +92,15 @@ services:
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE}
       AUDITA_AUTH_REFRESH_COOKIE_ENCRYPTION_KEY: ${AUDITA_AUTH_REFRESH_COOKIE_ENCRYPTION_KEY}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      LOG_LEVEL_ROOT: ${LOG_LEVEL_ROOT}
+      LOG_LEVEL_APP: ${LOG_LEVEL_APP}
+      LOG_LEVEL_FLYWAY: ${LOG_LEVEL_FLYWAY}
+      LOG_FILE: ${LOG_FILE}
+      LOG_FILE_MAX_SIZE: ${LOG_FILE_MAX_SIZE}
+      LOG_FILE_MAX_HISTORY: ${LOG_FILE_MAX_HISTORY}
+      LOG_FILE_TOTAL_SIZE_CAP: ${LOG_FILE_TOTAL_SIZE_CAP}
     volumes:
-      - api_logs:/data/logs
+      - ./logs:/data/logs
       - api_uploads:/data/uploads
     ports:
       - "7080:8080"
@@ -177,7 +185,6 @@ services:
 volumes:
   db_data:
   api_uploads:
-  api_logs:
 
 networks:
   audita-network:
