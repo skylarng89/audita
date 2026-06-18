@@ -1,6 +1,7 @@
 package io.audita.infrastructure.persistence.repository;
 
 import io.audita.infrastructure.persistence.entity.CrWatcherEntity;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -10,6 +11,7 @@ import java.util.UUID;
 
 public interface CrWatcherRepository extends JpaRepository<CrWatcherEntity, UUID> {
 
+    @EntityGraph(attributePaths = {"user"})
     List<CrWatcherEntity> findByChangeRequestId(UUID changeRequestId);
 
     @Query("SELECT w FROM CrWatcherEntity w WHERE w.changeRequest.id = :crId AND w.user.id = :userId")

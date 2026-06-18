@@ -168,8 +168,6 @@
 <script setup lang="ts">
 definePageMeta({ layout: "platform" });
 
-import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
-
 const api = useApi();
 const route = useRoute();
 const { success: toastSuccess, error: toastError } = useToast();
@@ -207,9 +205,6 @@ const { data: domainData, refresh: refreshDomains } = await useAsyncData<
   () =>
     api(`/api/platform/v1/tenants/${tenantId}/domains`) as Promise<Domain[]>,
 );
-
-const { hide: hideLoading } = useLoadingOverlay();
-watch(pending, (val) => { if (!val) hideLoading(); });
 
 const domains = computed(() => domainData.value ?? []);
 

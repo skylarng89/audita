@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- Logo / brand mark -->
     <div class="flex justify-center mb-8">
       <img
         src="/brand/audita-icon-light.svg"
@@ -14,8 +13,18 @@
       />
     </div>
 
-    <div
-      v-if="done"
+    <div v-if="!isMounted" class="space-y-4">
+      <SharedFieldSkeleton heightClass="h-8" class="w-44 mx-auto" />
+      <SharedFieldSkeleton heightClass="h-4" class="w-72 mx-auto" />
+      <div class="mt-6 space-y-4">
+        <SharedFieldSkeleton heightClass="h-10" rounded />
+        <SharedFieldSkeleton heightClass="h-10" rounded />
+        <SharedFieldSkeleton heightClass="h-10" rounded />
+        <SharedFieldSkeleton heightClass="h-10" class="w-full" rounded />
+      </div>
+    </div>
+
+    <div v-else-if="done"
       class="rounded-md bg-success-light border border-success px-4 py-4 text-sm text-green-800 text-center"
     >
       <p class="font-semibold mb-1">Platform bootstrapped successfully.</p>
@@ -131,6 +140,7 @@ const api = useApi();
 const { fetchStatus, invalidateStatus } = useOnboarding();
 
 const form = reactive({ fullName: "", email: "", password: "" });
+const isMounted = ref(false);
 const error = ref("");
 const done = ref(false);
 const isLoading = ref(false);
@@ -249,4 +259,6 @@ async function handleSubmit() {
     isLoading.value = false;
   }
 }
+
+onMounted(() => { isMounted.value = true; });
 </script>

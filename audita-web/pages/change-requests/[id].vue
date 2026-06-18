@@ -950,8 +950,15 @@
     </Transition>
   </div>
 
-  <div v-else class="py-16 text-center text-sm text-muted">
-    Loading change request…
+  <div v-else class="space-y-6 py-8">
+    <div class="space-y-2">
+      <SharedFieldSkeleton heightClass="h-4" class="w-20" />
+      <SharedFieldSkeleton heightClass="h-8" class="w-96" />
+      <SharedFieldSkeleton heightClass="h-4" class="w-64" />
+    </div>
+    <SharedFieldSkeleton heightClass="h-16" rounded />
+    <SharedFieldSkeleton heightClass="h-48" rounded />
+    <SharedFieldSkeleton heightClass="h-32" rounded />
   </div>
 </template>
 
@@ -972,7 +979,6 @@ import { EditorContent, useEditor } from "@tiptap/vue-3";
 import Mention from "@tiptap/extension-mention";
 import tippy from "tippy.js";
 import FlatPickr from "vue-flatpickr-component";
-import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
 import {
   buildRichTextExtensions,
   normalizeRichTextHtml,
@@ -993,7 +999,6 @@ useHead(
 
 const { error: toastError } = useToast();
 const auth = useAuthStore();
-const { hide: hideLoading } = useLoadingOverlay();
 const api = useApi();
 
 const route = useRoute();
@@ -1589,6 +1594,8 @@ async function saveEditAction() {
   }
 }
 
+const loading = ref(true);
+
 async function loadAll() {
   try {
     const [
@@ -1632,12 +1639,12 @@ async function loadAll() {
     }
     localFieldValues.value = valueMap;
     await loadDeploymentStatus();
-    hideLoading();
   } catch (error: unknown) {
     toastError(
       extractErrorMessage(error, "Failed to load change request details."),
     );
-    hideLoading();
+  } finally {
+    loading.value = false;
   }
 }
 

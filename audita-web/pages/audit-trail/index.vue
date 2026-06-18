@@ -171,7 +171,6 @@
 
 <script setup lang="ts">
 import type { AuditLogEntry, Page } from "~/types";
-import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
 
 definePageMeta({ layout: "default" });
 
@@ -180,8 +179,6 @@ useHead({ title: "Audit Trail — Audita" });
 const api = useApi();
 const auth = useAuthStore();
 const { success: toastSuccess, error: toastError } = useToast();
-const { hide: hideLoading } = useLoadingOverlay();
-
 if (!auth.hasPermission("audit.view")) {
   await navigateTo("/dashboard");
 }
@@ -305,10 +302,6 @@ watch(
     refresh();
   },
 );
-
-watch(pending, (val) => {
-  if (!val) hideLoading();
-});
 
 onMounted(() => {
   applyRangePreset();

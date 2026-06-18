@@ -1,5 +1,19 @@
 <template>
-  <div class="space-y-6">
+  <div v-if="loading" class="space-y-6">
+    <div class="space-y-1">
+      <SharedFieldSkeleton heightClass="h-4" class="w-44" />
+      <SharedFieldSkeleton heightClass="h-8" class="w-36" />
+      <SharedFieldSkeleton heightClass="h-4" class="w-72" />
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <SharedFieldSkeleton v-for="n in 4" :key="n" heightClass="h-24" rounded />
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <SharedFieldSkeleton heightClass="h-48" rounded class="lg:col-span-2" />
+      <SharedFieldSkeleton heightClass="h-48" rounded />
+    </div>
+  </div>
+  <div v-else class="space-y-6">
     <div>
       <p
         class="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary/60 mb-1"
@@ -231,7 +245,6 @@
 
 <script setup lang="ts">
 import type { ChangeRequest, Notification } from "~/types";
-import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
 import { formatDistanceToNow, parseISO } from "date-fns";
 
 definePageMeta({ middleware: "auth" });
@@ -241,7 +254,6 @@ useHead({ title: "Dashboard — Audita" });
 const api = useApi();
 const auth = useAuthStore();
 const { list } = useChangeRequests();
-const { hide: hideLoading } = useLoadingOverlay();
 const { error: toastError } = useToast();
 
 interface DashboardSummaryResponse {
@@ -259,8 +271,10 @@ const stats = reactive({
 });
 const pendingCRs = ref<ChangeRequest[]>([]);
 const recentActivity = ref<Notification[]>([]);
+const loading = ref(true);
 
 async function load() {
+  loading.value = true;
   try {
     const [summary, pendingPage, notifications] = await Promise.all([
       api<DashboardSummaryResponse>("/api/v1/dashboard/summary", {
@@ -285,10 +299,10 @@ async function load() {
 
     pendingCRs.value = pendingPage.content;
     recentActivity.value = notifications;
-    hideLoading();
   } catch (error: unknown) {
     toastError(resolveApiErrorMessage(error, "Failed to load dashboard data."));
-    hideLoading();
+  } finally {
+    loading.value = false;
   }
 }
 

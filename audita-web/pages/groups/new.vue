@@ -1,5 +1,18 @@
 <template>
-  <div class="max-w-4xl mx-auto space-y-6">
+  <div v-if="!isMounted" class="max-w-4xl mx-auto space-y-6">
+    <div class="flex items-center justify-between">
+      <div class="space-y-2">
+        <SharedFieldSkeleton heightClass="h-4" class="w-24" />
+        <SharedFieldSkeleton heightClass="h-8" class="w-36" />
+        <SharedFieldSkeleton heightClass="h-4" class="w-56" />
+      </div>
+    </div>
+    <div class="card shadow-card-hover p-6 space-y-5">
+      <SharedFieldSkeleton heightClass="h-10" rounded />
+      <SharedFieldSkeleton heightClass="h-32" rounded />
+    </div>
+  </div>
+  <div v-else class="max-w-4xl mx-auto space-y-6">
     <div class="flex items-center justify-between">
       <div>
         <p
@@ -245,6 +258,7 @@
       </div>
     </div>
   </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -258,6 +272,7 @@ const { createGroup } = useGroups()
 const { searchUsers } = useUserSearch()
 const { success: toastSuccess, error: toastError } = useToast()
 
+const isMounted = ref(false);
 const steps = ["Details", "Members", "Review"]
 const currentStep = ref(0)
 
@@ -347,6 +362,7 @@ async function handleCreate() {
 }
 
 onMounted(() => {
+  isMounted.value = true;
   document.addEventListener("click", (e) => {
     const target = e.target as Node
     const input = memberSearchInputRef.value

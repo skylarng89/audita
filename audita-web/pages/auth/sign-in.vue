@@ -1,5 +1,14 @@
 <template>
-  <div>
+  <div v-if="!isMounted" class="space-y-4">
+    <SharedFieldSkeleton heightClass="h-8" class="w-28" />
+    <SharedFieldSkeleton heightClass="h-4" class="w-64" />
+    <div class="space-y-4 mt-8">
+      <SharedFieldSkeleton heightClass="h-10" rounded />
+      <SharedFieldSkeleton heightClass="h-10" rounded />
+      <SharedFieldSkeleton heightClass="h-10" class="w-full" rounded />
+    </div>
+  </div>
+  <div v-else>
     <h1 class="text-2xl font-bold text-on-surface dark:text-gray-100 mb-1">
       Sign In
     </h1>
@@ -202,6 +211,7 @@
       Secure Environment &bull; AES-256 Encrypted
     </p>
   </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -213,6 +223,7 @@ const { login } = useAuth();
 const auth = useAuthStore();
 const route = useRoute();
 
+const isMounted = ref(false);
 const form = reactive({ email: "", password: "" });
 const errors = reactive({ email: "", password: "", general: "" });
 const isLoading = ref(false);
@@ -246,4 +257,6 @@ async function handleSubmit() {
     isLoading.value = false;
   }
 }
+
+onMounted(() => { isMounted.value = true; });
 </script>
