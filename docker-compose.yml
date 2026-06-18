@@ -92,7 +92,7 @@ services:
       AUDITA_AUTH_REFRESH_COOKIE_ENCRYPTION_KEY: ${AUDITA_AUTH_REFRESH_COOKIE_ENCRYPTION_KEY}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
     volumes:
-      - ./logs:/app/logs
+      - api_logs:/data/logs
       - api_uploads:/data/uploads
     ports:
       - "7080:8080"
@@ -177,6 +177,7 @@ services:
 volumes:
   db_data:
   api_uploads:
+  api_logs:
 
 networks:
   audita-network:

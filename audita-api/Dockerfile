@@ -29,14 +29,15 @@ COPY api/src api/src
 RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
     sh -c 'for i in 1 2 3; do ./gradlew :api:bootJar --no-daemon && exit 0; sleep 5; done; exit 1'
 
-# Pre-create uploads directory for runtime image without shell utilities.
-RUN mkdir -p /tmp/uploads
+# Pre-create uploads and logs directories for runtime image without shell utilities.
+RUN mkdir -p /tmp/uploads /tmp/logs
 
 # ── Runtime stage ────────────────────────────────────────────────────────────────
 FROM dhi.io/eclipse-temurin:25
 WORKDIR /app
 
 COPY --from=builder --chown=65532:65532 /tmp/uploads /data/uploads
+COPY --from=builder --chown=65532:65532 /tmp/logs /data/logs
 COPY --from=builder --chown=65532:65532 /app/api/build/libs/audita-api.jar app.jar
 
 USER 65532:65532
