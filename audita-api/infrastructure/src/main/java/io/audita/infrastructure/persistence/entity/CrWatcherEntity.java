@@ -10,7 +10,7 @@ import java.util.UUID;
 public class CrWatcherEntity {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
