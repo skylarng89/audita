@@ -44,9 +44,9 @@ class RequestWorkflowEntitiesTest {
     // ── RequestDeploymentEntity defaults ────────────────────────────────────────
 
     @Test
-    void deploymentEntityDefaultsStatusToPendingApproval() {
+    void deploymentEntityDefaultsStatusToPending() {
         RequestDeploymentEntity deployment = new RequestDeploymentEntity();
-        assertEquals("PENDING_APPROVAL", deployment.getStatus());
+        assertEquals("PENDING", deployment.getStatus());
     }
 
     @Test
@@ -102,40 +102,5 @@ class RequestWorkflowEntitiesTest {
         assertThrows(DomainException.class, () -> approver.reject(null));
     }
 
-    // ── RequestDeploymentApproverEntity domain methods ──────────────────────────
-
-    @Test
-    void deploymentApproverDefaultsToPending() {
-        RequestDeploymentApproverEntity approver = new RequestDeploymentApproverEntity();
-        assertEquals(ApproverStatus.PENDING, approver.getStatus());
-    }
-
-    @Test
-    void deploymentApproverApproveSetsStatusAndDecidedAt() {
-        RequestDeploymentApproverEntity approver = new RequestDeploymentApproverEntity();
-
-        approver.approve();
-
-        assertEquals(ApproverStatus.APPROVED, approver.getStatus());
-        assertNotNull(approver.getDecidedAt());
-        assertNull(approver.getRejectionReason());
-    }
-
-    @Test
-    void deploymentApproverRejectSetsStatusReasonAndDecidedAt() {
-        RequestDeploymentApproverEntity approver = new RequestDeploymentApproverEntity();
-
-        approver.reject("Deployment window missed");
-
-        assertEquals(ApproverStatus.REJECTED, approver.getStatus());
-        assertEquals("Deployment window missed", approver.getRejectionReason());
-        assertNotNull(approver.getDecidedAt());
-    }
-
-    @Test
-    void deploymentApproverRejectThrowsOnBlankReason() {
-        RequestDeploymentApproverEntity approver = new RequestDeploymentApproverEntity();
-        assertThrows(DomainException.class, () -> approver.reject(""));
-        assertThrows(DomainException.class, () -> approver.reject(null));
-    }
 }
+

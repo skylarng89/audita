@@ -11,7 +11,6 @@ import io.audita.domain.model.RequestWorkflowMode;
 import io.audita.domain.model.RiskLevel;
 import io.audita.infrastructure.persistence.entity.ChangeRequestEntity;
 import io.audita.infrastructure.persistence.entity.CrApproverEntity;
-import io.audita.infrastructure.persistence.entity.RequestDeploymentApproverEntity;
 import io.audita.infrastructure.persistence.entity.RequestDeploymentEntity;
 import io.audita.infrastructure.persistence.entity.RequestUatApproverEntity;
 import io.audita.infrastructure.persistence.entity.RequestUatEntity;
@@ -22,15 +21,16 @@ import io.audita.infrastructure.persistence.repository.AttachmentRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestCustomFieldRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestRepository;
 import io.audita.infrastructure.persistence.repository.CrApproverRepository;
+import io.audita.infrastructure.persistence.repository.CrWatcherRepository;
 import io.audita.infrastructure.persistence.repository.GroupMemberRepository;
 import io.audita.infrastructure.persistence.repository.GroupRepository;
 import io.audita.infrastructure.persistence.repository.OrgSettingRepository;
-import io.audita.infrastructure.persistence.repository.RequestDeploymentApproverRepository;
 import io.audita.infrastructure.persistence.repository.RequestDeploymentCommentRepository;
 import io.audita.infrastructure.persistence.repository.RequestDeploymentRepository;
 import io.audita.infrastructure.persistence.repository.RequestUatApproverRepository;
 import io.audita.infrastructure.persistence.repository.RequestUatCommentRepository;
 import io.audita.infrastructure.persistence.repository.RequestUatRepository;
+import io.audita.infrastructure.persistence.repository.RequestUatWatcherRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
 import io.audita.infrastructure.security.HtmlSanitizer;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +61,8 @@ class RequestWorkflowAuthorizationTest {
     @Mock
     CrApproverRepository crApproverRepository;
     @Mock
+    CrWatcherRepository crWatcherRepository;
+    @Mock
     GroupRepository groupRepository;
     @Mock
     GroupMemberRepository groupMemberRepository;
@@ -77,9 +79,9 @@ class RequestWorkflowAuthorizationTest {
     @Mock
     RequestUatCommentRepository requestUatCommentRepository;
     @Mock
-    RequestDeploymentRepository deploymentRepository;
+    RequestUatWatcherRepository requestUatWatcherRepository;
     @Mock
-    RequestDeploymentApproverRepository deploymentApproverRepository;
+    RequestDeploymentRepository deploymentRepository;
     @Mock
     RequestDeploymentCommentRepository deploymentCommentRepository;
     @Mock
@@ -92,6 +94,12 @@ class RequestWorkflowAuthorizationTest {
     AuditLogService auditLogService;
     @Mock
     HtmlSanitizer htmlSanitizer;
+    @Mock
+    NotificationService notificationService;
+    @Mock
+    EmailService emailService;
+    @Mock
+    MentionNotifier mentionNotifier;
 
     @InjectMocks
     ChangeRequestService changeRequestService;
@@ -269,7 +277,6 @@ class RequestWorkflowAuthorizationTest {
         ReflectionTestUtils.setField(pendingApprover, "id", UUID.randomUUID());
         pendingApprover.setUatId(uatId);
         pendingApprover.setUserId(approverId);
-        pendingApprover.setRequired(true);
         pendingApprover.setStatus(ApproverStatus.PENDING);
 
         when(requestUatApproverRepository.findByUatIdOrderByPositionAsc(uatId))
@@ -305,66 +312,6 @@ class RequestWorkflowAuthorizationTest {
 
         assertThat(ex.getErrorCode()).isEqualTo("FORBIDDEN");
         verify(requestUatRepository, never()).save(any());
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Deployment approval/rejection guards
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    @Test
-    void deploymentApproveDeniedWhenStatusNotPendingApproval() {
-        UUID deploymentId = UUID.randomUUID();
-        UUID approverId = UUID.randomUUID();
-
-        RequestDeploymentEntity deployment = new RequestDeploymentEntity();
-        ReflectionTestUtils.setField(deployment, "id", deploymentId);
-        deployment.setStatus("APPROVED");
-        when(deploymentRepository.findById(deploymentId)).thenReturn(Optional.of(deployment));
-
-        InvalidStateTransitionException ex = assertThrows(
-                InvalidStateTransitionException.class,
-                () -> requestDeploymentService.approveDeployment(deploymentId, approverId));
-
-        assertThat(ex.getMessage()).containsIgnoringCase("no longer open");
-        verify(deploymentApproverRepository, never()).save(any());
-    }
-
-    @Test
-    void deploymentRejectDeniedWhenStatusNotPendingApproval() {
-        UUID deploymentId = UUID.randomUUID();
-        UUID approverId = UUID.randomUUID();
-
-        RequestDeploymentEntity deployment = new RequestDeploymentEntity();
-        ReflectionTestUtils.setField(deployment, "id", deploymentId);
-        deployment.setStatus("REJECTED");
-        when(deploymentRepository.findById(deploymentId)).thenReturn(Optional.of(deployment));
-
-        InvalidStateTransitionException ex = assertThrows(
-                InvalidStateTransitionException.class,
-                () -> requestDeploymentService.rejectDeployment(deploymentId, approverId, "reason"));
-
-        assertThat(ex.getMessage()).containsIgnoringCase("no longer open");
-        verify(deploymentApproverRepository, never()).save(any());
-    }
-
-    @Test
-    void deploymentApproveDeniedForNonApprover() {
-        UUID deploymentId = UUID.randomUUID();
-        UUID nonApproverId = UUID.randomUUID();
-
-        RequestDeploymentEntity deployment = new RequestDeploymentEntity();
-        ReflectionTestUtils.setField(deployment, "id", deploymentId);
-        deployment.setStatus("PENDING_APPROVAL");
-        when(deploymentRepository.findById(deploymentId)).thenReturn(Optional.of(deployment));
-        when(deploymentApproverRepository.findByDeploymentIdAndUserId(deploymentId, nonApproverId))
-                .thenReturn(Optional.empty());
-
-        DomainNotPermittedException ex = assertThrows(
-                DomainNotPermittedException.class,
-                () -> requestDeploymentService.approveDeployment(deploymentId, nonApproverId));
-
-        assertThat(ex.getErrorCode()).isEqualTo("NOT_APPROVER");
-        verify(deploymentApproverRepository, never()).save(any());
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -465,7 +412,7 @@ class RequestWorkflowAuthorizationTest {
 
         ChangeRequestService.CreateRequest req = new ChangeRequestService.CreateRequest(
                 "CR", "desc", Priority.MEDIUM, RiskLevel.MEDIUM,
-                null, null, null, null, null, creatorId, null, null, null);
+                null, null, null, null, null, creatorId, null, null, null, null, null);
 
         ChangeRequestEntity first = changeRequestService.create(req);
         String firstDisplayId = first.getDisplayId();

@@ -26,15 +26,13 @@ class ChangeRequestEntityTest {
     }
 
     @Test
-    void evaluateApprovalClosureApprovesWhenAllRequiredApproved() {
+    void evaluateApprovalClosureApprovesWhenAllApproversApproved() {
         ChangeRequestEntity changeRequest = baseChangeRequest();
         changeRequest.setStatus(ChangeRequestStatus.PENDING_APPROVAL);
 
         CrApproverEntity a1 = new CrApproverEntity();
-        a1.setRequired(true);
         a1.setStatus(ApproverStatus.APPROVED);
         CrApproverEntity a2 = new CrApproverEntity();
-        a2.setRequired(true);
         a2.setStatus(ApproverStatus.APPROVED);
 
         changeRequest.getApprovers().add(a1);
@@ -45,12 +43,11 @@ class ChangeRequestEntityTest {
     }
 
     @Test
-    void evaluateApprovalClosureRejectsWhenSingleRequiredRejected() {
+    void evaluateApprovalClosureRejectsWhenSingleApproverRejected() {
         ChangeRequestEntity changeRequest = baseChangeRequest();
         changeRequest.setStatus(ChangeRequestStatus.PENDING_APPROVAL);
 
         CrApproverEntity a1 = new CrApproverEntity();
-        a1.setRequired(true);
         a1.setStatus(ApproverStatus.REJECTED);
         changeRequest.getApprovers().add(a1);
 
@@ -60,18 +57,20 @@ class ChangeRequestEntityTest {
     }
 
     @Test
-    void evaluateApprovalClosureApprovesWhenNoRequiredApproversAndAllOptionalApproved() {
+    void evaluateApprovalClosureStaysPendingWhenNotAllApproved() {
         ChangeRequestEntity changeRequest = baseChangeRequest();
         changeRequest.setStatus(ChangeRequestStatus.PENDING_APPROVAL);
 
         CrApproverEntity a1 = new CrApproverEntity();
-        a1.setRequired(false);
         a1.setStatus(ApproverStatus.APPROVED);
+        CrApproverEntity a2 = new CrApproverEntity();
+        a2.setStatus(ApproverStatus.PENDING);
         changeRequest.getApprovers().add(a1);
+        changeRequest.getApprovers().add(a2);
 
         changeRequest.evaluateApprovalClosure();
 
-        assertEquals(ChangeRequestStatus.APPROVED, changeRequest.getStatus());
+        assertEquals(ChangeRequestStatus.PENDING_APPROVAL, changeRequest.getStatus());
     }
 
     // ── RW15-001: display ID and dual-status fields ────────────────────────────
@@ -151,7 +150,6 @@ class ChangeRequestEntityTest {
         changeRequest.setApprovalStatus(ChangeRequestStatus.PENDING_APPROVAL);
 
         CrApproverEntity a1 = new CrApproverEntity();
-        a1.setRequired(true);
         a1.setStatus(ApproverStatus.APPROVED);
         changeRequest.getApprovers().add(a1);
 
