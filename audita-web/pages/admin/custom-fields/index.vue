@@ -35,8 +35,17 @@
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="card p-8 text-center text-sm text-muted">
-      Loading custom fields…
+    <div v-if="loading" class="space-y-3 pt-2">
+      <div v-for="n in 4" :key="n" class="card px-5 py-4 flex items-center justify-between">
+        <div class="space-y-2">
+          <SharedFieldSkeleton heightClass="h-5" class="w-40" />
+          <SharedFieldSkeleton heightClass="h-4" class="w-56" />
+        </div>
+        <div class="flex items-center gap-2">
+          <SharedFieldSkeleton heightClass="h-8" class="w-12" />
+          <SharedFieldSkeleton heightClass="h-8" class="w-14" />
+        </div>
+      </div>
     </div>
 
     <!-- Error -->

@@ -22,7 +22,17 @@
       </button>
     </div>
 
-    <div v-if="pending" class="text-muted text-sm">Loading roles…</div>
+    <div v-if="pending" class="space-y-4">
+      <div v-for="n in 3" :key="n" class="card p-5 shadow-card-hover space-y-3">
+        <SharedFieldSkeleton heightClass="h-5" class="w-40" />
+        <SharedFieldSkeleton heightClass="h-4" class="w-64" />
+        <div class="flex flex-wrap gap-1.5">
+          <SharedFieldSkeleton heightClass="h-5" class="w-24" />
+          <SharedFieldSkeleton heightClass="h-5" class="w-20" />
+          <SharedFieldSkeleton heightClass="h-5" class="w-32" />
+        </div>
+      </div>
+    </div>
 
     <div v-else class="space-y-4">
       <div
@@ -240,7 +250,6 @@
 <script setup lang="ts">
 import type { Permission, Role } from "~/composables/useRoles";
 import { useRoles } from "~/composables/useRoles";
-import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
 
 definePageMeta({ middleware: ["auth", "admin-only"] });
 
@@ -248,7 +257,6 @@ useHead({ title: "Roles & Permissions — Audita" });
 
 const auth = useAuthStore();
 const { success: toastSuccess, error: toastError } = useToast();
-const { hide: hideLoading } = useLoadingOverlay();
 const { listRoles, listPermissions, createRole, updateRole, deleteRole } =
   useRoles();
 
@@ -344,11 +352,6 @@ watch(
   },
   { immediate: true },
 );
-
-watch(dataPending, (val) => {
-  pending.value = val;
-  if (!val) hideLoading();
-});
 
 const permissionGroups = computed<PermissionGroup[]>(() => {
   const byCode = new Map(allPermissions.value.map((p) => [p.code, p]));
@@ -508,7 +511,5 @@ async function confirmDelete() {
   }
 }
 
-onMounted(() => {
-  if (roles.value.length === 0 && !pending.value) hideLoading();
-});
+onMounted(() => {});
 </script>

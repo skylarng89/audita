@@ -27,11 +27,17 @@
       <section class="card p-5 shadow-card-hover lg:col-span-2 space-y-5">
         <h2 class="text-lg font-semibold">Organization Profile</h2>
 
-        <div v-if="pending" class="field-hint">
-          Loading organization profile...
+        <div v-if="pending" class="space-y-4">
+          <SharedFieldSkeleton heightClass="h-10" rounded />
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <SharedFieldSkeleton heightClass="h-10" rounded />
+            <SharedFieldSkeleton heightClass="h-10" rounded />
+            <SharedFieldSkeleton heightClass="h-10" rounded />
+            <SharedFieldSkeleton heightClass="h-10" rounded />
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div v-else class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label class="field-label" for="org-name">Organization Name</label>
             <input
@@ -342,7 +348,13 @@
         </button>
       </div>
 
-      <div v-if="cfPending" class="mt-4 field-hint">Loading custom fields…</div>
+      <div v-if="cfPending" class="mt-4 space-y-3">
+        <div v-for="n in 4" :key="n" class="flex items-center gap-4">
+          <SharedFieldSkeleton heightClass="h-5" class="flex-1" />
+          <SharedFieldSkeleton heightClass="h-5" class="w-20" />
+          <SharedFieldSkeleton heightClass="h-5" class="w-16" />
+        </div>
+      </div>
 
       <div
         v-else-if="customFields.length === 0"
@@ -641,7 +653,6 @@ import {
   isSettingsDirty,
   validateSlaDefaults,
 } from "~/composables/adminSettingsForm";
-import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
 
 definePageMeta({ middleware: ["auth", "admin-only"] });
 
@@ -711,7 +722,6 @@ interface GroupLookupResponse {
   description: string | null;
 }
 
-const { hide: hideLoading } = useLoadingOverlay();
 const pending = ref(false);
 const errorMessage = ref("");
 const savingSettings = ref(false);
@@ -855,13 +865,11 @@ async function loadSettings() {
       settings.autoApproverDefaults,
       settings.auditDefaults,
     );
-    hideLoading();
   } catch (error: unknown) {
     errorMessage.value = "Unable to load settings right now.";
     toastError(
       resolveApiErrorMessage(error, "Failed to load organization settings."),
     );
-    hideLoading();
   } finally {
     pending.value = false;
   }
