@@ -46,6 +46,8 @@ function buildCr(overrides: Partial<ChangeRequest> = {}): ChangeRequest {
     workflowMode: "DELIVERY_PIPELINE",
     requestDepartmentId: null,
     destinationDepartmentId: null,
+    requestGroupId: null,
+    destinationGroupId: null,
     scheduledStart: "2026-06-01T10:00:00Z",
     scheduledEnd: "2026-06-05T18:00:00Z",
     affectedSystems: ["API Gateway", "Auth Service"],

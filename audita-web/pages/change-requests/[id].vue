@@ -32,7 +32,21 @@
         >
           Edit
         </button>
+        <button
+          class="btn-ghost btn-md"
+          :title="copied ? 'Copied!' : 'Copy link to this request'"
+          @click="copyUrl"
+        >
+          {{ copied ? "Copied!" : "Copy URL" }}
+        </button>
       </div>
+    </div>
+
+    <div
+      v-if="changeRequest.completionStatus === 'COMPLETED'"
+      class="rounded-lg bg-info-light border border-info/30 px-4 py-3 text-sm text-info mb-4"
+    >
+      This request is completed and read-only.
     </div>
 
     <div class="card p-4">
@@ -541,25 +555,6 @@
                 {{ candidate.kind }}{{ candidate.secondary ? ` • ${candidate.secondary}` : "" }}
               </p>
             </div>
-            <button
-              v-if="pendingSelection[candidate.id] && pendingSelection[candidate.id].role !== 'Auditor'"
-              type="button"
-              class="text-xs px-2 py-1 rounded-md shrink-0 transition-colors"
-              :class="
-                pendingSelection[candidate.id].isRequired
-                  ? 'bg-primary/15 text-primary'
-                  : 'bg-surface-container-high text-muted'
-              "
-              @click.stop="toggleRequiredFor(candidate)"
-            >
-              {{ pendingSelection[candidate.id].isRequired ? "Required" : "Optional" }}
-            </button>
-            <span
-              v-else-if="pendingSelection[candidate.id]?.role === 'Auditor'"
-              class="text-xs px-2 py-1 rounded-md shrink-0 bg-surface-container-high text-muted"
-            >
-              Always Optional
-            </span>
           </label>
           <div
             v-if="!filteredCandidates.length"
@@ -588,17 +583,6 @@
                 class="text-[10px] px-1 rounded bg-surface-container-high text-muted"
               >
                 Auditor
-              </span>
-              <span
-                v-else
-                class="text-[10px] px-1 rounded"
-                :class="
-                  pendingSelection[cid]?.isRequired
-                    ? 'bg-primary/15 text-primary'
-                    : 'bg-surface-container-high text-muted'
-                "
-              >
-                {{ pendingSelection[cid]?.isRequired ? "Req" : "Opt" }}
               </span>
               <button
                 type="button"
@@ -661,24 +645,12 @@
           </div>
           <div class="flex items-center gap-2">
             <button
-              v-if="canManageApprovers && a.userRole !== 'Auditor'"
-              type="button"
-              class="text-xs px-2 py-1 rounded-md shrink-0 transition-colors"
-              :class="
-                a.isRequired
-                  ? 'bg-primary/15 text-primary hover:bg-primary/25'
-                  : 'bg-surface-container-high text-muted hover:bg-surface-container'
-              "
-              @click="toggleApproverRequirementAction(a.id, a.isRequired)"
+              v-if="canManageApprovers && a.status === 'PENDING'"
+              class="btn-ghost btn-sm"
+              @click="demoteApproverAction(a.id)"
             >
-              {{ a.isRequired ? "Required" : "Optional" }}
+              Demote to Watcher
             </button>
-            <span
-              v-else-if="a.userRole === 'Auditor'"
-              class="text-xs px-2 py-1 rounded-md shrink-0 bg-surface-container-high text-muted"
-            >
-              Always Optional
-            </span>
             <button
               class="btn-ghost btn-md"
               :title="`Move ${a.userFullName} up`"
@@ -730,6 +702,85 @@
           </button>
         </div>
       </Transition>
+
+      <div class="border-t border-border dark:border-border-dark pt-4 mt-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold">Watchers</h3>
+          <button
+            class="btn-ghost btn-md"
+            :disabled="!canManageApprovers"
+            :title="approverManagementDisabledReason"
+            @click="showAddWatcher = !showAddWatcher"
+          >
+            Add Watcher
+          </button>
+        </div>
+
+        <div v-if="showAddWatcher" class="space-y-3">
+          <input
+            v-model="watcherSearchQuery"
+            class="input w-full"
+            placeholder="Search users by name or email…"
+          />
+          <div
+            class="max-h-48 overflow-auto rounded-lg border border-border dark:border-border-dark divide-y divide-border/60 dark:divide-border-dark/60"
+          >
+            <label
+              v-for="candidate in filteredWatcherCandidates"
+              :key="candidate.id"
+              class="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface-container-low dark:hover:bg-slate-800 cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                class="h-4 w-4 accent-primary shrink-0"
+                :checked="!!pendingWatcherIds[candidate.id]"
+                @change="toggleWatcherCandidate(candidate, $event)"
+              />
+              <div class="flex-1 min-w-0">
+                <p class="font-medium truncate">{{ candidate.label }}</p>
+                <p class="text-xs text-muted">{{ candidate.secondary ?? "" }}</p>
+              </div>
+            </label>
+            <div v-if="!filteredWatcherCandidates.length" class="px-3 py-4 text-center text-sm text-muted">
+              No matching users found.
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              class="btn-primary btn-md"
+              :disabled="!selectedWatcherCandidateIds.length || isAddingWatchers"
+              @click="batchAddWatchers"
+            >
+              {{ isAddingWatchers ? "Adding…" : `Add ${selectedWatcherCandidateIds.length}` }}
+            </button>
+            <button class="btn-ghost btn-md" @click="cancelAddWatcher">Cancel</button>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <div
+            v-for="w in watchers"
+            :key="w.id"
+            class="flex items-center justify-between rounded-lg border border-border dark:border-border-dark p-3"
+          >
+            <div>
+              <p class="text-sm font-semibold">{{ w.userFullName }}</p>
+              <p class="text-xs text-muted">{{ w.userEmail }}</p>
+            </div>
+            <div v-if="canManageApprovers" class="flex items-center gap-2">
+              <button class="btn-ghost btn-sm" @click="promoteWatcherAction(w.userId)">
+                Promote to Approver
+              </button>
+              <button class="btn-ghost btn-sm" @click="removeWatcherAction(w.userId)">
+                Remove
+              </button>
+            </div>
+          </div>
+          <div v-if="!watchers.length" class="text-sm text-muted">
+            No watchers added yet.
+          </div>
+        </div>
+      </div>
     </section>
 
     <section v-else-if="tab === 'activity'" class="card p-5">
@@ -792,7 +843,7 @@
     </section>
 
     <section v-else-if="tab === 'deployment'" class="card p-5">
-      <CrDeploymentPanel :request-id="id" />
+      <CrDeploymentPanel :request-id="id" :created-by="changeRequest.createdBy ?? null" />
     </section>
 
     <section v-else class="card p-5 space-y-4">
@@ -913,6 +964,7 @@ import type {
   ChangeRequestCustomFieldValue,
   Comment,
   CrApprover,
+  CrWatcher,
   CustomFieldDefinition,
   Group,
 } from "~/types";
@@ -957,7 +1009,6 @@ const {
   addApprover,
   addApproverGroup,
   removeApprover,
-  updateApproverRequirement,
   reorderApprovers,
   searchApproverCandidates,
   listCustomFields,
@@ -973,6 +1024,11 @@ const {
   upsertLinks,
   markComplete,
   getDeployment,
+  listWatchers,
+  addWatchers,
+  removeWatcher,
+  promoteWatcher,
+  demoteApprover,
 } = useChangeRequests();
 
 const approvers = ref<CrApprover[]>([]);
@@ -1057,10 +1113,9 @@ const isCreator = computed(
   () => !!changeRequest.value && changeRequest.value.createdBy === auth.userId,
 );
 const canEditCR = computed(() => {
-  if (!changeRequest.value) return false;
-  if (changeRequest.value.status !== "DRAFT") return false;
-  if (auth.role === "Auditor") return false;
-  return isCreator.value || auth.isSuperAdmin || auth.role === "Admin";
+  if (changeRequest.value?.completionStatus === "COMPLETED") return false;
+  if (changeRequest.value?.status !== "DRAFT") return false;
+  return isCreator.value || auth.isAdmin || auth.isSuperAdmin;
 });
 const creatorCanSelfApprove = computed(
   () => auth.isSuperAdmin || auth.role === "Admin",
@@ -1075,16 +1130,9 @@ const canCancel = computed(() => {
   );
 });
 const canManageApprovers = computed(() => {
-  if (!changeRequest.value) {
-    return false;
-  }
-  if (
-    changeRequest.value.status !== "DRAFT" &&
-    changeRequest.value.status !== "PENDING_APPROVAL"
-  ) {
-    return false;
-  }
-  return isCreator.value || auth.isSuperAdmin || auth.role === "Admin";
+  if (changeRequest.value?.completionStatus === "COMPLETED") return false;
+  if (!auth.hasPermission("cr.manage_participants")) return false;
+  return isCreator.value || auth.isAdmin || auth.isSuperAdmin;
 });
 const approverManagementDisabledReason = computed(() => {
   if (canManageApprovers.value) {
@@ -1093,11 +1141,11 @@ const approverManagementDisabledReason = computed(() => {
   if (!changeRequest.value) {
     return "Approver management is unavailable while loading this change request.";
   }
-  if (
-    changeRequest.value.status !== "DRAFT" &&
-    changeRequest.value.status !== "PENDING_APPROVAL"
-  ) {
-    return "Approvers can only be changed while the change request is open.";
+  if (changeRequest.value.completionStatus === "COMPLETED") {
+    return "This request is completed and read-only.";
+  }
+  if (!auth.hasPermission("cr.manage_participants")) {
+    return "You do not have permission to manage participants.";
   }
   return "Only the requester or an admin can manage approvers.";
 });
@@ -1118,20 +1166,13 @@ function approverRowDisabledReason(approver: CrApprover) {
   }
   return `Remove ${approver.userFullName}`;
 }
+const isApprover = computed(() =>
+  approvers.value.some((approver) => approver.userId === auth.userId),
+);
 const canSeeApprovalActions = computed(() => {
-  if (
-    !changeRequest.value ||
-    changeRequest.value.status !== "PENDING_APPROVAL"
-  ) {
-    return false;
-  }
-  if (auth.role === "Auditor") {
-    return false;
-  }
-  if (auth.isSuperAdmin || auth.role === "Admin") {
-    return true;
-  }
-  return approvers.value.some((approver) => approver.userId === auth.userId);
+  if (changeRequest.value?.status !== "PENDING_APPROVAL") return false;
+  if (!auth.hasPermission("cr.approve")) return false;
+  return auth.isAdmin || auth.isSuperAdmin || isApprover.value;
 });
 
 const canCastVote = computed(() => {
@@ -1141,13 +1182,13 @@ const canCastVote = computed(() => {
   ) {
     return false;
   }
-  if (auth.role === "Auditor") {
+  if (!auth.hasPermission("cr.approve")) {
     return false;
   }
   if (isCreator.value && !creatorCanSelfApprove.value) {
     return false;
   }
-  if (auth.isSuperAdmin || auth.role === "Admin") {
+  if (auth.isSuperAdmin || auth.isAdmin) {
     return true;
   }
 
@@ -1250,7 +1291,7 @@ const approverCandidates = ref<ApproverCandidate[]>([]);
 const isSavingApprovers = ref(false);
 
 interface ApproverSnapshot {
-  [id: string]: { isRequired: boolean; position: number };
+  [id: string]: { position: number };
 }
 
 const originalApproverState = ref<ApproverSnapshot>({});
@@ -1259,14 +1300,10 @@ const approverDirty = ref(false);
 function snapshotApproverState() {
   const snap: ApproverSnapshot = {};
   for (const a of approvers.value) {
-    snap[a.id] = { isRequired: a.isRequired, position: a.position };
+    snap[a.id] = { position: a.position };
   }
   originalApproverState.value = snap;
   approverDirty.value = false;
-}
-
-function markApproverDirty() {
-  approverDirty.value = true;
 }
 
 const hasApproverChanges = computed(() => approverDirty.value);
@@ -1275,7 +1312,6 @@ interface PendingApprover {
   id: string;
   kind: "USER" | "GROUP";
   label: string;
-  isRequired: boolean;
   role: string | null;
 }
 
@@ -1310,6 +1346,58 @@ const filteredCandidates = computed(() => {
 const selectedCandidateIds = computed(() =>
   Object.keys(pendingSelection.value),
 );
+
+// ── Watchers ─────────────────────────────────────────────────────────────────
+const watchers = ref<CrWatcher[]>([]);
+const showAddWatcher = ref(false);
+const watcherSearchQuery = ref("");
+const watcherCandidates = ref<ApproverCandidate[]>([]);
+const pendingWatcherIds = ref<Record<string, ApproverCandidate>>({});
+const isAddingWatchers = ref(false);
+
+const existingWatcherUserIds = computed(() => {
+  const ids = new Set<string>();
+  for (const w of watchers.value) {
+    ids.add(w.userId);
+  }
+  return ids;
+});
+
+const filteredWatcherCandidates = computed(() => {
+  const available = watcherCandidates.value.filter(
+    (c) =>
+      c.kind === "USER" &&
+      !existingApproverIds.value.has(c.id) &&
+      !existingWatcherUserIds.value.has(c.id) &&
+      c.id !== auth.userId &&
+      c.role !== "Auditor",
+  );
+  const q = watcherSearchQuery.value.trim().toLowerCase();
+  if (!q) return available;
+  return available.filter(
+    (c) =>
+      c.label.toLowerCase().includes(q) ||
+      (c.secondary && c.secondary.toLowerCase().includes(q)),
+  );
+});
+
+const selectedWatcherCandidateIds = computed(() =>
+  Object.keys(pendingWatcherIds.value),
+);
+
+const copied = ref(false);
+async function copyUrl() {
+  try {
+    await navigator.clipboard.writeText(window.location.href);
+    copied.value = true;
+    setTimeout(() => {
+      copied.value = false;
+    }, 2000);
+  } catch {
+    toastError("Unable to copy URL to clipboard.");
+  }
+}
+
 const fileInput = ref<HTMLInputElement | null>(null);
 
 const showReject = ref(false);
@@ -1513,6 +1601,7 @@ async function loadAll() {
       commentList,
       groupList,
       linkedIds,
+      watcherList,
     ] = await Promise.all([
       get(id.value),
       listApprovers(id.value),
@@ -1523,6 +1612,7 @@ async function loadAll() {
       listComments(id.value),
       listActiveGroups().catch(() => [] as Group[]),
       getLinkedRequests(id.value).catch(() => [] as string[]),
+      listWatchers(id.value).catch(() => [] as CrWatcher[]),
     ]);
     changeRequest.value = cr;
     approvers.value = approverList;
@@ -1534,6 +1624,7 @@ async function loadAll() {
     comments.value = commentList;
     activeGroups.value = groupList;
     linkedRequestIds.value = linkedIds;
+    watchers.value = watcherList;
     const valueMap: Record<string, string> = {};
     for (const def of definitions) {
       const saved = savedFields.find((field) => field.fieldId === def.id);
@@ -1790,15 +1881,9 @@ async function batchAddApprovers() {
   try {
     for (const sel of selections) {
       if (sel.kind === "USER") {
-        await addApprover(id.value, {
-          userId: sel.id,
-          isRequired: sel.isRequired,
-        });
+        await addApprover(id.value, { userId: sel.id });
       } else {
-        await addApproverGroup(id.value, {
-          groupId: sel.id,
-          isRequired: sel.isRequired,
-        });
+        await addApproverGroup(id.value, { groupId: sel.id, isRequired: false });
       }
     }
 
@@ -1836,28 +1921,16 @@ function filterApproverCandidates() {
 function toggleCandidate(candidate: ApproverCandidate, event: Event) {
   const checked = (event.target as HTMLInputElement).checked;
   if (checked) {
-    const isAuditor = candidate.role === "Auditor";
     pendingSelection.value[candidate.id] = {
       id: candidate.id,
       kind: candidate.kind,
       label: candidate.label,
-      isRequired: isAuditor ? false : false,
       role: candidate.role,
     };
   } else {
     const copy = { ...pendingSelection.value };
     delete copy[candidate.id];
     pendingSelection.value = copy;
-  }
-}
-
-function toggleRequiredFor(candidate: ApproverCandidate) {
-  const existing = pendingSelection.value[candidate.id];
-  if (existing) {
-    pendingSelection.value = {
-      ...pendingSelection.value,
-      [candidate.id]: { ...existing, isRequired: !existing.isRequired },
-    };
   }
 }
 
@@ -1882,22 +1955,80 @@ async function removeApproverAction(approverId: string) {
   }
 }
 
-async function toggleApproverRequirementAction(approverId: string, currentRequired: boolean) {
+async function demoteApproverAction(approverId: string) {
   if (!canManageApprovers.value) {
     toastError(approverManagementDisabledReason.value ?? "Approvers cannot be changed right now.");
     return;
   }
-  const newVal = !currentRequired;
   try {
-    const updated = await updateApproverRequirement(id.value, approverId, newVal);
-    const idx = approvers.value.findIndex((a) => a.id === approverId);
-    if (idx >= 0) {
-      approvers.value[idx] = updated;
-    }
-    markApproverDirty();
+    await demoteApprover(id.value, approverId);
+    approvers.value = await listApprovers(id.value);
+    watchers.value = await listWatchers(id.value);
+    snapshotApproverState();
     activity.value = await listActivity(id.value);
   } catch (error: unknown) {
-    toastError(extractErrorMessage(error, "Unable to update approver requirement."));
+    toastError(extractErrorMessage(error, "Unable to demote approver."));
+  }
+}
+
+function toggleWatcherCandidate(candidate: ApproverCandidate, event: Event) {
+  const checked = (event.target as HTMLInputElement).checked;
+  if (checked) {
+    pendingWatcherIds.value = { ...pendingWatcherIds.value, [candidate.id]: candidate };
+  } else {
+    pendingWatcherIds.value = Object.fromEntries(
+      Object.entries(pendingWatcherIds.value).filter(([key]) => key !== candidate.id),
+    );
+  }
+}
+
+function cancelAddWatcher() {
+  showAddWatcher.value = false;
+  watcherSearchQuery.value = "";
+  pendingWatcherIds.value = {};
+}
+
+async function batchAddWatchers() {
+  if (!selectedWatcherCandidateIds.value.length || !canManageApprovers.value) {
+    return;
+  }
+  isAddingWatchers.value = true;
+  try {
+    watchers.value = await addWatchers(id.value, selectedWatcherCandidateIds.value);
+    activity.value = await listActivity(id.value);
+    cancelAddWatcher();
+  } catch (error: unknown) {
+    toastError(extractErrorMessage(error, "Unable to add watchers."));
+  } finally {
+    isAddingWatchers.value = false;
+  }
+}
+
+async function removeWatcherAction(userId: string) {
+  if (!canManageApprovers.value) {
+    return;
+  }
+  try {
+    await removeWatcher(id.value, userId);
+    watchers.value = watchers.value.filter((w) => w.userId !== userId);
+    activity.value = await listActivity(id.value);
+  } catch (error: unknown) {
+    toastError(extractErrorMessage(error, "Unable to remove watcher."));
+  }
+}
+
+async function promoteWatcherAction(userId: string) {
+  if (!canManageApprovers.value) {
+    return;
+  }
+  try {
+    await promoteWatcher(id.value, userId);
+    approvers.value = await listApprovers(id.value);
+    watchers.value = await listWatchers(id.value);
+    snapshotApproverState();
+    activity.value = await listActivity(id.value);
+  } catch (error: unknown) {
+    toastError(extractErrorMessage(error, "Unable to promote watcher."));
   }
 }
 
@@ -2149,13 +2280,22 @@ watch(showAddApprover, async (isOpen) => {
   await loadApproverCandidates();
 });
 
+watch(showAddWatcher, async (isOpen) => {
+  if (!isOpen) {
+    return;
+  }
+  if (!watcherCandidates.value.length) {
+    watcherCandidates.value = await searchApproverCandidates("", 50);
+  }
+});
+
 const deploymentDone = ref(false);
 
 async function loadDeploymentStatus() {
   if (changeRequest.value?.workflowMode !== "DELIVERY_PIPELINE") return;
   try {
     const deployment = await getDeployment(id.value);
-    deploymentDone.value = deployment.status === "APPROVED";
+    deploymentDone.value = deployment.status === "COMPLETED";
   } catch {
     deploymentDone.value = false;
   }

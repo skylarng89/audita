@@ -35,6 +35,8 @@ function buildCr(overrides: Partial<ChangeRequest> = {}): ChangeRequest {
     workflowMode: "APPROVAL_ONLY",
     requestDepartmentId: null,
     destinationDepartmentId: null,
+    requestGroupId: null,
+    destinationGroupId: null,
     scheduledStart: null,
     scheduledEnd: null,
     affectedSystems: [],
