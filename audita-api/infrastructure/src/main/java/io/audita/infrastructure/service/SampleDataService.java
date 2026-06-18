@@ -28,6 +28,7 @@ public class SampleDataService implements SampleDataPort {
     private final CustomFieldDefinitionRepository customFieldDefinitionRepository;
     private final ChangeRequestRepository changeRequestRepository;
     private final CrApproverRepository crApproverRepository;
+    private final CrWatcherRepository crWatcherRepository;
     private final CommentRepository commentRepository;
     private final CommentMentionRepository commentMentionRepository;
     private final ActivityStreamRepository activityStreamRepository;
@@ -35,6 +36,9 @@ public class SampleDataService implements SampleDataPort {
     private final AttachmentRepository attachmentRepository;
     private final ChangeRequestCustomFieldRepository changeRequestCustomFieldRepository;
     private final OrgSettingRepository orgSettingRepository;
+    private final RequestUatRepository requestUatRepository;
+    private final RequestUatWatcherRepository requestUatWatcherRepository;
+    private final RequestDeploymentRepository requestDeploymentRepository;
     private final PasswordEncoder passwordEncoder;
 
     public SampleDataService(UserRepository userRepository,
@@ -44,6 +48,7 @@ public class SampleDataService implements SampleDataPort {
             CustomFieldDefinitionRepository customFieldDefinitionRepository,
             ChangeRequestRepository changeRequestRepository,
             CrApproverRepository crApproverRepository,
+            CrWatcherRepository crWatcherRepository,
             CommentRepository commentRepository,
             CommentMentionRepository commentMentionRepository,
             ActivityStreamRepository activityStreamRepository,
@@ -51,6 +56,9 @@ public class SampleDataService implements SampleDataPort {
             AttachmentRepository attachmentRepository,
             ChangeRequestCustomFieldRepository changeRequestCustomFieldRepository,
             OrgSettingRepository orgSettingRepository,
+            RequestUatRepository requestUatRepository,
+            RequestUatWatcherRepository requestUatWatcherRepository,
+            RequestDeploymentRepository requestDeploymentRepository,
             PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -59,6 +67,7 @@ public class SampleDataService implements SampleDataPort {
         this.customFieldDefinitionRepository = customFieldDefinitionRepository;
         this.changeRequestRepository = changeRequestRepository;
         this.crApproverRepository = crApproverRepository;
+        this.crWatcherRepository = crWatcherRepository;
         this.commentRepository = commentRepository;
         this.commentMentionRepository = commentMentionRepository;
         this.activityStreamRepository = activityStreamRepository;
@@ -66,6 +75,9 @@ public class SampleDataService implements SampleDataPort {
         this.attachmentRepository = attachmentRepository;
         this.changeRequestCustomFieldRepository = changeRequestCustomFieldRepository;
         this.orgSettingRepository = orgSettingRepository;
+        this.requestUatRepository = requestUatRepository;
+        this.requestUatWatcherRepository = requestUatWatcherRepository;
+        this.requestDeploymentRepository = requestDeploymentRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -92,6 +104,8 @@ public class SampleDataService implements SampleDataPort {
         Map<String, CustomFieldDefinitionEntity> sampleFields = createSampleCustomFields(now);
         Map<String, ChangeRequestEntity> sampleCRs = createSampleChangeRequests(sampleUsers, now);
         createSampleApprovers(sampleCRs, sampleUsers, now);
+        createSampleWatchers(sampleCRs, sampleUsers, now);
+        createSampleDeployments(sampleCRs, sampleUsers, now);
         createSampleCustomFieldValues(sampleCRs, sampleFields);
         createSampleComments(sampleCRs, sampleUsers, now);
         createSampleActivityStream(sampleCRs, sampleUsers, now);
@@ -126,6 +140,8 @@ public class SampleDataService implements SampleDataPort {
         notificationRepository.deleteByIsSampleTrue();
         activityStreamRepository.deleteByIsSampleTrue();
         crApproverRepository.deleteByIsSampleTrue();
+        crWatcherRepository.deleteByIsSampleTrue();
+        requestUatWatcherRepository.deleteByIsSampleTrue();
         changeRequestCustomFieldRepository.deleteByIsSampleTrue();
         commentRepository.deleteByIsSampleTrue();
         attachmentRepository.deleteByIsSampleTrue();
@@ -159,8 +175,6 @@ public class SampleDataService implements SampleDataPort {
                 .orElseThrow(() -> new IllegalStateException("Admin role not found"));
         RoleEntity requesterRole = roleRepository.findByName("Requester")
                 .orElseThrow(() -> new IllegalStateException("Requester role not found"));
-        RoleEntity approverRole = roleRepository.findByName("Approver")
-                .orElseThrow(() -> new IllegalStateException("Approver role not found"));
         RoleEntity auditorRole = roleRepository.findByName("Auditor")
                 .orElseThrow(() -> new IllegalStateException("Auditor role not found"));
 
@@ -168,11 +182,11 @@ public class SampleDataService implements SampleDataPort {
         users.put("sarah_chen", persistUser("sarah.chen@acme-demo.io", "Sarah Chen", adminRole, passwordHash));
         users.put("james_wilson", persistUser("james.wilson@acme-demo.io", "James Wilson", requesterRole, passwordHash));
         users.put("maria_garcia", persistUser("maria.garcia@acme-demo.io", "Maria Garcia", requesterRole, passwordHash));
-        users.put("david_kim", persistUser("david.kim@acme-demo.io", "David Kim", approverRole, passwordHash));
-        users.put("robert_johnson", persistUser("robert.johnson@acme-demo.io", "Robert Johnson", approverRole, passwordHash));
+        users.put("david_kim", persistUser("david.kim@acme-demo.io", "David Kim", requesterRole, passwordHash));
+        users.put("robert_johnson", persistUser("robert.johnson@acme-demo.io", "Robert Johnson", requesterRole, passwordHash));
         users.put("lisa_patel", persistUser("lisa.patel@acme-demo.io", "Lisa Patel", auditorRole, passwordHash));
         users.put("alex_thompson", persistUser("alex.thompson@acme-demo.io", "Alex Thompson", requesterRole, passwordHash));
-        users.put("priya_sharma", persistUser("priya.sharma@acme-demo.io", "Priya Sharma", approverRole, passwordHash));
+        users.put("priya_sharma", persistUser("priya.sharma@acme-demo.io", "Priya Sharma", requesterRole, passwordHash));
         return users;
     }
 
@@ -438,64 +452,64 @@ public class SampleDataService implements SampleDataPort {
         UserEntity sarah = users.get("sarah_chen");
 
         ChangeRequestEntity pg = crs.get("pg_upgrade");
-        addApprover(pg, david, true, 1, ApproverStatus.APPROVED, now.minusDays(4));
-        addApprover(pg, robert, true, 2, ApproverStatus.APPROVED, now.minusDays(3));
+        addApprover(pg, david, 1, ApproverStatus.APPROVED, now.minusDays(4));
+        addApprover(pg, robert, 2, ApproverStatus.APPROVED, now.minusDays(3));
         pg.setApprovalLocked(true);
 
         ChangeRequestEntity payment = crs.get("payment_v2");
-        addApprover(payment, david, true, 1, ApproverStatus.PENDING, null);
-        addApprover(payment, robert, true, 2, ApproverStatus.PENDING, null);
+        addApprover(payment, david, 1, ApproverStatus.PENDING, null);
+        addApprover(payment, robert, 2, ApproverStatus.PENDING, null);
 
         ChangeRequestEntity k8s = crs.get("k8s_migration");
-        addApprover(k8s, david, true, 1, ApproverStatus.APPROVED, now.minusDays(2));
-        addApprover(k8s, robert, false, 2, ApproverStatus.APPROVED, now.minusDays(1));
-        addApprover(k8s, priya, false, 3, ApproverStatus.APPROVED, now.minusDays(1));
+        addApprover(k8s, david, 1, ApproverStatus.APPROVED, now.minusDays(2));
+        addApprover(k8s, robert, 2, ApproverStatus.APPROVED, now.minusDays(1));
+        addApprover(k8s, priya, 3, ApproverStatus.APPROVED, now.minusDays(1));
         k8s.setApprovalLocked(true);
 
         ChangeRequestEntity ssl = crs.get("ssl_renewal");
-        addApprover(ssl, david, true, 1, ApproverStatus.APPROVED, now.minusDays(1));
+        addApprover(ssl, david, 1, ApproverStatus.APPROVED, now.minusDays(1));
         ssl.setApprovalLocked(true);
 
         ChangeRequestEntity networkSw = crs.get("network_switches");
-        addApprover(networkSw, robert, true, 1, ApproverStatus.APPROVED, now.minusDays(6));
-        addApprover(networkSw, david, true, 2, ApproverStatus.APPROVED, now.minusDays(5));
+        addApprover(networkSw, robert, 1, ApproverStatus.APPROVED, now.minusDays(6));
+        addApprover(networkSw, david, 2, ApproverStatus.APPROVED, now.minusDays(5));
         networkSw.setApprovalLocked(true);
 
         ChangeRequestEntity kafka = crs.get("kafka_upgrade");
-        addApprover(kafka, david, true, 1, ApproverStatus.PENDING, null);
-        addApprover(kafka, priya, true, 2, ApproverStatus.PENDING, null);
+        addApprover(kafka, david, 1, ApproverStatus.PENDING, null);
+        addApprover(kafka, priya, 2, ApproverStatus.PENDING, null);
 
         ChangeRequestEntity spring = crs.get("spring_cve");
-        addApprover(spring, david, true, 1, ApproverStatus.APPROVED, now.minusHours(12));
-        addApprover(spring, robert, true, 2, ApproverStatus.APPROVED, now.minusHours(6));
+        addApprover(spring, david, 1, ApproverStatus.APPROVED, now.minusHours(12));
+        addApprover(spring, robert, 2, ApproverStatus.APPROVED, now.minusHours(6));
         spring.setApprovalLocked(true);
 
         ChangeRequestEntity monitoring = crs.get("monitoring");
-        addApprover(monitoring, david, true, 1, ApproverStatus.APPROVED, now.minusDays(3));
-        addApprover(monitoring, robert, false, 2, ApproverStatus.APPROVED, now.minusDays(2));
+        addApprover(monitoring, david, 1, ApproverStatus.APPROVED, now.minusDays(3));
+        addApprover(monitoring, robert, 2, ApproverStatus.APPROVED, now.minusDays(2));
         monitoring.setApprovalLocked(true);
 
         ChangeRequestEntity redis = crs.get("redis_migrate");
-        addApprover(redis, david, true, 1, ApproverStatus.PENDING, null);
+        addApprover(redis, david, 1, ApproverStatus.PENDING, null);
 
         ChangeRequestEntity firewall = crs.get("firewall");
-        addApprover(firewall, robert, true, 1, ApproverStatus.APPROVED, now.minusDays(2));
-        addApprover(firewall, david, true, 2, ApproverStatus.APPROVED, now.minusDays(1));
+        addApprover(firewall, robert, 1, ApproverStatus.APPROVED, now.minusDays(2));
+        addApprover(firewall, david, 2, ApproverStatus.APPROVED, now.minusDays(1));
         firewall.setApprovalLocked(true);
 
         ChangeRequestEntity encryption = crs.get("encryption_at_rest");
-        addApprover(encryption, robert, true, 1, ApproverStatus.APPROVED, now.minusDays(4));
-        addApprover(encryption, sarah, true, 2, ApproverStatus.APPROVED, now.minusDays(3));
+        addApprover(encryption, robert, 1, ApproverStatus.APPROVED, now.minusDays(4));
+        addApprover(encryption, sarah, 2, ApproverStatus.APPROVED, now.minusDays(3));
         encryption.setApprovalLocked(true);
 
         ChangeRequestEntity lb = crs.get("lb_upgrade");
-        addApprover(lb, robert, true, 1, ApproverStatus.REJECTED, now.minusDays(2));
+        addApprover(lb, robert, 1, ApproverStatus.REJECTED, now.minusDays(2));
         lb.setApprovalLocked(true);
     }
 
-    private void addApprover(ChangeRequestEntity cr, UserEntity user, boolean isRequired,
+    private void addApprover(ChangeRequestEntity cr, UserEntity user,
             int position, ApproverStatus status, OffsetDateTime decidedAt) {
-        CrApproverEntity approver = new CrApproverEntity(cr, user, isRequired, position, false);
+        CrApproverEntity approver = new CrApproverEntity(cr, user, position);
         approver.setSample(true);
         approver.setStatus(status);
         approver.setDecidedAt(decidedAt);
@@ -503,6 +517,62 @@ public class SampleDataService implements SampleDataPort {
             approver.setRejectionReason("Does not meet current priority thresholds. Resubmit with stronger business case.");
         }
         crApproverRepository.save(approver);
+    }
+
+    private void createSampleWatchers(Map<String, ChangeRequestEntity> crs, Map<String, UserEntity> users, OffsetDateTime now) {
+        addWatcher(crs.get("pg_upgrade"), users.get("lisa_patel"));
+        addWatcher(crs.get("payment_v2"), users.get("alex_thompson"));
+        addWatcher(crs.get("k8s_migration"), users.get("maria_garcia"));
+        addWatcher(crs.get("spring_cve"), users.get("james_wilson"));
+        addWatcher(crs.get("monitoring"), users.get("priya_sharma"));
+    }
+
+    private void addWatcher(ChangeRequestEntity cr, UserEntity user) {
+        CrWatcherEntity watcher = new CrWatcherEntity(cr, user);
+        watcher.setSample(true);
+        crWatcherRepository.save(watcher);
+    }
+
+    private void createSampleDeployments(Map<String, ChangeRequestEntity> crs, Map<String, UserEntity> users, OffsetDateTime now) {
+        UserEntity david = users.get("david_kim");
+
+        ChangeRequestEntity pg = crs.get("pg_upgrade");
+        pg.setWorkflowMode(RequestWorkflowMode.DELIVERY_PIPELINE);
+        pg.setApprovalStatus(ChangeRequestStatus.APPROVED);
+        RequestUatEntity pgUat = createSampleUat(pg, pg.getCreatedBy(), now);
+        createDeployment(pg, pgUat, david, "COMPLETED", now.minusDays(2), now.minusDays(1));
+
+        ChangeRequestEntity k8s = crs.get("k8s_migration");
+        k8s.setWorkflowMode(RequestWorkflowMode.DELIVERY_PIPELINE);
+        k8s.setApprovalStatus(ChangeRequestStatus.APPROVED);
+        RequestUatEntity k8sUat = createSampleUat(k8s, k8s.getCreatedBy(), now);
+        createDeployment(k8s, k8sUat, david, "PENDING", now.minusDays(1), null);
+    }
+
+    private RequestUatEntity createSampleUat(ChangeRequestEntity cr, UserEntity creator, OffsetDateTime now) {
+        RequestUatEntity uat = new RequestUatEntity();
+        uat.setRequestId(cr.getId());
+        uat.setTitle("UAT for " + cr.getTitle());
+        uat.setDetails("Sample UAT details");
+        uat.setStatus("PROMOTED");
+        uat.setReadOnly(true);
+        uat.setCreatedBy(creator.getId());
+        return requestUatRepository.save(uat);
+    }
+
+    private RequestDeploymentEntity createDeployment(ChangeRequestEntity cr, RequestUatEntity uat,
+            UserEntity assignee, String status, OffsetDateTime promotedAt, OffsetDateTime completedAt) {
+        RequestDeploymentEntity deployment = new RequestDeploymentEntity();
+        deployment.setRequestId(cr.getId());
+        deployment.setUatId(uat.getId());
+        deployment.setAssignee(assignee);
+        deployment.setStatus(status);
+        deployment.setCreatedBy(cr.getCreatedBy().getId());
+        deployment.setPromotedAt(promotedAt);
+        if (completedAt != null) {
+            deployment.setCompletedAt(completedAt);
+        }
+        return requestDeploymentRepository.save(deployment);
     }
 
     private void createSampleCustomFieldValues(Map<String, ChangeRequestEntity> crs,

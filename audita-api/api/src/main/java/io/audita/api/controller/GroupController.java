@@ -32,7 +32,7 @@ public class GroupController {
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'groups.view')")
     public PageResponse<GroupResponse> listGroups(@PageableDefault(size = 20) Pageable pageable,
                                                    @RequestParam(required = false) Boolean active) {
         if (active != null && active) {
@@ -42,13 +42,13 @@ public class GroupController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'groups.view')")
     public GroupResponse getGroup(@PathVariable UUID id) {
         return GroupResponse.from(groupService.getGroup(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'groups.manage')")
     public ResponseEntity<GroupResponse> createGroup(@Valid @RequestBody CreateGroupRequest req,
                                                       @AuthenticationPrincipal UserDetails principal) {
         UUID createdById = UUID.fromString(principal.getUsername());
@@ -57,21 +57,21 @@ public class GroupController {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'groups.manage')")
     public GroupResponse updateGroup(@PathVariable UUID id,
                                      @Valid @RequestBody CreateGroupRequest req) {
         return GroupResponse.from(groupService.updateGroup(id, req.name(), req.description()));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'groups.manage')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteGroup(@PathVariable UUID id, @CurrentUser UserPrincipal user) {
         groupService.deleteGroup(id, user.userId());
     }
 
     @GetMapping("/{id}/members")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'groups.view')")
         public PageResponse<UserResponse> listMembers(@PathVariable UUID id,
                               @PageableDefault(size = 20) Pageable pageable) {
         return PageResponse.from(
@@ -81,21 +81,21 @@ public class GroupController {
     }
 
     @PostMapping("/{id}/members")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'groups.manage')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addMember(@PathVariable UUID id, @Valid @RequestBody GroupMemberRequest req) {
         groupService.addMember(id, req.userId());
     }
 
     @DeleteMapping("/{id}/members/{userId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'groups.manage')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeMember(@PathVariable UUID id, @PathVariable UUID userId) {
         groupService.removeMember(id, userId);
     }
 
     @PostMapping("/{id}/members/batch")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'groups.manage')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addMembers(@PathVariable UUID id, @Valid @RequestBody BatchMembersRequest req,
                            @CurrentUser UserPrincipal user) {
@@ -103,7 +103,7 @@ public class GroupController {
     }
 
     @DeleteMapping("/{id}/members/batch")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'groups.manage')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeMembers(@PathVariable UUID id, @Valid @RequestBody BatchMembersRequest req,
                               @CurrentUser UserPrincipal user) {

@@ -145,44 +145,6 @@ class RequestWorkflowControllersWebMvcTest {
     }
 
     @Test
-    void approve_deployment_returns_204() throws Exception {
-        RequestDeploymentEntity deployment = deploymentEntity(deploymentId, requestId, uatId);
-
-        when(requestDeploymentService.getByRequestId(requestId)).thenReturn(Optional.of(deployment));
-
-        setAuth(principal);
-        try {
-            mockMvc.perform(post("/api/v1/change-requests/{requestId}/deployment/approve", requestId)
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isNoContent());
-        } finally {
-            SecurityContextHolder.clearContext();
-        }
-
-        verify(requestDeploymentService).approveDeployment(deploymentId, userId);
-    }
-
-    @Test
-    void reject_deployment_returns_204() throws Exception {
-        RequestDeploymentEntity deployment = deploymentEntity(deploymentId, requestId, uatId);
-
-        when(requestDeploymentService.getByRequestId(requestId)).thenReturn(Optional.of(deployment));
-
-        setAuth(principal);
-        try {
-            mockMvc.perform(post("/api/v1/change-requests/{requestId}/deployment/reject", requestId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(
-                                    Map.of("reason", "Not ready for production"))))
-                    .andExpect(status().isNoContent());
-        } finally {
-            SecurityContextHolder.clearContext();
-        }
-
-        verify(requestDeploymentService).rejectDeployment(deploymentId, userId, "Not ready for production");
-    }
-
-    @Test
     void deployment_controller_has_no_create_endpoint() {
         Method[] methods = RequestDeploymentController.class.getDeclaredMethods();
         boolean hasCreateMethod = Arrays.stream(methods)

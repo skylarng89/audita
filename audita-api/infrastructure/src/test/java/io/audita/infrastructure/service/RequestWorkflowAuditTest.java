@@ -8,12 +8,12 @@ import io.audita.infrastructure.persistence.entity.RequestDeploymentEntity;
 import io.audita.infrastructure.persistence.entity.RequestUatCommentEntity;
 import io.audita.infrastructure.persistence.entity.RequestUatEntity;
 import io.audita.infrastructure.persistence.repository.ChangeRequestRepository;
-import io.audita.infrastructure.persistence.repository.RequestDeploymentApproverRepository;
 import io.audita.infrastructure.persistence.repository.RequestDeploymentCommentRepository;
 import io.audita.infrastructure.persistence.repository.RequestDeploymentRepository;
 import io.audita.infrastructure.persistence.repository.RequestUatApproverRepository;
 import io.audita.infrastructure.persistence.repository.RequestUatCommentRepository;
 import io.audita.infrastructure.persistence.repository.RequestUatRepository;
+import io.audita.infrastructure.persistence.repository.RequestUatWatcherRepository;
 import io.audita.infrastructure.persistence.repository.ActivityStreamRepository;
 import io.audita.infrastructure.persistence.repository.CrApproverRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
@@ -47,11 +47,15 @@ class RequestWorkflowAuditTest {
         @Mock ChangeRequestRepository changeRequestRepository;
         @Mock RequestUatRepository requestUatRepository;
         @Mock RequestUatApproverRepository requestUatApproverRepository;
+        @Mock RequestUatWatcherRepository requestUatWatcherRepository;
         @Mock RequestUatCommentRepository requestUatCommentRepository;
         @Mock UserRepository userRepository;
         @Mock RequestDeploymentService deploymentService;
         @Mock AuditLogService auditLogService;
         @Mock ActivityStreamRepository activityStreamRepository;
+        @Mock NotificationService notificationService;
+        @Mock EmailService emailService;
+        @Mock MentionNotifier mentionNotifier;
 
         @InjectMocks RequestUatService requestUatService;
 
@@ -166,14 +170,13 @@ class RequestWorkflowAuditTest {
     class DeploymentAuditTests {
 
         @Mock RequestDeploymentRepository deploymentRepository;
-        @Mock RequestDeploymentApproverRepository deploymentApproverRepository;
         @Mock RequestDeploymentCommentRepository deploymentCommentRepository;
-        @Mock CrApproverRepository crApproverRepository;
-        @Mock RequestUatApproverRepository uatApproverRepository;
         @Mock UserRepository userRepository;
         @Mock ChangeRequestRepository changeRequestRepository;
         @Mock ActivityStreamRepository activityStreamRepository;
         @Mock AuditLogService auditLogService;
+        @Mock NotificationService notificationService;
+        @Mock MentionNotifier mentionNotifier;
 
         @InjectMocks RequestDeploymentService requestDeploymentService;
 
@@ -188,7 +191,12 @@ class RequestWorkflowAuditTest {
             ReflectionTestUtils.setField(deployment, "id", deploymentId);
             deployment.setRequestId(requestId);
 
+            ChangeRequestEntity cr = new ChangeRequestEntity();
+            ReflectionTestUtils.setField(cr, "id", requestId);
+            cr.setTitle("Deployment CR");
+
             when(deploymentRepository.findById(deploymentId)).thenReturn(Optional.of(deployment));
+            when(changeRequestRepository.findById(requestId)).thenReturn(Optional.of(cr));
             when(deploymentCommentRepository.save(any(RequestDeploymentCommentEntity.class))).thenAnswer(inv -> {
                 RequestDeploymentCommentEntity c = inv.getArgument(0);
                 ReflectionTestUtils.setField(c, "id", commentId);
@@ -218,7 +226,12 @@ class RequestWorkflowAuditTest {
             ReflectionTestUtils.setField(deployment, "id", deploymentId);
             deployment.setRequestId(requestId);
 
+            ChangeRequestEntity cr = new ChangeRequestEntity();
+            ReflectionTestUtils.setField(cr, "id", requestId);
+            cr.setTitle("Deployment CR");
+
             when(deploymentRepository.findById(deploymentId)).thenReturn(Optional.of(deployment));
+            when(changeRequestRepository.findById(requestId)).thenReturn(Optional.of(cr));
             when(deploymentCommentRepository.save(any(RequestDeploymentCommentEntity.class))).thenAnswer(inv -> {
                 RequestDeploymentCommentEntity c = inv.getArgument(0);
                 ReflectionTestUtils.setField(c, "id", commentId);

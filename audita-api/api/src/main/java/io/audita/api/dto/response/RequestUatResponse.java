@@ -19,7 +19,8 @@ public record RequestUatResponse(
         String createdByFullName,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
-        List<RequestUatApproverResponse> approvers
+        List<RequestUatApproverResponse> approvers,
+        List<RequestUatWatcherResponse> watchers
 ) {
     public static RequestUatResponse from(RequestUatEntity entity) {
         return new RequestUatResponse(
@@ -34,6 +35,7 @@ public record RequestUatResponse(
                 null,
                 entity.getCreatedAt(),
                 entity.getUpdatedAt(),
+                List.of(),
                 List.of()
         );
     }
@@ -52,7 +54,28 @@ public record RequestUatResponse(
                 createdByFullName,
                 entity.getCreatedAt(),
                 entity.getUpdatedAt(),
-                approvers
+                approvers,
+                List.of()
+        );
+    }
+
+    public static RequestUatResponse from(RequestUatEntity entity, String createdByFullName,
+            List<RequestUatApproverResponse> approvers,
+            List<RequestUatWatcherResponse> watchers) {
+        return new RequestUatResponse(
+                entity.getId(),
+                entity.getRequestId(),
+                entity.getTitle(),
+                entity.getDetails(),
+                entity.getStatus(),
+                entity.isReadOnly(),
+                entity.isRequesterSignedOff(),
+                entity.getCreatedBy(),
+                createdByFullName,
+                entity.getCreatedAt(),
+                entity.getUpdatedAt(),
+                approvers,
+                watchers
         );
     }
 }

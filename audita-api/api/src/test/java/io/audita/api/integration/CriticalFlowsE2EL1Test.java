@@ -118,7 +118,7 @@ class CriticalFlowsE2EL1Test {
         insertTenant(slug);
         insertUser(slug, adminEmail, "Admin User", "ADMIN", "ACTIVE", password);
         insertUser(slug, requesterEmail, "Requester User", "REQUESTER", "ACTIVE", password);
-        UUID approverId = insertUser(slug, approverEmail, "Approver User", "APPROVER", "ACTIVE", password);
+        UUID approverId = insertUser(slug, approverEmail, "Approver User", "REQUESTER", "ACTIVE", password);
 
         String adminToken = accessToken(login(slug, adminEmail, password));
         String requesterToken = accessToken(login(slug, requesterEmail, password));
@@ -324,8 +324,6 @@ class CriticalFlowsE2EL1Test {
             exec(c, "ALTER TABLE " + slug + ".cr_approvers ADD COLUMN IF NOT EXISTS \"isAdHoc\" BOOLEAN DEFAULT FALSE");
             exec(c, "ALTER TABLE " + slug + ".cr_approvers ADD COLUMN IF NOT EXISTS createdat TIMESTAMPTZ DEFAULT NOW()");
             exec(c, "ALTER TABLE " + slug + ".cr_approvers ADD COLUMN IF NOT EXISTS \"createdAt\" TIMESTAMPTZ DEFAULT NOW()");
-            exec(c, "ALTER TABLE " + slug + ".cr_approvers ALTER COLUMN is_required DROP NOT NULL");
-            exec(c, "ALTER TABLE " + slug + ".cr_approvers ALTER COLUMN is_ad_hoc DROP NOT NULL");
             exec(c, "ALTER TABLE " + slug + ".cr_approvers ALTER COLUMN created_at DROP NOT NULL");
 
             exec(c, "ALTER TABLE " + slug + ".notifications ADD COLUMN IF NOT EXISTS recipientid UUID");

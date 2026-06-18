@@ -133,7 +133,6 @@ CREATE TABLE IF NOT EXISTS request_uat_approvers (
     id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     uat_id           UUID        NOT NULL REFERENCES request_uat(id) ON DELETE CASCADE,
     user_id          UUID        NOT NULL REFERENCES users(id),
-    is_required      BOOLEAN     NOT NULL DEFAULT TRUE,
     status           VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     position         INT         NOT NULL,
     decided_at       TIMESTAMPTZ,
@@ -141,6 +140,18 @@ CREATE TABLE IF NOT EXISTS request_uat_approvers (
     CONSTRAINT uq_uat_approver        UNIQUE (uat_id, user_id),
     CONSTRAINT chk_uat_approver_status CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED'))
 );
+
+CREATE TABLE IF NOT EXISTS request_uat_watchers (
+    id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    uat_id     UUID        NOT NULL REFERENCES request_uat(id) ON DELETE CASCADE,
+    user_id    UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    is_sample  BOOLEAN     NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_uat_watcher UNIQUE (uat_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_uat_watchers_uat ON request_uat_watchers(uat_id);
+CREATE INDEX IF NOT EXISTS idx_uat_watchers_user ON request_uat_watchers(user_id);
 
 CREATE TABLE IF NOT EXISTS request_uat_comments (
     id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -156,26 +167,18 @@ CREATE TABLE IF NOT EXISTS request_uat_comments (
 CREATE TABLE IF NOT EXISTS request_deployments (
     id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     request_id   UUID        NOT NULL UNIQUE REFERENCES change_requests(id) ON DELETE CASCADE,
-    uat_id       UUID        NOT NULL UNIQUE REFERENCES request_uat(id),
-    status       VARCHAR(32) NOT NULL DEFAULT 'PENDING_APPROVAL',
-    created_by   UUID        REFERENCES users(id),
+    uat_id       UUID        NOT NULL UNIQUE REFERENCES request_uat(id) ON DELETE CASCADE,
+    assignee_id  UUID        REFERENCES users(id) ON DELETE SET NULL,
+    status       VARCHAR(32) NOT NULL DEFAULT 'PENDING',
+    created_by   UUID        NOT NULL REFERENCES users(id),
     promoted_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     completed_at TIMESTAMPTZ,
-    CONSTRAINT chk_deployment_status CHECK (status IN ('PENDING_APPROVAL', 'APPROVED', 'REJECTED'))
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_deployment_status CHECK (status IN ('PENDING', 'COMPLETED', 'CANCELLED'))
 );
 
-CREATE TABLE IF NOT EXISTS request_deployment_approvers (
-    id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-    deployment_id    UUID        NOT NULL REFERENCES request_deployments(id) ON DELETE CASCADE,
-    user_id          UUID        NOT NULL REFERENCES users(id),
-    is_required      BOOLEAN     NOT NULL DEFAULT TRUE,
-    status           VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-    position         INT         NOT NULL,
-    decided_at       TIMESTAMPTZ,
-    rejection_reason TEXT,
-    CONSTRAINT uq_deployment_approver        UNIQUE (deployment_id, user_id),
-    CONSTRAINT chk_deployment_approver_status CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED'))
-);
+CREATE INDEX IF NOT EXISTS idx_deployment_assignee ON request_deployments(assignee_id);
 
 CREATE TABLE IF NOT EXISTS request_deployment_comments (
     id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),

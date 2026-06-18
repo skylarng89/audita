@@ -2,7 +2,9 @@
 <!--
   Logback configuration for Audita API.
 
-  Two appenders:
+  Three appenders:
+    - FILE          : rolling file output (daily + size-based, gzipped).
+                      Active in ALL profiles. MDC context included per line.
     - CONSOLE_JSON  : structured JSON output (production / default).
                       LogstashEncoder includes all MDC fields automatically.
                       MDC keys expected: tenant_id, user_id, request_id.
@@ -10,6 +12,24 @@
                       Active only when the "dev" Spring profile is loaded.
 -->
 <configuration>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       File appender — active in ALL profiles.
+       Daily rotation + size-based rolling with gzipped archives.
+       MDC context (tenant_id|user_id|request_id) included per line.
+  ═══════════════════════════════════════════════════════════ -->
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_FILE:-logs/audita-api.log}</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>logs/audita-api-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+      <maxFileSize>${LOG_FILE_MAX_SIZE:-50MB}</maxFileSize>
+      <maxHistory>${LOG_FILE_MAX_HISTORY:-30}</maxHistory>
+      <totalSizeCap>${LOG_FILE_TOTAL_SIZE_CAP:-1GB}</totalSizeCap>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d{ISO8601} %-5level [%thread] [%X{tenant_id}|%X{user_id}|%X{request_id}] %logger{36} - %msg%n%rEx</pattern>
+    </encoder>
+  </appender>
 
   <!-- ═══════════════════════════════════════════════════════════
        Profile-based root logger wiring
@@ -39,11 +59,13 @@
 
     <root level="INFO">
       <appender-ref ref="CONSOLE_JSON" />
+      <appender-ref ref="FILE" />
     </root>
 
     <!-- Verbose debug logging for Audita application code only -->
     <logger name="io.audita" level="DEBUG" additivity="false">
       <appender-ref ref="CONSOLE_JSON" />
+      <appender-ref ref="FILE" />
     </logger>
   </springProfile>
 
@@ -59,10 +81,12 @@
 
     <root level="INFO">
       <appender-ref ref="CONSOLE_PLAIN" />
+      <appender-ref ref="FILE" />
     </root>
 
     <logger name="io.audita" level="DEBUG" additivity="false">
       <appender-ref ref="CONSOLE_PLAIN" />
+      <appender-ref ref="FILE" />
     </logger>
 
     <!-- Suppress noisy Hibernate SQL parameter binding in dev unless needed -->

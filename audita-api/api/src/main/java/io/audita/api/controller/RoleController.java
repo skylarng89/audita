@@ -2,6 +2,7 @@ package io.audita.api.controller;
 
 import io.audita.api.dto.request.CreateCustomRoleRequest;
 import io.audita.api.dto.request.UpdateRolePermissionsRequest;
+import io.audita.api.dto.response.PermissionCatalogueResponse;
 import io.audita.api.dto.response.RoleResponse;
 import io.audita.infrastructure.service.RoleService;
 import jakarta.validation.Valid;
@@ -15,7 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/roles")
-@PreAuthorize("isAuthenticated()")
+@PreAuthorize("@authz.hasPermission(authentication, 'roles.view')")
 public class RoleController {
 
     private final RoleService roleService;
@@ -34,17 +35,29 @@ public class RoleController {
         return RoleResponse.from(roleService.getRole(id));
     }
 
+    @GetMapping("/permissions")
+    public PermissionCatalogueResponse listPermissions() {
+        return PermissionCatalogueResponse.from(roleService.listAllPermissions());
+    }
+
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'roles.manage')")
     public ResponseEntity<RoleResponse> createCustomRole(@Valid @RequestBody CreateCustomRoleRequest req) {
         var role = roleService.createCustomRole(req.name(), req.description(), req.permissionCodes());
         return new ResponseEntity<>(RoleResponse.from(role), HttpStatus.CREATED);
     }
 
     @PatchMapping("/{id}/permissions")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'roles.manage')")
     public RoleResponse updateRolePermissions(@PathVariable UUID id,
             @Valid @RequestBody UpdateRolePermissionsRequest req) {
         return RoleResponse.from(roleService.updateRolePermissions(id, req.permissionCodes()));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("@authz.hasPermission(authentication, 'roles.manage')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteRole(@PathVariable UUID id) {
+        roleService.deleteRole(id);
     }
 }

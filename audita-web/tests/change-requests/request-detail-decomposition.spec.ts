@@ -21,6 +21,10 @@ vi.mock("~/composables/richText", () => ({
   buildRichTextExtensions: () => [],
 }));
 
+vi.stubGlobal("useAuthStore", () => ({
+  hasPermission: () => true,
+}));
+
 import CrRequestOverviewPanel from "~/components/cr/CrRequestOverviewPanel.vue";
 import CrCompletionStatusControl from "~/components/cr/CrCompletionStatusControl.vue";
 import CrCompletionStatusBadge from "~/components/cr/CrCompletionStatusBadge.vue";
@@ -46,6 +50,8 @@ function buildCr(overrides: Partial<ChangeRequest> = {}): ChangeRequest {
     workflowMode: "DELIVERY_PIPELINE",
     requestDepartmentId: null,
     destinationDepartmentId: null,
+    requestGroupId: null,
+    destinationGroupId: null,
     scheduledStart: "2026-06-01T10:00:00Z",
     scheduledEnd: "2026-06-05T18:00:00Z",
     affectedSystems: ["API Gateway", "Auth Service"],

@@ -38,7 +38,7 @@ public class TenantSettingsController {
         }
 
         @GetMapping
-        @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+        @PreAuthorize("@authz.hasPermission(authentication, 'settings.view')")
         public TenantAdminSettingsResponse getSettings(@AuthenticationPrincipal UserPrincipal principal) {
                 String tenantSlug = principal == null ? null : principal.tenantSlug();
                 if (tenantSlug == null || tenantSlug.isBlank()) {
@@ -96,7 +96,7 @@ TenantAdminSettingsResponse.AuditDefaults auditDefaults = new TenantAdminSetting
         }
 
         @PatchMapping
-        @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+        @PreAuthorize("@authz.hasPermission(authentication, 'settings.manage')")
         public TenantAdminSettingsResponse patchSettings(@AuthenticationPrincipal UserPrincipal principal,
                         @RequestBody Map<String, Object> body) {
                 String tenantSlug = principal == null ? null : principal.tenantSlug();

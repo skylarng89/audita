@@ -13,6 +13,7 @@ import io.audita.infrastructure.persistence.repository.ChangeRequestRepository;
 import io.audita.infrastructure.persistence.repository.RequestUatApproverRepository;
 import io.audita.infrastructure.persistence.repository.RequestUatCommentRepository;
 import io.audita.infrastructure.persistence.repository.RequestUatRepository;
+import io.audita.infrastructure.persistence.repository.RequestUatWatcherRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,6 +52,14 @@ class RequestUatServiceTest {
     AuditLogService auditLogService;
     @Mock
     ActivityStreamRepository activityStreamRepository;
+    @Mock
+    RequestUatWatcherRepository requestUatWatcherRepository;
+    @Mock
+    NotificationService notificationService;
+    @Mock
+    EmailService emailService;
+    @Mock
+    MentionNotifier mentionNotifier;
 
     @InjectMocks
     RequestUatService requestUatService;
@@ -201,7 +210,6 @@ class RequestUatServiceTest {
         ReflectionTestUtils.setField(pending, "id", UUID.randomUUID());
         pending.setUatId(uatId);
         pending.setUserId(UUID.randomUUID());
-        pending.setRequired(true);
         pending.setPosition(1);
         pending.setStatus(ApproverStatus.PENDING);
 
@@ -260,6 +268,7 @@ class RequestUatServiceTest {
         uat.setDetails("details");
         uat.setStatus("IN_PROGRESS");
         uat.setReadOnly(false);
+        uat.setRequesterSignedOff(true);
         uat.setCreatedBy(UUID.randomUUID());
         return uat;
     }
@@ -269,7 +278,6 @@ class RequestUatServiceTest {
         ReflectionTestUtils.setField(approver, "id", UUID.randomUUID());
         approver.setUatId(uatId);
         approver.setUserId(UUID.randomUUID());
-        approver.setRequired(required);
         approver.setPosition(1);
         approver.setStatus(ApproverStatus.APPROVED);
         return approver;

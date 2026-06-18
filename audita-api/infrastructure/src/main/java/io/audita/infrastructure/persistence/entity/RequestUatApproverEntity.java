@@ -20,9 +20,6 @@ public class RequestUatApproverEntity {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(name = "is_required", nullable = false)
-    private boolean isRequired = true;
-
     @Column(nullable = false)
     private int position;
 
@@ -58,8 +55,6 @@ public class RequestUatApproverEntity {
     public void setUatId(UUID uatId) { this.uatId = uatId; }
     public UUID getUserId() { return userId; }
     public void setUserId(UUID userId) { this.userId = userId; }
-    public boolean isRequired() { return isRequired; }
-    public void setRequired(boolean required) { this.isRequired = required; }
     public int getPosition() { return position; }
     public void setPosition(int position) { this.position = position; }
     public ApproverStatus getStatus() { return status; }

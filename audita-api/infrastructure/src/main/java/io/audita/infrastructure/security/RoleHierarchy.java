@@ -29,7 +29,6 @@ public final class RoleHierarchy {
             case "SUPER_ADMIN" -> 1000 ;
             case "ADMIN" -> 900 ;
             case "AUDITOR" -> 700 ;
-            case "APPROVER" -> 500 ;
             case "REQUESTER" -> 300 ;
             default -> 100 ;
         };

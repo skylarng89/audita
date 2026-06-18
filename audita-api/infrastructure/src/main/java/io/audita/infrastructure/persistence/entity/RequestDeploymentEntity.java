@@ -19,10 +19,14 @@ public class RequestDeploymentEntity {
     private UUID uatId;
 
     @Column(nullable = false)
-    private String status = "PENDING_APPROVAL";
+    private String status = "PENDING";
 
     @Column(name = "created_by")
     private UUID createdBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assignee_id")
+    private UserEntity assignee;
 
     @Column(name = "promoted_at", nullable = false)
     private OffsetDateTime promotedAt = OffsetDateTime.now();
@@ -41,6 +45,8 @@ public class RequestDeploymentEntity {
     public void setStatus(String status) { this.status = status; }
     public UUID getCreatedBy() { return createdBy; }
     public void setCreatedBy(UUID createdBy) { this.createdBy = createdBy; }
+    public UserEntity getAssignee() { return assignee; }
+    public void setAssignee(UserEntity assignee) { this.assignee = assignee; }
     public OffsetDateTime getPromotedAt() { return promotedAt; }
     public void setPromotedAt(OffsetDateTime promotedAt) { this.promotedAt = promotedAt; }
     public OffsetDateTime getCompletedAt() { return completedAt; }

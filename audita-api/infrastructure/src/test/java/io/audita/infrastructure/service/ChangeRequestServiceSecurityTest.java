@@ -16,6 +16,9 @@ import io.audita.infrastructure.persistence.repository.AttachmentRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestCustomFieldRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestRepository;
 import io.audita.infrastructure.persistence.repository.CrApproverRepository;
+import io.audita.infrastructure.persistence.repository.CrWatcherRepository;
+import io.audita.infrastructure.persistence.repository.GroupMemberRepository;
+import io.audita.infrastructure.persistence.repository.GroupRepository;
 import io.audita.infrastructure.persistence.repository.OrgSettingRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
 import io.audita.infrastructure.security.HtmlSanitizer;
@@ -53,6 +56,12 @@ class ChangeRequestServiceSecurityTest {
     @Mock
     CrApproverRepository crApproverRepository;
     @Mock
+    CrWatcherRepository crWatcherRepository;
+    @Mock
+    GroupRepository groupRepository;
+    @Mock
+    GroupMemberRepository groupMemberRepository;
+    @Mock
     ChangeRequestCustomFieldRepository customFieldRepository;
     @Mock
     ActivityStreamRepository activityStreamRepository;
@@ -63,9 +72,15 @@ class ChangeRequestServiceSecurityTest {
     @Mock
     OrgSettingRepository orgSettingRepository;
     @Mock
+    RequestDeploymentService deploymentService;
+    @Mock
     AuditLogService auditLogService;
     @Mock
     HtmlSanitizer htmlSanitizer;
+    @Mock
+    NotificationService notificationService;
+    @Mock
+    EmailService emailService;
 
     @InjectMocks
     ChangeRequestService changeRequestService;
@@ -129,6 +144,8 @@ class ChangeRequestServiceSecurityTest {
                 List.of("db"),
                 requesterId,
                 "REQUESTER",
+                null,
+                null,
                 null,
                 null,
                 null));
@@ -238,7 +255,6 @@ class ChangeRequestServiceSecurityTest {
                     }
                     CrApproverEntity first = approvers.get(0);
                     return first.getUser().getEmail().equals("approver@example.com")
-                            && first.isRequired()
                             && first.getPosition() == 1;
                 }));
     }
@@ -292,6 +308,8 @@ class ChangeRequestServiceSecurityTest {
                 null,
                 List.of("db"),
                 ownerId,
+                null,
+                null,
                 null,
                 null,
                 null));
@@ -351,6 +369,8 @@ class ChangeRequestServiceSecurityTest {
                 ownerId,
                 null,
                 null,
+                null,
+                null,
                 null));
 
         verify(crApproverRepository)
@@ -360,7 +380,6 @@ class ChangeRequestServiceSecurityTest {
                     }
                     CrApproverEntity first = approvers.get(0);
                     return first.getUser().getId().equals(configuredUserId)
-                            && first.isRequired()
                             && first.getPosition() == 1;
                 }));
     }
@@ -378,7 +397,7 @@ class ChangeRequestServiceSecurityTest {
 
         UserEntity pendingUser = new UserEntity("pending@example.com", "Pending User");
         ReflectionTestUtils.setField(pendingUser, "id", UUID.randomUUID());
-        CrApproverEntity approver = new CrApproverEntity(changeRequest, pendingUser, true, 1, true);
+        CrApproverEntity approver = new CrApproverEntity(changeRequest, pendingUser, 1);
         ReflectionTestUtils.setField(approver, "id", approverId);
         approver.setStatus(ApproverStatus.PENDING);
 
@@ -405,7 +424,7 @@ class ChangeRequestServiceSecurityTest {
 
         UserEntity decidedUser = new UserEntity("decided@example.com", "Decided User");
         ReflectionTestUtils.setField(decidedUser, "id", UUID.randomUUID());
-        CrApproverEntity approver = new CrApproverEntity(changeRequest, decidedUser, true, 1, true);
+        CrApproverEntity approver = new CrApproverEntity(changeRequest, decidedUser, 1);
         ReflectionTestUtils.setField(approver, "id", approverId);
         approver.setStatus(ApproverStatus.APPROVED);
 
@@ -444,7 +463,7 @@ class ChangeRequestServiceSecurityTest {
 
         ChangeRequestEntity result = changeRequestService.create(new ChangeRequestService.CreateRequest(
                 "Test CR", "desc", Priority.MEDIUM, RiskLevel.MEDIUM,
-                null, null, null, null, null, ownerId, null, null, null));
+                null, null, null, null, null, ownerId, null, null, null, null, null));
 
         assertThat(result.getDisplayId()).isEqualTo("RQ-000001");
     }
@@ -475,7 +494,7 @@ class ChangeRequestServiceSecurityTest {
 
         ChangeRequestEntity result = changeRequestService.create(new ChangeRequestService.CreateRequest(
                 "Test CR", "desc", Priority.MEDIUM, RiskLevel.MEDIUM,
-                null, null, null, null, null, ownerId, null, null, null));
+                null, null, null, null, null, ownerId, null, null, null, null, null));
 
         assertThat(result.getDisplayId()).isEqualTo("IT-000001");
     }
@@ -514,7 +533,7 @@ class ChangeRequestServiceSecurityTest {
 
         ChangeRequestService.CreateRequest req = new ChangeRequestService.CreateRequest(
                 "CR1", "desc", Priority.MEDIUM, RiskLevel.MEDIUM,
-                null, null, null, null, null, ownerId, null, null, null);
+                null, null, null, null, null, ownerId, null, null, null, null, null);
 
         ChangeRequestEntity first = changeRequestService.create(req);
         ChangeRequestEntity second = changeRequestService.create(req);
@@ -562,7 +581,7 @@ class ChangeRequestServiceSecurityTest {
 
         ChangeRequestService.CreateRequest req = new ChangeRequestService.CreateRequest(
                 "CR", "desc", Priority.MEDIUM, RiskLevel.MEDIUM,
-                null, null, null, null, null, ownerId, null, null, null);
+                null, null, null, null, null, ownerId, null, null, null, null, null);
 
         ChangeRequestEntity first = changeRequestService.create(req);
         String firstDisplayId = first.getDisplayId();

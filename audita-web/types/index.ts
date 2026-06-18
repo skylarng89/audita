@@ -1,11 +1,6 @@
 // ── Auth & Users ──────────────────────────────────────────────────────────────
 
-export type UserRole =
-  | "Admin"
-  | "Requester"
-  | "Approver"
-  | "Auditor"
-  | "SUPER_ADMIN";
+export type UserRole = "Admin" | "Requester" | "Auditor" | "SUPER_ADMIN";
 export type UserStatus = "PENDING" | "ACTIVE" | "SUSPENDED";
 
 export interface User {
@@ -72,6 +67,15 @@ export interface ChangeRequest {
   createdByFullName: string | null;
   createdAt: string;
   updatedAt: string;
+  watchers?: CrWatcher[];
+}
+
+export interface CrWatcher {
+  id: string;
+  userId: string;
+  userEmail: string;
+  userFullName: string;
+  createdAt: string;
 }
 
 export interface Department {
@@ -88,7 +92,6 @@ export interface CrApprover {
   userEmail: string;
   userFullName: string;
   userRole: string | null;
-  isRequired: boolean;
   position: number;
   status: ApproverStatus;
   rejectionReason: string | null;
@@ -129,10 +132,17 @@ export interface UatApprover {
   userId: string;
   userFullName: string;
   userEmail: string;
-  isRequired: boolean;
   status: ApproverStatus;
   rejectionReason: string | null;
   decidedAt: string | null;
+}
+
+export interface UatWatcher {
+  id: string;
+  userId: string;
+  userEmail: string;
+  userFullName: string;
+  createdAt: string;
 }
 
 export interface Uat {
@@ -143,6 +153,7 @@ export interface Uat {
   readOnly: boolean;
   requesterSignedOff: boolean;
   approvers: UatApprover[];
+  watchers?: UatWatcher[];
   createdBy: string | null;
   createdByFullName: string | null;
   createdAt: string;
@@ -152,7 +163,7 @@ export interface Uat {
 
 // ── Deployment ────────────────────────────────────────────────────────────────
 
-export type DeploymentStatus = "PENDING_APPROVAL" | "APPROVED" | "REJECTED";
+export type DeploymentStatus = "PENDING" | "COMPLETED" | "CANCELLED";
 
 export interface DeploymentApprover {
   id: string;
@@ -169,7 +180,7 @@ export interface Deployment {
   requestId: string;
   status: DeploymentStatus;
   promotedAt: string;
-  approvers: DeploymentApprover[];
+  assignee: { id: string; email: string; fullName: string } | null;
 }
 
 // ── Comments & Activity ───────────────────────────────────────────────────────

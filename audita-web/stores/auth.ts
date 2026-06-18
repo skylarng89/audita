@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { createAuthSessionSyncEvent } from "~/composables/authSessionSync";
 import {
   computeTokenExpiresAt,
+  extractPermissionsFromToken,
   hasActiveAccessToken,
 } from "~/composables/authSession";
 import type { AuthResponse, UserRole } from "~/types";
@@ -13,6 +14,7 @@ interface AuthState {
   email: string | null;
   fullName: string | null;
   role: UserRole | null;
+  permissions: string[] | null;
   tenantSlug: string | null;
   sessionInitialized: boolean;
   loggingOut: boolean;
@@ -73,6 +75,7 @@ export const useAuthStore = defineStore("auth", {
     email: null,
     fullName: null,
     role: null,
+    permissions: null,
     tenantSlug: null,
     sessionInitialized: false,
     loggingOut: false,
@@ -84,8 +87,9 @@ export const useAuthStore = defineStore("auth", {
     isSuperAdmin: (s) => s.role === "SUPER_ADMIN",
     isAdmin: (s) => s.role === "Admin",
     isAuditor: (s) => s.role === "Auditor",
-    canApprove: (s) =>
-      s.role === "Admin" || s.role === "Approver" || s.role === "Requester",
+    hasPermission: (s) => (permission: string) =>
+      s.permissions?.includes(permission) ?? false,
+    canApprove: (s) => s.role === "Admin" || s.role === "Requester",
     canCreateCR: (s) => s.role === "Admin" || s.role === "Requester",
   },
 
@@ -122,6 +126,7 @@ export const useAuthStore = defineStore("auth", {
       this.email = response.email;
       this.fullName = response.fullName;
       this.role = response.role;
+      this.permissions = extractPermissionsFromToken(response.accessToken);
       this.tenantSlug = response.tenantSlug;
       persistTenantSlug(this.tenantSlug);
       this.sessionInitialized = true;
@@ -139,6 +144,7 @@ export const useAuthStore = defineStore("auth", {
       this.email = null;
       this.fullName = null;
       this.role = null;
+      this.permissions = null;
       this.tenantSlug = null;
       persistTenantSlug(null);
       this.sessionInitialized = true;

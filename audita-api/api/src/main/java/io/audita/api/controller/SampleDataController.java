@@ -24,7 +24,7 @@ public class SampleDataController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'settings.manage')")
     public SampleDataResponse importSampleData(@AuthenticationPrincipal UserPrincipal principal) {
         String tenantSlug = resolveTenantSlug(principal);
         SampleDataSummary summary = sampleDataPort.importSampleData(tenantSlug);
@@ -32,7 +32,7 @@ public class SampleDataController {
     }
 
     @DeleteMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'settings.manage')")
     public SampleDataResponse removeSampleData(@AuthenticationPrincipal UserPrincipal principal) {
         String tenantSlug = resolveTenantSlug(principal);
         SampleDataSummary summary = sampleDataPort.removeSampleData(tenantSlug);

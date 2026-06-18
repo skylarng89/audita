@@ -1,25 +1,20 @@
 package io.audita.infrastructure.service;
 
-import io.audita.domain.model.ApproverStatus;
 import io.audita.domain.model.ChangeRequestStatus;
 import io.audita.domain.model.RequestWorkflowMode;
 import io.audita.infrastructure.persistence.entity.ActivityStreamEntity;
 import io.audita.infrastructure.persistence.entity.ChangeRequestEntity;
-import io.audita.infrastructure.persistence.entity.CrApproverEntity;
-import io.audita.infrastructure.persistence.entity.RequestDeploymentApproverEntity;
 import io.audita.infrastructure.persistence.entity.RequestDeploymentEntity;
 import io.audita.infrastructure.persistence.entity.RequestUatApproverEntity;
 import io.audita.infrastructure.persistence.entity.RequestUatEntity;
-import io.audita.infrastructure.persistence.entity.UserEntity;
 import io.audita.infrastructure.persistence.repository.ActivityStreamRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestRepository;
-import io.audita.infrastructure.persistence.repository.CrApproverRepository;
-import io.audita.infrastructure.persistence.repository.RequestDeploymentApproverRepository;
 import io.audita.infrastructure.persistence.repository.RequestDeploymentCommentRepository;
 import io.audita.infrastructure.persistence.repository.RequestDeploymentRepository;
 import io.audita.infrastructure.persistence.repository.RequestUatApproverRepository;
 import io.audita.infrastructure.persistence.repository.RequestUatCommentRepository;
 import io.audita.infrastructure.persistence.repository.RequestUatRepository;
+import io.audita.infrastructure.persistence.repository.RequestUatWatcherRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,6 +43,8 @@ class RequestWorkflowActivityTest {
     @Mock
     RequestUatApproverRepository requestUatApproverRepository;
     @Mock
+    RequestUatWatcherRepository requestUatWatcherRepository;
+    @Mock
     RequestUatCommentRepository requestUatCommentRepository;
     @Mock
     UserRepository userRepository;
@@ -60,11 +57,13 @@ class RequestWorkflowActivityTest {
     @Mock
     RequestDeploymentRepository deploymentRepository;
     @Mock
-    RequestDeploymentApproverRepository deploymentApproverRepository;
-    @Mock
     RequestDeploymentCommentRepository deploymentCommentRepository;
     @Mock
-    CrApproverRepository crApproverRepository;
+    NotificationService notificationService;
+    @Mock
+    EmailService emailService;
+    @Mock
+    MentionNotifier mentionNotifier;
 
     RequestUatService requestUatService;
     RequestDeploymentService requestDeploymentService;
@@ -75,23 +74,26 @@ class RequestWorkflowActivityTest {
                 changeRequestRepository,
                 requestUatRepository,
                 requestUatApproverRepository,
+                requestUatWatcherRepository,
                 requestUatCommentRepository,
                 userRepository,
                 deploymentService,
                 auditLogService,
-                activityStreamRepository
+                activityStreamRepository,
+                notificationService,
+                emailService,
+                mentionNotifier
         );
 
         requestDeploymentService = new RequestDeploymentService(
                 deploymentRepository,
-                deploymentApproverRepository,
                 deploymentCommentRepository,
-                crApproverRepository,
-                requestUatApproverRepository,
                 userRepository,
                 auditLogService,
                 activityStreamRepository,
-                changeRequestRepository
+                changeRequestRepository,
+                notificationService,
+                mentionNotifier
         );
     }
 
@@ -128,7 +130,7 @@ class RequestWorkflowActivityTest {
         UUID actorId = UUID.randomUUID();
         RequestUatEntity uat = buildInProgressUat(uatId, requestId);
         ChangeRequestEntity cr = buildApprovedDeliveryPipelineRequest(requestId);
-        RequestUatApproverEntity approver = buildApprover(uatId, actorId, true);
+        RequestUatApproverEntity approver = buildApprover(uatId, actorId);
         approver.approve();
 
         when(requestUatRepository.findById(uatId)).thenReturn(Optional.of(uat));
@@ -162,8 +164,6 @@ class RequestWorkflowActivityTest {
             ReflectionTestUtils.setField(d, "id", UUID.randomUUID());
             return d;
         });
-        when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(requestId)).thenReturn(List.of());
-        when(requestUatApproverRepository.findByUatIdOrderByPositionAsc(uatId)).thenReturn(List.of());
 
         requestDeploymentService.createFromPromotion(requestId, uatId, actorId);
 
@@ -175,34 +175,6 @@ class RequestWorkflowActivityTest {
         assertThat(activity.getChangeRequest()).isEqualTo(cr);
         assertThat(activity.getPayload()).containsEntry("requestId", requestId.toString());
         assertThat(activity.getPayload()).containsEntry("uatId", uatId.toString());
-    }
-
-    @Test
-    void approveDeploymentEmitsActivityEvent() {
-        UUID deploymentId = UUID.randomUUID();
-        UUID requestId = UUID.randomUUID();
-        UUID actorId = UUID.randomUUID();
-        RequestDeploymentEntity deployment = buildPendingDeployment(deploymentId, requestId);
-        ChangeRequestEntity cr = buildApprovedDeliveryPipelineRequest(requestId);
-        RequestDeploymentApproverEntity approver = buildDeploymentApprover(deploymentId, actorId, true);
-
-        when(deploymentRepository.findById(deploymentId)).thenReturn(Optional.of(deployment));
-        when(changeRequestRepository.findById(requestId)).thenReturn(Optional.of(cr));
-        when(deploymentApproverRepository.findByDeploymentIdAndUserId(deploymentId, actorId))
-                .thenReturn(Optional.of(approver));
-        when(deploymentApproverRepository.save(any(RequestDeploymentApproverEntity.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
-        when(deploymentApproverRepository.findByDeploymentIdOrderByPositionAsc(deploymentId))
-                .thenReturn(List.of(approver));
-
-        requestDeploymentService.approveDeployment(deploymentId, actorId);
-
-        ArgumentCaptor<ActivityStreamEntity> captor = ArgumentCaptor.forClass(ActivityStreamEntity.class);
-        verify(activityStreamRepository).save(captor.capture());
-
-        ActivityStreamEntity activity = captor.getValue();
-        assertThat(activity.getActionType()).isEqualTo("DEPLOYMENT_APPROVED");
-        assertThat(activity.getChangeRequest()).isEqualTo(cr);
     }
 
     private ChangeRequestEntity buildApprovedDeliveryPipelineRequest(UUID requestId) {
@@ -221,40 +193,16 @@ class RequestWorkflowActivityTest {
         uat.setDetails("details");
         uat.setStatus("IN_PROGRESS");
         uat.setReadOnly(false);
+        uat.setRequesterSignedOff(true);
         return uat;
     }
 
-    private RequestUatApproverEntity buildApprover(UUID uatId, UUID userId, boolean required) {
+    private RequestUatApproverEntity buildApprover(UUID uatId, UUID userId) {
         RequestUatApproverEntity approver = new RequestUatApproverEntity();
         ReflectionTestUtils.setField(approver, "id", UUID.randomUUID());
         approver.setUatId(uatId);
         approver.setUserId(userId);
-        approver.setRequired(required);
         approver.setPosition(1);
         return approver;
-    }
-
-    private RequestDeploymentEntity buildPendingDeployment(UUID deploymentId, UUID requestId) {
-        RequestDeploymentEntity deployment = new RequestDeploymentEntity();
-        ReflectionTestUtils.setField(deployment, "id", deploymentId);
-        deployment.setRequestId(requestId);
-        deployment.setStatus("PENDING_APPROVAL");
-        return deployment;
-    }
-
-    private RequestDeploymentApproverEntity buildDeploymentApprover(UUID deploymentId, UUID userId, boolean required) {
-        RequestDeploymentApproverEntity approver = new RequestDeploymentApproverEntity();
-        ReflectionTestUtils.setField(approver, "id", UUID.randomUUID());
-        approver.setDeploymentId(deploymentId);
-        approver.setUserId(userId);
-        approver.setRequired(required);
-        approver.setPosition(1);
-        return approver;
-    }
-
-    private UserEntity buildUser(UUID userId) {
-        UserEntity user = new UserEntity("user@example.com", "Test User");
-        ReflectionTestUtils.setField(user, "id", userId);
-        return user;
     }
 }

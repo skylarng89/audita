@@ -3,6 +3,7 @@ package io.audita.infrastructure.service;
 import io.audita.domain.exception.DomainNotPermittedException;
 import io.audita.domain.exception.InvalidRequestException;
 import io.audita.domain.exception.InvalidStateTransitionException;
+import io.audita.domain.exception.NotFoundException;
 import io.audita.domain.model.ApprovalType;
 import io.audita.domain.model.ApproverStatus;
 import io.audita.domain.model.ChangeRequestStatus;
@@ -16,6 +17,7 @@ import io.audita.infrastructure.persistence.entity.AttachmentEntity;
 import io.audita.infrastructure.persistence.entity.ChangeRequestEntity;
 import io.audita.infrastructure.persistence.entity.ChangeRequestCustomFieldEntity;
 import io.audita.infrastructure.persistence.entity.CrApproverEntity;
+import io.audita.infrastructure.persistence.entity.CrWatcherEntity;
 import io.audita.infrastructure.persistence.entity.OrgSettingEntity;
 import io.audita.infrastructure.persistence.entity.UserEntity;
 import io.audita.infrastructure.persistence.repository.ActivityStreamRepository;
@@ -23,6 +25,7 @@ import io.audita.infrastructure.persistence.repository.AttachmentRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestCustomFieldRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestRepository;
 import io.audita.infrastructure.persistence.repository.CrApproverRepository;
+import io.audita.infrastructure.persistence.repository.CrWatcherRepository;
 import io.audita.infrastructure.persistence.repository.GroupRepository;
 import io.audita.infrastructure.persistence.repository.GroupMemberRepository;
 import io.audita.infrastructure.persistence.repository.OrgSettingRepository;
@@ -30,6 +33,8 @@ import io.audita.infrastructure.persistence.repository.UserRepository;
 import io.audita.infrastructure.security.HtmlSanitizer;
 import io.audita.infrastructure.tenant.RequestContext;
 import io.audita.infrastructure.tenant.TenantContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -44,7 +49,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +63,7 @@ import java.util.UUID;
 @Transactional
 public class ChangeRequestService {
 
+    private static final Logger log = LoggerFactory.getLogger(ChangeRequestService.class);
     private static final Set<String> ELEVATED_ROLES = Set.of("ADMIN", "SUPER_ADMIN");
     private static final Set<String> GLOBAL_VIEW_ROLES = Set.of("ADMIN", "SUPER_ADMIN", "AUDITOR");
     private static final String ERROR_NOT_FOUND = "NOT_FOUND";
@@ -70,6 +78,7 @@ public class ChangeRequestService {
 
     private final ChangeRequestRepository changeRequestRepository;
     private final CrApproverRepository crApproverRepository;
+    private final CrWatcherRepository crWatcherRepository;
     private final GroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final ChangeRequestCustomFieldRepository customFieldRepository;
@@ -94,6 +103,7 @@ public class ChangeRequestService {
 
     public ChangeRequestService(ChangeRequestRepository changeRequestRepository,
             CrApproverRepository crApproverRepository,
+            CrWatcherRepository crWatcherRepository,
             GroupRepository groupRepository,
             GroupMemberRepository groupMemberRepository,
             ChangeRequestCustomFieldRepository customFieldRepository,
@@ -108,6 +118,7 @@ public class ChangeRequestService {
             EmailService emailService) {
         this.changeRequestRepository = changeRequestRepository;
         this.crApproverRepository = crApproverRepository;
+        this.crWatcherRepository = crWatcherRepository;
         this.groupRepository = groupRepository;
         this.groupMemberRepository = groupMemberRepository;
         this.customFieldRepository = customFieldRepository;
@@ -123,6 +134,7 @@ public class ChangeRequestService {
     }
 
     public ChangeRequestEntity create(CreateRequest request) {
+        log.debug("create: title={}, actor={}", request.title(), request.createdById());
         UserEntity createdBy = userRepository.findById(request.createdById())
                 .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "User not found."));
 
@@ -159,8 +171,10 @@ public class ChangeRequestService {
     public ChangeRequestEntity update(UpdateRequest request) {
         ChangeRequestEntity current = getById(request.id());
         assertCanMutate(current, request.actorUserId(), request.actorRole());
-        if (current.getStatus().isClosed()) {
-            throw new InvalidStateTransitionException("Closed change requests cannot be edited.");
+        assertNotCompleted(current);
+        if (current.getStatus() != ChangeRequestStatus.DRAFT) {
+            throw new InvalidStateTransitionException("CR_NOT_EDITABLE",
+                    "Change request can only be edited while in DRAFT status.");
         }
 
         if (request.title() != null) {
@@ -216,8 +230,10 @@ public class ChangeRequestService {
     }
 
     public ChangeRequestEntity submit(UUID id, UUID actorUserId, String actorRole) {
+        log.info("CR submit: id={}, actor={}", id, actorUserId);
         ChangeRequestEntity changeRequest = getById(id);
         assertCanMutate(changeRequest, actorUserId, actorRole);
+        assertNotCompleted(changeRequest);
         ensureDefaultApprovers(changeRequest);
         if (crApproverRepository.countByChangeRequestId(changeRequest.getId()) < 1) {
             throw new InvalidStateTransitionException("APPROVERS_REQUIRED",
@@ -245,8 +261,10 @@ public class ChangeRequestService {
     }
 
     public void cancel(UUID id, UUID actorUserId, String actorRole) {
+        log.info("CR cancel: id={}, actor={}", id, actorUserId);
         ChangeRequestEntity changeRequest = getById(id);
         assertCanMutate(changeRequest, actorUserId, actorRole);
+        assertNotCompleted(changeRequest);
         changeRequest.cancel();
         ChangeRequestEntity cancelled = changeRequestRepository.save(changeRequest);
         logActivity(cancelled, cancelled.getCreatedBy(), "CR_CANCELLED",
@@ -268,12 +286,10 @@ public class ChangeRequestService {
     }
 
     public ChangeRequestEntity completeRequest(UUID requestId, UUID actorUserId, String actorRole) {
+        log.info("CR completeRequest: id={}, actor={}", requestId, actorUserId);
         ChangeRequestEntity cr = getById(requestId);
         assertCanMutate(cr, actorUserId, actorRole);
-
-        if (cr.getCompletionStatus() == CompletionStatus.COMPLETED) {
-            throw new InvalidStateTransitionException("Request is already completed.");
-        }
+        assertNotCompleted(cr);
 
         if (cr.getWorkflowMode() == RequestWorkflowMode.APPROVAL_ONLY) {
             if (cr.getApprovalStatus() != ChangeRequestStatus.APPROVED) {
@@ -318,6 +334,7 @@ public class ChangeRequestService {
         }
         ChangeRequestEntity cr = getById(requestId);
         assertCanMutate(cr, actorUserId, actorRole);
+        assertNotCompleted(cr);
 
         if (cr.getStatus() != ChangeRequestStatus.DRAFT) {
             throw new InvalidStateTransitionException(
@@ -379,7 +396,20 @@ public class ChangeRequestService {
         // Draft CRs are private to their creator. Return NOT_FOUND (not 403) to
         // avoid leaking that the resource exists to users who cannot see it.
         if (changeRequest.getStatus() == ChangeRequestStatus.DRAFT &&
-                !changeRequest.getCreatedBy().getId().equals(viewerId)) {
+                (changeRequest.getCreatedBy() == null || !changeRequest.getCreatedBy().getId().equals(viewerId))) {
+            throw new DomainNotPermittedException(ERROR_NOT_FOUND, "Change request not found.");
+        }
+        return changeRequest;
+    }
+
+    @Transactional(readOnly = true)
+    public ChangeRequestEntity getById(UUID id, UUID viewerId, Set<String> viewerPermissions) {
+        ChangeRequestEntity changeRequest = getById(id);
+        if (!hasGlobalViewAccess(viewerPermissions) && !isViewerAllowed(changeRequest, viewerId)) {
+            throw new DomainNotPermittedException(ERROR_NOT_FOUND, "Change request not found.");
+        }
+        if (changeRequest.getStatus() == ChangeRequestStatus.DRAFT &&
+                (changeRequest.getCreatedBy() == null || !changeRequest.getCreatedBy().getId().equals(viewerId))) {
             throw new DomainNotPermittedException(ERROR_NOT_FOUND, "Change request not found.");
         }
         return changeRequest;
@@ -400,13 +430,137 @@ public class ChangeRequestService {
         return crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId);
     }
 
+    @Transactional(readOnly = true)
+    public List<CrWatcherEntity> listWatchers(UUID crId) {
+        getById(crId);
+        return crWatcherRepository.findByChangeRequestId(crId);
+    }
+
+    @Transactional
+    public List<CrWatcherEntity> addWatchers(UUID crId,
+            List<UUID> userIds,
+            UUID actorUserId,
+            Set<String> actorPermissions) {
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of();
+        }
+        log.debug("addWatchers: crId={}, count={}, actor={}", crId, userIds.size(), actorUserId);
+        ChangeRequestEntity cr = getById(crId, actorUserId, actorPermissions);
+        assertCanMutate(cr, actorUserId, actorPermissions);
+        assertNotCompleted(cr);
+
+        List<CrWatcherEntity> added = new ArrayList<>();
+        for (UUID userId : userIds) {
+            if (crWatcherRepository.existsByChangeRequestIdAndUserId(crId, userId)) {
+                continue;
+            }
+            if (cr.getApprovers().stream().anyMatch(a -> a.getUser().getId().equals(userId))) {
+                throw new DomainNotPermittedException("CONFLICT",
+                        "User is already an approver on this request and cannot be a watcher.");
+            }
+            UserEntity user = userRepository.findById(userId)
+                    .orElseThrow(() -> new NotFoundException("USER_NOT_FOUND", "User not found"));
+            if (isAuditor(user)) {
+                throw new DomainNotPermittedException("FORBIDDEN",
+                        "Auditors cannot be added as watchers.");
+            }
+            CrWatcherEntity watcher = new CrWatcherEntity(cr, user);
+            crWatcherRepository.save(watcher);
+            added.add(watcher);
+
+            auditLogService.log("CR_WATCHER_ADDED", ENTITY_CHANGE_REQUEST, crId, actorUserId,
+                    resolveActorEmail(actorUserId),
+                    Map.of("watcherUserId", userId, "watcherEmail", user.getEmail()),
+                    RequestContext.getCurrentIp());
+            notificationService.createAndPush(userId, "CR_WATCHER_ADDED",
+                    "Added as Watcher", "You have been added as a watcher to: " + cr.getTitle(),
+                    "/change-requests/" + crId);
+        }
+        log.info("Added {} watchers to CR {}", added.size(), crId);
+        return added;
+    }
+
+    @Transactional
+    public void removeWatcher(UUID crId, UUID userId, UUID actorUserId, Set<String> actorPermissions) {
+        log.debug("removeWatcher: crId={}, userId={}, actor={}", crId, userId, actorUserId);
+        ChangeRequestEntity cr = getById(crId, actorUserId, actorPermissions);
+        assertCanMutate(cr, actorUserId, actorPermissions);
+        assertNotCompleted(cr);
+        CrWatcherEntity watcher = crWatcherRepository.findByCrIdAndUserId(crId, userId)
+                .orElseThrow(() -> new NotFoundException("WATCHER_NOT_FOUND", "Watcher not found"));
+        crWatcherRepository.delete(watcher);
+        auditLogService.log("CR_WATCHER_REMOVED", ENTITY_CHANGE_REQUEST, crId, actorUserId,
+                resolveActorEmail(actorUserId),
+                Map.of("watcherUserId", userId),
+                RequestContext.getCurrentIp());
+        log.info("Removed watcher {} from CR {}", userId, crId);
+    }
+
+    @Transactional
+    public void moveWatcherToApprover(UUID crId, UUID userId, UUID actorUserId, Set<String> actorPermissions) {
+        log.debug("moveWatcherToApprover: crId={}, userId={}, actor={}", crId, userId, actorUserId);
+        ChangeRequestEntity cr = getById(crId, actorUserId, actorPermissions);
+        assertCanMutate(cr, actorUserId, actorPermissions);
+        assertNotCompleted(cr);
+        CrWatcherEntity watcher = crWatcherRepository.findByCrIdAndUserId(crId, userId)
+                .orElseThrow(() -> new NotFoundException("WATCHER_NOT_FOUND", "Watcher not found"));
+        UserEntity promotedUser = watcher.getUser();
+        crWatcherRepository.delete(watcher);
+
+        int nextPosition = cr.getApprovers().stream()
+                .mapToInt(CrApproverEntity::getPosition)
+                .max()
+                .orElse(0) + 1;
+        CrApproverEntity approver = new CrApproverEntity(cr, promotedUser, nextPosition);
+        approver.setStatus(ApproverStatus.PENDING);
+        crApproverRepository.save(approver);
+
+        auditLogService.log("CR_WATCHER_PROMOTED", ENTITY_CHANGE_REQUEST, crId, actorUserId,
+                resolveActorEmail(actorUserId),
+                Map.of("userId", userId, "newPosition", nextPosition),
+                RequestContext.getCurrentIp());
+        log.info("Moved watcher {} to approver on CR {}", userId, crId);
+    }
+
+    @Transactional
+    public void moveApproverToWatcher(UUID crId, UUID approverId, UUID actorUserId, Set<String> actorPermissions) {
+        log.debug("moveApproverToWatcher: crId={}, approverId={}, actor={}", crId, approverId, actorUserId);
+        ChangeRequestEntity cr = getById(crId, actorUserId, actorPermissions);
+        assertCanMutate(cr, actorUserId, actorPermissions);
+        assertNotCompleted(cr);
+        CrApproverEntity approver = cr.getApprovers().stream()
+                .filter(a -> a.getId().equals(approverId))
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("APPROVER_NOT_FOUND", "Approver not found"));
+
+        if (approver.getStatus() != ApproverStatus.PENDING) {
+            throw new InvalidStateTransitionException("APPROVER_ALREADY_VOTED",
+                    "Cannot move an approver who has already voted.");
+        }
+
+        UserEntity movedUser = approver.getUser();
+        UUID movedUserId = movedUser.getId();
+        crApproverRepository.delete(approver);
+        resequenceApprovers(crId);
+
+        CrWatcherEntity watcher = new CrWatcherEntity(cr, movedUser);
+        crWatcherRepository.save(watcher);
+
+        auditLogService.log("CR_APPROVER_DEMOTED", ENTITY_CHANGE_REQUEST, crId, actorUserId,
+                resolveActorEmail(actorUserId),
+                Map.of("userId", movedUserId),
+                RequestContext.getCurrentIp());
+        log.info("Moved approver {} to watcher on CR {}", approverId, crId);
+    }
+
     public CrApproverEntity addApprover(UUID changeRequestId,
             UUID userId,
-            boolean isRequired,
             UUID actorUserId,
             String actorRole) {
+        log.debug("addApprover: crId={}, userId={}, actor={}", changeRequestId, userId, actorUserId);
         ChangeRequestEntity changeRequest = getById(changeRequestId);
         assertCanMutate(changeRequest, actorUserId, actorRole);
+        assertNotCompleted(changeRequest);
         assertApproverManagementAllowed(changeRequest);
 
         UserEntity user = userRepository.findById(userId)
@@ -421,14 +575,19 @@ public class ChangeRequestService {
             throw new DomainNotPermittedException("DUPLICATE_APPROVER", "User is already an approver on this CR.");
         }
 
+        if (crWatcherRepository.existsByChangeRequestIdAndUserId(changeRequestId, userId)) {
+            throw new DomainNotPermittedException("CONFLICT",
+                    "User is already a watcher on this request and cannot be an approver.");
+        }
+
         int position = crApproverRepository.countByChangeRequestId(changeRequestId) + 1;
-        CrApproverEntity approver = new CrApproverEntity(changeRequest, user, isRequired, position, true);
+        CrApproverEntity approver = new CrApproverEntity(changeRequest, user, position);
         CrApproverEntity created = crApproverRepository.save(approver);
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVER_ADDED",
                 Map.of(PAYLOAD_APPROVER_ID, created.getId().toString(), "userId", userId.toString()));
         auditLogService.log("CR_APPROVER_ADDED", ENTITY_CHANGE_REQUEST, changeRequestId,
                 actorUserId, resolveActorEmail(actorUserId),
-                Map.of(PAYLOAD_APPROVER_ID, created.getId().toString(), "userId", userId.toString(), "isRequired", isRequired),
+                Map.of(PAYLOAD_APPROVER_ID, created.getId().toString(), "userId", userId.toString()),
                 RequestContext.getCurrentIp());
         notificationService.createAndPush(user.getId(), "APPROVER_ADDED",
                 "Added as approver: " + changeRequest.getTitle(),
@@ -447,6 +606,7 @@ public class ChangeRequestService {
             String actorRole) {
         ChangeRequestEntity changeRequest = getById(changeRequestId);
         assertCanMutate(changeRequest, actorUserId, actorRole);
+        assertNotCompleted(changeRequest);
         assertApproverManagementAllowed(changeRequest);
 
         if (!groupRepository.existsById(groupId)) {
@@ -471,7 +631,7 @@ public class ChangeRequestService {
             if (existingUserIds.contains(user.getId())) {
                 continue;
             }
-            additions.add(new CrApproverEntity(changeRequest, user, isRequired, nextPosition++, true));
+            additions.add(new CrApproverEntity(changeRequest, user, nextPosition++));
         }
         if (additions.isEmpty()) {
             return List.of();
@@ -501,6 +661,7 @@ public class ChangeRequestService {
     public void removeApprover(UUID changeRequestId, UUID approverId, UUID actorUserId, String actorRole) {
         ChangeRequestEntity changeRequest = getById(changeRequestId);
         assertCanMutate(changeRequest, actorUserId, actorRole);
+        assertNotCompleted(changeRequest);
         assertApproverManagementAllowed(changeRequest);
 
         CrApproverEntity approver = crApproverRepository.findById(approverId)
@@ -528,6 +689,7 @@ public class ChangeRequestService {
             String actorRole) {
         ChangeRequestEntity changeRequest = getById(changeRequestId);
         assertCanMutate(changeRequest, actorUserId, actorRole);
+        assertNotCompleted(changeRequest);
         assertApproverManagementAllowed(changeRequest);
 
         List<CrApproverEntity> existing = crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId);
@@ -555,33 +717,6 @@ public class ChangeRequestService {
                 actorUserId, resolveActorEmail(actorUserId),
                 Map.of(PAYLOAD_COUNT, saved.size()), RequestContext.getCurrentIp());
         return saved;
-    }
-
-    public CrApproverEntity updateApproverRequirement(UUID changeRequestId,
-            UUID approverId,
-            boolean isRequired,
-            UUID actorUserId,
-            String actorRole) {
-        ChangeRequestEntity changeRequest = getById(changeRequestId);
-        assertCanMutate(changeRequest, actorUserId, actorRole);
-        assertApproverManagementAllowed(changeRequest);
-
-        CrApproverEntity approver = crApproverRepository.findWithUserAndRolesById(approverId)
-                .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "Approver not found."));
-        if (!approver.getChangeRequest().getId().equals(changeRequestId)) {
-            throw new DomainNotPermittedException(ERROR_NOT_FOUND, "Approver not found on this change request.");
-        }
-
-        approver.setRequired(isRequired);
-        crApproverRepository.save(approver);
-        logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVER_REQUIREMENT_CHANGED",
-                Map.of(PAYLOAD_APPROVER_ID, approverId.toString(), "isRequired", isRequired));
-        auditLogService.log("CR_APPROVER_REQUIREMENT_CHANGED", ENTITY_CHANGE_REQUEST, changeRequestId,
-                actorUserId, resolveActorEmail(actorUserId),
-                Map.of(PAYLOAD_APPROVER_ID, approverId.toString(), "isRequired", isRequired),
-                RequestContext.getCurrentIp());
-        return crApproverRepository.findWithUserAndRolesById(approverId)
-                .orElseThrow(() -> new DomainNotPermittedException(ERROR_NOT_FOUND, "Approver not found."));
     }
 
     @Transactional(readOnly = true)
@@ -634,6 +769,7 @@ public class ChangeRequestService {
     }
 
     public ChangeRequestEntity approve(UUID changeRequestId, UUID actorUserId) {
+        log.info("CR approve: id={}, approver={}", changeRequestId, actorUserId);
         ChangeRequestEntity changeRequest = getById(changeRequestId);
         ensurePendingApproval(changeRequest);
 
@@ -676,6 +812,7 @@ public class ChangeRequestService {
     }
 
     public ChangeRequestEntity reject(UUID changeRequestId, UUID actorUserId, String reason) {
+        log.info("CR reject: id={}, approver={}", changeRequestId, actorUserId);
         ChangeRequestEntity changeRequest = getById(changeRequestId);
         ensurePendingApproval(changeRequest);
 
@@ -772,6 +909,7 @@ public class ChangeRequestService {
 
         ChangeRequestEntity changeRequest = getById(changeRequestId);
         assertCanMutate(changeRequest, uploaderId, uploaderRole);
+        assertNotCompleted(changeRequest);
 
         String mimeType = file.getContentType();
         if (!isAllowedMimeType(mimeType)) {
@@ -838,6 +976,7 @@ public class ChangeRequestService {
             String actorRole) {
         ChangeRequestEntity changeRequest = getById(changeRequestId);
         assertCanMutate(changeRequest, actorUserId, actorRole);
+        assertNotCompleted(changeRequest);
         customFieldRepository.deleteByIdChangeRequestId(changeRequestId);
 
         List<ChangeRequestCustomFieldEntity> newRows = fields.stream()
@@ -952,13 +1091,10 @@ public class ChangeRequestService {
                 continue;
             }
 
-            boolean isRequired = true;
             CrApproverEntity approver = new CrApproverEntity(
                     changeRequest,
                     user,
-                    isRequired,
-                    nextPosition++,
-                    false);
+                    nextPosition++);
             newApprovers.add(approver);
         }
 
@@ -1016,15 +1152,32 @@ public class ChangeRequestService {
         }
     }
 
-    private void assertCanMutate(ChangeRequestEntity changeRequest, UUID actorUserId, String actorRole) {
-        String normalizedRole = actorRole == null ? "" : actorRole.toUpperCase();
-        if (ELEVATED_ROLES.contains(normalizedRole)) {
+    private void assertNotCompleted(ChangeRequestEntity changeRequest) {
+        if (changeRequest.getCompletionStatus() == CompletionStatus.COMPLETED) {
+            throw new InvalidStateTransitionException("REQUEST_COMPLETED",
+                    "This request is completed and read-only.");
+        }
+    }
+
+    private void assertCanMutate(ChangeRequestEntity changeRequest, UUID actorUserId, Set<String> actorPermissions) {
+        if (actorPermissions != null && actorPermissions.contains("cr.view.all")) {
             return;
         }
         UserEntity createdBy = changeRequest.getCreatedBy();
         if (createdBy == null || !createdBy.getId().equals(actorUserId)) {
+            log.warn("Permission denied: actor {} cannot mutate CR {} (owner={})",
+                    actorUserId, changeRequest.getId(),
+                    createdBy != null ? createdBy.getId() : null);
             throw new DomainNotPermittedException("FORBIDDEN", "You are not allowed to modify this change request.");
         }
+    }
+
+    private void assertCanMutate(ChangeRequestEntity changeRequest, UUID actorUserId, String actorRole) {
+        Set<String> perms = new HashSet<>();
+        if (actorRole != null && ELEVATED_ROLES.contains(actorRole.toUpperCase())) {
+            perms.add("cr.view.all");
+        }
+        assertCanMutate(changeRequest, actorUserId, perms);
     }
 
     private void assertCreatorSelfApprovalRule(ChangeRequestEntity changeRequest, UUID actorUserId, UserEntity actor) {
@@ -1049,6 +1202,10 @@ public class ChangeRequestService {
         return actor.getRoles().stream()
                 .map(role -> role.getName() == null ? "" : role.getName().toUpperCase())
                 .anyMatch(ELEVATED_ROLES::contains);
+    }
+
+    private boolean hasGlobalViewAccess(Set<String> viewerPermissions) {
+        return viewerPermissions != null && viewerPermissions.contains("cr.view.all");
     }
 
     private boolean hasGlobalViewAccess(String viewerRole) {
@@ -1077,7 +1234,19 @@ public class ChangeRequestService {
         if (createdBy != null && createdBy.getId().equals(viewerId)) {
             return true;
         }
-        return crApproverRepository.findByChangeRequestIdAndUserId(changeRequest.getId(), viewerId).isPresent();
+        if (crApproverRepository.findByChangeRequestIdAndUserId(changeRequest.getId(), viewerId).isPresent()) {
+            return true;
+        }
+        if (crWatcherRepository.existsByChangeRequestIdAndUserId(changeRequest.getId(), viewerId)) {
+            return true;
+        }
+        return deploymentService.getByRequestId(changeRequest.getId())
+                .map(d -> d.getAssignee() != null && d.getAssignee().getId().equals(viewerId))
+                .orElse(false);
+    }
+
+    private boolean isAuditor(UserEntity user) {
+        return user.getRoles().stream().anyMatch(r -> "AUDITOR".equalsIgnoreCase(r.getName()));
     }
 
     private boolean isAllowedMimeType(String mimeType) {

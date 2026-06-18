@@ -47,24 +47,12 @@
         </div>
         <div class="flex items-center gap-2">
           <button
-            v-if="canManageApprovers && a.userRole !== 'Auditor'"
-            type="button"
-            class="text-xs px-2 py-1 rounded-md shrink-0 transition-colors"
-            :class="
-              a.isRequired
-                ? 'bg-primary/15 text-primary hover:bg-primary/25'
-                : 'bg-surface-container-high text-muted hover:bg-surface-container'
-            "
-            @click="$emit('toggleRequired', a.id, a.isRequired)"
+            v-if="canManageApprovers && a.status === 'PENDING'"
+            class="btn-ghost btn-sm"
+            @click="$emit('demote', a.id)"
           >
-            {{ a.isRequired ? "Required" : "Optional" }}
+            Demote to Watcher
           </button>
-          <span
-            v-else-if="a.userRole === 'Auditor'"
-            class="text-xs px-2 py-1 rounded-md shrink-0 bg-surface-container-high text-muted"
-          >
-            Always Optional
-          </span>
           <button
             class="btn-ghost btn-md"
             :title="`Move ${a.userFullName} up`"
@@ -128,7 +116,7 @@ defineEmits<{
   dragStart: [id: string]
   dragEnd: []
   drop: [id: string]
-  toggleRequired: [id: string, isRequired: boolean]
+  demote: [id: string]
   moveUp: [id: string]
   moveDown: [id: string]
   remove: [id: string]

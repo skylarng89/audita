@@ -282,7 +282,7 @@ class AllSprintsE2ETest {
 
     @Test @Order(29)
     void s2_invite_approver_and_accept() throws Exception {
-        String approverRoleId = readRoleId(orgSlug, "APPROVER");
+        String approverRoleId = readRoleId(orgSlug, "REQUESTER");
         String body = json("""
                 {"email":"%s","fullName":"%s","roleId":"%s"}
                 """.formatted(approverEmail, approverName, approverRoleId));

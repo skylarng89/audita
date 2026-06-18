@@ -23,9 +23,6 @@ public class CrApproverEntity {
     private UserEntity user;
 
     @Column(nullable = false)
-    private boolean isRequired = true;
-
-    @Column(nullable = false)
     private int position;
 
     @Enumerated(EnumType.STRING)
@@ -37,9 +34,6 @@ public class CrApproverEntity {
 
     private OffsetDateTime decidedAt;
 
-    @Column(nullable = false)
-    private boolean isAdHoc = false;
-
     @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
@@ -48,13 +42,10 @@ public class CrApproverEntity {
 
     protected CrApproverEntity() {}
 
-    public CrApproverEntity(ChangeRequestEntity changeRequest, UserEntity user,
-                             boolean isRequired, int position, boolean isAdHoc) {
+    public CrApproverEntity(ChangeRequestEntity changeRequest, UserEntity user, int position) {
         this.changeRequest = changeRequest;
         this.user = user;
-        this.isRequired = isRequired;
         this.position = position;
-        this.isAdHoc = isAdHoc;
     }
 
     // ── Domain logic ─────────────────────────────────────────────────────────
@@ -81,8 +72,6 @@ public class CrApproverEntity {
     public void setChangeRequest(ChangeRequestEntity changeRequest) { this.changeRequest = changeRequest; }
     public UserEntity getUser() { return user; }
     public void setUser(UserEntity user) { this.user = user; }
-    public boolean isRequired() { return isRequired; }
-    public void setRequired(boolean required) { this.isRequired = required; }
     public int getPosition() { return position; }
     public void setPosition(int position) { this.position = position; }
     public ApproverStatus getStatus() { return status; }
@@ -91,8 +80,6 @@ public class CrApproverEntity {
     public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
     public OffsetDateTime getDecidedAt() { return decidedAt; }
     public void setDecidedAt(OffsetDateTime decidedAt) { this.decidedAt = decidedAt; }
-    public boolean isAdHoc() { return isAdHoc; }
-    public void setAdHoc(boolean adHoc) { this.isAdHoc = adHoc; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public boolean isSample() { return isSample; }
     public void setSample(boolean sample) { isSample = sample; }

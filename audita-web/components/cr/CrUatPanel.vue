@@ -156,23 +156,12 @@
             </div>
             <div class="flex items-center gap-2">
               <button
-                v-if="canManage && !uat.readOnly"
-                type="button"
-                class="text-xs px-2 py-1 rounded-md shrink-0 transition-colors"
-                :class="approver.isRequired
-                  ? 'bg-primary/15 text-primary hover:bg-primary/25'
-                  : 'bg-surface-container-high text-muted hover:bg-surface-container'"
-                @click="toggleUatApproverRequirement(approver.id, approver.isRequired)"
+                v-if="canManage && !uat.readOnly && approver.status === 'PENDING'"
+                class="btn-ghost btn-sm"
+                @click="demoteApproverAction(approver.id)"
               >
-                {{ approver.isRequired ? "Required" : "Optional" }}
+                Demote to Watcher
               </button>
-              <span
-                v-else
-                class="text-xs px-2 py-1 rounded-md"
-                :class="approver.isRequired ? 'bg-primary/15 text-primary' : 'bg-surface-container-high text-muted'"
-              >
-                {{ approver.isRequired ? "Required" : "Optional" }}
-              </span>
               <div class="flex items-center gap-2 mt-1">
                 <span class="text-xs px-2 py-0.5 rounded-md font-medium" :class="approverStatusClass(approver.status)">
                   {{ formatEnumLabel(approver.status) }}
@@ -186,6 +175,84 @@
           </div>
           <div v-if="!uat.approvers?.length" class="text-sm text-muted">
             No approvers added yet.
+          </div>
+        </div>
+      </div>
+
+      <div v-if="!uat.readOnly" class="card p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold">UAT Watchers</h3>
+          <button
+            v-if="canManage"
+            class="btn-ghost btn-md"
+            @click="showAddWatcher = !showAddWatcher"
+          >
+            Add UAT Watcher
+          </button>
+        </div>
+
+        <div v-if="showAddWatcher" class="space-y-3">
+          <input
+            v-model="watcherSearchQuery"
+            class="input w-full"
+            placeholder="Search users by name or email…"
+          />
+          <div
+            class="max-h-48 overflow-auto rounded-lg border border-border dark:border-border-dark divide-y divide-border/60 dark:divide-border-dark/60"
+          >
+            <label
+              v-for="candidate in filteredWatcherCandidates"
+              :key="candidate.id"
+              class="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface-container-low dark:hover:bg-slate-800 cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                class="h-4 w-4 accent-primary shrink-0"
+                :checked="!!pendingWatcherIds[candidate.id]"
+                @change="toggleWatcherCandidate(candidate, $event)"
+              />
+              <div class="flex-1 min-w-0">
+                <p class="font-medium truncate">{{ candidate.label }}</p>
+                <p class="text-xs text-muted">{{ candidate.secondary ?? "" }}</p>
+              </div>
+            </label>
+            <div v-if="!filteredWatcherCandidates.length" class="px-3 py-4 text-center text-sm text-muted">
+              No matching users found.
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              class="btn-primary btn-md"
+              :disabled="!selectedWatcherCandidateIds.length || isAddingWatchers"
+              @click="batchAddWatchers"
+            >
+              {{ isAddingWatchers ? "Adding…" : `Add ${selectedWatcherCandidateIds.length}` }}
+            </button>
+            <button class="btn-ghost btn-md" @click="cancelAddWatcher">Cancel</button>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <div
+            v-for="w in watchers"
+            :key="w.id"
+            class="flex items-center justify-between rounded-lg border border-border dark:border-border-dark p-3"
+          >
+            <div>
+              <p class="text-sm font-semibold">{{ w.userFullName }}</p>
+              <p class="text-xs text-muted">{{ w.userEmail }}</p>
+            </div>
+            <div v-if="canManage" class="flex items-center gap-2">
+              <button class="btn-ghost btn-sm" @click="promoteWatcherAction(w.userId)">
+                Promote to Approver
+              </button>
+              <button class="btn-ghost btn-sm" @click="removeWatcherAction(w.userId)">
+                Remove
+              </button>
+            </div>
+          </div>
+          <div v-if="!watchers.length" class="text-sm text-muted">
+            No watchers added yet.
           </div>
         </div>
       </div>
@@ -315,7 +382,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Uat, ApproverCandidate, Comment } from "~/types";
+import type { Uat, UatWatcher, ApproverCandidate, Comment } from "~/types";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import { buildRichTextExtensions, normalizeRichTextHtml } from "~/composables/richText";
 
@@ -344,7 +411,11 @@ const {
   postUatComment,
   approveUat,
   rejectUat,
-  updateUatApproverRequirement,
+  listUatWatchers,
+  addUatWatchers,
+  removeUatWatcher,
+  promoteUatWatcher,
+  demoteUatApprover,
 } = useChangeRequests();
 
 const uat = ref<Uat | null>(null);
@@ -388,8 +459,9 @@ const isUatAvailable = computed(
 );
 
 const canManage = computed(() => {
-  if (auth.role === "Auditor") return false;
-  return auth.isSuperAdmin || auth.role === "Admin" || (uat.value?.createdBy === auth.userId);
+  if (!uat.value || uat.value.readOnly) return false;
+  if (!auth.hasPermission("cr.manage_participants")) return false;
+  return auth.isSuperAdmin || auth.isAdmin || uat.value.createdBy === auth.userId;
 });
 
 const currentApprover = computed(() => {
@@ -469,18 +541,108 @@ const showRejectForm = ref(false);
 const rejectionReason = ref("");
 const isSigningOff = ref(false);
 
-async function toggleUatApproverRequirement(approverId: string, currentRequired: boolean) {
-  const newVal = !currentRequired;
+const watchers = ref<UatWatcher[]>([]);
+const showAddWatcher = ref(false);
+const watcherSearchQuery = ref("");
+const watcherCandidates = ref<ApproverCandidate[]>([]);
+const pendingWatcherIds = ref<Record<string, ApproverCandidate>>({});
+const isAddingWatchers = ref(false);
+
+const existingUatWatcherUserIds = computed(() => {
+  const ids = new Set<string>();
+  for (const w of watchers.value) {
+    ids.add(w.userId);
+  }
+  return ids;
+});
+
+const filteredWatcherCandidates = computed(() => {
+  const available = watcherCandidates.value.filter(
+    (c) =>
+      c.kind === "USER" &&
+      !existingApproverUserIds.value.has(c.id) &&
+      !existingUatWatcherUserIds.value.has(c.id) &&
+      c.id !== auth.userId &&
+      c.role !== "Auditor",
+  );
+  const q = watcherSearchQuery.value.trim().toLowerCase();
+  if (!q) return available;
+  return available.filter(
+    (c) =>
+      c.label.toLowerCase().includes(q) ||
+      (c.secondary && c.secondary.toLowerCase().includes(q)),
+  );
+});
+
+const selectedWatcherCandidateIds = computed(() => Object.keys(pendingWatcherIds.value));
+
+async function loadWatchers() {
   try {
-    const updated = await updateUatApproverRequirement(props.requestId, approverId, newVal);
-    if (uat.value) {
-      const idx = uat.value.approvers.findIndex((a) => a.id === approverId);
-      if (idx >= 0) {
-        uat.value.approvers[idx] = { ...uat.value.approvers[idx], ...updated };
-      }
-    }
+    watchers.value = await listUatWatchers(props.requestId);
+  } catch {
+    watchers.value = [];
+  }
+}
+
+function toggleWatcherCandidate(candidate: ApproverCandidate, event: Event) {
+  const checked = (event.target as HTMLInputElement).checked;
+  if (checked) {
+    pendingWatcherIds.value = { ...pendingWatcherIds.value, [candidate.id]: candidate };
+  } else {
+    pendingWatcherIds.value = Object.fromEntries(
+      Object.entries(pendingWatcherIds.value).filter(([key]) => key !== candidate.id),
+    );
+  }
+}
+
+function cancelAddWatcher() {
+  showAddWatcher.value = false;
+  watcherSearchQuery.value = "";
+  pendingWatcherIds.value = {};
+}
+
+async function batchAddWatchers() {
+  if (!selectedWatcherCandidateIds.value.length) return;
+  isAddingWatchers.value = true;
+  try {
+    watchers.value = await addUatWatchers(props.requestId, selectedWatcherCandidateIds.value);
+    cancelAddWatcher();
+    emit("updated");
   } catch (err: unknown) {
-    toastError(resolveApiErrorMessage(err, "Failed to update approver requirement."));
+    toastError(resolveApiErrorMessage(err, "Failed to add UAT watchers."));
+  } finally {
+    isAddingWatchers.value = false;
+  }
+}
+
+async function removeWatcherAction(userId: string) {
+  try {
+    await removeUatWatcher(props.requestId, userId);
+    watchers.value = watchers.value.filter((w) => w.userId !== userId);
+  } catch (err: unknown) {
+    toastError(resolveApiErrorMessage(err, "Failed to remove UAT watcher."));
+  }
+}
+
+async function promoteWatcherAction(userId: string) {
+  try {
+    await promoteUatWatcher(props.requestId, userId);
+    await loadUat();
+    await loadWatchers();
+    emit("updated");
+  } catch (err: unknown) {
+    toastError(resolveApiErrorMessage(err, "Failed to promote UAT watcher."));
+  }
+}
+
+async function demoteApproverAction(approverId: string) {
+  try {
+    await demoteUatApprover(props.requestId, approverId);
+    await loadUat();
+    await loadWatchers();
+    emit("updated");
+  } catch (err: unknown) {
+    toastError(resolveApiErrorMessage(err, "Failed to demote UAT approver."));
   }
 }
 
@@ -609,7 +771,7 @@ async function batchAddApprovers() {
   isAddingApprovers.value = true;
   try {
     for (const candidate of Object.values(pendingApproverIds.value)) {
-      await addUatApprover(props.requestId, { userId: candidate.id, isRequired: false });
+      await addUatApprover(props.requestId, { userId: candidate.id });
     }
     await loadUat();
     cancelAddApprover();
@@ -665,6 +827,7 @@ watch(
     if (isUatAvailable.value) {
       loadUat();
       loadUatComments();
+      loadWatchers();
     } else {
       loading.value = false;
     }
@@ -675,6 +838,12 @@ watch(
 watch(showAddApprover, async (isOpen) => {
   if (isOpen && !approverCandidates.value.length) {
     approverCandidates.value = await searchApproverCandidates("", 50);
+  }
+});
+
+watch(showAddWatcher, async (isOpen) => {
+  if (isOpen && !watcherCandidates.value.length) {
+    watcherCandidates.value = await searchApproverCandidates("", 50);
   }
 });
 </script>

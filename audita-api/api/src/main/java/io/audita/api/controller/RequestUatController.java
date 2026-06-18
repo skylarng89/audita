@@ -1,16 +1,19 @@
 package io.audita.api.controller;
 
 import io.audita.api.dto.request.AddApproverRequest;
+import io.audita.api.dto.request.AddWatchersRequest;
 import io.audita.api.dto.request.CreateCommentRequest;
 import io.audita.api.dto.request.CreateRequestUatRequest;
 import io.audita.api.dto.request.RejectChangeRequestRequest;
 import io.audita.api.dto.response.RequestUatApproverResponse;
 import io.audita.api.dto.response.RequestUatResponse;
+import io.audita.api.dto.response.RequestUatWatcherResponse;
 import io.audita.api.dto.response.StageCommentResponse;
 import io.audita.api.security.UserPrincipal;
 import io.audita.infrastructure.persistence.entity.RequestUatApproverEntity;
 import io.audita.infrastructure.persistence.entity.RequestUatCommentEntity;
 import io.audita.infrastructure.persistence.entity.RequestUatEntity;
+import io.audita.infrastructure.persistence.entity.RequestUatWatcherEntity;
 import io.audita.infrastructure.persistence.entity.UserEntity;
 import io.audita.infrastructure.service.RequestUatService;
 import jakarta.validation.Valid;
@@ -36,7 +39,7 @@ public class RequestUatController {
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public RequestUatResponse get(@PathVariable UUID requestId) {
         RequestUatEntity uat = requestUatService.getByRequestId(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "UAT not found"));
@@ -50,7 +53,7 @@ public class RequestUatController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.edit')")
     public ResponseEntity<RequestUatResponse> create(
             @PathVariable UUID requestId,
             @Valid @RequestBody CreateRequestUatRequest req,
@@ -65,7 +68,7 @@ public class RequestUatController {
     }
 
     @PatchMapping
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.edit')")
     public RequestUatResponse update(
             @PathVariable UUID requestId,
             @Valid @RequestBody CreateRequestUatRequest req,
@@ -85,7 +88,7 @@ public class RequestUatController {
     }
 
     @GetMapping("/approvers")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public List<RequestUatApproverResponse> listApprovers(@PathVariable UUID requestId) {
         RequestUatEntity uat = requestUatService.getByRequestId(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "UAT not found"));
@@ -97,7 +100,7 @@ public class RequestUatController {
     }
 
     @PostMapping("/approvers")
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.manage_participants')")
     public ResponseEntity<RequestUatApproverResponse> addApprover(
             @PathVariable UUID requestId,
             @Valid @RequestBody AddApproverRequest req,
@@ -105,27 +108,72 @@ public class RequestUatController {
         RequestUatEntity uat = requestUatService.getByRequestId(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "UAT not found"));
         var created = requestUatService.addApprover(
-                uat.getId(), req.userId(), req.isRequired(),
+                uat.getId(), req.userId(),
                 principal.userId(), principal.role());
         return new ResponseEntity<>(RequestUatApproverResponse.from(created), HttpStatus.CREATED);
     }
 
-    @PatchMapping("/approvers/{approverId}/requirement")
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
-    public RequestUatApproverResponse updateApproverRequirement(
+    @PostMapping("/approvers/{approverId}/demote")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.manage_participants')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void demoteUatApprover(
             @PathVariable UUID requestId,
             @PathVariable UUID approverId,
-            @RequestParam boolean isRequired,
             @AuthenticationPrincipal UserPrincipal principal) {
-        var updated = requestUatService.updateApproverRequirement(
-                requestId, approverId, isRequired,
-                principal.userId(), principal.role());
-        Map<UUID, UserEntity> approverUsers = requestUatService.loadApproverUsers(List.of(updated));
-        return RequestUatApproverResponse.from(updated, approverUsers.get(updated.getUserId()));
+        requestUatService.moveUatApproverToWatcher(
+                requestId, approverId, principal.userId(), principal.effectivePermissions());
+    }
+
+    @GetMapping("/watchers")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
+    public List<RequestUatWatcherResponse> listUatWatchers(@PathVariable UUID requestId) {
+        List<RequestUatWatcherEntity> watchers = requestUatService.listUatWatchers(requestId);
+        Map<UUID, UserEntity> watcherUsers = requestUatService.loadWatcherUsers(watchers);
+        return watchers.stream()
+                .map(w -> RequestUatWatcherResponse.from(w, watcherUsers.get(w.getUser().getId())))
+                .toList();
+    }
+
+    @PostMapping("/watchers")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.manage_participants')")
+    public ResponseEntity<List<RequestUatWatcherResponse>> addUatWatchers(
+            @PathVariable UUID requestId,
+            @Valid @RequestBody AddWatchersRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        List<RequestUatWatcherEntity> added = requestUatService.addUatWatchers(
+                requestId, request.userIds(), principal.userId(), principal.effectivePermissions());
+        Map<UUID, UserEntity> watcherUsers = requestUatService.loadWatcherUsers(added);
+        return new ResponseEntity<>(
+                added.stream()
+                        .map(w -> RequestUatWatcherResponse.from(w, watcherUsers.get(w.getUser().getId())))
+                        .toList(),
+                HttpStatus.CREATED);
+    }
+
+    @DeleteMapping("/watchers/{userId}")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.manage_participants')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeUatWatcher(
+            @PathVariable UUID requestId,
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        requestUatService.removeUatWatcher(
+                requestId, userId, principal.userId(), principal.effectivePermissions());
+    }
+
+    @PostMapping("/watchers/{userId}/promote")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.manage_participants')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void promoteUatWatcher(
+            @PathVariable UUID requestId,
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        requestUatService.moveUatWatcherToApprover(
+                requestId, userId, principal.userId(), principal.effectivePermissions());
     }
 
     @PostMapping("/approve")
-    @PreAuthorize("isAuthenticated() and !hasRole('AUDITOR')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'uat.signoff')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void approve(
             @PathVariable UUID requestId,
@@ -136,7 +184,7 @@ public class RequestUatController {
     }
 
     @PostMapping("/reject")
-    @PreAuthorize("isAuthenticated() and !hasRole('AUDITOR')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'uat.signoff')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void reject(
             @PathVariable UUID requestId,
@@ -148,7 +196,7 @@ public class RequestUatController {
     }
 
     @PostMapping("/promote")
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.edit')")
     public RequestUatResponse promote(
             @PathVariable UUID requestId,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -166,7 +214,7 @@ public class RequestUatController {
     }
 
     @GetMapping("/comments")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public List<StageCommentResponse> listComments(@PathVariable UUID requestId) {
         RequestUatEntity uat = requestUatService.getByRequestId(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "UAT not found"));
@@ -178,7 +226,7 @@ public class RequestUatController {
     }
 
     @PostMapping("/comments")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public ResponseEntity<StageCommentResponse> createComment(
             @PathVariable UUID requestId,
             @Valid @RequestBody CreateCommentRequest req,

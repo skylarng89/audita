@@ -62,7 +62,7 @@
       </NuxtLink>
 
       <NuxtLink
-        v-if="auth.isAdmin"
+        v-if="auth.hasPermission('users.manage')"
         to="/users"
         :class="sidebarCollapsed ? 'sidebar-link-rail' : 'sidebar-link'"
         :active-class="
@@ -111,7 +111,7 @@
       </NuxtLink>
 
       <NuxtLink
-        v-if="auth.isAdmin || auth.isAuditor"
+        v-if="auth.hasPermission('audit.view')"
         to="/audit-trail"
         :class="sidebarCollapsed ? 'sidebar-link-rail' : 'sidebar-link'"
         :active-class="
@@ -136,7 +136,7 @@
       </NuxtLink>
 
       <NuxtLink
-        v-if="auth.isAdmin"
+        v-if="auth.hasPermission('settings.manage')"
         to="/admin/custom-fields"
         :class="sidebarCollapsed ? 'sidebar-link-rail' : 'sidebar-link'"
         :active-class="
@@ -161,7 +161,7 @@
       </NuxtLink>
 
       <NuxtLink
-        v-if="auth.isAdmin"
+        v-if="auth.hasPermission('settings.manage')"
         to="/admin/settings"
         :class="sidebarCollapsed ? 'sidebar-link-rail' : 'sidebar-link'"
         :active-class="
@@ -200,7 +200,7 @@
       ]"
     >
       <NuxtLink
-        v-if="auth.canCreateCR && !sidebarCollapsed"
+        v-if="auth.hasPermission('cr.create') && !sidebarCollapsed"
         to="/change-requests/new"
         class="btn-primary btn-md w-full shadow-md shadow-primary/20 rounded-xl mb-3"
       >
@@ -220,7 +220,7 @@
         New Request
       </NuxtLink>
       <NuxtLink
-        v-else-if="auth.canCreateCR"
+        v-else-if="auth.hasPermission('cr.create')"
         to="/change-requests/new"
         class="flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-xl bg-primary text-white hover:bg-primary-dark shadow-sm transition-colors"
         title="New Request"

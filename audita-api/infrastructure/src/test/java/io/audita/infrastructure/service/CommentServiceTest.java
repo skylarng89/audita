@@ -17,13 +17,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,6 +38,7 @@ class CommentServiceTest {
     @Mock ActivityStreamRepository activityStreamRepository;
     @Mock NotificationService notificationService;
     @Mock EmailService emailService;
+    @Mock MentionNotifier mentionNotifier;
 
     @InjectMocks
     CommentService commentService;
@@ -60,7 +61,12 @@ class CommentServiceTest {
 
         when(changeRequestRepository.findById(crId)).thenReturn(Optional.of(cr));
         when(userRepository.findById(authorId)).thenReturn(Optional.of(author));
-        when(userRepository.findByEmailIgnoreCase(anyString())).thenReturn(Optional.of(mentioned));
+        when(mentionNotifier.processMentions(
+                eq("Hello team @bob@example.com"),
+                eq(authorId),
+                eq("DB migration"),
+                eq("/change-requests/" + crId)))
+                .thenReturn(Set.of(mentioned));
         when(commentRepository.save(any(CommentEntity.class))).thenAnswer(inv -> {
             CommentEntity c = inv.getArgument(0);
             ReflectionTestUtils.setField(c, "id", UUID.randomUUID());
@@ -75,22 +81,12 @@ class CommentServiceTest {
 
         assertThat(created.getBody()).contains("Hello");
         assertThat(created.getBody()).doesNotContain("<script>");
+        verify(mentionNotifier).processMentions(
+                eq("Hello team @bob@example.com"),
+                eq(authorId),
+                eq("DB migration"),
+                eq("/change-requests/" + crId));
         verify(commentMentionRepository).save(any());
-        verify(notificationService).createAndPush(
-            mentionedId,
-            "MENTION",
-            "Author One mentioned you",
-            "In change request: DB migration",
-            "/change-requests/" + crId
-        );
-        verify(emailService).sendMentionEmail(
-            eq("bob@example.com"),
-            eq("Bob Two"),
-            eq("DB migration"),
-            eq(crId.toString()),
-            anyString(),
-            eq("Author One")
-        );
         verify(activityStreamRepository).save(any());
     }
 

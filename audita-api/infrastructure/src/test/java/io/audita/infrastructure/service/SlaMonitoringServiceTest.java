@@ -69,7 +69,7 @@ class SlaMonitoringServiceTest {
         UserEntity approverUser = user("approver@example.com", "Approver Two");
         TenantEntity tenant = activeTenant();
 
-        CrApproverEntity approver = new CrApproverEntity(cr, approverUser, true, 1, false);
+        CrApproverEntity approver = new CrApproverEntity(cr, approverUser, 1);
         when(tenantRepository.findByStatus(TenantStatus.ACTIVE)).thenReturn(List.of(tenant));
         when(orgSettingRepository.findById("sla.warning_before_hours")).thenReturn(Optional.empty());
         when(changeRequestRepository.findSlaWarning(any(), any())).thenReturn(List.of(cr));

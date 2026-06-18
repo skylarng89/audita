@@ -2,6 +2,7 @@ package io.audita.api.controller;
 
 import io.audita.api.dto.request.AddApproverRequest;
 import io.audita.api.dto.request.AddApproverGroupRequest;
+import io.audita.api.dto.request.AddWatchersRequest;
 import io.audita.api.dto.request.CreateChangeRequestRequest;
 import io.audita.api.dto.request.RejectChangeRequestRequest;
 import io.audita.api.dto.request.ReorderApproversRequest;
@@ -16,6 +17,7 @@ import io.audita.api.dto.response.PageResponse;
 import io.audita.api.dto.response.ChangeRequestResponse;
 import io.audita.api.dto.response.ApproverCandidateResponse;
 import io.audita.api.dto.response.CrApproverResponse;
+import io.audita.api.dto.response.CrWatcherResponse;
 import io.audita.api.dto.response.RequestLinkSearchResponse;
 import io.audita.api.security.UserPrincipal;
 import io.audita.domain.model.ApprovalType;
@@ -61,7 +63,7 @@ public class ChangeRequestController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.create')")
     public ResponseEntity<ChangeRequestResponse> create(
             @Valid @RequestBody CreateChangeRequestRequest req,
             @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey,
@@ -96,7 +98,7 @@ public class ChangeRequestController {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.edit')")
     public ChangeRequestResponse update(@PathVariable UUID id,
             @Valid @RequestBody UpdateChangeRequestRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -121,7 +123,7 @@ public class ChangeRequestController {
     }
 
     @PostMapping("/{id}/submit")
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.submit')")
     public ChangeRequestResponse submit(@PathVariable UUID id,
             @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -139,7 +141,7 @@ public class ChangeRequestController {
     }
 
     @PostMapping("/{id}/cancel")
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.cancel')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancel(@PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -147,7 +149,7 @@ public class ChangeRequestController {
     }
 
     @PostMapping("/{id}/complete")
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.edit')")
     public ChangeRequestResponse complete(@PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ChangeRequestResponse.from(
@@ -155,7 +157,7 @@ public class ChangeRequestController {
     }
 
     @PatchMapping("/{id}/workflow-mode")
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.edit')")
     public ChangeRequestResponse setWorkflowMode(@PathVariable UUID id,
             @Valid @RequestBody SetWorkflowModeRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -164,7 +166,7 @@ public class ChangeRequestController {
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public PageResponse<ChangeRequestResponse> list(
             @RequestParam(required = false) ChangeRequestStatus status,
             @RequestParam(required = false) Priority priority,
@@ -179,20 +181,20 @@ public class ChangeRequestController {
     }
 
     @GetMapping("/categories")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public List<String> listCategories() {
         return changeRequestService.listCategories();
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public ChangeRequestResponse get(@PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ChangeRequestResponse.from(changeRequestService.getById(id, principal.userId(), principal.role()));
     }
 
     @GetMapping("/{id}/approvers")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public List<CrApproverResponse> listApprovers(@PathVariable UUID id) {
         return changeRequestService.listApprovers(id).stream()
                 .map(CrApproverResponse::from)
@@ -200,7 +202,7 @@ public class ChangeRequestController {
     }
 
     @GetMapping("/approver-candidates")
-    @PreAuthorize("hasAnyRole('REQUESTER', 'APPROVER', 'AUDITOR', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public List<ApproverCandidateResponse> searchApproverCandidates(
             @RequestParam(required = false) String query,
             @RequestParam(defaultValue = "10") int limit) {
@@ -210,21 +212,20 @@ public class ChangeRequestController {
     }
 
     @PostMapping("/{id}/approvers")
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.manage_participants')")
     public ResponseEntity<CrApproverResponse> addApprover(@PathVariable UUID id,
             @Valid @RequestBody AddApproverRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {
         var created = changeRequestService.addApprover(
                 id,
                 req.userId(),
-                req.isRequired(),
                 principal.userId(),
                 principal.role());
         return new ResponseEntity<>(CrApproverResponse.from(created), HttpStatus.CREATED);
     }
 
     @PostMapping("/{id}/approvers/groups")
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.manage_participants')")
     public ResponseEntity<List<CrApproverResponse>> addApproverGroup(@PathVariable UUID id,
             @Valid @RequestBody AddApproverGroupRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -238,7 +239,7 @@ public class ChangeRequestController {
     }
 
     @PatchMapping("/{id}/approvers/reorder")
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.manage_participants')")
     public List<CrApproverResponse> reorderApprovers(@PathVariable UUID id,
             @Valid @RequestBody ReorderApproversRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -249,7 +250,7 @@ public class ChangeRequestController {
     }
 
     @DeleteMapping("/{id}/approvers/{approverId}")
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.manage_participants')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeApprover(@PathVariable UUID id,
             @PathVariable UUID approverId,
@@ -257,26 +258,65 @@ public class ChangeRequestController {
         changeRequestService.removeApprover(id, approverId, principal.userId(), principal.role());
     }
 
-    @PatchMapping("/{id}/approvers/{approverId}/requirement")
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
-    public CrApproverResponse updateApproverRequirement(@PathVariable UUID id,
+    @PostMapping("/{id}/approvers/{approverId}/demote")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.manage_participants')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void demoteApprover(@PathVariable UUID id,
             @PathVariable UUID approverId,
-            @RequestParam boolean isRequired,
             @AuthenticationPrincipal UserPrincipal principal) {
-        var updated = changeRequestService.updateApproverRequirement(id, approverId, isRequired,
-                principal.userId(), principal.role());
-        return CrApproverResponse.from(updated);
+        changeRequestService.moveApproverToWatcher(
+                id, approverId, principal.userId(), principal.effectivePermissions());
+    }
+
+    @GetMapping("/{id}/watchers")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
+    public List<CrWatcherResponse> listWatchers(@PathVariable UUID id) {
+        return changeRequestService.listWatchers(id).stream()
+                .map(CrWatcherResponse::from)
+                .toList();
+    }
+
+    @PostMapping("/{id}/watchers")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.manage_participants')")
+    public ResponseEntity<List<CrWatcherResponse>> addWatchers(@PathVariable UUID id,
+            @Valid @RequestBody AddWatchersRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        var added = changeRequestService.addWatchers(
+                id, request.userIds(), principal.userId(), principal.effectivePermissions());
+        return new ResponseEntity<>(
+                added.stream().map(CrWatcherResponse::from).toList(),
+                HttpStatus.CREATED);
+    }
+
+    @DeleteMapping("/{id}/watchers/{userId}")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.manage_participants')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeWatcher(@PathVariable UUID id,
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        changeRequestService.removeWatcher(
+                id, userId, principal.userId(), principal.effectivePermissions());
+    }
+
+    @PostMapping("/{id}/watchers/{userId}/promote")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.manage_participants')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void promoteWatcher(@PathVariable UUID id,
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        changeRequestService.moveWatcherToApprover(
+                id, userId, principal.userId(), principal.effectivePermissions());
     }
 
     @PostMapping("/{id}/approve")
-    @PreAuthorize("isAuthenticated() and !hasRole('AUDITOR')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.approve')")
     public ChangeRequestResponse approve(@PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ChangeRequestResponse.from(changeRequestService.approve(id, principal.userId()));
     }
 
     @PostMapping("/{id}/reject")
-    @PreAuthorize("isAuthenticated() and !hasRole('AUDITOR')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.approve')")
     public ChangeRequestResponse reject(@PathVariable UUID id,
             @Valid @RequestBody RejectChangeRequestRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -284,7 +324,7 @@ public class ChangeRequestController {
     }
 
     @GetMapping("/{id}/custom-fields")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public List<ChangeRequestCustomFieldResponse> listCustomFields(@PathVariable UUID id) {
         return changeRequestService.listCustomFields(id).stream()
                 .map(ChangeRequestCustomFieldResponse::from)
@@ -292,7 +332,7 @@ public class ChangeRequestController {
     }
 
     @PutMapping("/{id}/custom-fields")
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.edit')")
     public List<ChangeRequestCustomFieldResponse> upsertCustomFields(
             @PathVariable UUID id,
             @Valid @RequestBody UpsertChangeRequestCustomFieldsRequest req,
@@ -308,7 +348,7 @@ public class ChangeRequestController {
     }
 
     @GetMapping("/{id}/activity")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public List<ActivityStreamResponse> activity(@PathVariable UUID id) {
         return changeRequestService.listActivity(id).stream()
                 .map(ActivityStreamResponse::from)
@@ -316,7 +356,7 @@ public class ChangeRequestController {
     }
 
     @GetMapping("/{id}/attachments")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public List<AttachmentResponse> attachments(@PathVariable UUID id) {
         return changeRequestService.listAttachments(id).stream()
                 .map(AttachmentResponse::from)
@@ -324,7 +364,7 @@ public class ChangeRequestController {
     }
 
     @PostMapping(value = "/{id}/attachments", consumes = "multipart/form-data")
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.edit')")
     public ResponseEntity<AttachmentResponse> uploadAttachment(
             @PathVariable UUID id,
             @RequestPart("file") MultipartFile file,
@@ -335,7 +375,7 @@ public class ChangeRequestController {
     }
 
     @GetMapping("/{id}/attachments/{attachmentId}/download")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public ResponseEntity<InputStreamResource> downloadAttachment(
             @PathVariable UUID id,
             @PathVariable UUID attachmentId) {
@@ -352,7 +392,7 @@ public class ChangeRequestController {
     }
 
     @GetMapping("/search")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public List<RequestLinkSearchResponse> searchRequests(
             @RequestParam(required = false) String query,
             @RequestParam(defaultValue = "10") int limit) {
@@ -362,13 +402,13 @@ public class ChangeRequestController {
     }
 
     @GetMapping("/{id}/links")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public List<UUID> getLinkedRequests(@PathVariable UUID id) {
         return requestLinkService.getLinkedRequests(id);
     }
 
     @PutMapping("/{id}/links")
-    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.edit')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void upsertLinks(@PathVariable UUID id,
             @Valid @RequestBody UpsertLinksRequest req,

@@ -29,6 +29,8 @@ function buildCr(overrides: Partial<ChangeRequest> = {}): ChangeRequest {
     workflowMode: "DELIVERY_PIPELINE",
     requestDepartmentId: null,
     destinationDepartmentId: null,
+    requestGroupId: null,
+    destinationGroupId: null,
     scheduledStart: null,
     scheduledEnd: null,
     affectedSystems: [],
@@ -87,11 +89,11 @@ describe("UAT composable methods", () => {
     mockApi.mockResolvedValueOnce({});
 
     const { addUatApprover } = useChangeRequests();
-    await addUatApprover("cr-1", { userId: "u-1", isRequired: true });
+    await addUatApprover("cr-1", { userId: "u-1" });
 
     expect(mockApi).toHaveBeenCalledWith("/api/v1/change-requests/cr-1/uat/approvers", {
       method: "POST",
-      body: { userId: "u-1", isRequired: true },
+      body: { userId: "u-1" },
     });
   });
 

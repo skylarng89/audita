@@ -34,7 +34,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/audit-trail")
-@PreAuthorize("hasAnyRole('ADMIN', 'AUDITOR')")
+@PreAuthorize("@authz.hasPermission(authentication, 'audit.view')")
 public class AuditTrailController {
 
     private static final DateTimeFormatter CSV_TS_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
@@ -76,6 +76,7 @@ public class AuditTrailController {
     }
 
     @GetMapping(value = "/export.csv", produces = "text/csv")
+    @PreAuthorize("@authz.hasPermission(authentication, 'audit.export')")
     public ResponseEntity<byte[]> exportCsv(
             @RequestParam(required = false) String actorEmail,
             @RequestParam(required = false) String actionType,
@@ -116,6 +117,7 @@ public class AuditTrailController {
     }
 
     @PostMapping("/exports")
+    @PreAuthorize("@authz.hasPermission(authentication, 'audit.export')")
     public ResponseEntity<Map<String, Object>> queueExport(
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(required = false) String actorEmail,

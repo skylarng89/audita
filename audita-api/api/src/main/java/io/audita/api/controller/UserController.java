@@ -29,19 +29,19 @@ public class UserController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('AUDITOR', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'users.view')")
     public PageResponse<UserResponse> listUsers(@PageableDefault(size = 20) Pageable pageable) {
         return PageResponse.from(userService.listUsers(pageable), UserResponse::from);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('AUDITOR', 'ADMIN', 'SUPER_ADMIN') or #id.toString() == authentication.name")
+    @PreAuthorize("@authz.hasPermission(authentication, 'users.view') or #id.toString() == authentication.name")
     public UserResponse getUser(@PathVariable UUID id) {
         return UserResponse.from(userService.getUser(id));
     }
 
     @PostMapping("/invite")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'users.manage')")
     public ResponseEntity<UserResponse> inviteUser(@Valid @RequestBody InviteUserRequest req,
             @AuthenticationPrincipal UserDetails principal) {
         UUID invitedById = UUID.fromString(principal.getUsername());
@@ -50,13 +50,13 @@ public class UserController {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'users.manage')")
     public UserResponse updateUser(@PathVariable UUID id, @Valid @RequestBody UpdateUserRequest req) {
         return UserResponse.from(userService.updateUser(id, req.fullName(), req.roleId(), req.roleIds()));
     }
 
     @PostMapping("/{id}/deactivate")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'users.manage')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deactivateUser(@PathVariable UUID id,
             @AuthenticationPrincipal UserDetails principal) {
@@ -65,27 +65,27 @@ public class UserController {
     }
 
     @PostMapping("/{id}/reactivate")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'users.manage')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void reactivateUser(@PathVariable UUID id) {
         userService.reactivateUser(id);
     }
 
     @PostMapping("/{id}/invite")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'users.manage')")
     public UserResponse resendInvite(@PathVariable UUID id) {
         return UserResponse.from(userService.resendInvite(id));
     }
 
     @DeleteMapping("/{id}/invite")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("@authz.hasPermission(authentication, 'users.manage')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancelInvite(@PathVariable UUID id) {
         userService.cancelInvite(id);
     }
 
     @GetMapping("/search")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'users.view')")
     public List<UserResponse> searchUsers(
             @RequestParam(defaultValue = "") String query,
             @RequestParam(defaultValue = "20") int limit) {

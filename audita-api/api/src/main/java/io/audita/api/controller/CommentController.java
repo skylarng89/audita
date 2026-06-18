@@ -30,7 +30,7 @@ public class CommentController {
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public List<CommentResponse> list(@PathVariable UUID changeRequestId) {
         return commentService.list(changeRequestId).stream()
                 .map(CommentResponse::from)
@@ -38,7 +38,7 @@ public class CommentController {
     }
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authz.hasPermission(authentication, 'cr.view')")
     public ResponseEntity<CommentResponse> create(@PathVariable UUID changeRequestId,
                                                   @Valid @RequestBody CreateCommentRequest req,
                                                   @AuthenticationPrincipal UserPrincipal principal) {

@@ -138,39 +138,23 @@ public class ChangeRequestEntity {
         if (this.status != ChangeRequestStatus.PENDING_APPROVAL) {
             return;
         }
-
-        List<CrApproverEntity> required = approvers.stream()
-                .filter(CrApproverEntity::isRequired)
-                .toList();
-
-        if (required.isEmpty()) {
-            required = approvers;
-            if (required.isEmpty()) {
+        if (approvers == null || approvers.isEmpty()) {
+            return;
+        }
+        boolean allApproved = true;
+        for (CrApproverEntity approver : approvers) {
+            if (approver.getStatus() == ApproverStatus.REJECTED) {
+                this.status = ChangeRequestStatus.REJECTED;
+                this.approvalStatus = ChangeRequestStatus.REJECTED;
                 return;
             }
+            if (approver.getStatus() != ApproverStatus.APPROVED) {
+                allApproved = false;
+            }
         }
-
-        boolean allRequiredApproved = required.stream()
-                .allMatch(a -> a.getStatus() == ApproverStatus.APPROVED);
-        if (allRequiredApproved) {
+        if (allApproved) {
             this.status = ChangeRequestStatus.APPROVED;
             this.approvalStatus = ChangeRequestStatus.APPROVED;
-            return;
-        }
-
-        // Single required approver who rejected → immediately closed
-        if (required.size() == 1 && required.get(0).getStatus() == ApproverStatus.REJECTED) {
-            this.status = ChangeRequestStatus.REJECTED;
-            this.approvalStatus = ChangeRequestStatus.REJECTED;
-            return;
-        }
-
-        // Multiple required approvers: rejected only when ALL required have rejected
-        boolean allRequiredRejected = required.stream()
-                .allMatch(a -> a.getStatus() == ApproverStatus.REJECTED);
-        if (allRequiredRejected) {
-            this.status = ChangeRequestStatus.REJECTED;
-            this.approvalStatus = ChangeRequestStatus.REJECTED;
         }
     }
 

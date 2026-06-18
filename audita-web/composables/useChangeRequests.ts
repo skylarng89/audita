@@ -5,6 +5,7 @@ import type {
   ChangeRequestCustomFieldValue,
   CRStatus,
   CrApprover,
+  CrWatcher,
   Comment,
   ActivityEntry,
   Department,
@@ -14,6 +15,7 @@ import type {
   Page,
   Uat,
   UatApprover,
+  UatWatcher,
 } from "~/types";
 
 export type ChangeRequestSearchResult = {
@@ -103,7 +105,7 @@ export function useChangeRequests() {
 
   async function addApprover(
     id: string,
-    body: { userId: string; isRequired: boolean },
+    body: { userId: string },
   ): Promise<CrApprover> {
     return api<CrApprover>(`/api/v1/change-requests/${id}/approvers`, {
       method: "POST",
@@ -153,20 +155,6 @@ export function useChangeRequests() {
     await api(`/api/v1/change-requests/${id}/approvers/${approverId}`, {
       method: "DELETE",
     });
-  }
-
-  async function updateApproverRequirement(
-    id: string,
-    approverId: string,
-    isRequired: boolean,
-  ): Promise<CrApprover> {
-    return api<CrApprover>(
-      `/api/v1/change-requests/${id}/approvers/${approverId}/requirement`,
-      {
-        method: "PATCH",
-        query: { isRequired },
-      },
-    );
   }
 
   async function listCustomFields(
@@ -338,7 +326,7 @@ export function useChangeRequests() {
 
   async function addUatApprover(
     requestId: string,
-    body: { userId: string; isRequired: boolean },
+    body: { userId: string },
   ): Promise<void> {
     await api(`/api/v1/change-requests/${requestId}/uat/approvers`, {
       method: "POST",
@@ -348,17 +336,6 @@ export function useChangeRequests() {
 
   async function listUatApprovers(requestId: string): Promise<UatApprover[]> {
     return api<UatApprover[]>(`/api/v1/change-requests/${requestId}/uat/approvers`);
-  }
-
-  async function updateUatApproverRequirement(
-    requestId: string,
-    approverId: string,
-    isRequired: boolean,
-  ): Promise<UatApprover> {
-    return api<UatApprover>(
-      `/api/v1/change-requests/${requestId}/uat/approvers/${approverId}/requirement`,
-      { method: "PATCH", query: { isRequired } },
-    );
   }
 
   async function approveUat(requestId: string): Promise<void> {
@@ -402,6 +379,103 @@ export function useChangeRequests() {
     });
   }
 
+  async function listWatchers(id: string): Promise<CrWatcher[]> {
+    return api<CrWatcher[]>(`/api/v1/change-requests/${id}/watchers`);
+  }
+
+  async function addWatchers(id: string, userIds: string[]): Promise<CrWatcher[]> {
+    return api<CrWatcher[]>(`/api/v1/change-requests/${id}/watchers`, {
+      method: "POST",
+      body: { userIds },
+    });
+  }
+
+  async function removeWatcher(id: string, userId: string): Promise<void> {
+    await api(`/api/v1/change-requests/${id}/watchers/${userId}`, {
+      method: "DELETE",
+    });
+  }
+
+  async function promoteWatcher(id: string, userId: string): Promise<CrApprover> {
+    return api<CrApprover>(
+      `/api/v1/change-requests/${id}/watchers/${userId}/promote`,
+      { method: "POST" },
+    );
+  }
+
+  async function demoteApprover(
+    id: string,
+    approverId: string,
+  ): Promise<CrWatcher> {
+    return api<CrWatcher>(
+      `/api/v1/change-requests/${id}/approvers/${approverId}/demote`,
+      { method: "POST" },
+    );
+  }
+
+  async function listUatWatchers(requestId: string): Promise<UatWatcher[]> {
+    return api<UatWatcher[]>(
+      `/api/v1/change-requests/${requestId}/uat/watchers`,
+    );
+  }
+
+  async function addUatWatchers(
+    requestId: string,
+    userIds: string[],
+  ): Promise<UatWatcher[]> {
+    return api<UatWatcher[]>(
+      `/api/v1/change-requests/${requestId}/uat/watchers`,
+      { method: "POST", body: { userIds } },
+    );
+  }
+
+  async function removeUatWatcher(
+    requestId: string,
+    userId: string,
+  ): Promise<void> {
+    await api(
+      `/api/v1/change-requests/${requestId}/uat/watchers/${userId}`,
+      { method: "DELETE" },
+    );
+  }
+
+  async function promoteUatWatcher(
+    requestId: string,
+    userId: string,
+  ): Promise<UatApprover> {
+    return api<UatApprover>(
+      `/api/v1/change-requests/${requestId}/uat/watchers/${userId}/promote`,
+      { method: "POST" },
+    );
+  }
+
+  async function demoteUatApprover(
+    requestId: string,
+    approverId: string,
+  ): Promise<UatWatcher> {
+    return api<UatWatcher>(
+      `/api/v1/change-requests/${requestId}/uat/approvers/${approverId}/demote`,
+      { method: "POST" },
+    );
+  }
+
+  async function assignDeployer(
+    requestId: string,
+    userId: string,
+  ): Promise<Deployment> {
+    return api<Deployment>(
+      `/api/v1/change-requests/${requestId}/deployment/assignee`,
+      { method: "POST", body: { userId } },
+    );
+  }
+
+  async function completeDeployment(requestId: string): Promise<Deployment> {
+    return api<Deployment>(
+      `/api/v1/change-requests/${requestId}/deployment/complete`,
+      { method: "POST" },
+    );
+  }
+
   return {
     listCategories,
     listActiveDepartments,
@@ -418,7 +492,6 @@ export function useChangeRequests() {
     addApprover,
     addApproverGroup,
     removeApprover,
-    updateApproverRequirement,
     reorderApprovers,
     searchApproverCandidates,
     listCustomFields,
@@ -437,7 +510,6 @@ export function useChangeRequests() {
     updateUat,
     addUatApprover,
     listUatApprovers,
-    updateUatApproverRequirement,
     approveUat,
     rejectUat,
     promoteUat,
@@ -450,5 +522,17 @@ export function useChangeRequests() {
     postUatComment,
     listDeploymentComments,
     postDeploymentComment,
+    listWatchers,
+    addWatchers,
+    removeWatcher,
+    promoteWatcher,
+    demoteApprover,
+    listUatWatchers,
+    addUatWatchers,
+    removeUatWatcher,
+    promoteUatWatcher,
+    demoteUatApprover,
+    assignDeployer,
+    completeDeployment,
   };
 }
