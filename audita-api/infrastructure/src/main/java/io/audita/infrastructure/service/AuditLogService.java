@@ -60,9 +60,6 @@ public class AuditLogService implements AuditTrailPort {
      * Uses REQUIRES_NEW so the audit entry is committed independently of
      * the caller's transaction, surviving any rollback in the business
      * operation.
-     *
-     * Acquires a pessimistic write lock on the last audit_log row to
-     * serialise concurrent writes and guarantee correct chain ordering.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void log(String actionType,
@@ -73,15 +70,14 @@ public class AuditLogService implements AuditTrailPort {
                     Map<String, Object> payload,
                     String ipAddress) {
         try {
-            long chainIndex;
-            byte[] previousHash;
-            Optional<AuditLogEntity> last = auditLogRepository.findTopByOrderByChainIndexDesc();
-            if (last.isPresent()) {
-                chainIndex = last.get().getChainIndex() + 1;
-                previousHash = last.get().getRecordHash();
-            } else {
-                chainIndex = 1L;
-                previousHash = null;
+            long chainIndex = auditLogRepository.getMaxChainIndex() + 1;
+
+            byte[] previousHash = null;
+            if (chainIndex > 1) {
+                Optional<AuditLogEntity> last = auditLogRepository.findByChainIndex(chainIndex - 1);
+                if (last.isPresent()) {
+                    previousHash = last.get().getRecordHash();
+                }
             }
 
             byte[] recordHash = computeRecordHash(
