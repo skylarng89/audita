@@ -258,7 +258,7 @@ class RequestWorkflowAuthorizationTest {
     // ═══════════════════════════════════════════════════════════════════════════
 
     @Test
-    void uatPromotionDeniedWhenRequiredApproversPending() {
+    void uatPromotionDeniedWhenApproverPending() {
         UUID requestId = UUID.randomUUID();
         UUID uatId = UUID.randomUUID();
         UUID creatorId = UUID.randomUUID();
@@ -271,6 +271,7 @@ class RequestWorkflowAuthorizationTest {
         ReflectionTestUtils.setField(uat, "id", uatId);
         uat.setRequestId(requestId);
         uat.setReadOnly(false);
+        uat.setRequesterSignedOff(true);
         when(requestUatRepository.findById(uatId)).thenReturn(Optional.of(uat));
 
         RequestUatApproverEntity pendingApprover = new RequestUatApproverEntity();
@@ -286,7 +287,7 @@ class RequestWorkflowAuthorizationTest {
                 InvalidStateTransitionException.class,
                 () -> requestUatService.promoteToDeployment(uatId, creatorId, "REQUESTER"));
 
-        assertThat(ex.getMessage()).containsIgnoringCase("required");
+        assertThat(ex.getMessage()).containsIgnoringCase("approver");
         verify(requestUatRepository, never()).save(any());
     }
 

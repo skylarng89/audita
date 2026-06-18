@@ -62,15 +62,15 @@ class RequestDeploymentServiceTest {
         assertThat(result.getRequestId()).isEqualTo(requestId);
         assertThat(result.getUatId()).isEqualTo(uatId);
         assertThat(result.getCreatedBy()).isEqualTo(actorId);
-        assertThat(result.getStatus()).isEqualTo("PENDING_APPROVAL");
+        assertThat(result.getStatus()).isEqualTo("PENDING");
         verify(deploymentRepository).save(any(RequestDeploymentEntity.class));
     }
 
     @Test
-    void isDeploymentDoneReturnsTrueWhenApproved() {
+    void isDeploymentDoneReturnsTrueWhenCompleted() {
         UUID requestId = UUID.randomUUID();
         RequestDeploymentEntity deployment = buildDeployment(UUID.randomUUID(), requestId, UUID.randomUUID());
-        deployment.setStatus("APPROVED");
+        deployment.setStatus("COMPLETED");
 
         when(deploymentRepository.findByRequestId(requestId)).thenReturn(Optional.of(deployment));
 
@@ -81,7 +81,7 @@ class RequestDeploymentServiceTest {
     void isDeploymentDoneReturnsFalseWhenPending() {
         UUID requestId = UUID.randomUUID();
         RequestDeploymentEntity deployment = buildDeployment(UUID.randomUUID(), requestId, UUID.randomUUID());
-        deployment.setStatus("PENDING_APPROVAL");
+        deployment.setStatus("PENDING");
 
         when(deploymentRepository.findByRequestId(requestId)).thenReturn(Optional.of(deployment));
 
@@ -101,7 +101,7 @@ class RequestDeploymentServiceTest {
         ReflectionTestUtils.setField(deployment, "id", deploymentId);
         deployment.setRequestId(requestId);
         deployment.setUatId(uatId);
-        deployment.setStatus("PENDING_APPROVAL");
+        deployment.setStatus("PENDING");
         return deployment;
     }
 }

@@ -268,6 +268,7 @@ class RequestUatServiceTest {
         uat.setDetails("details");
         uat.setStatus("IN_PROGRESS");
         uat.setReadOnly(false);
+        uat.setRequesterSignedOff(true);
         uat.setCreatedBy(UUID.randomUUID());
         return uat;
     }

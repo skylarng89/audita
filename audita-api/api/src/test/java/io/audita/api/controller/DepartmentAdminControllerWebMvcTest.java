@@ -151,12 +151,12 @@ class DepartmentAdminControllerWebMvcTest {
     }
 
     @Test
-    void create_endpoint_requires_admin_role() throws Exception {
+    void create_endpoint_requires_groups_manage_permission() throws Exception {
         Method method = DepartmentAdminController.class.getMethod("create",
                 io.audita.api.dto.request.UpsertDepartmentRequest.class);
         PreAuthorize annotation = method.getAnnotation(PreAuthorize.class);
         assertThat(annotation).isNotNull();
-        assertThat(annotation.value()).contains("ADMIN");
+        assertThat(annotation.value()).contains("groups.manage");
     }
 
     @Test

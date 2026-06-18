@@ -15,13 +15,13 @@ class UserControllerSecurityAnnotationsTest {
     void userControllerAppliesReadOnlyAuditorPolicy() {
         Map<String, String> preAuthByMethod = readPreAuthorizeByMethod(UserController.class);
 
-        assertThat(preAuthByMethod.get("listUsers")).contains("AUDITOR");
-        assertThat(preAuthByMethod.get("getUser")).contains("AUDITOR");
+        assertThat(preAuthByMethod.get("listUsers")).contains("users.view");
+        assertThat(preAuthByMethod.get("getUser")).contains("users.view");
 
-        assertThat(preAuthByMethod.get("inviteUser")).doesNotContain("AUDITOR");
-        assertThat(preAuthByMethod.get("updateUser")).doesNotContain("AUDITOR");
-        assertThat(preAuthByMethod.get("deactivateUser")).doesNotContain("AUDITOR");
-        assertThat(preAuthByMethod.get("reactivateUser")).doesNotContain("AUDITOR");
+        assertThat(preAuthByMethod.get("inviteUser")).contains("users.manage");
+        assertThat(preAuthByMethod.get("updateUser")).contains("users.manage");
+        assertThat(preAuthByMethod.get("deactivateUser")).contains("users.manage");
+        assertThat(preAuthByMethod.get("reactivateUser")).contains("users.manage");
     }
 
     @Test
@@ -39,9 +39,9 @@ class UserControllerSecurityAnnotationsTest {
     void changeRequestApprovalEndpointsAllowAssignedRequesterApprovers() {
         Map<String, String> preAuthByMethod = readPreAuthorizeByMethod(ChangeRequestController.class);
 
-        assertThat(preAuthByMethod.get("approve")).contains("isAuthenticated()");
+        assertThat(preAuthByMethod.get("approve")).contains("cr.approve");
         assertThat(preAuthByMethod.get("approve")).doesNotContain("APPROVER");
-        assertThat(preAuthByMethod.get("reject")).contains("isAuthenticated()");
+        assertThat(preAuthByMethod.get("reject")).contains("cr.approve");
         assertThat(preAuthByMethod.get("reject")).doesNotContain("APPROVER");
     }
 

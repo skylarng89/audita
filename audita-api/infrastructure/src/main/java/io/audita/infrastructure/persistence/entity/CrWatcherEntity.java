@@ -22,7 +22,7 @@ public class CrWatcherEntity {
     private UserEntity user;
 
     @Column(name = "is_sample", nullable = false)
-    private boolean sample = false;
+    private boolean isSample = false;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
@@ -37,7 +37,7 @@ public class CrWatcherEntity {
     public UUID getId() { return id; }
     public ChangeRequestEntity getChangeRequest() { return changeRequest; }
     public UserEntity getUser() { return user; }
-    public boolean isSample() { return sample; }
-    public void setSample(boolean sample) { this.sample = sample; }
+    public boolean isSample() { return isSample; }
+    public void setSample(boolean sample) { this.isSample = sample; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
 }

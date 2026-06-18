@@ -193,6 +193,7 @@ class RequestWorkflowActivityTest {
         uat.setDetails("details");
         uat.setStatus("IN_PROGRESS");
         uat.setReadOnly(false);
+        uat.setRequesterSignedOff(true);
         return uat;
     }
 

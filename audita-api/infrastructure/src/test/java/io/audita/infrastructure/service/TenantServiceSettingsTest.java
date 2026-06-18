@@ -101,7 +101,6 @@ class TenantServiceSettingsTest {
     @Test
     void updateWorkflowDefaults_persistsBothWorkflowKeys() {
         when(tenantRepository.findBySlug("acme")).thenReturn(Optional.of(activeTenant("acme")));
-        when(orgSettingRepository.findById(any())).thenReturn(Optional.empty());
         when(orgSettingRepository.save(any(OrgSettingEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         tenantService.updateWorkflowDefaults("acme", new TenantSettingsPort.WorkflowDefaults(ApprovalType.NON_LINEAR, false));
@@ -118,13 +117,6 @@ class TenantServiceSettingsTest {
     @Test
     void updateSlaDefaults_persistsAllSlaKeys() {
         when(tenantRepository.findBySlug("acme")).thenReturn(Optional.of(activeTenant("acme")));
-                when(orgSettingRepository.findById(any())).thenAnswer(invocation -> {
-                        String key = invocation.getArgument(0, String.class);
-                        if ("sla.deadline_hours.low".equals(key)) {
-                                return Optional.of(new OrgSettingEntity("sla.deadline_hours.low", "72"));
-                        }
-                        return Optional.empty();
-                });
         when(orgSettingRepository.save(any(OrgSettingEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         tenantService.updateSlaDefaults("acme", new TenantSettingsPort.SlaDefaults(96, 72, 36, 12, 3));

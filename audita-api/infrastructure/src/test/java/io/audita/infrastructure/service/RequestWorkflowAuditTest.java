@@ -191,7 +191,12 @@ class RequestWorkflowAuditTest {
             ReflectionTestUtils.setField(deployment, "id", deploymentId);
             deployment.setRequestId(requestId);
 
+            ChangeRequestEntity cr = new ChangeRequestEntity();
+            ReflectionTestUtils.setField(cr, "id", requestId);
+            cr.setTitle("Deployment CR");
+
             when(deploymentRepository.findById(deploymentId)).thenReturn(Optional.of(deployment));
+            when(changeRequestRepository.findById(requestId)).thenReturn(Optional.of(cr));
             when(deploymentCommentRepository.save(any(RequestDeploymentCommentEntity.class))).thenAnswer(inv -> {
                 RequestDeploymentCommentEntity c = inv.getArgument(0);
                 ReflectionTestUtils.setField(c, "id", commentId);
@@ -221,7 +226,12 @@ class RequestWorkflowAuditTest {
             ReflectionTestUtils.setField(deployment, "id", deploymentId);
             deployment.setRequestId(requestId);
 
+            ChangeRequestEntity cr = new ChangeRequestEntity();
+            ReflectionTestUtils.setField(cr, "id", requestId);
+            cr.setTitle("Deployment CR");
+
             when(deploymentRepository.findById(deploymentId)).thenReturn(Optional.of(deployment));
+            when(changeRequestRepository.findById(requestId)).thenReturn(Optional.of(cr));
             when(deploymentCommentRepository.save(any(RequestDeploymentCommentEntity.class))).thenAnswer(inv -> {
                 RequestDeploymentCommentEntity c = inv.getArgument(0);
                 ReflectionTestUtils.setField(c, "id", commentId);
