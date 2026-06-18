@@ -25,6 +25,8 @@ public record UserPrincipal(
         boolean isSuperAdmin,
         Collection<? extends GrantedAuthority> authorities)implements UserDetails {
 
+    private static final String WILDCARD = "*";
+
     public static UserPrincipal ofTenantUser(
             UUID userId,
             String email,
@@ -51,8 +53,12 @@ public record UserPrincipal(
     }
 
     public static UserPrincipal ofSuperAdmin(UUID userId, String email) {
+        List<GrantedAuthority> authorities = List.of(
+                new SimpleGrantedAuthority("ROLE_SUPER_ADMIN"),
+                new SimpleGrantedAuthority(WILDCARD)
+        );
         return new UserPrincipal(userId, email, "SUPER_ADMIN", List.of("SUPER_ADMIN"), List.of(), null, true,
-                List.of(new SimpleGrantedAuthority("ROLE_SUPER_ADMIN")));
+                authorities);
     }
 
     private static String normalizeRole(String role) {
