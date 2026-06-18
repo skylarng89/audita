@@ -135,12 +135,16 @@ public class ChangeRequestEntity {
      * Re-evaluates and applies closure state after every approver decision (WF-09, WF-10, WF-12).
      */
     public void evaluateApprovalClosure() {
+        if (this.status != ChangeRequestStatus.PENDING_APPROVAL) {
+            return;
+        }
         if (approvers == null || approvers.isEmpty()) {
             return;
         }
         boolean allApproved = true;
         for (CrApproverEntity approver : approvers) {
             if (approver.getStatus() == ApproverStatus.REJECTED) {
+                this.status = ChangeRequestStatus.REJECTED;
                 this.approvalStatus = ChangeRequestStatus.REJECTED;
                 return;
             }
@@ -149,6 +153,7 @@ public class ChangeRequestEntity {
             }
         }
         if (allApproved) {
+            this.status = ChangeRequestStatus.APPROVED;
             this.approvalStatus = ChangeRequestStatus.APPROVED;
         }
     }
