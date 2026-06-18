@@ -396,7 +396,7 @@ public class ChangeRequestService {
         // Draft CRs are private to their creator. Return NOT_FOUND (not 403) to
         // avoid leaking that the resource exists to users who cannot see it.
         if (changeRequest.getStatus() == ChangeRequestStatus.DRAFT &&
-                !changeRequest.getCreatedBy().getId().equals(viewerId)) {
+                (changeRequest.getCreatedBy() == null || !changeRequest.getCreatedBy().getId().equals(viewerId))) {
             throw new DomainNotPermittedException(ERROR_NOT_FOUND, "Change request not found.");
         }
         return changeRequest;
@@ -409,7 +409,7 @@ public class ChangeRequestService {
             throw new DomainNotPermittedException(ERROR_NOT_FOUND, "Change request not found.");
         }
         if (changeRequest.getStatus() == ChangeRequestStatus.DRAFT &&
-                !changeRequest.getCreatedBy().getId().equals(viewerId)) {
+                (changeRequest.getCreatedBy() == null || !changeRequest.getCreatedBy().getId().equals(viewerId))) {
             throw new DomainNotPermittedException(ERROR_NOT_FOUND, "Change request not found.");
         }
         return changeRequest;
@@ -441,6 +441,9 @@ public class ChangeRequestService {
             List<UUID> userIds,
             UUID actorUserId,
             Set<String> actorPermissions) {
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of();
+        }
         log.debug("addWatchers: crId={}, count={}, actor={}", crId, userIds.size(), actorUserId);
         ChangeRequestEntity cr = getById(crId, actorUserId, actorPermissions);
         assertCanMutate(cr, actorUserId, actorPermissions);
@@ -536,14 +539,16 @@ public class ChangeRequestService {
         }
 
         UserEntity movedUser = approver.getUser();
+        UUID movedUserId = movedUser.getId();
         crApproverRepository.delete(approver);
+        resequenceApprovers(crId);
 
         CrWatcherEntity watcher = new CrWatcherEntity(cr, movedUser);
         crWatcherRepository.save(watcher);
 
         auditLogService.log("CR_APPROVER_DEMOTED", ENTITY_CHANGE_REQUEST, crId, actorUserId,
                 resolveActorEmail(actorUserId),
-                Map.of("userId", movedUser.getId()),
+                Map.of("userId", movedUserId),
                 RequestContext.getCurrentIp());
         log.info("Moved approver {} to watcher on CR {}", approverId, crId);
     }
