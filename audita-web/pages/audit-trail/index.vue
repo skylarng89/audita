@@ -182,7 +182,7 @@ const auth = useAuthStore();
 const { success: toastSuccess, error: toastError } = useToast();
 const { hide: hideLoading } = useLoadingOverlay();
 
-if (!(auth.isAdmin || auth.isAuditor)) {
+if (!auth.hasPermission("audit.view")) {
   await navigateTo("/dashboard");
 }
 
