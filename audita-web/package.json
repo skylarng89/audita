@@ -26,7 +26,7 @@
     "@tiptap/pm": "^3.27.0",
     "@tiptap/starter-kit": "^3.27.0",
     "@tiptap/suggestion": "^3.26.1",
-    "@tiptap/vue-3": "^3.26.1",
+    "@tiptap/vue-3": "^3.27.0",
     "date-fns": "^4.4.0",
     "flatpickr": "^4.6.13",
     "nuxt": "^4.4.8",
