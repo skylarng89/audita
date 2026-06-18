@@ -5,6 +5,5 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record AddApproverRequest(
-        @NotNull UUID userId,
-        boolean isRequired
+        @NotNull UUID userId
 ) {}

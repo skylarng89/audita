@@ -40,15 +40,21 @@ public record ChangeRequestResponse(
         UUID requestDepartmentId,
         UUID destinationDepartmentId,
         UUID requestGroupId,
-        UUID destinationGroupId
+        UUID destinationGroupId,
+        List<CrWatcherResponse> watchers
 ) {
     public static ChangeRequestResponse from(ChangeRequestEntity entity) {
+        return from(entity, List.of());
+    }
+
+    public static ChangeRequestResponse from(ChangeRequestEntity entity, List<CrWatcherResponse> watchers) {
         UUID createdById = entity.getCreatedBy() != null ? entity.getCreatedBy().getId() : null;
         String createdByEmail = entity.getCreatedBy() != null ? entity.getCreatedBy().getEmail() : null;
         String createdByFullName = entity.getCreatedBy() != null ? entity.getCreatedBy().getFullName() : null;
         List<String> systems = entity.getAffectedSystems() == null
                 ? List.of()
                 : Arrays.asList(entity.getAffectedSystems());
+        List<CrWatcherResponse> resolvedWatchers = watchers != null ? watchers : List.of();
 
         return new ChangeRequestResponse(
                 entity.getId(),
@@ -77,7 +83,8 @@ public record ChangeRequestResponse(
                 entity.getRequestDepartmentId(),
                 entity.getDestinationDepartmentId(),
                 entity.getRequestGroupId(),
-                entity.getDestinationGroupId()
+                entity.getDestinationGroupId(),
+                resolvedWatchers
         );
     }
 }
