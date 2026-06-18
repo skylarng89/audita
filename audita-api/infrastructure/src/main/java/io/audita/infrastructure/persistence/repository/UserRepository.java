@@ -56,6 +56,12 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
     long countDistinctByRoles_NameAndStatus(String roleName, UserStatus status);
 
+    // Counts users assigned to a role via either the legacy single role field
+    // or the user_roles join — UserEntity carries both, so both must be covered.
+    @Query("SELECT COUNT(u) FROM UserEntity u "
+            + "WHERE u.role.id = :roleId OR :roleId IN (SELECT r.id FROM u.roles r)")
+    long countByRoleId(@Param("roleId") UUID roleId);
+
     @Query("SELECT u FROM UserEntity u WHERE u.isSample = false AND (LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :query, '%')))")
     List<UserEntity> searchByEmailOrName(@Param("query") String query, Pageable pageable);
 }
