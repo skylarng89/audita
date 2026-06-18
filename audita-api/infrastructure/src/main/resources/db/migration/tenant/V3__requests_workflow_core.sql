@@ -144,7 +144,7 @@ CREATE TABLE IF NOT EXISTS request_uat_approvers (
 CREATE TABLE IF NOT EXISTS request_uat_watchers (
     id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     uat_id     UUID        NOT NULL REFERENCES request_uat(id) ON DELETE CASCADE,
-    user_id    UUID        NOT NULL REFERENCES users(id),
+    user_id    UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     is_sample  BOOLEAN     NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT uq_uat_watcher UNIQUE (uat_id, user_id)
@@ -167,10 +167,10 @@ CREATE TABLE IF NOT EXISTS request_uat_comments (
 CREATE TABLE IF NOT EXISTS request_deployments (
     id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     request_id   UUID        NOT NULL UNIQUE REFERENCES change_requests(id) ON DELETE CASCADE,
-    uat_id       UUID        NOT NULL UNIQUE REFERENCES request_uat(id),
-    assignee_id  UUID        REFERENCES users(id),
+    uat_id       UUID        NOT NULL UNIQUE REFERENCES request_uat(id) ON DELETE CASCADE,
+    assignee_id  UUID        REFERENCES users(id) ON DELETE SET NULL,
     status       VARCHAR(32) NOT NULL DEFAULT 'PENDING',
-    created_by   UUID        REFERENCES users(id),
+    created_by   UUID        NOT NULL REFERENCES users(id),
     promoted_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     completed_at TIMESTAMPTZ,
     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),

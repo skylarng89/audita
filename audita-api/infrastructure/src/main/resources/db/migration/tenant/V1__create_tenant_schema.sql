@@ -192,7 +192,7 @@ CREATE TABLE IF NOT EXISTS cr_approvers (
 CREATE TABLE IF NOT EXISTS cr_watchers (
     id                UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     change_request_id UUID         NOT NULL REFERENCES change_requests(id) ON DELETE CASCADE,
-    user_id           UUID         NOT NULL REFERENCES users(id),
+    user_id           UUID         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     is_sample         BOOLEAN      NOT NULL DEFAULT FALSE,
     created_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     CONSTRAINT uq_cr_watcher UNIQUE (change_request_id, user_id)
