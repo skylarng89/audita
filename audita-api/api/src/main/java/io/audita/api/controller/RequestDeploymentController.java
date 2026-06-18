@@ -1,12 +1,10 @@
 package io.audita.api.controller;
 
+import io.audita.api.dto.request.AssignDeployerRequest;
 import io.audita.api.dto.request.CreateCommentRequest;
-import io.audita.api.dto.request.RejectChangeRequestRequest;
 import io.audita.api.dto.response.RequestDeploymentResponse;
-import io.audita.api.dto.response.RequestDeploymentResponse.DeploymentApproverResponse;
 import io.audita.api.dto.response.StageCommentResponse;
 import io.audita.api.security.UserPrincipal;
-import io.audita.infrastructure.persistence.entity.RequestDeploymentApproverEntity;
 import io.audita.infrastructure.persistence.entity.RequestDeploymentCommentEntity;
 import io.audita.infrastructure.persistence.entity.RequestDeploymentEntity;
 import io.audita.infrastructure.persistence.entity.UserEntity;
@@ -36,50 +34,36 @@ public class RequestDeploymentController {
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public RequestDeploymentResponse get(@PathVariable UUID requestId) {
-        RequestDeploymentEntity deployment = requestDeploymentService.getByRequestId(requestId)
+        RequestDeploymentEntity deployment = requestDeploymentService.getDeploymentWithAssignee(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deployment not found"));
-        List<RequestDeploymentApproverEntity> approverEntities =
-                requestDeploymentService.listApprovers(deployment.getId());
-        Map<UUID, UserEntity> approverUsers =
-                requestDeploymentService.loadApproverUsers(approverEntities);
-        return RequestDeploymentResponse.from(deployment, approverEntities, approverUsers);
+        UserEntity assignee = deployment.getAssignee();
+        String createdByFullName = requestDeploymentService.resolveUserFullName(deployment.getCreatedBy());
+        return RequestDeploymentResponse.from(deployment, assignee, createdByFullName);
     }
 
-    @GetMapping("/approvers")
-    @PreAuthorize("isAuthenticated()")
-    public List<DeploymentApproverResponse> listApprovers(@PathVariable UUID requestId) {
-        RequestDeploymentEntity deployment = requestDeploymentService.getByRequestId(requestId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deployment not found"));
-        List<RequestDeploymentApproverEntity> approverEntities =
-                requestDeploymentService.listApprovers(deployment.getId());
-        Map<UUID, UserEntity> approverUsers =
-                requestDeploymentService.loadApproverUsers(approverEntities);
-        return approverEntities.stream()
-                .map(a -> DeploymentApproverResponse.from(a, approverUsers.get(a.getUserId())))
-                .toList();
+    @PostMapping("/assignee")
+    @PreAuthorize("hasAnyRole('REQUESTER', 'ADMIN', 'SUPER_ADMIN')")
+    public RequestDeploymentResponse assignDeployer(
+            @PathVariable UUID requestId,
+            @Valid @RequestBody AssignDeployerRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        RequestDeploymentEntity updated = requestDeploymentService.assignDeployer(
+                requestId, req.userId(), principal.userId(), principal.role());
+        UserEntity assignee = updated.getAssignee();
+        String createdByFullName = requestDeploymentService.resolveUserFullName(updated.getCreatedBy());
+        return RequestDeploymentResponse.from(updated, assignee, createdByFullName);
     }
 
-    @PostMapping("/approve")
+    @PostMapping("/complete")
     @PreAuthorize("isAuthenticated() and !hasRole('AUDITOR')")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void approve(
+    public RequestDeploymentResponse complete(
             @PathVariable UUID requestId,
             @AuthenticationPrincipal UserPrincipal principal) {
-        RequestDeploymentEntity deployment = requestDeploymentService.getByRequestId(requestId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deployment not found"));
-        requestDeploymentService.approveDeployment(deployment.getId(), principal.userId());
-    }
-
-    @PostMapping("/reject")
-    @PreAuthorize("isAuthenticated() and !hasRole('AUDITOR')")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void reject(
-            @PathVariable UUID requestId,
-            @Valid @RequestBody RejectChangeRequestRequest req,
-            @AuthenticationPrincipal UserPrincipal principal) {
-        RequestDeploymentEntity deployment = requestDeploymentService.getByRequestId(requestId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deployment not found"));
-        requestDeploymentService.rejectDeployment(deployment.getId(), principal.userId(), req.reason());
+        RequestDeploymentEntity updated = requestDeploymentService.completeDeployment(
+                requestId, principal.userId(), principal.role());
+        UserEntity assignee = updated.getAssignee();
+        String createdByFullName = requestDeploymentService.resolveUserFullName(updated.getCreatedBy());
+        return RequestDeploymentResponse.from(updated, assignee, createdByFullName);
     }
 
     @GetMapping("/comments")
