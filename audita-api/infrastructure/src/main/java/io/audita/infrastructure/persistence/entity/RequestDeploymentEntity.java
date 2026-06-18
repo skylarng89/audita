@@ -19,7 +19,7 @@ public class RequestDeploymentEntity {
     private UUID uatId;
 
     @Column(nullable = false)
-    private String status = "PENDING_APPROVAL";
+    private String status = "PENDING";
 
     @Column(name = "created_by")
     private UUID createdBy;
