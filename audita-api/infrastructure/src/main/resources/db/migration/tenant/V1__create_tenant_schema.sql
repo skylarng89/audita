@@ -180,15 +180,26 @@ CREATE TABLE IF NOT EXISTS cr_approvers (
     id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     change_request_id UUID        NOT NULL REFERENCES change_requests(id) ON DELETE CASCADE,
     user_id           UUID        NOT NULL REFERENCES users(id),
-    is_required       BOOLEAN     NOT NULL DEFAULT TRUE,
     position          INT         NOT NULL,
-    status            VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
+    status            VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     rejection_reason  TEXT,
     decided_at        TIMESTAMPTZ,
-    is_ad_hoc         BOOLEAN     NOT NULL DEFAULT FALSE,
-    created_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_cr_approver UNIQUE (change_request_id, user_id),
     CONSTRAINT chk_approver_status CHECK (status IN ('PENDING','APPROVED','REJECTED'))
 );
+
+CREATE TABLE IF NOT EXISTS cr_watchers (
+    id                UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    change_request_id UUID         NOT NULL REFERENCES change_requests(id) ON DELETE CASCADE,
+    user_id           UUID         NOT NULL REFERENCES users(id),
+    is_sample         BOOLEAN      NOT NULL DEFAULT FALSE,
+    created_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_cr_watcher UNIQUE (change_request_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_cr_watchers_cr ON cr_watchers(change_request_id);
+CREATE INDEX IF NOT EXISTS idx_cr_watchers_user ON cr_watchers(user_id);
 
 CREATE TABLE IF NOT EXISTS attachments (
     id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -295,52 +306,53 @@ CREATE TABLE IF NOT EXISTS audit_export_requests (
 -- ============================================================
 
 INSERT INTO permissions (code, label) VALUES
-    ('cr.create',           'Create Change Requests'),
-    ('cr.view',             'View Change Requests'),
-    ('cr.edit',             'Edit Change Requests'),
-    ('cr.cancel',           'Cancel Change Requests'),
-    ('cr.submit',           'Submit Change Requests for Approval'),
-    ('cr.approve',          'Approve / Reject Change Requests'),
-    ('users.view',          'View Users'),
-    ('users.manage',        'Invite, Edit and Deactivate Users'),
-    ('roles.view',          'View Roles'),
-    ('roles.manage',        'Create and Manage Custom Roles'),
-    ('groups.view',         'View Groups'),
-    ('groups.manage',       'Create and Manage Groups'),
-    ('settings.view',       'View Organisation Settings'),
-    ('settings.manage',     'Manage Organisation Settings'),
-    ('sla.view',            'View SLA Policies'),
-    ('sla.manage',          'Create and Manage SLA Policies'),
-    ('audit.view',          'View Audit Trail'),
-    ('audit.export',        'Export Audit Trail to CSV')
+    ('cr.create',              'Create Change Requests'),
+    ('cr.view',                'View Change Requests'),
+    ('cr.view.all',            'View All Change Requests (global)'),
+    ('cr.edit',                'Edit Change Requests'),
+    ('cr.cancel',              'Cancel Change Requests'),
+    ('cr.submit',              'Submit Change Requests for Approval'),
+    ('cr.approve',             'Approve / Reject Change Requests'),
+    ('cr.manage_participants', 'Add/Remove Approvers, Watchers, Assignees'),
+    ('uat.signoff',            'UAT Sign-Off (requester + approver)'),
+    ('deployment.execute',     'Mark Deployment Completed'),
+    ('users.view',             'View Users'),
+    ('users.manage',           'Invite, Edit and Deactivate Users'),
+    ('roles.view',             'View Roles'),
+    ('roles.manage',           'Create and Manage Custom Roles'),
+    ('groups.view',            'View Groups'),
+    ('groups.manage',          'Create and Manage Groups'),
+    ('settings.view',          'View Organisation Settings'),
+    ('settings.manage',        'Manage Organisation Settings'),
+    ('sla.view',               'View SLA Policies'),
+    ('sla.manage',             'Create and Manage SLA Policies'),
+    ('audit.view',             'View Audit Trail'),
+    ('audit.export',           'Export Audit Trail to CSV')
 ON CONFLICT (code) DO NOTHING;
 
 INSERT INTO roles (id, name, description, is_system) VALUES
     ('00000000-0000-0000-0000-000000000001', 'Admin',     'Full organisation management',              TRUE),
     ('00000000-0000-0000-0000-000000000002', 'Requester', 'Can create and manage change requests',     TRUE),
-    ('00000000-0000-0000-0000-000000000003', 'Approver',  'Can review and action change requests',     TRUE),
     ('00000000-0000-0000-0000-000000000004', 'Auditor',   'Read-only access across the organisation',  TRUE)
 ON CONFLICT (id) DO NOTHING;
 
+-- Admin: all permissions
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT '00000000-0000-0000-0000-000000000001', id FROM permissions
 ON CONFLICT DO NOTHING;
 
+-- Requester: create, view, edit, cancel, submit, approve, manage_participants, uat.signoff, deployment.execute, users.view, groups.view, settings.view, sla.view
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT '00000000-0000-0000-0000-000000000002', id FROM permissions
-WHERE code IN ('cr.create', 'cr.view', 'cr.edit', 'cr.cancel', 'cr.submit',
+WHERE code IN ('cr.create', 'cr.view', 'cr.edit', 'cr.cancel', 'cr.submit', 'cr.approve',
+               'cr.manage_participants', 'uat.signoff', 'deployment.execute',
                'users.view', 'groups.view', 'settings.view', 'sla.view')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO role_permissions (role_id, permission_id)
-SELECT '00000000-0000-0000-0000-000000000003', id FROM permissions
-WHERE code IN ('cr.view', 'cr.approve', 'users.view', 'groups.view',
-               'settings.view', 'sla.view')
-ON CONFLICT DO NOTHING;
-
+-- Auditor: view all, users.view, groups.view, roles.view, settings.view, sla.view, audit.view, audit.export
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT '00000000-0000-0000-0000-000000000004', id FROM permissions
-WHERE code IN ('cr.view', 'users.view', 'groups.view', 'roles.view',
+WHERE code IN ('cr.view', 'cr.view.all', 'users.view', 'groups.view', 'roles.view',
                'settings.view', 'sla.view', 'audit.view', 'audit.export')
 ON CONFLICT DO NOTHING;
 
