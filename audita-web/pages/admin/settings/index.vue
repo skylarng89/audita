@@ -276,11 +276,6 @@
       </div>
     </section>
 
-    <div class="bg-danger p-2 text-white text-xs font-mono mb-2">
-      SLADEBUG: low={{ settings.slaDefaults.lowHours }} med={{ settings.slaDefaults.mediumHours }} high={{ settings.slaDefaults.highHours }} crit={{ settings.slaDefaults.criticalHours }} warn={{ settings.slaDefaults.warningBeforeHours }}
-      | types: {{ typeof settings.slaDefaults.lowHours }} {{ typeof settings.slaDefaults.mediumHours }} {{ typeof settings.slaDefaults.highHours }} {{ typeof settings.slaDefaults.criticalHours }} {{ typeof settings.slaDefaults.warningBeforeHours }}
-    </div>
-
     <section class="card p-5 shadow-card-hover">
       <h2 class="text-lg font-semibold">SLA Defaults</h2>
       <p class="text-sm text-muted mt-1">
