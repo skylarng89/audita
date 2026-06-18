@@ -21,6 +21,10 @@ vi.mock("~/composables/richText", () => ({
   buildRichTextExtensions: () => [],
 }));
 
+vi.stubGlobal("useAuthStore", () => ({
+  hasPermission: () => true,
+}));
+
 import CrRequestOverviewPanel from "~/components/cr/CrRequestOverviewPanel.vue";
 import CrCompletionStatusControl from "~/components/cr/CrCompletionStatusControl.vue";
 import CrCompletionStatusBadge from "~/components/cr/CrCompletionStatusBadge.vue";

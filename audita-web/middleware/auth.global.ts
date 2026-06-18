@@ -60,6 +60,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   if (!auth.isAuthenticated) {
-    return navigateTo("/auth/sign-in");
+    const redirect = encodeURIComponent(to.fullPath);
+    return navigateTo(`/auth/sign-in?redirect=${redirect}`);
   }
 });

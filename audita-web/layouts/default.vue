@@ -245,7 +245,7 @@
               Requests
             </NuxtLink>
             <NuxtLink
-              v-if="auth.isAdmin"
+              v-if="auth.hasPermission('users.manage')"
               to="/users"
               class="sidebar-link"
               active-class="sidebar-link-active"
@@ -290,7 +290,7 @@
               Groups
             </NuxtLink>
             <NuxtLink
-              v-if="auth.isAdmin || auth.isAuditor"
+              v-if="auth.hasPermission('audit.view')"
               to="/audit-trail"
               class="sidebar-link"
               active-class="sidebar-link-active"
@@ -315,7 +315,7 @@
               Audit Trail
             </NuxtLink>
             <NuxtLink
-              v-if="auth.isAdmin"
+              v-if="auth.hasPermission('settings.manage')"
               to="/admin/custom-fields"
               class="sidebar-link"
               active-class="sidebar-link-active"
@@ -340,7 +340,7 @@
               Custom Fields
             </NuxtLink>
             <NuxtLink
-              v-if="auth.isAdmin"
+              v-if="auth.hasPermission('settings.manage')"
               to="/admin/settings"
               class="sidebar-link"
               active-class="sidebar-link-active"
@@ -377,7 +377,7 @@
             class="p-3 border-t border-outline-variant/50 dark:border-border-dark shrink-0"
           >
             <NuxtLink
-              v-if="auth.canCreateCR"
+              v-if="auth.hasPermission('cr.create')"
               to="/change-requests/new"
               class="btn-primary btn-md w-full shadow-md shadow-primary/20 rounded-xl"
               @click="mobileNavOpen = false"

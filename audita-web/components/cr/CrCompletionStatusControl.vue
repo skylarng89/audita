@@ -2,7 +2,7 @@
   <div class="flex items-center gap-3">
     <CrCompletionStatusBadge :status="completionStatus || 'IN_PROGRESS'" />
     <button
-      v-if="canMarkComplete"
+      v-if="canMarkComplete && auth.hasPermission('cr.manage_participants')"
       class="btn-primary btn-sm"
       @click="$emit('completed')"
     >
@@ -26,6 +26,8 @@ const props = defineProps<{
 defineEmits<{
   completed: [];
 }>();
+
+const auth = useAuthStore();
 
 const canMarkComplete = computed(() => {
   if (props.completionStatus === "COMPLETED") return false;
