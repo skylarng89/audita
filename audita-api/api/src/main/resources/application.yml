@@ -177,15 +177,22 @@ audita:
 # ── Logging ──────────────────────────────────────────────────────────────────────
 logging:
   level:
-    root: INFO
-    "[io.audita]": INFO
-    "[org.flywaydb]": INFO
+    root: ${LOG_LEVEL_ROOT:INFO}
+    "[io.audita]": ${LOG_LEVEL_APP:DEBUG}
+    "[org.flywaydb]": ${LOG_LEVEL_FLYWAY:INFO}
     "[org.hibernate.orm.deprecation]": ERROR
     "[org.hibernate.orm.connections.pooling]": WARN
     "[org.hibernate.orm.query]": ERROR
     "[io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics]": ERROR
   pattern:
     console: "%d{ISO8601} %-5level [%thread] %logger{36} - %msg%n"
+  file:
+    name: ${LOG_FILE:logs/audita-api.log}
+  logback:
+    rollingpolicy:
+      max-file-size: ${LOG_FILE_MAX_SIZE:50MB}
+      max-history: ${LOG_FILE_MAX_HISTORY:30}
+      total-size-cap: ${LOG_FILE_TOTAL_SIZE_CAP:1GB}
 
 ---
 spring:
