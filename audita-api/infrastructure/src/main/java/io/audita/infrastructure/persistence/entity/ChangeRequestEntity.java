@@ -135,42 +135,21 @@ public class ChangeRequestEntity {
      * Re-evaluates and applies closure state after every approver decision (WF-09, WF-10, WF-12).
      */
     public void evaluateApprovalClosure() {
-        if (this.status != ChangeRequestStatus.PENDING_APPROVAL) {
+        if (approvers == null || approvers.isEmpty()) {
             return;
         }
-
-        List<CrApproverEntity> required = approvers.stream()
-                .filter(CrApproverEntity::isRequired)
-                .toList();
-
-        if (required.isEmpty()) {
-            required = approvers;
-            if (required.isEmpty()) {
+        boolean allApproved = true;
+        for (CrApproverEntity approver : approvers) {
+            if (approver.getStatus() == ApproverStatus.REJECTED) {
+                this.approvalStatus = ChangeRequestStatus.REJECTED;
                 return;
             }
+            if (approver.getStatus() != ApproverStatus.APPROVED) {
+                allApproved = false;
+            }
         }
-
-        boolean allRequiredApproved = required.stream()
-                .allMatch(a -> a.getStatus() == ApproverStatus.APPROVED);
-        if (allRequiredApproved) {
-            this.status = ChangeRequestStatus.APPROVED;
+        if (allApproved) {
             this.approvalStatus = ChangeRequestStatus.APPROVED;
-            return;
-        }
-
-        // Single required approver who rejected → immediately closed
-        if (required.size() == 1 && required.get(0).getStatus() == ApproverStatus.REJECTED) {
-            this.status = ChangeRequestStatus.REJECTED;
-            this.approvalStatus = ChangeRequestStatus.REJECTED;
-            return;
-        }
-
-        // Multiple required approvers: rejected only when ALL required have rejected
-        boolean allRequiredRejected = required.stream()
-                .allMatch(a -> a.getStatus() == ApproverStatus.REJECTED);
-        if (allRequiredRejected) {
-            this.status = ChangeRequestStatus.REJECTED;
-            this.approvalStatus = ChangeRequestStatus.REJECTED;
         }
     }
 
