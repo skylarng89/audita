@@ -540,6 +540,7 @@ public class ChangeRequestService {
 
         UserEntity movedUser = approver.getUser();
         UUID movedUserId = movedUser.getId();
+        cr.getApprovers().remove(approver);
         crApproverRepository.delete(approver);
         resequenceApprovers(crId);
 
@@ -674,6 +675,7 @@ public class ChangeRequestService {
                     "Approvers who already voted cannot be removed.");
         }
 
+        changeRequest.getApprovers().remove(approver);
         crApproverRepository.delete(approver);
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_APPROVER_REMOVED",
                 Map.of(PAYLOAD_APPROVER_ID, approverId.toString()));
