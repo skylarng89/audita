@@ -22,14 +22,12 @@ tmp/
 *.env.production
 mailpit_data/
 .kilo/
-
-# Audita API file logs (keep the directory, ignore the contents)
 audita-api/logs/*
 !audita-api/logs/.gitkeep
-
 .mcp.json
 .sugar
 .sugar/
 memory-bank/
 AGENTS.md
 .opencode/
+sonar-scan.sh
