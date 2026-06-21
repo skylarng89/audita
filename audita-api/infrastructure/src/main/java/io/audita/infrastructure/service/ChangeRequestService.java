@@ -472,6 +472,8 @@ public class ChangeRequestService {
                     resolveActorEmail(actorUserId),
                     Map.of("watcherUserId", userId, "watcherEmail", user.getEmail()),
                     RequestContext.getCurrentIp());
+            logActivity(cr, cr.getCreatedBy(), "CR_WATCHER_ADDED",
+                    Map.of("watcherUserId", userId, "watcherEmail", user.getEmail()));
             notificationService.createAndPush(userId, "CR_WATCHER_ADDED",
                     "Added as Watcher", "You have been added as a watcher to: " + cr.getTitle(),
                     "/change-requests/" + crId);
@@ -493,6 +495,8 @@ public class ChangeRequestService {
                 resolveActorEmail(actorUserId),
                 Map.of("watcherUserId", userId),
                 RequestContext.getCurrentIp());
+        logActivity(cr, cr.getCreatedBy(), "CR_WATCHER_REMOVED",
+                Map.of("watcherUserId", userId));
         log.info("Removed watcher {} from CR {}", userId, crId);
     }
 
@@ -519,6 +523,8 @@ public class ChangeRequestService {
                 resolveActorEmail(actorUserId),
                 Map.of("userId", userId, "newPosition", nextPosition),
                 RequestContext.getCurrentIp());
+        logActivity(cr, cr.getCreatedBy(), "CR_WATCHER_PROMOTED",
+                Map.of("userId", userId, "newPosition", nextPosition));
         log.info("Moved watcher {} to approver on CR {}", userId, crId);
     }
 
@@ -551,6 +557,8 @@ public class ChangeRequestService {
                 resolveActorEmail(actorUserId),
                 Map.of("userId", movedUserId),
                 RequestContext.getCurrentIp());
+        logActivity(cr, cr.getCreatedBy(), "CR_APPROVER_DEMOTED",
+                Map.of("userId", movedUserId));
         log.info("Moved approver {} to watcher on CR {}", approverId, crId);
     }
 
