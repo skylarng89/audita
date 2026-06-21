@@ -200,7 +200,6 @@
       SECURE ENVIRONMENT &bull; AES-256 ENCRYPTED
     </p>
   </div>
-  </div>
 </template>
 
 <script setup lang="ts">
@@ -228,7 +227,7 @@ if (import.meta.client) {
   const hostname = window.location.hostname;
   const parts = hostname.split(".");
   if (parts.length >= 3) {
-    const sub = parts[0];
+    const sub = parts[0] ?? "";
     if (!["www", "app", "api", "mail", "smtp"].includes(sub)) {
       form.subdomain = sub;
     }
@@ -327,5 +326,7 @@ async function handleSubmit() {
   }
 }
 
-onMounted(() => { isMounted.value = true; });
+onMounted(() => {
+  isMounted.value = true;
+});
 </script>

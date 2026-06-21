@@ -49,29 +49,48 @@
               "
             >
               <template v-if="currentStep > i">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               </template>
               <template v-else>{{ i + 1 }}</template>
             </div>
             <span
               class="text-sm font-medium"
-              :class="currentStep >= i ? 'text-on-surface dark:text-gray-100' : 'text-muted'"
+              :class="
+                currentStep >= i
+                  ? 'text-on-surface dark:text-gray-100'
+                  : 'text-muted'
+              "
             >
               {{ step }}
             </span>
             <div
               v-if="i < steps.length - 1"
               class="w-12 h-0.5 rounded"
-              :class="currentStep > i ? 'bg-primary' : 'bg-border dark:bg-border-dark'"
+              :class="
+                currentStep > i ? 'bg-primary' : 'bg-border dark:bg-border-dark'
+              "
             />
           </div>
         </div>
       </div>
 
       <div class="p-6 min-h-[300px]">
-        <div v-if="errorMessage" class="mb-4 rounded-md border border-danger-border bg-danger-light px-4 py-3 text-sm text-danger">
+        <div
+          v-if="errorMessage"
+          class="mb-4 rounded-md border border-danger-border bg-danger-light px-4 py-3 text-sm text-danger"
+        >
           {{ errorMessage }}
         </div>
 
@@ -94,7 +113,9 @@
                 placeholder="Enter group name"
                 @blur="nameError = !form.name.trim()"
               />
-              <p v-if="nameError" class="field-error">Group name is required.</p>
+              <p v-if="nameError" class="field-error">
+                Group name is required.
+              </p>
             </div>
 
             <div>
@@ -117,7 +138,8 @@
         <div v-if="currentStep === 1">
           <div class="space-y-4">
             <p class="text-sm text-muted">
-              Search and select users to add to this group. You can skip this step.
+              Search and select users to add to this group. You can skip this
+              step.
             </p>
 
             <div class="relative">
@@ -161,11 +183,18 @@
                 >
                   <div class="flex-1 min-w-0">
                     <p class="font-medium truncate">{{ result.fullName }}</p>
-                    <p class="text-xs text-muted truncate">{{ result.email }}</p>
+                    <p class="text-xs text-muted truncate">
+                      {{ result.email }}
+                    </p>
                   </div>
-                  <AppBadge variant="primary" size="sm">{{ result.role }}</AppBadge>
+                  <AppBadge variant="primary" size="sm">{{
+                    result.role
+                  }}</AppBadge>
                 </div>
-                <div v-if="searchingMembers" class="px-3 py-2 text-sm text-muted">
+                <div
+                  v-if="searchingMembers"
+                  class="px-3 py-2 text-sm text-muted"
+                >
                   Searching…
                 </div>
               </div>
@@ -174,20 +203,34 @@
         </div>
 
         <div v-if="currentStep === 2">
-          <div class="card border border-border dark:border-border-dark p-5 space-y-4">
-            <h3 class="text-sm font-semibold uppercase tracking-wide text-muted">Summary</h3>
+          <div
+            class="card border border-border dark:border-border-dark p-5 space-y-4"
+          >
+            <h3
+              class="text-sm font-semibold uppercase tracking-wide text-muted"
+            >
+              Summary
+            </h3>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <p class="text-xs text-muted uppercase tracking-wide">Group Name</p>
+                <p class="text-xs text-muted uppercase tracking-wide">
+                  Group Name
+                </p>
                 <p class="text-sm font-semibold mt-0.5">{{ form.name }}</p>
               </div>
               <div>
-                <p class="text-xs text-muted uppercase tracking-wide">Description</p>
-                <p class="text-sm mt-0.5">{{ form.description || "No description" }}</p>
+                <p class="text-xs text-muted uppercase tracking-wide">
+                  Description
+                </p>
+                <p class="text-sm mt-0.5">
+                  {{ form.description || "No description" }}
+                </p>
               </div>
               <div class="sm:col-span-2">
-                <p class="text-xs text-muted uppercase tracking-wide">Members</p>
+                <p class="text-xs text-muted uppercase tracking-wide">
+                  Members
+                </p>
                 <template v-if="selectedMembers.length">
                   <div class="flex flex-wrap gap-1 mt-0.5">
                     <span
@@ -210,7 +253,9 @@
     <div
       class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-950 border-t border-border dark:border-border-dark z-30 md:left-14"
     >
-      <div class="max-w-4xl mx-auto flex items-center justify-between px-6 py-4">
+      <div
+        class="max-w-4xl mx-auto flex items-center justify-between px-6 py-4"
+      >
         <div class="flex items-center gap-2 text-sm text-muted">
           <span>Step {{ currentStep + 1 }} of {{ steps.length }}</span>
           <span class="text-border dark:text-border-dark">|</span>
@@ -258,118 +303,124 @@
       </div>
     </div>
   </div>
-  </div>
 </template>
 
 <script setup lang="ts">
-import type { UserSearchResult } from "~/types"
+import type { UserSearchResult } from "~/types";
 
-definePageMeta({ middleware: ["auth", "admin-only"] })
+definePageMeta({ middleware: ["auth", "admin-only"] });
 
-useHead({ title: "New Group — Audita" })
+useHead({ title: "New Group — Audita" });
 
-const { createGroup } = useGroups()
-const { searchUsers } = useUserSearch()
-const { success: toastSuccess, error: toastError } = useToast()
+const { createGroup } = useGroups();
+const { searchUsers } = useUserSearch();
+const { success: toastSuccess, error: toastError } = useToast();
 
 const isMounted = ref(false);
-const steps = ["Details", "Members", "Review"]
-const currentStep = ref(0)
+const steps = ["Details", "Members", "Review"];
+const currentStep = ref(0);
 
 const form = reactive({
   name: "",
   description: "",
-})
+});
 
-const nameError = ref(false)
-const creating = ref(false)
-const errorMessage = ref("")
+const nameError = ref(false);
+const creating = ref(false);
+const errorMessage = ref("");
 
-const selectedMembers = ref<UserSearchResult[]>([])
-const memberSearchText = ref("")
-const memberSearchResults = ref<UserSearchResult[]>([])
-const memberSearchDropdownOpen = ref(false)
-const searchingMembers = ref(false)
-const memberSearchInputRef = ref<HTMLInputElement | null>(null)
+const selectedMembers = ref<UserSearchResult[]>([]);
+const memberSearchText = ref("");
+const memberSearchResults = ref<UserSearchResult[]>([]);
+const memberSearchDropdownOpen = ref(false);
+const searchingMembers = ref(false);
+const memberSearchInputRef = ref<HTMLInputElement | null>(null);
 
-let searchTimer: ReturnType<typeof setTimeout> | null = null
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
 async function onMemberSearchInput() {
-  if (searchTimer) clearTimeout(searchTimer)
+  if (searchTimer) clearTimeout(searchTimer);
 
-  const q = memberSearchText.value.trim()
+  const q = memberSearchText.value.trim();
   if (!q) {
-    memberSearchResults.value = []
-    memberSearchDropdownOpen.value = false
-    return
+    memberSearchResults.value = [];
+    memberSearchDropdownOpen.value = false;
+    return;
   }
 
-  searchingMembers.value = true
+  searchingMembers.value = true;
   searchTimer = setTimeout(async () => {
     try {
-      const results = await searchUsers(q, 20)
+      const results = await searchUsers(q, 20);
       memberSearchResults.value = results.filter(
         (r) => !selectedMembers.value.some((m) => m.id === r.id),
-      )
-      memberSearchDropdownOpen.value = true
+      );
+      memberSearchDropdownOpen.value = true;
     } finally {
-      searchingMembers.value = false
+      searchingMembers.value = false;
     }
-  }, 300)
+  }, 300);
 }
 
 function selectMember(result: UserSearchResult) {
   if (!selectedMembers.value.some((m) => m.id === result.id)) {
-    selectedMembers.value.push(result)
+    selectedMembers.value.push(result);
   }
-  memberSearchText.value = ""
-  memberSearchResults.value = []
-  memberSearchDropdownOpen.value = false
+  memberSearchText.value = "";
+  memberSearchResults.value = [];
+  memberSearchDropdownOpen.value = false;
 }
 
 function removeSelectedMember(id: string) {
-  selectedMembers.value = selectedMembers.value.filter((m) => m.id !== id)
+  selectedMembers.value = selectedMembers.value.filter((m) => m.id !== id);
 }
 
 async function handleCreate() {
-  nameError.value = !form.name.trim()
+  nameError.value = !form.name.trim();
   if (nameError.value) {
-    currentStep.value = 0
-    return
+    currentStep.value = 0;
+    return;
   }
 
-  creating.value = true
-  errorMessage.value = ""
+  creating.value = true;
+  errorMessage.value = "";
   try {
-    const payload: { name: string; description?: string; memberIds?: string[] } = {
+    const payload: {
+      name: string;
+      description?: string;
+      memberIds?: string[];
+    } = {
       name: form.name.trim(),
-    }
+    };
     if (form.description.trim()) {
-      payload.description = form.description.trim()
+      payload.description = form.description.trim();
     }
     if (selectedMembers.value.length) {
-      payload.memberIds = selectedMembers.value.map((m) => m.id)
+      payload.memberIds = selectedMembers.value.map((m) => m.id);
     }
 
-    await createGroup(payload)
-    toastSuccess("Group created.")
-    await navigateTo("/groups")
+    await createGroup(payload);
+    toastSuccess("Group created.");
+    await navigateTo("/groups");
   } catch (error: unknown) {
-    errorMessage.value = resolveApiErrorMessage(error, "Failed to create group.")
+    errorMessage.value = resolveApiErrorMessage(
+      error,
+      "Failed to create group.",
+    );
   } finally {
-    creating.value = false
+    creating.value = false;
   }
 }
 
 onMounted(() => {
   isMounted.value = true;
   document.addEventListener("click", (e) => {
-    const target = e.target as Node
-    const input = memberSearchInputRef.value
-    if (!input || !input.parentElement?.parentElement) return
+    const target = e.target as Node;
+    const input = memberSearchInputRef.value;
+    if (!input || !input.parentElement?.parentElement) return;
     if (!input.parentElement.parentElement.contains(target)) {
-      memberSearchDropdownOpen.value = false
+      memberSearchDropdownOpen.value = false;
     }
-  })
-})
+  });
+});
 </script>
