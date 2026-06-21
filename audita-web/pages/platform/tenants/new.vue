@@ -37,7 +37,12 @@
         {{ error }}
       </div>
 
-      <form v-if="isMounted" @submit.prevent="handleSubmit" novalidate class="space-y-5">
+      <form
+        v-if="isMounted"
+        @submit.prevent="handleSubmit"
+        novalidate
+        class="space-y-5"
+      >
         <div>
           <label class="field-label" for="org-name">Organisation Name</label>
           <input
@@ -105,7 +110,6 @@
           {{ loading ? "Provisioning..." : "Provision Organisation ->" }}
         </button>
       </form>
-      </div>
     </div>
   </div>
 </template>
@@ -145,11 +149,16 @@ async function handleSubmit() {
     toastSuccess(`Organisation "${form.name}" provisioned. Invite email sent.`);
     router.push("/platform/tenants");
   } catch (e: unknown) {
-    error.value = resolveApiErrorMessage(e, "Provisioning failed. Please try again.");
+    error.value = resolveApiErrorMessage(
+      e,
+      "Provisioning failed. Please try again.",
+    );
   } finally {
     loading.value = false;
   }
 }
 
-onMounted(() => { isMounted.value = true; });
+onMounted(() => {
+  isMounted.value = true;
+});
 </script>
