@@ -26,7 +26,6 @@ import java.util.HexFormat;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -71,14 +70,7 @@ public class AuditLogService implements AuditTrailPort {
                     String ipAddress) {
         try {
             long chainIndex = auditLogRepository.getMaxChainIndex() + 1;
-
-            byte[] previousHash = null;
-            if (chainIndex > 1) {
-                Optional<AuditLogEntity> last = auditLogRepository.findByChainIndex(chainIndex - 1);
-                if (last.isPresent()) {
-                    previousHash = last.get().getRecordHash();
-                }
-            }
+            byte[] previousHash = auditLogRepository.findLastRecordHash();
 
             byte[] recordHash = computeRecordHash(
                     actorId, actorEmail, actionType, entityType, entityId,
