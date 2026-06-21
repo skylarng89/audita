@@ -173,6 +173,7 @@ describe("CrCompletionStatusControl", () => {
         approvalStatus: "APPROVED",
         workflowMode: "DELIVERY_PIPELINE",
         deploymentDone: false,
+        isCreator: true,
       },
       global: completionControlGlobal,
     });
@@ -187,6 +188,7 @@ describe("CrCompletionStatusControl", () => {
         approvalStatus: "APPROVED",
         workflowMode: "DELIVERY_PIPELINE",
         deploymentDone: true,
+        isCreator: true,
       },
       global: completionControlGlobal,
     });
@@ -202,6 +204,7 @@ describe("CrCompletionStatusControl", () => {
         approvalStatus: "APPROVED",
         workflowMode: "DELIVERY_PIPELINE",
         deploymentDone: true,
+        isCreator: true,
       },
       global: completionControlGlobal,
     });
@@ -217,6 +220,7 @@ describe("CrCompletionStatusControl", () => {
         approvalStatus: "APPROVED",
         workflowMode: "DELIVERY_PIPELINE",
         deploymentDone: false,
+        isCreator: true,
       },
       global: completionControlGlobal,
     });
@@ -231,6 +235,7 @@ describe("CrCompletionStatusControl", () => {
         approvalStatus: "APPROVED",
         workflowMode: "APPROVAL_ONLY",
         deploymentDone: false,
+        isCreator: true,
       },
       global: completionControlGlobal,
     });
@@ -245,6 +250,7 @@ describe("CrCompletionStatusControl", () => {
         approvalStatus: "APPROVED",
         workflowMode: "DELIVERY_PIPELINE",
         deploymentDone: true,
+        isCreator: true,
       },
       global: completionControlGlobal,
     });
