@@ -5,6 +5,8 @@ import io.audita.infrastructure.persistence.entity.AuditLogEntity;
 import io.audita.infrastructure.persistence.entity.UserEntity;
 import io.audita.infrastructure.persistence.repository.AuditLogRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +51,9 @@ public class AuditLogService implements AuditTrailPort {
     private final AuditLogRepository auditLogRepository;
     private final UserRepository userRepository;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     public AuditLogService(AuditLogRepository auditLogRepository, UserRepository userRepository) {
         this.auditLogRepository = auditLogRepository;
         this.userRepository = userRepository;
@@ -76,9 +81,22 @@ public class AuditLogService implements AuditTrailPort {
                     actorId, actorEmail, actionType, entityType, entityId,
                     payload, ipAddress, previousHash);
 
-            auditLogRepository.save(new AuditLogEntity(
-                    actorId, actorEmail, actionType, entityType, entityId,
-                    payload, ipAddress, chainIndex, recordHash, previousHash));
+            entityManager.createNativeQuery(
+                    "INSERT INTO audit_log (id, actor_id, actor_email, action_type, entity_type, entity_id, " +
+                    "payload, ip_address, created_at, chain_index, record_hash, previous_hash) " +
+                    "VALUES (gen_random_uuid(), :actorId, :actorEmail, :actionType, :entityType, :entityId, " +
+                    "CAST(:payload AS jsonb), :ipAddress, now(), :chainIndex, :recordHash, :previousHash)")
+                    .setParameter("actorId", actorId)
+                    .setParameter("actorEmail", actorEmail)
+                    .setParameter("actionType", actionType)
+                    .setParameter("entityType", entityType)
+                    .setParameter("entityId", entityId)
+                    .setParameter("payload", canonicalPayload(payload))
+                    .setParameter("ipAddress", ipAddress)
+                    .setParameter("chainIndex", chainIndex)
+                    .setParameter("recordHash", recordHash)
+                    .setParameter("previousHash", previousHash)
+                    .executeUpdate();
         } catch (Exception e) {
             log.error("Failed to write audit log entry: actionType={} entityType={}", actionType, entityType, e);
         }
