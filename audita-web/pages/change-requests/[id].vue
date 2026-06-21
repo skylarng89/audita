@@ -23,6 +23,7 @@
           :approval-status="changeRequest.approvalStatus"
           :workflow-mode="changeRequest.workflowMode"
           :deployment-done="deploymentDone"
+          :is-creator="isCreator"
           @completed="onMarkComplete"
         />
         <button
@@ -1058,8 +1059,8 @@ type MentionPopupController = {
 async function searchMentionUsers(query: string) {
   try {
     const results = await api<Array<{ id: string; fullName: string; email: string }>>(
-      "/api/v1/users/search",
-      { query: { q: query, limit: 10 } },
+      "/api/v1/users/mention-candidates",
+      { query: { query, limit: 10 } },
     );
     return results.map((u) => ({
       id: u.id,
