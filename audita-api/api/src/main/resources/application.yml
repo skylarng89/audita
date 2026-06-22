@@ -167,7 +167,7 @@ audita:
   storage:
     backend: ${STORAGE_BACKEND}
     local:
-      base-path: ${STORAGE_LOCAL_BASE_PATH}
+      base-path: ${STORAGE_LOCAL_BASE_PATH:/tmp/uploads}
     s3:
       bucket: ${STORAGE_S3_BUCKET}
       region: ${STORAGE_S3_REGION}
