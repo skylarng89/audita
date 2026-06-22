@@ -266,6 +266,8 @@ export interface CustomFieldDefinition {
   options: string[] | null;
   isRequired: boolean;
   displayOrder: number;
+  minValue?: number | null;
+  maxValue?: number | null;
 }
 
 export interface SlaPolicy {
