@@ -1,8 +1,8 @@
 # Audita — Active Context
 
-**Last Updated:** 2026-06-18
-**Current Phase:** RBAC & Flow Simplification — merged to main, CI running
-**Active Sprint:** RBAC refactoring complete — awaiting CI verification
+**Last Updated:** 2026-06-22
+**Current Phase:** Post-deployment hardening — all critical bugs fixed, uploads and logs migrated to bind mounts
+**Active Sprint:** None — maintenance mode
 
 ---
 

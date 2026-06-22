@@ -573,6 +573,30 @@
             placeholder="Option A&#10;Option B&#10;Option C"
           />
         </div>
+        <div v-if="cfForm.fieldType === 'NUMBER'" class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="field-label" for="cf-min-value">Min Value</label>
+            <input
+              id="cf-min-value"
+              v-model.number="cfForm.minValue"
+              type="number"
+              step="0.01"
+              class="input"
+              placeholder="No minimum"
+            />
+          </div>
+          <div>
+            <label class="field-label" for="cf-max-value">Max Value</label>
+            <input
+              id="cf-max-value"
+              v-model.number="cfForm.maxValue"
+              type="number"
+              step="0.01"
+              class="input"
+              placeholder="No maximum"
+            />
+          </div>
+        </div>
         <div class="flex items-center gap-2">
           <input
             id="cf-required"
@@ -1034,6 +1058,8 @@ const cfForm = reactive({
   optionsText: "",
   isRequired: false,
   displayOrder: 0,
+  minValue: null as number | null,
+  maxValue: null as number | null,
 });
 
 async function loadCustomFields() {
@@ -1057,6 +1083,8 @@ function openCreateModal() {
   cfForm.optionsText = "";
   cfForm.isRequired = false;
   cfForm.displayOrder = customFields.value.length;
+  cfForm.minValue = null;
+  cfForm.maxValue = null;
   cfSaveError.value = "";
   showCfModal.value = true;
 }
@@ -1068,6 +1096,8 @@ function openEditModal(field: CustomFieldDefinition) {
   cfForm.optionsText = (field.options ?? []).join("\n");
   cfForm.isRequired = field.isRequired;
   cfForm.displayOrder = field.displayOrder;
+  cfForm.minValue = field.minValue ?? null;
+  cfForm.maxValue = field.maxValue ?? null;
   cfSaveError.value = "";
   showCfModal.value = true;
 }
@@ -1080,6 +1110,11 @@ function closeCfModal() {
 async function saveCfField() {
   cfSaving.value = true;
   cfSaveError.value = "";
+  if (cfForm.fieldType === "NUMBER" && cfForm.minValue != null && cfForm.maxValue != null && cfForm.minValue > cfForm.maxValue) {
+    cfSaveError.value = "Min value must be less than or equal to max value.";
+    cfSaving.value = false;
+    return;
+  }
   const options =
     cfForm.fieldType === "DROPDOWN"
       ? cfForm.optionsText
@@ -1094,6 +1129,8 @@ async function saveCfField() {
     options,
     isRequired: cfForm.isRequired,
     displayOrder: cfForm.displayOrder,
+    minValue: cfForm.fieldType === "NUMBER" ? cfForm.minValue : null,
+    maxValue: cfForm.fieldType === "NUMBER" ? cfForm.maxValue : null,
   };
 
   try {

@@ -311,52 +311,72 @@
               <div
                 v-for="def in fieldDefinitions"
                 :key="def.id"
-                class="grid grid-cols-[200px_1fr] gap-3 items-center"
+                class="space-y-1"
               >
-                <label class="text-sm font-medium" :for="`cf-${def.id}`">
-                  {{ def.label }}
-                  <span v-if="def.isRequired" class="text-danger ml-0.5"
-                    >*</span
+                <div class="grid grid-cols-[200px_1fr] gap-3 items-center">
+                  <label class="text-sm font-medium" :for="`cf-${def.id}`">
+                    {{ def.label }}
+                    <span v-if="def.isRequired" class="text-danger ml-0.5"
+                      >*</span
+                    >
+                  </label>
+                  <select
+                    v-if="def.fieldType === 'DROPDOWN'"
+                    :id="`cf-${def.id}`"
+                    v-model="localFieldValues[def.id]"
+                    class="input"
                   >
-                </label>
-                <select
-                  v-if="def.fieldType === 'DROPDOWN'"
-                  :id="`cf-${def.id}`"
-                  v-model="localFieldValues[def.id]"
-                  class="input"
+                    <option value="">&mdash; select &mdash;</option>
+                    <option v-for="opt in def.options" :key="opt" :value="opt">
+                      {{ opt }}
+                    </option>
+                  </select>
+                  <input
+                    v-else-if="def.fieldType === 'CHECKBOX'"
+                    :id="`cf-${def.id}`"
+                    type="checkbox"
+                    class="h-4 w-4 accent-primary"
+                    :checked="localFieldValues[def.id] === 'true'"
+                    @change="
+                      localFieldValues[def.id] = (
+                        $event.target as HTMLInputElement
+                      ).checked
+                        ? 'true'
+                        : 'false'
+                    "
+                  />
+                  <input
+                    v-else-if="def.fieldType === 'NUMBER'"
+                    :id="`cf-${def.id}`"
+                    type="number"
+                    :min="def.minValue ?? undefined"
+                    :max="def.maxValue ?? undefined"
+                    step="0.01"
+                    v-model="localFieldValues[def.id]"
+                    class="input"
+                  />
+                  <input
+                    v-else
+                    :id="`cf-${def.id}`"
+                    :type="def.fieldType === 'DATE' ? 'date' : 'text'"
+                    v-model="localFieldValues[def.id]"
+                    class="input"
+                  />
+                </div>
+                <p
+                  v-if="def.fieldType === 'NUMBER' && (def.minValue != null || def.maxValue != null)"
+                  class="text-xs text-muted ml-[200px]"
                 >
-                  <option value="">&mdash; select &mdash;</option>
-                  <option v-for="opt in def.options" :key="opt" :value="opt">
-                    {{ opt }}
-                  </option>
-                </select>
-                <input
-                  v-else-if="def.fieldType === 'CHECKBOX'"
-                  :id="`cf-${def.id}`"
-                  type="checkbox"
-                  class="h-4 w-4 accent-primary"
-                  :checked="localFieldValues[def.id] === 'true'"
-                  @change="
-                    localFieldValues[def.id] = (
-                      $event.target as HTMLInputElement
-                    ).checked
-                      ? 'true'
-                      : 'false'
-                  "
-                />
-                <input
-                  v-else
-                  :id="`cf-${def.id}`"
-                  :type="
-                    def.fieldType === 'NUMBER'
-                      ? 'number'
-                      : def.fieldType === 'DATE'
-                        ? 'date'
-                        : 'text'
-                  "
-                  v-model="localFieldValues[def.id]"
-                  class="input"
-                />
+                  <template v-if="def.minValue != null && def.maxValue != null">
+                    Range: {{ def.minValue }} &mdash; {{ def.maxValue }}
+                  </template>
+                  <template v-else-if="def.minValue != null">
+                    Min: {{ def.minValue }}
+                  </template>
+                  <template v-else>
+                    Max: {{ def.maxValue }}
+                  </template>
+                </p>
               </div>
             </div>
           </template>
