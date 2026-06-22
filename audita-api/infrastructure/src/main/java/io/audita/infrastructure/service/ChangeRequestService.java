@@ -1037,7 +1037,7 @@ public class ChangeRequestService {
                     "Value for '" + def.getLabel() + "' must be a valid number.");
         }
 
-        if (value.scale() > 2) {
+        if (value.stripTrailingZeros().scale() > 2) {
             throw new InvalidRequestException("INVALID_INPUT",
                     "Value for '" + def.getLabel() + "' must have at most 2 decimal places.");
         }
