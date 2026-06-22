@@ -119,6 +119,8 @@ describe("CrRequestOverviewPanel", () => {
         isRequired: false,
         options: [],
         displayOrder: 1,
+        minValue: null,
+        maxValue: null,
       },
     ];
     const values: Record<string, string> = { "cf-1": "Production" };
