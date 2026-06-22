@@ -549,12 +549,17 @@ public class ChangeRequestService {
             throw new InvalidStateTransitionException("APPROVER_ALREADY_VOTED",
                     "Cannot move an approver who has already voted.");
         }
+        if (cr.getStatus() == ChangeRequestStatus.PENDING_APPROVAL && cr.getApprovers().size() == 1) {
+            throw new InvalidStateTransitionException("LAST_APPROVER_LOCKED",
+                    "Cannot remove the last remaining approver from a pending request.");
+        }
 
         UserEntity movedUser = approver.getUser();
         UUID movedUserId = movedUser.getId();
         cr.getApprovers().remove(approver);
         crApproverRepository.delete(approver);
         resequenceApprovers(crId);
+        cr.evaluateApprovalClosure();
 
         CrWatcherEntity watcher = new CrWatcherEntity(cr, movedUser);
         crWatcherRepository.save(watcher);
@@ -688,6 +693,10 @@ public class ChangeRequestService {
             throw new InvalidStateTransitionException("APPROVER_DECISION_LOCKED",
                     "Approvers who already voted cannot be removed.");
         }
+        if (changeRequest.getApprovers().size() == 1) {
+            throw new InvalidStateTransitionException("LAST_APPROVER_LOCKED",
+                    "Cannot remove the last remaining approver. Cancel the request instead.");
+        }
 
         changeRequest.getApprovers().remove(approver);
         crApproverRepository.delete(approver);
@@ -696,6 +705,7 @@ public class ChangeRequestService {
         auditLogService.log("CR_APPROVER_REMOVED", ENTITY_CHANGE_REQUEST, changeRequestId,
                 actorUserId, resolveActorEmail(actorUserId),
                 Map.of(PAYLOAD_APPROVER_ID, approverId.toString()), RequestContext.getCurrentIp());
+        changeRequest.evaluateApprovalClosure();
         resequenceApprovers(changeRequestId);
     }
 
