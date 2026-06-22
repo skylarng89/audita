@@ -997,7 +997,7 @@ public class ChangeRequestService {
 
         for (FieldValue fv : fields) {
             CustomFieldDefinitionEntity def = customFieldDefinitionRepository.findById(fv.fieldId())
-                    .orElseThrow(() -> new NotFoundException(ERROR_NOT_FOUND, "Custom field definition not found: " + fv.fieldId()));
+                    .orElseThrow(() -> new NotFoundException("Custom field definition", fv.fieldId()));
 
             String raw = fv.value();
             boolean blank = raw == null || raw.isBlank();
