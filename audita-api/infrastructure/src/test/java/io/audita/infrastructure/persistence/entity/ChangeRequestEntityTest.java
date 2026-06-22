@@ -73,6 +73,31 @@ class ChangeRequestEntityTest {
         assertEquals(ChangeRequestStatus.PENDING_APPROVAL, changeRequest.getStatus());
     }
 
+    @Test
+    void evaluateApprovalClosureApprovesWhenAllRemainingApproved() {
+        ChangeRequestEntity changeRequest = baseChangeRequest();
+        changeRequest.setStatus(ChangeRequestStatus.PENDING_APPROVAL);
+
+        CrApproverEntity a1 = new CrApproverEntity();
+        a1.setStatus(ApproverStatus.APPROVED);
+        changeRequest.getApprovers().add(a1);
+
+        changeRequest.evaluateApprovalClosure();
+
+        assertEquals(ChangeRequestStatus.APPROVED, changeRequest.getStatus());
+        assertEquals(ChangeRequestStatus.APPROVED, changeRequest.getApprovalStatus());
+    }
+
+    @Test
+    void evaluateApprovalClosureNoOpWhenApproversEmpty() {
+        ChangeRequestEntity changeRequest = baseChangeRequest();
+        changeRequest.setStatus(ChangeRequestStatus.PENDING_APPROVAL);
+
+        changeRequest.evaluateApprovalClosure();
+
+        assertEquals(ChangeRequestStatus.PENDING_APPROVAL, changeRequest.getStatus());
+    }
+
     // ── RW15-001: display ID and dual-status fields ────────────────────────────
 
     @Test

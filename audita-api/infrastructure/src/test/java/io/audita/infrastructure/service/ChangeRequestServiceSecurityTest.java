@@ -36,6 +36,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -436,6 +437,142 @@ class ChangeRequestServiceSecurityTest {
                 () -> changeRequestService.removeApprover(changeRequestId, approverId, ownerId, "REQUESTER"));
 
         assertThat(ex.getErrorCode()).isEqualTo("APPROVER_DECISION_LOCKED");
+        verify(crApproverRepository, never()).delete(any());
+    }
+
+    @Test
+    void removeApproverAutoApprovesWhenAllRemainingApproved() {
+        UUID changeRequestId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        UUID pendingApproverId = UUID.randomUUID();
+        UUID approvedApproverId = UUID.randomUUID();
+
+        ChangeRequestEntity changeRequest = buildDraftChangeRequest(ownerId);
+        changeRequest.setStatus(ChangeRequestStatus.PENDING_APPROVAL);
+        changeRequest.setApprovalLocked(true);
+        ReflectionTestUtils.setField(changeRequest, "id", changeRequestId);
+
+        UserEntity approvedUser = new UserEntity("approved@example.com", "Approved User");
+        ReflectionTestUtils.setField(approvedUser, "id", UUID.randomUUID());
+        CrApproverEntity approvedApprover = new CrApproverEntity(changeRequest, approvedUser, 1);
+        ReflectionTestUtils.setField(approvedApprover, "id", approvedApproverId);
+        approvedApprover.setStatus(ApproverStatus.APPROVED);
+
+        UserEntity pendingUser = new UserEntity("pending@example.com", "Pending User");
+        ReflectionTestUtils.setField(pendingUser, "id", UUID.randomUUID());
+        CrApproverEntity pendingApprover = new CrApproverEntity(changeRequest, pendingUser, 2);
+        ReflectionTestUtils.setField(pendingApprover, "id", pendingApproverId);
+        pendingApprover.setStatus(ApproverStatus.PENDING);
+
+        changeRequest.getApprovers().add(approvedApprover);
+        changeRequest.getApprovers().add(pendingApprover);
+
+        when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
+        when(crApproverRepository.findById(pendingApproverId)).thenReturn(Optional.of(pendingApprover));
+        when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(changeRequestId))
+                .thenReturn(List.of(approvedApprover));
+
+        changeRequestService.removeApprover(changeRequestId, pendingApproverId, ownerId, "REQUESTER");
+
+        assertThat(changeRequest.getStatus()).isEqualTo(ChangeRequestStatus.APPROVED);
+        assertThat(changeRequest.getApprovalStatus()).isEqualTo(ChangeRequestStatus.APPROVED);
+        verify(crApproverRepository).delete(pendingApprover);
+    }
+
+    @Test
+    void removeApproverRejectsLastApproverInPendingApproval() {
+        UUID changeRequestId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        UUID approverId = UUID.randomUUID();
+
+        ChangeRequestEntity changeRequest = buildDraftChangeRequest(ownerId);
+        changeRequest.setStatus(ChangeRequestStatus.PENDING_APPROVAL);
+        changeRequest.setApprovalLocked(true);
+        ReflectionTestUtils.setField(changeRequest, "id", changeRequestId);
+
+        UserEntity pendingUser = new UserEntity("pending@example.com", "Pending User");
+        ReflectionTestUtils.setField(pendingUser, "id", UUID.randomUUID());
+        CrApproverEntity approver = new CrApproverEntity(changeRequest, pendingUser, 1);
+        ReflectionTestUtils.setField(approver, "id", approverId);
+        approver.setStatus(ApproverStatus.PENDING);
+
+        changeRequest.getApprovers().add(approver);
+
+        when(changeRequestRepository.findById(changeRequestId)).thenReturn(Optional.of(changeRequest));
+        when(crApproverRepository.findById(approverId)).thenReturn(Optional.of(approver));
+
+        InvalidStateTransitionException ex = assertThrows(
+                InvalidStateTransitionException.class,
+                () -> changeRequestService.removeApprover(changeRequestId, approverId, ownerId, "REQUESTER"));
+
+        assertThat(ex.getErrorCode()).isEqualTo("LAST_APPROVER_LOCKED");
+        verify(crApproverRepository, never()).delete(any());
+    }
+
+    @Test
+    void moveApproverToWatcherAutoApprovesWhenAllRemainingApproved() {
+        UUID crId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        UUID pendingApproverId = UUID.randomUUID();
+        UUID approvedApproverId = UUID.randomUUID();
+
+        ChangeRequestEntity cr = buildDraftChangeRequest(ownerId);
+        cr.setStatus(ChangeRequestStatus.PENDING_APPROVAL);
+        cr.setApprovalLocked(true);
+        ReflectionTestUtils.setField(cr, "id", crId);
+
+        UserEntity approvedUser = new UserEntity("approved@example.com", "Approved User");
+        ReflectionTestUtils.setField(approvedUser, "id", UUID.randomUUID());
+        CrApproverEntity approvedApprover = new CrApproverEntity(cr, approvedUser, 1);
+        ReflectionTestUtils.setField(approvedApprover, "id", approvedApproverId);
+        approvedApprover.setStatus(ApproverStatus.APPROVED);
+
+        UserEntity pendingUser = new UserEntity("pending@example.com", "Pending User");
+        ReflectionTestUtils.setField(pendingUser, "id", UUID.randomUUID());
+        CrApproverEntity pendingApprover = new CrApproverEntity(cr, pendingUser, 2);
+        ReflectionTestUtils.setField(pendingApprover, "id", pendingApproverId);
+        pendingApprover.setStatus(ApproverStatus.PENDING);
+
+        cr.getApprovers().add(approvedApprover);
+        cr.getApprovers().add(pendingApprover);
+
+        when(changeRequestRepository.findById(crId)).thenReturn(Optional.of(cr));
+        when(crApproverRepository.findByChangeRequestIdOrderByPositionAsc(crId))
+                .thenReturn(List.of(approvedApprover));
+
+        changeRequestService.moveApproverToWatcher(crId, pendingApproverId, ownerId, Set.of("cr.view.all"));
+
+        assertThat(cr.getStatus()).isEqualTo(ChangeRequestStatus.APPROVED);
+        assertThat(cr.getApprovalStatus()).isEqualTo(ChangeRequestStatus.APPROVED);
+        verify(crApproverRepository).delete(pendingApprover);
+    }
+
+    @Test
+    void moveApproverToWatcherRejectsLastApproverInPendingApproval() {
+        UUID crId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        UUID approverId = UUID.randomUUID();
+
+        ChangeRequestEntity cr = buildDraftChangeRequest(ownerId);
+        cr.setStatus(ChangeRequestStatus.PENDING_APPROVAL);
+        cr.setApprovalLocked(true);
+        ReflectionTestUtils.setField(cr, "id", crId);
+
+        UserEntity pendingUser = new UserEntity("pending@example.com", "Pending User");
+        ReflectionTestUtils.setField(pendingUser, "id", UUID.randomUUID());
+        CrApproverEntity approver = new CrApproverEntity(cr, pendingUser, 1);
+        ReflectionTestUtils.setField(approver, "id", approverId);
+        approver.setStatus(ApproverStatus.PENDING);
+
+        cr.getApprovers().add(approver);
+
+        when(changeRequestRepository.findById(crId)).thenReturn(Optional.of(cr));
+
+        InvalidStateTransitionException ex = assertThrows(
+                InvalidStateTransitionException.class,
+                () -> changeRequestService.moveApproverToWatcher(crId, approverId, ownerId, Set.of("cr.view.all")));
+
+        assertThat(ex.getErrorCode()).isEqualTo("LAST_APPROVER_LOCKED");
         verify(crApproverRepository, never()).delete(any());
     }
 

@@ -27,6 +27,7 @@ audita-api/logs/*
 .mcp.json
 .sugar
 .sugar/
+memory-bank
 memory-bank/
 AGENTS.md
 .opencode/

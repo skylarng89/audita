@@ -472,6 +472,10 @@ public class RequestUatService {
             throw new InvalidStateTransitionException("APPROVER_ALREADY_VOTED",
                     "Cannot move an approver who has already voted.");
         }
+        if (requestUatApproverRepository.countByUatId(uat.getId()) == 1) {
+            throw new InvalidStateTransitionException("LAST_APPROVER_LOCKED",
+                    "Cannot remove the last remaining UAT approver.");
+        }
 
         UUID movedUserId = approver.getUserId();
         requestUatApproverRepository.delete(approver);
