@@ -433,13 +433,14 @@
             @drop.prevent="onDropUpload"
           >
             <p class="text-sm text-muted">
-              Drag and drop files here, or choose a file.
+              Drag and drop files here, or select files.
             </p>
             <input
               ref="fileInput"
               class="hidden"
               type="file"
               accept=".png,.jpg,.jpeg,.docx,.xlsx,.pdf"
+              multiple
               @change="onSelectUpload"
             />
             <button
@@ -447,7 +448,7 @@
               :disabled="isUploading"
               @click="fileInput?.click()"
             >
-              {{ isUploading ? "Uploading…" : "Select File" }}
+              {{ isUploading ? "Uploading…" : "Select Files" }}
             </button>
             <p v-if="uploadError" class="mt-2 text-xs text-danger">
               {{ uploadError }}
@@ -1798,12 +1799,22 @@ async function handleDownload(attachmentId: string, fileName: string) {
 
 function onSelectUpload(event: Event) {
   const target = event.target as HTMLInputElement;
-  uploadSelected(target.files?.item(0) ?? null);
+  const files = target.files;
+  if (files && files.length) {
+    for (let i = 0; i < files.length; i++) {
+      uploadSelected(files.item(i));
+    }
+  }
   target.value = "";
 }
 
 function onDropUpload(event: DragEvent) {
-  uploadSelected(event.dataTransfer?.files?.item(0) ?? null);
+  const files = event.dataTransfer?.files;
+  if (files && files.length) {
+    for (let i = 0; i < files.length; i++) {
+      uploadSelected(files.item(i));
+    }
+  }
 }
 
 function formatSize(bytes: number) {
