@@ -1,5 +1,33 @@
 # Audita — Changelog
 
+## [2.1.0] — 2026-06-22
+
+### Added
+- **Skeleton Loaders** — Per-page inline skeletons (`SharedFieldSkeleton.vue`) replace global loading overlay. Auth/setup pages use `mounted` ref pattern for SPA cold-start.
+- **Mention-Candidates Endpoint** — `GET /api/v1/users/mention-candidates` with ACTIVE status filter.
+- **Multi-File Upload on Detail Page** — File input supports `multiple` attribute, handlers iterate all files.
+
+### Fixed
+- **Onboarding Setup Token** — Nuxt proxy injects `X-Setup-Token` server-side from `NUXT_SETUP_TOKEN` env var.
+- **SLA Fields Blank** — Replaced `SettingsSla.vue` SFC with raw inline inputs (Nuxt 4 SPA generic SFC failure).
+- **Log Permissions** — Changed to `/tmp/logs/` path, added `user:` override in compose.
+- **Upload Permissions** — Removed named volume, changed to bind mount `./uploads:/tmp/uploads`.
+- **Watcher List 500** — Added `@EntityGraph(attributePaths = {"user"})` to watcher repositories (lazy init outside transaction).
+- **Audit Log UPDATE on Watcher Add** — Native SQL INSERT bypasses Hibernate persistence context entirely.
+- **Approver Not Removed on Demotion** — Added `cr.getApprovers().remove(approver)` before delete.
+- **Activity Stream Missing for Watchers** — Added `logActivity()` calls to all 4 watcher/move methods.
+- **Mark Complete for Non-Creator** — Button gated on `isCreator || isAdmin || isSuperAdmin`.
+- **Comment Mentions Broken** — Fixed query param name `q` → `query`, switched to dedicated mention-candidates endpoint.
+- **Audit Log UPDATE Persisted** — Native queries for chain index and previous hash return scalars, no entities loaded.
+
+### Removed
+- `useLoadingOverlay.ts` composable
+- `SharedLoadingOverlay.vue` component
+- `SettingsSla.vue` component
+- `api_uploads` named volume from compose files
+
+---
+
 ## [2.0.0] — 2026-06-18
 
 ### Added

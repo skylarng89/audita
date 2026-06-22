@@ -100,8 +100,8 @@ services:
       LOG_FILE_MAX_HISTORY: ${LOG_FILE_MAX_HISTORY}
       LOG_FILE_TOTAL_SIZE_CAP: ${LOG_FILE_TOTAL_SIZE_CAP}
     volumes:
-      - ./logs:/data/logs
-      - api_uploads:/data/uploads
+      - ./logs:/tmp/logs
+      - ./uploads:/tmp/uploads
     ports:
       - "7080:8080"
     deploy:
@@ -157,6 +157,7 @@ services:
       NUXT_PUBLIC_API_BASE: ${APP_BASE_PATH}
       NUXT_API_INTERNAL_BASE: ${APP_INTERNAL_BASE_PATH}
       NUXT_PUBLIC_APP_VERSION: ${APP_VERSION:-latest}
+      NUXT_SETUP_TOKEN: ${BOOTSTRAP_SETUP_TOKEN}
     ports:
       - "7001:3000"
     deploy:
@@ -184,7 +185,6 @@ services:
 
 volumes:
   db_data:
-  api_uploads:
 
 networks:
   audita-network:

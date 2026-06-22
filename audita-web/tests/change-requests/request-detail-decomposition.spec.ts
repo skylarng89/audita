@@ -110,7 +110,7 @@ describe("CrRequestOverviewPanel", () => {
     expect(wrapper.text()).toContain("Auth Service");
   });
 
-  it("renders custom fields when present", () => {
+  it("renders custom fields with min/max shape", () => {
     const defs: CustomFieldDefinition[] = [
       {
         id: "cf-1",
@@ -119,9 +119,24 @@ describe("CrRequestOverviewPanel", () => {
         isRequired: false,
         options: [],
         displayOrder: 1,
+        minValue: null,
+        maxValue: null,
+      },
+      {
+        id: "cf-2",
+        label: "Budget",
+        fieldType: "NUMBER",
+        isRequired: false,
+        options: [],
+        displayOrder: 2,
+        minValue: 1,
+        maxValue: 5,
       },
     ];
-    const values: Record<string, string> = { "cf-1": "Production" };
+    const values: Record<string, string> = {
+      "cf-1": "Production",
+      "cf-2": "3",
+    };
     const wrapper = mount(CrRequestOverviewPanel, {
       props: {
         changeRequest: buildCr(),
@@ -133,6 +148,8 @@ describe("CrRequestOverviewPanel", () => {
     });
     expect(wrapper.text()).toContain("Environment");
     expect(wrapper.text()).toContain("Production");
+    expect(wrapper.text()).toContain("Budget");
+    expect(wrapper.text()).toContain("3");
   });
 
   it("renders linked requests when present", () => {
@@ -173,6 +190,7 @@ describe("CrCompletionStatusControl", () => {
         approvalStatus: "APPROVED",
         workflowMode: "DELIVERY_PIPELINE",
         deploymentDone: false,
+        isCreator: true,
       },
       global: completionControlGlobal,
     });
@@ -187,6 +205,7 @@ describe("CrCompletionStatusControl", () => {
         approvalStatus: "APPROVED",
         workflowMode: "DELIVERY_PIPELINE",
         deploymentDone: true,
+        isCreator: true,
       },
       global: completionControlGlobal,
     });
@@ -202,6 +221,7 @@ describe("CrCompletionStatusControl", () => {
         approvalStatus: "APPROVED",
         workflowMode: "DELIVERY_PIPELINE",
         deploymentDone: true,
+        isCreator: true,
       },
       global: completionControlGlobal,
     });
@@ -217,6 +237,7 @@ describe("CrCompletionStatusControl", () => {
         approvalStatus: "APPROVED",
         workflowMode: "DELIVERY_PIPELINE",
         deploymentDone: false,
+        isCreator: true,
       },
       global: completionControlGlobal,
     });
@@ -231,6 +252,7 @@ describe("CrCompletionStatusControl", () => {
         approvalStatus: "APPROVED",
         workflowMode: "APPROVAL_ONLY",
         deploymentDone: false,
+        isCreator: true,
       },
       global: completionControlGlobal,
     });
@@ -245,6 +267,7 @@ describe("CrCompletionStatusControl", () => {
         approvalStatus: "APPROVED",
         workflowMode: "DELIVERY_PIPELINE",
         deploymentDone: true,
+        isCreator: true,
       },
       global: completionControlGlobal,
     });

@@ -1,6 +1,7 @@
 package io.audita.infrastructure.persistence.repository;
 
 import io.audita.infrastructure.persistence.entity.RequestUatWatcherEntity;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -10,6 +11,7 @@ import java.util.UUID;
 
 public interface RequestUatWatcherRepository extends JpaRepository<RequestUatWatcherEntity, UUID> {
 
+    @EntityGraph(attributePaths = {"user"})
     List<RequestUatWatcherEntity> findByUatId(UUID uatId);
 
     @Query("SELECT w FROM RequestUatWatcherEntity w WHERE w.uat.id = :uatId AND w.user.id = :userId")

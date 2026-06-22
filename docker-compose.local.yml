@@ -48,8 +48,8 @@ services:
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
     volumes:
-      - ./logs:/data/logs
-      - audita_uploads:/data/uploads
+      - ./logs:/tmp/logs
+      - ./uploads:/tmp/uploads
     ports:
       - "7080:8080"
     networks:
@@ -103,6 +103,7 @@ services:
       NUXT_PUBLIC_API_BASE: ${API_BASE_URL}
       NUXT_API_INTERNAL_BASE: ${API_INTERNAL_BASE_URL}
       NUXT_PUBLIC_APP_VERSION: ${APP_VERSION:-dev}
+      NUXT_SETUP_TOKEN: ${BOOTSTRAP_SETUP_TOKEN}
     ports:
       - "7100:3000"
     networks:
@@ -130,7 +131,6 @@ services:
 
 volumes:
   dbdata:
-  audita_uploads:
 
 networks:
   ulcnetwork:

@@ -27,11 +27,17 @@
       <section class="card p-5 shadow-card-hover lg:col-span-2 space-y-5">
         <h2 class="text-lg font-semibold">Organization Profile</h2>
 
-        <div v-if="pending" class="field-hint">
-          Loading organization profile...
+        <div v-if="pending" class="space-y-4">
+          <SharedFieldSkeleton heightClass="h-10" rounded />
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <SharedFieldSkeleton heightClass="h-10" rounded />
+            <SharedFieldSkeleton heightClass="h-10" rounded />
+            <SharedFieldSkeleton heightClass="h-10" rounded />
+            <SharedFieldSkeleton heightClass="h-10" rounded />
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div v-else class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label class="field-label" for="org-name">Organization Name</label>
             <input
@@ -276,14 +282,34 @@
       </div>
     </section>
 
-    <AdminSettingsSla
-      :model-value="settings.slaDefaults"
-      @update:low-hours="settings.slaDefaults.lowHours = $event"
-      @update:medium-hours="settings.slaDefaults.mediumHours = $event"
-      @update:high-hours="settings.slaDefaults.highHours = $event"
-      @update:critical-hours="settings.slaDefaults.criticalHours = $event"
-      @update:warning-before-hours="settings.slaDefaults.warningBeforeHours = $event"
-    />
+    <section class="card p-5 shadow-card-hover">
+      <h2 class="text-lg font-semibold">SLA Defaults</h2>
+      <p class="text-sm text-muted mt-1">
+        Configure default SLA deadlines per priority and warning threshold.
+      </p>
+      <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div>
+          <label class="field-label" for="sla-low">Low (hours)</label>
+          <input id="sla-low" v-model.number="settings.slaDefaults.lowHours" type="number" min="1" max="720" class="input" />
+        </div>
+        <div>
+          <label class="field-label" for="sla-medium">Medium (hours)</label>
+          <input id="sla-medium" v-model.number="settings.slaDefaults.mediumHours" type="number" min="1" max="720" class="input" />
+        </div>
+        <div>
+          <label class="field-label" for="sla-high">High (hours)</label>
+          <input id="sla-high" v-model.number="settings.slaDefaults.highHours" type="number" min="1" max="720" class="input" />
+        </div>
+        <div>
+          <label class="field-label" for="sla-critical">Critical (hours)</label>
+          <input id="sla-critical" v-model.number="settings.slaDefaults.criticalHours" type="number" min="1" max="720" class="input" />
+        </div>
+        <div>
+          <label class="field-label" for="sla-warning">Warning Before (hours)</label>
+          <input id="sla-warning" v-model.number="settings.slaDefaults.warningBeforeHours" type="number" min="1" max="168" class="input" />
+        </div>
+      </div>
+    </section>
 
     <section class="card p-5 shadow-card-hover">
       <h2 class="text-lg font-semibold">Audit Export Defaults</h2>
@@ -322,7 +348,13 @@
         </button>
       </div>
 
-      <div v-if="cfPending" class="mt-4 field-hint">Loading custom fields…</div>
+      <div v-if="cfPending" class="mt-4 space-y-3">
+        <div v-for="n in 4" :key="n" class="flex items-center gap-4">
+          <SharedFieldSkeleton heightClass="h-5" class="flex-1" />
+          <SharedFieldSkeleton heightClass="h-5" class="w-20" />
+          <SharedFieldSkeleton heightClass="h-5" class="w-16" />
+        </div>
+      </div>
 
       <div
         v-else-if="customFields.length === 0"
@@ -541,6 +573,30 @@
             placeholder="Option A&#10;Option B&#10;Option C"
           />
         </div>
+        <div v-if="cfForm.fieldType === 'NUMBER'" class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="field-label" for="cf-min-value">Min Value</label>
+            <input
+              id="cf-min-value"
+              v-model.number="cfForm.minValue"
+              type="number"
+              step="0.01"
+              class="input"
+              placeholder="No minimum"
+            />
+          </div>
+          <div>
+            <label class="field-label" for="cf-max-value">Max Value</label>
+            <input
+              id="cf-max-value"
+              v-model.number="cfForm.maxValue"
+              type="number"
+              step="0.01"
+              class="input"
+              placeholder="No maximum"
+            />
+          </div>
+        </div>
         <div class="flex items-center gap-2">
           <input
             id="cf-required"
@@ -621,7 +677,6 @@ import {
   isSettingsDirty,
   validateSlaDefaults,
 } from "~/composables/adminSettingsForm";
-import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
 
 definePageMeta({ middleware: ["auth", "admin-only"] });
 
@@ -691,7 +746,6 @@ interface GroupLookupResponse {
   description: string | null;
 }
 
-const { hide: hideLoading } = useLoadingOverlay();
 const pending = ref(false);
 const errorMessage = ref("");
 const savingSettings = ref(false);
@@ -835,13 +889,11 @@ async function loadSettings() {
       settings.autoApproverDefaults,
       settings.auditDefaults,
     );
-    hideLoading();
   } catch (error: unknown) {
     errorMessage.value = "Unable to load settings right now.";
     toastError(
       resolveApiErrorMessage(error, "Failed to load organization settings."),
     );
-    hideLoading();
   } finally {
     pending.value = false;
   }
@@ -1006,6 +1058,8 @@ const cfForm = reactive({
   optionsText: "",
   isRequired: false,
   displayOrder: 0,
+  minValue: null as number | null,
+  maxValue: null as number | null,
 });
 
 async function loadCustomFields() {
@@ -1029,6 +1083,8 @@ function openCreateModal() {
   cfForm.optionsText = "";
   cfForm.isRequired = false;
   cfForm.displayOrder = customFields.value.length;
+  cfForm.minValue = null;
+  cfForm.maxValue = null;
   cfSaveError.value = "";
   showCfModal.value = true;
 }
@@ -1040,6 +1096,8 @@ function openEditModal(field: CustomFieldDefinition) {
   cfForm.optionsText = (field.options ?? []).join("\n");
   cfForm.isRequired = field.isRequired;
   cfForm.displayOrder = field.displayOrder;
+  cfForm.minValue = field.minValue ?? null;
+  cfForm.maxValue = field.maxValue ?? null;
   cfSaveError.value = "";
   showCfModal.value = true;
 }
@@ -1052,6 +1110,11 @@ function closeCfModal() {
 async function saveCfField() {
   cfSaving.value = true;
   cfSaveError.value = "";
+  if (cfForm.fieldType === "NUMBER" && cfForm.minValue != null && cfForm.maxValue != null && cfForm.minValue > cfForm.maxValue) {
+    cfSaveError.value = "Min value must be less than or equal to max value.";
+    cfSaving.value = false;
+    return;
+  }
   const options =
     cfForm.fieldType === "DROPDOWN"
       ? cfForm.optionsText
@@ -1066,6 +1129,8 @@ async function saveCfField() {
     options,
     isRequired: cfForm.isRequired,
     displayOrder: cfForm.displayOrder,
+    minValue: cfForm.fieldType === "NUMBER" ? cfForm.minValue : null,
+    maxValue: cfForm.fieldType === "NUMBER" ? cfForm.maxValue : null,
   };
 
   try {

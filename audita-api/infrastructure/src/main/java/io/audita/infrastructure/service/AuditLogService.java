@@ -5,6 +5,8 @@ import io.audita.infrastructure.persistence.entity.AuditLogEntity;
 import io.audita.infrastructure.persistence.entity.UserEntity;
 import io.audita.infrastructure.persistence.repository.AuditLogRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +28,6 @@ import java.util.HexFormat;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -50,6 +51,9 @@ public class AuditLogService implements AuditTrailPort {
     private final AuditLogRepository auditLogRepository;
     private final UserRepository userRepository;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     public AuditLogService(AuditLogRepository auditLogRepository, UserRepository userRepository) {
         this.auditLogRepository = auditLogRepository;
         this.userRepository = userRepository;
@@ -60,9 +64,6 @@ public class AuditLogService implements AuditTrailPort {
      * Uses REQUIRES_NEW so the audit entry is committed independently of
      * the caller's transaction, surviving any rollback in the business
      * operation.
-     *
-     * Acquires a pessimistic write lock on the last audit_log row to
-     * serialise concurrent writes and guarantee correct chain ordering.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void log(String actionType,
@@ -73,24 +74,29 @@ public class AuditLogService implements AuditTrailPort {
                     Map<String, Object> payload,
                     String ipAddress) {
         try {
-            long chainIndex;
-            byte[] previousHash;
-            Optional<AuditLogEntity> last = auditLogRepository.findTopByOrderByChainIndexDesc();
-            if (last.isPresent()) {
-                chainIndex = last.get().getChainIndex() + 1;
-                previousHash = last.get().getRecordHash();
-            } else {
-                chainIndex = 1L;
-                previousHash = null;
-            }
+            long chainIndex = auditLogRepository.getMaxChainIndex() + 1;
+            byte[] previousHash = auditLogRepository.findLastRecordHash();
 
             byte[] recordHash = computeRecordHash(
                     actorId, actorEmail, actionType, entityType, entityId,
                     payload, ipAddress, previousHash);
 
-            auditLogRepository.save(new AuditLogEntity(
-                    actorId, actorEmail, actionType, entityType, entityId,
-                    payload, ipAddress, chainIndex, recordHash, previousHash));
+            entityManager.createNativeQuery(
+                    "INSERT INTO audit_log (id, actor_id, actor_email, action_type, entity_type, entity_id, " +
+                    "payload, ip_address, created_at, chain_index, record_hash, previous_hash) " +
+                    "VALUES (gen_random_uuid(), :actorId, :actorEmail, :actionType, :entityType, :entityId, " +
+                    "CAST(:payload AS jsonb), :ipAddress, now(), :chainIndex, :recordHash, :previousHash)")
+                    .setParameter("actorId", actorId)
+                    .setParameter("actorEmail", actorEmail)
+                    .setParameter("actionType", actionType)
+                    .setParameter("entityType", entityType)
+                    .setParameter("entityId", entityId)
+                    .setParameter("payload", canonicalPayload(payload))
+                    .setParameter("ipAddress", ipAddress)
+                    .setParameter("chainIndex", chainIndex)
+                    .setParameter("recordHash", recordHash)
+                    .setParameter("previousHash", previousHash)
+                    .executeUpdate();
         } catch (Exception e) {
             log.error("Failed to write audit log entry: actionType={} entityType={}", actionType, entityType, e);
         }

@@ -23,6 +23,7 @@
           :approval-status="changeRequest.approvalStatus"
           :workflow-mode="changeRequest.workflowMode"
           :deployment-done="deploymentDone"
+          :is-creator="isCreator"
           @completed="onMarkComplete"
         />
         <button
@@ -310,52 +311,72 @@
               <div
                 v-for="def in fieldDefinitions"
                 :key="def.id"
-                class="grid grid-cols-[200px_1fr] gap-3 items-center"
+                class="space-y-1"
               >
-                <label class="text-sm font-medium" :for="`cf-${def.id}`">
-                  {{ def.label }}
-                  <span v-if="def.isRequired" class="text-danger ml-0.5"
-                    >*</span
+                <div class="grid grid-cols-[200px_1fr] gap-3 items-center">
+                  <label class="text-sm font-medium" :for="`cf-${def.id}`">
+                    {{ def.label }}
+                    <span v-if="def.isRequired" class="text-danger ml-0.5"
+                      >*</span
+                    >
+                  </label>
+                  <select
+                    v-if="def.fieldType === 'DROPDOWN'"
+                    :id="`cf-${def.id}`"
+                    v-model="localFieldValues[def.id]"
+                    class="input"
                   >
-                </label>
-                <select
-                  v-if="def.fieldType === 'DROPDOWN'"
-                  :id="`cf-${def.id}`"
-                  v-model="localFieldValues[def.id]"
-                  class="input"
+                    <option value="">&mdash; select &mdash;</option>
+                    <option v-for="opt in def.options" :key="opt" :value="opt">
+                      {{ opt }}
+                    </option>
+                  </select>
+                  <input
+                    v-else-if="def.fieldType === 'CHECKBOX'"
+                    :id="`cf-${def.id}`"
+                    type="checkbox"
+                    class="h-4 w-4 accent-primary"
+                    :checked="localFieldValues[def.id] === 'true'"
+                    @change="
+                      localFieldValues[def.id] = (
+                        $event.target as HTMLInputElement
+                      ).checked
+                        ? 'true'
+                        : 'false'
+                    "
+                  />
+                  <input
+                    v-else-if="def.fieldType === 'NUMBER'"
+                    :id="`cf-${def.id}`"
+                    type="number"
+                    :min="def.minValue ?? undefined"
+                    :max="def.maxValue ?? undefined"
+                    step="0.01"
+                    v-model="localFieldValues[def.id]"
+                    class="input"
+                  />
+                  <input
+                    v-else
+                    :id="`cf-${def.id}`"
+                    :type="def.fieldType === 'DATE' ? 'date' : 'text'"
+                    v-model="localFieldValues[def.id]"
+                    class="input"
+                  />
+                </div>
+                <p
+                  v-if="def.fieldType === 'NUMBER' && (def.minValue != null || def.maxValue != null)"
+                  class="text-xs text-muted ml-[200px]"
                 >
-                  <option value="">&mdash; select &mdash;</option>
-                  <option v-for="opt in def.options" :key="opt" :value="opt">
-                    {{ opt }}
-                  </option>
-                </select>
-                <input
-                  v-else-if="def.fieldType === 'CHECKBOX'"
-                  :id="`cf-${def.id}`"
-                  type="checkbox"
-                  class="h-4 w-4 accent-primary"
-                  :checked="localFieldValues[def.id] === 'true'"
-                  @change="
-                    localFieldValues[def.id] = (
-                      $event.target as HTMLInputElement
-                    ).checked
-                      ? 'true'
-                      : 'false'
-                  "
-                />
-                <input
-                  v-else
-                  :id="`cf-${def.id}`"
-                  :type="
-                    def.fieldType === 'NUMBER'
-                      ? 'number'
-                      : def.fieldType === 'DATE'
-                        ? 'date'
-                        : 'text'
-                  "
-                  v-model="localFieldValues[def.id]"
-                  class="input"
-                />
+                  <template v-if="def.minValue != null && def.maxValue != null">
+                    Range: {{ def.minValue }} &mdash; {{ def.maxValue }}
+                  </template>
+                  <template v-else-if="def.minValue != null">
+                    Min: {{ def.minValue }}
+                  </template>
+                  <template v-else>
+                    Max: {{ def.maxValue }}
+                  </template>
+                </p>
               </div>
             </div>
           </template>
@@ -432,13 +453,14 @@
             @drop.prevent="onDropUpload"
           >
             <p class="text-sm text-muted">
-              Drag and drop files here, or choose a file.
+              Drag and drop files here, or select files.
             </p>
             <input
               ref="fileInput"
               class="hidden"
               type="file"
               accept=".png,.jpg,.jpeg,.docx,.xlsx,.pdf"
+              multiple
               @change="onSelectUpload"
             />
             <button
@@ -446,7 +468,7 @@
               :disabled="isUploading"
               @click="fileInput?.click()"
             >
-              {{ isUploading ? "Uploading…" : "Select File" }}
+              {{ isUploading ? "Uploading…" : "Select Files" }}
             </button>
             <p v-if="uploadError" class="mt-2 text-xs text-danger">
               {{ uploadError }}
@@ -950,8 +972,15 @@
     </Transition>
   </div>
 
-  <div v-else class="py-16 text-center text-sm text-muted">
-    Loading change request…
+  <div v-else class="space-y-6 py-8">
+    <div class="space-y-2">
+      <SharedFieldSkeleton heightClass="h-4" class="w-20" />
+      <SharedFieldSkeleton heightClass="h-8" class="w-96" />
+      <SharedFieldSkeleton heightClass="h-4" class="w-64" />
+    </div>
+    <SharedFieldSkeleton heightClass="h-16" rounded />
+    <SharedFieldSkeleton heightClass="h-48" rounded />
+    <SharedFieldSkeleton heightClass="h-32" rounded />
   </div>
 </template>
 
@@ -972,7 +1001,6 @@ import { EditorContent, useEditor } from "@tiptap/vue-3";
 import Mention from "@tiptap/extension-mention";
 import tippy from "tippy.js";
 import FlatPickr from "vue-flatpickr-component";
-import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
 import {
   buildRichTextExtensions,
   normalizeRichTextHtml,
@@ -993,7 +1021,6 @@ useHead(
 
 const { error: toastError } = useToast();
 const auth = useAuthStore();
-const { hide: hideLoading } = useLoadingOverlay();
 const api = useApi();
 
 const route = useRoute();
@@ -1053,8 +1080,8 @@ type MentionPopupController = {
 async function searchMentionUsers(query: string) {
   try {
     const results = await api<Array<{ id: string; fullName: string; email: string }>>(
-      "/api/v1/users/search",
-      { query: { q: query, limit: 10 } },
+      "/api/v1/users/mention-candidates",
+      { query: { query, limit: 10 } },
     );
     return results.map((u) => ({
       id: u.id,
@@ -1589,6 +1616,8 @@ async function saveEditAction() {
   }
 }
 
+const loading = ref(true);
+
 async function loadAll() {
   try {
     const [
@@ -1632,12 +1661,12 @@ async function loadAll() {
     }
     localFieldValues.value = valueMap;
     await loadDeploymentStatus();
-    hideLoading();
   } catch (error: unknown) {
     toastError(
       extractErrorMessage(error, "Failed to load change request details."),
     );
-    hideLoading();
+  } finally {
+    loading.value = false;
   }
 }
 
@@ -1790,12 +1819,22 @@ async function handleDownload(attachmentId: string, fileName: string) {
 
 function onSelectUpload(event: Event) {
   const target = event.target as HTMLInputElement;
-  uploadSelected(target.files?.item(0) ?? null);
+  const files = target.files;
+  if (files && files.length) {
+    for (let i = 0; i < files.length; i++) {
+      uploadSelected(files.item(i));
+    }
+  }
   target.value = "";
 }
 
 function onDropUpload(event: DragEvent) {
-  uploadSelected(event.dataTransfer?.files?.item(0) ?? null);
+  const files = event.dataTransfer?.files;
+  if (files && files.length) {
+    for (let i = 0; i < files.length; i++) {
+      uploadSelected(files.item(i));
+    }
+  }
 }
 
 function formatSize(bytes: number) {

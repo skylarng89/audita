@@ -54,8 +54,6 @@
 <script setup lang="ts">
 definePageMeta({ layout: "platform" });
 
-import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
-
 const api = useApi();
 
 interface Tenant {
@@ -86,9 +84,6 @@ const { data, pending, refresh } = await useAsyncData<PageData>(
       },
     }),
 );
-
-const { hide: hideLoading } = useLoadingOverlay();
-watch(pending, (val) => { if (!val) hideLoading(); });
 
 watch(page, () => refresh());
 

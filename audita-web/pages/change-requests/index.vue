@@ -413,7 +413,6 @@
 
 <script setup lang="ts">
 import type { ChangeRequest, CRStatus, Page } from "~/types";
-import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
 import { isPast, parseISO } from "date-fns";
 
 definePageMeta({ middleware: "auth" });
@@ -421,7 +420,6 @@ definePageMeta({ middleware: "auth" });
 useHead({ title: "Requests — Audita" });
 
 const auth = useAuthStore();
-const { hide: hideLoading } = useLoadingOverlay();
 const { list } = useChangeRequests();
 const PAGE_SIZE = 50;
 
@@ -458,10 +456,8 @@ async function fetchPage(pageIndex: number) {
 
     page.value = nextPage;
     currentPage.value = pageIndex;
-    hideLoading();
     liveAnnouncement.value = `Loaded ${nextPage.totalElements} change requests.`;
   } catch {
-    hideLoading();
   } finally {
     isLoading.value = false;
   }

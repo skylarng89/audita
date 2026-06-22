@@ -93,4 +93,12 @@ public class UserController {
                 .map(UserResponse::from)
                 .toList();
     }
+
+    @GetMapping("/mention-candidates")
+    @PreAuthorize("@authz.hasPermission(authentication, 'users.view')")
+    public List<UserService.MentionCandidate> searchMentionCandidates(
+            @RequestParam(defaultValue = "") String query,
+            @RequestParam(defaultValue = "10") int limit) {
+        return userService.searchMentionCandidates(query, limit);
+    }
 }

@@ -7,6 +7,7 @@ import io.audita.infrastructure.persistence.repository.CustomFieldDefinitionRepo
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -38,11 +39,15 @@ public class CustomFieldAdminService implements CustomFieldAdminPort {
                                              String fieldType,
                                              List<String> options,
                                              boolean isRequired,
-                                             int displayOrder) {
+                                             int displayOrder,
+                                             BigDecimal minValue,
+                                             BigDecimal maxValue) {
         validateFieldType(fieldType);
         validateDropdownOptions(fieldType, options);
+        validateMinMax(fieldType, minValue, maxValue);
         CustomFieldDefinitionEntity entity =
-                new CustomFieldDefinitionEntity(label, fieldType.toUpperCase(), options, isRequired, displayOrder);
+                new CustomFieldDefinitionEntity(label, fieldType.toUpperCase(),
+                        options, isRequired, displayOrder, minValue, maxValue);
         return toRecord(repository.save(entity));
     }
 
@@ -52,23 +57,30 @@ public class CustomFieldAdminService implements CustomFieldAdminPort {
                                              String fieldType,
                                              List<String> options,
                                              boolean isRequired,
-                                             int displayOrder) {
+                                             int displayOrder,
+                                             BigDecimal minValue,
+                                             BigDecimal maxValue) {
         validateFieldType(fieldType);
         validateDropdownOptions(fieldType, options);
+        validateMinMax(fieldType, minValue, maxValue);
         CustomFieldDefinitionEntity entity = repository.findById(id)
-                .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND", "Custom field definition not found."));
+                .orElseThrow(() -> new DomainNotPermittedException("NOT_FOUND",
+                        "Custom field definition not found."));
         entity.setLabel(label);
         entity.setFieldType(fieldType.toUpperCase());
         entity.setOptions("DROPDOWN".equalsIgnoreCase(fieldType) ? options : null);
         entity.setRequired(isRequired);
         entity.setDisplayOrder(displayOrder);
+        entity.setMinValue(minValue);
+        entity.setMaxValue(maxValue);
         return toRecord(repository.save(entity));
     }
 
     @Override
     public void deleteDefinition(UUID id) {
         if (!repository.existsById(id)) {
-            throw new DomainNotPermittedException("NOT_FOUND", "Custom field definition not found.");
+            throw new DomainNotPermittedException("NOT_FOUND",
+                    "Custom field definition not found.");
         }
         repository.deleteById(id);
     }
@@ -87,6 +99,18 @@ public class CustomFieldAdminService implements CustomFieldAdminPort {
         }
     }
 
+    private void validateMinMax(String fieldType, BigDecimal minValue, BigDecimal maxValue) {
+        boolean hasMinMax = minValue != null || maxValue != null;
+        if (hasMinMax && !"NUMBER".equalsIgnoreCase(fieldType)) {
+            throw new DomainNotPermittedException("INVALID_MIN_MAX",
+                    "minValue and maxValue are only valid for NUMBER fields.");
+        }
+        if (minValue != null && maxValue != null && minValue.compareTo(maxValue) > 0) {
+            throw new DomainNotPermittedException("INVALID_MIN_MAX",
+                    "minValue must be less than or equal to maxValue.");
+        }
+    }
+
     private FieldDefinition toRecord(CustomFieldDefinitionEntity e) {
         return new FieldDefinition(
                 e.getId(),
@@ -95,6 +119,8 @@ public class CustomFieldAdminService implements CustomFieldAdminPort {
                 e.getOptions(),
                 e.isRequired(),
                 e.getDisplayOrder(),
+                e.getMinValue(),
+                e.getMaxValue(),
                 e.getCreatedAt()
         );
     }

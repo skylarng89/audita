@@ -2,7 +2,7 @@
   <div class="flex items-center gap-3">
     <CrCompletionStatusBadge :status="completionStatus || 'IN_PROGRESS'" />
     <button
-      v-if="canMarkComplete && auth.hasPermission('cr.manage_participants')"
+      v-if="canMarkComplete && auth.hasPermission('cr.manage_participants') && (props.isCreator || auth.isAdmin || auth.isSuperAdmin)"
       class="btn-primary btn-sm"
       @click="$emit('completed')"
     >
@@ -21,6 +21,7 @@ const props = defineProps<{
   approvalStatus: string | null;
   workflowMode: WorkflowMode | null;
   deploymentDone: boolean;
+  isCreator: boolean;
 }>();
 
 defineEmits<{

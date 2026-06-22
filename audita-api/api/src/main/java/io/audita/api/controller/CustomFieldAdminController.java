@@ -39,7 +39,9 @@ public class CustomFieldAdminController {
                 req.fieldType(),
                 req.options(),
                 req.isRequired(),
-                req.displayOrder()
+                req.displayOrder(),
+                req.minValue(),
+                req.maxValue()
         );
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(CustomFieldDefinitionResponse.from(created));
@@ -56,7 +58,9 @@ public class CustomFieldAdminController {
                         req.fieldType(),
                         req.options(),
                         req.isRequired(),
-                        req.displayOrder()
+                        req.displayOrder(),
+                        req.minValue(),
+                        req.maxValue()
                 )
         );
     }

@@ -35,8 +35,17 @@
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="card p-8 text-center text-sm text-muted">
-      Loading custom fields…
+    <div v-if="loading" class="space-y-3 pt-2">
+      <div v-for="n in 4" :key="n" class="card px-5 py-4 flex items-center justify-between">
+        <div class="space-y-2">
+          <SharedFieldSkeleton heightClass="h-5" class="w-40" />
+          <SharedFieldSkeleton heightClass="h-4" class="w-56" />
+        </div>
+        <div class="flex items-center gap-2">
+          <SharedFieldSkeleton heightClass="h-8" class="w-12" />
+          <SharedFieldSkeleton heightClass="h-8" class="w-14" />
+        </div>
+      </div>
     </div>
 
     <!-- Error -->
@@ -142,6 +151,29 @@
             />
           </div>
 
+          <div v-if="form.fieldType === 'NUMBER'" class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="field-label">Min Value</label>
+              <input
+                v-model.number="form.minValue"
+                type="number"
+                step="0.01"
+                class="input mt-1"
+                placeholder="No minimum"
+              />
+            </div>
+            <div>
+              <label class="field-label">Max Value</label>
+              <input
+                v-model.number="form.maxValue"
+                type="number"
+                step="0.01"
+                class="input mt-1"
+                placeholder="No maximum"
+              />
+            </div>
+          </div>
+
           <div>
             <label class="field-label">Display Order</label>
             <input
@@ -237,6 +269,8 @@ const form = reactive({
   optionsText: "",
   isRequired: false,
   displayOrder: 0,
+  minValue: null as number | null,
+  maxValue: null as number | null,
 });
 
 // Delete state
@@ -277,6 +311,8 @@ function openCreateModal() {
   form.optionsText = "";
   form.isRequired = false;
   form.displayOrder = fields.value.length;
+  form.minValue = null;
+  form.maxValue = null;
   saveError.value = "";
   showModal.value = true;
 }
@@ -288,6 +324,8 @@ function openEditModal(field: CustomFieldDefinition) {
   form.optionsText = (field.options ?? []).join("\n");
   form.isRequired = field.isRequired;
   form.displayOrder = field.displayOrder;
+  form.minValue = field.minValue ?? null;
+  form.maxValue = field.maxValue ?? null;
   saveError.value = "";
   showModal.value = true;
 }
@@ -306,6 +344,10 @@ async function saveField() {
     saveError.value = "At least one option is required for dropdown fields.";
     return;
   }
+  if (form.fieldType === "NUMBER" && form.minValue != null && form.maxValue != null && form.minValue > form.maxValue) {
+    saveError.value = "Min value must be less than or equal to max value.";
+    return;
+  }
 
   const options =
     form.fieldType === "DROPDOWN"
@@ -321,6 +363,8 @@ async function saveField() {
     options,
     isRequired: form.isRequired,
     displayOrder: form.displayOrder,
+    minValue: form.fieldType === "NUMBER" ? form.minValue : null,
+    maxValue: form.fieldType === "NUMBER" ? form.maxValue : null,
   };
 
   saving.value = true;

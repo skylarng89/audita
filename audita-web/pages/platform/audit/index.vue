@@ -98,8 +98,6 @@
 <script setup lang="ts">
 definePageMeta({ layout: "platform" });
 
-import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
-
 const api = useApi();
 
 interface PlatformAuditRow {
@@ -133,9 +131,6 @@ const { data, pending } = await useAsyncData<PlatformAuditPayload>(
     }
   },
 );
-
-const { hide: hideLoading } = useLoadingOverlay();
-watch(pending, (val) => { if (!val) hideLoading(); });
 
 const rows = computed(() => data.value?.content ?? []);
 

@@ -188,8 +188,6 @@
 </template>
 
 <script setup lang="ts">
-import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
-
 definePageMeta({ middleware: ["auth", "admin-only"] });
 
 const api = useApi();
@@ -214,8 +212,6 @@ interface PageData {
   number: number;
 }
 
-const { hide: hideLoading } = useLoadingOverlay();
-
 const page = ref(0);
 const { data, pending, refresh } = await useAsyncData<PageData>(
   "admin-users",
@@ -229,10 +225,6 @@ const { data: rolesData } = await useAsyncData<Role[]>(
 const users = computed(() => data.value?.content ?? []);
 const totalPages = computed(() => data.value?.totalPages ?? 1);
 const roles = computed(() => rolesData.value ?? []);
-
-watch(pending, (val) => {
-  if (!val) hideLoading();
-});
 
 const showInviteModal = ref(false);
 const inviteForm = reactive({ email: "", fullName: "", roleId: "" });

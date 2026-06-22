@@ -256,7 +256,8 @@ public class SampleDataService implements SampleDataPort {
         f.setSample(true);
         fields.put("business_justification", customFieldDefinitionRepository.save(f));
 
-        f = new CustomFieldDefinitionEntity("Risk Assessment Score", "NUMBER", List.of(), false, order++);
+        f = new CustomFieldDefinitionEntity("Risk Assessment Score", "NUMBER", List.of(),
+                false, order++, java.math.BigDecimal.ZERO, new java.math.BigDecimal("100"));
         f.setSample(true);
         fields.put("risk_score", customFieldDefinitionRepository.save(f));
 

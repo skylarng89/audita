@@ -1,5 +1,15 @@
 <template>
-  <div class="w-full">
+  <div v-if="!isMounted" class="w-full space-y-5">
+    <div class="flex justify-center mb-8">
+      <SharedFieldSkeleton heightClass="h-14" class="w-14" rounded />
+    </div>
+    <SharedFieldSkeleton heightClass="h-8" class="w-64" />
+    <SharedFieldSkeleton heightClass="h-4" class="w-80" />
+    <SharedFieldSkeleton heightClass="h-10" rounded />
+    <SharedFieldSkeleton heightClass="h-10" rounded />
+    <SharedFieldSkeleton heightClass="h-10" class="w-full" rounded />
+  </div>
+  <div v-else class="w-full">
     <!-- Logo -->
     <div class="flex justify-center mb-8">
       <img
@@ -200,6 +210,7 @@ const auth = useAuthStore();
 const { login } = useAuth();
 const { invalidateStatus } = useOnboarding();
 
+const isMounted = ref(false);
 const step = ref(1);
 const form = reactive({
   orgName: "",
@@ -216,7 +227,7 @@ if (import.meta.client) {
   const hostname = window.location.hostname;
   const parts = hostname.split(".");
   if (parts.length >= 3) {
-    const sub = parts[0];
+    const sub = parts[0] ?? "";
     if (!["www", "app", "api", "mail", "smtp"].includes(sub)) {
       form.subdomain = sub;
     }
@@ -314,4 +325,8 @@ async function handleSubmit() {
     isLoading.value = false;
   }
 }
+
+onMounted(() => {
+  isMounted.value = true;
+});
 </script>

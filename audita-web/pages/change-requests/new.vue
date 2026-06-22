@@ -19,6 +19,7 @@
     </div>
 
     <form
+      v-if="!editorLoading"
       class="card p-8 space-y-7 shadow-card-hover"
       @submit.prevent="createChangeRequest"
       novalidate
@@ -381,6 +382,18 @@
       </div>
       <p v-if="errorMessage" class="text-sm text-danger">{{ errorMessage }}</p>
     </form>
+    <div v-else class="card p-8 space-y-7 shadow-card-hover">
+      <SharedFieldSkeleton heightClass="h-10" class="w-full" rounded />
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <SharedFieldSkeleton heightClass="h-10" rounded />
+        <SharedFieldSkeleton heightClass="h-10" rounded />
+      </div>
+      <SharedFieldSkeleton heightClass="h-48" rounded />
+      <div class="flex justify-end gap-2">
+        <SharedFieldSkeleton heightClass="h-10" class="w-24" rounded />
+        <SharedFieldSkeleton heightClass="h-10" class="w-32" rounded />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -389,7 +402,6 @@ import type { Group } from "~/types";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import FlatPickr from "vue-flatpickr-component";
 import { buildRichTextExtensions } from "~/composables/richText";
-import { useLoadingOverlay } from "~/composables/useLoadingOverlay";
 
 definePageMeta({ middleware: ["auth", "can-create-cr"] });
 
@@ -397,8 +409,8 @@ useHead({ title: "New Request — Audita" });
 
 const { create, listCategories, listActiveGroups, uploadAttachment, upsertLinks } = useChangeRequests();
 const { error: toastError } = useToast();
-const { hide: hideLoading } = useLoadingOverlay();
 
+const editorLoading = ref(true);
 const isSaving = ref(false);
 const errorMessage = ref("");
 const activeGroups = ref<Group[]>([]);
@@ -626,7 +638,7 @@ onMounted(async () => {
     allCategories.value = cats;
     activeGroups.value = groups;
   } finally {
-    hideLoading();
+    editorLoading.value = false;
   }
 
   document.addEventListener("click", (e) => {
