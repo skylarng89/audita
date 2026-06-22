@@ -16,6 +16,7 @@ import io.audita.infrastructure.persistence.entity.ActivityStreamEntity;
 import io.audita.infrastructure.persistence.entity.AttachmentEntity;
 import io.audita.infrastructure.persistence.entity.ChangeRequestEntity;
 import io.audita.infrastructure.persistence.entity.ChangeRequestCustomFieldEntity;
+import io.audita.infrastructure.persistence.entity.CustomFieldDefinitionEntity;
 import io.audita.infrastructure.persistence.entity.CrApproverEntity;
 import io.audita.infrastructure.persistence.entity.CrWatcherEntity;
 import io.audita.infrastructure.persistence.entity.OrgSettingEntity;
@@ -24,6 +25,7 @@ import io.audita.infrastructure.persistence.repository.ActivityStreamRepository;
 import io.audita.infrastructure.persistence.repository.AttachmentRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestCustomFieldRepository;
 import io.audita.infrastructure.persistence.repository.ChangeRequestRepository;
+import io.audita.infrastructure.persistence.repository.CustomFieldDefinitionRepository;
 import io.audita.infrastructure.persistence.repository.CrApproverRepository;
 import io.audita.infrastructure.persistence.repository.CrWatcherRepository;
 import io.audita.infrastructure.persistence.repository.GroupRepository;
@@ -43,6 +45,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -91,6 +94,7 @@ public class ChangeRequestService {
     private final HtmlSanitizer htmlSanitizer;
     private final NotificationService notificationService;
     private final EmailService emailService;
+    private final CustomFieldDefinitionRepository customFieldDefinitionRepository;
 
     @Value("${audita.storage.local.base-path:/tmp/uploads}")
     private String storageBasePath;
@@ -107,6 +111,7 @@ public class ChangeRequestService {
             GroupRepository groupRepository,
             GroupMemberRepository groupMemberRepository,
             ChangeRequestCustomFieldRepository customFieldRepository,
+            CustomFieldDefinitionRepository customFieldDefinitionRepository,
             ActivityStreamRepository activityStreamRepository,
             AttachmentRepository attachmentRepository,
             UserRepository userRepository,
@@ -122,6 +127,7 @@ public class ChangeRequestService {
         this.groupRepository = groupRepository;
         this.groupMemberRepository = groupMemberRepository;
         this.customFieldRepository = customFieldRepository;
+        this.customFieldDefinitionRepository = customFieldDefinitionRepository;
         this.activityStreamRepository = activityStreamRepository;
         this.attachmentRepository = attachmentRepository;
         this.userRepository = userRepository;
@@ -988,6 +994,28 @@ public class ChangeRequestService {
         ChangeRequestEntity changeRequest = getById(changeRequestId);
         assertCanMutate(changeRequest, actorUserId, actorRole);
         assertNotCompleted(changeRequest);
+
+        for (FieldValue fv : fields) {
+            CustomFieldDefinitionEntity def = customFieldDefinitionRepository.findById(fv.fieldId())
+                    .orElseThrow(() -> new NotFoundException(ERROR_NOT_FOUND, "Custom field definition not found: " + fv.fieldId()));
+
+            String raw = fv.value();
+            boolean blank = raw == null || raw.isBlank();
+
+            if (def.isRequired() && blank) {
+                throw new InvalidRequestException("INVALID_INPUT",
+                        "'" + def.getLabel() + "' is required.");
+            }
+
+            if (blank) {
+                continue;
+            }
+
+            if ("NUMBER".equalsIgnoreCase(def.getFieldType())) {
+                validateNumberValue(def, raw);
+            }
+        }
+
         customFieldRepository.deleteByIdChangeRequestId(changeRequestId);
 
         List<ChangeRequestCustomFieldEntity> newRows = fields.stream()
@@ -998,6 +1026,31 @@ public class ChangeRequestService {
         payload.put(PAYLOAD_COUNT, saved.size());
         logActivity(changeRequest, changeRequest.getCreatedBy(), "CR_CUSTOM_FIELDS_UPDATED", payload);
         return saved;
+    }
+
+    private void validateNumberValue(CustomFieldDefinitionEntity def, String raw) {
+        BigDecimal value;
+        try {
+            value = new BigDecimal(raw);
+        } catch (NumberFormatException e) {
+            throw new InvalidRequestException("INVALID_INPUT",
+                    "Value for '" + def.getLabel() + "' must be a valid number.");
+        }
+
+        if (value.scale() > 2) {
+            throw new InvalidRequestException("INVALID_INPUT",
+                    "Value for '" + def.getLabel() + "' must have at most 2 decimal places.");
+        }
+
+        if (def.getMinValue() != null && value.compareTo(def.getMinValue()) < 0) {
+            throw new InvalidRequestException("INVALID_INPUT",
+                    "Value for '" + def.getLabel() + "' must be at least " + def.getMinValue().stripTrailingZeros().toPlainString() + ".");
+        }
+
+        if (def.getMaxValue() != null && value.compareTo(def.getMaxValue()) > 0) {
+            throw new InvalidRequestException("INVALID_INPUT",
+                    "Value for '" + def.getLabel() + "' must be at most " + def.getMaxValue().stripTrailingZeros().toPlainString() + ".");
+        }
     }
 
     public record FieldValue(UUID fieldId, String value) {
