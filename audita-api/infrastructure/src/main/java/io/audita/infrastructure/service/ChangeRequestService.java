@@ -954,12 +954,10 @@ public class ChangeRequestService {
         }
 
         try {
-            log.info("Creating upload directory: {}", storageDir);
             Files.createDirectories(storageDir);
-            log.info("Writing upload file: {} ({} bytes)", outputPath, file.getSize());
             Files.copy(file.getInputStream(), outputPath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            log.error("Upload failed at path={}: {}", outputPath, e.getMessage());
+            log.error("Upload failed: {}", e.getMessage());
             throw new DomainNotPermittedException("UPLOAD_FAILED", "Could not persist uploaded file.");
         }
 
