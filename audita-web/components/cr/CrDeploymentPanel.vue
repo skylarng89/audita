@@ -178,6 +178,7 @@
 import type { Deployment, Comment, ApproverCandidate } from "~/types";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import { buildRichTextExtensions, normalizeRichTextHtml } from "~/composables/richText";
+import { buildMentionExtension } from "~/composables/useMentions";
 
 const props = defineProps<{
   requestId: string;
@@ -207,7 +208,7 @@ const assigneeCandidates = ref<ApproverCandidate[]>([]);
 const selectedAssigneeId = ref<string | null>(null);
 
 const deploymentCommentEditor = useEditor({
-  extensions: buildRichTextExtensions("Add a comment…"),
+  extensions: [...buildRichTextExtensions("Add a comment. Type @ to mention someone…"), buildMentionExtension()],
   editorProps: {
     attributes: {
       class: "prose dark:prose-invert max-w-none focus:outline-none min-h-[4rem]",
