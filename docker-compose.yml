@@ -101,6 +101,7 @@ services:
       LOG_FILE_TOTAL_SIZE_CAP: ${LOG_FILE_TOTAL_SIZE_CAP}
     volumes:
       - ./logs:/tmp/logs
+      - ./uploads:/tmp/uploads
     ports:
       - "7080:8080"
     deploy:
