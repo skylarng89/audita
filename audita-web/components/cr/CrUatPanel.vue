@@ -16,7 +16,7 @@
         No UAT has been initiated for this request.
       </p>
       <button
-        v-if="canManage"
+        v-if="canCreateUat"
         class="btn-primary btn-md"
         @click="showCreateForm = true"
       >
@@ -457,6 +457,10 @@ const commentEditor = useEditor({
 const isUatAvailable = computed(
   () => props.approvalStatus === "APPROVED" && props.workflowMode === "DELIVERY_PIPELINE",
 );
+
+const canCreateUat = computed(() => {
+  return auth.hasPermission("cr.edit") || auth.isSuperAdmin || auth.isAdmin;
+});
 
 const canManage = computed(() => {
   if (!uat.value || uat.value.readOnly) return false;
