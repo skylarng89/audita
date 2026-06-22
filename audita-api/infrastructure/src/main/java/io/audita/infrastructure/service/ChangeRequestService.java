@@ -92,7 +92,7 @@ public class ChangeRequestService {
     private final NotificationService notificationService;
     private final EmailService emailService;
 
-    @Value("${audita.storage.local.base-path:/data/uploads}")
+    @Value("${audita.storage.local.base-path:/tmp/uploads}")
     private String storageBasePath;
 
     @Value("${audita.upload.max-size-bytes:10485760}")
