@@ -151,6 +151,29 @@
             />
           </div>
 
+          <div v-if="form.fieldType === 'NUMBER'" class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="field-label">Min Value</label>
+              <input
+                v-model.number="form.minValue"
+                type="number"
+                step="0.01"
+                class="input mt-1"
+                placeholder="No minimum"
+              />
+            </div>
+            <div>
+              <label class="field-label">Max Value</label>
+              <input
+                v-model.number="form.maxValue"
+                type="number"
+                step="0.01"
+                class="input mt-1"
+                placeholder="No maximum"
+              />
+            </div>
+          </div>
+
           <div>
             <label class="field-label">Display Order</label>
             <input
@@ -246,6 +269,8 @@ const form = reactive({
   optionsText: "",
   isRequired: false,
   displayOrder: 0,
+  minValue: null as number | null,
+  maxValue: null as number | null,
 });
 
 // Delete state
@@ -286,6 +311,8 @@ function openCreateModal() {
   form.optionsText = "";
   form.isRequired = false;
   form.displayOrder = fields.value.length;
+  form.minValue = null;
+  form.maxValue = null;
   saveError.value = "";
   showModal.value = true;
 }
@@ -297,6 +324,8 @@ function openEditModal(field: CustomFieldDefinition) {
   form.optionsText = (field.options ?? []).join("\n");
   form.isRequired = field.isRequired;
   form.displayOrder = field.displayOrder;
+  form.minValue = field.minValue ?? null;
+  form.maxValue = field.maxValue ?? null;
   saveError.value = "";
   showModal.value = true;
 }
@@ -315,6 +344,10 @@ async function saveField() {
     saveError.value = "At least one option is required for dropdown fields.";
     return;
   }
+  if (form.fieldType === "NUMBER" && form.minValue != null && form.maxValue != null && form.minValue > form.maxValue) {
+    saveError.value = "Min value must be less than or equal to max value.";
+    return;
+  }
 
   const options =
     form.fieldType === "DROPDOWN"
@@ -330,6 +363,8 @@ async function saveField() {
     options,
     isRequired: form.isRequired,
     displayOrder: form.displayOrder,
+    minValue: form.fieldType === "NUMBER" ? form.minValue : null,
+    maxValue: form.fieldType === "NUMBER" ? form.maxValue : null,
   };
 
   saving.value = true;
