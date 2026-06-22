@@ -30,7 +30,7 @@ RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
     sh -c 'for i in 1 2 3; do ./gradlew :api:bootJar --no-daemon && exit 0; sleep 5; done; exit 1'
 
 # Pre-create uploads directory for runtime image without shell utilities.
-RUN mkdir -p /tmp/uploads
+RUN mkdir -p /tmp/uploads && chmod 777 /tmp/uploads
 
 # ── Runtime stage ────────────────────────────────────────────────────────────────
 FROM dhi.io/eclipse-temurin:25
