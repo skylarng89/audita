@@ -382,3 +382,57 @@ Log levels are env-configurable: `LOG_LEVEL_ROOT` (default INFO), `LOG_LEVEL_APP
 The existing `CONSOLE_JSON` (non-dev) and `CONSOLE_PLAIN` (dev) appenders are preserved. The FILE appender is added alongside them in all profiles.
 
 **Files changed:** `logback-spring.xml`, `application.yml`, `.env.example`, `.gitignore`, `audita-api/logs/.gitkeep`
+
+---
+
+## ADR-055: Skeleton Loaders Replace Loading Overlay
+
+**Date:** 2026-06-22
+**Status:** Accepted
+
+**Decision:** Remove the global full-screen loading overlay (`SharedLoadingOverlay.vue`, `useLoadingOverlay.ts`, `app.vue` wiring) and replace it with per-page inline skeleton loaders using `SharedFieldSkeleton.vue` (`animate-pulse`). Each data-fetching page shows a skeleton layout mirroring its real content while `pending` is true, then swaps to real content when data resolves.
+
+Auth/setup pages use a `mounted` ref pattern — skeleton shows until `onMounted` flips the ref, eliminating the SPA cold-start blank screen.
+
+**Reasoning:** The global overlay had multiple problems: race conditions (`showId` counter with 200ms debounce), pages without `hideLoading()` calls left the overlay stuck permanently, logout transitions broke it, and it blocked all interaction. Per-page skeletons are declarative, non-blocking, and have no race conditions — they simply render conditionally until their data arrives.
+
+**Files changed:** `SharedFieldSkeleton.vue` (new), all 20 data-fetching pages, `app.vue`; deleted `SharedLoadingOverlay.vue`, `useLoadingOverlay.ts`
+
+---
+
+## ADR-056: Native SQL INSERT Bypasses Hibernate for Audit Log
+
+**Date:** 2026-06-22
+**Status:** Accepted
+
+**Decision:** Replace `auditLogRepository.save(new AuditLogEntity(...))` with a native SQL `INSERT INTO audit_log` via `EntityManager.createNativeQuery()`. Use native scalar queries (`getMaxChainIndex()`, `findLastRecordHash()`) instead of JPA `@Lock(PESSIMISTIC_WRITE)` entity queries.
+
+**Reasoning:** The JPA `@Lock(PESSIMISTIC_WRITE)` annotation on `findTopByOrderByChainIndexDesc()` caused Hibernate to dirty-check the locked entity and issue an UPDATE during flush, hitting the append-only trigger. Even without the lock, `findByChainIndex()` loaded an `AuditLogEntity` into the persistence context where `byte[]` field comparisons triggered false-positive dirty checks. The native queries return scalar values — no entities loaded, no dirty-checking, no UPDATE ever possible.
+
+**Files changed:** `AuditLogRepository.java`, `AuditLogService.java`
+
+---
+
+## ADR-057: Bind Mounts for Logs and Uploads with User Override
+
+**Date:** 2026-06-22
+**Status:** Accepted
+
+**Decision:** Use bind mounts (`./logs:/tmp/logs`, `./uploads:/tmp/uploads`) with `user: "${APP_UID:-1000}"` in compose files for all persistent host-accessible data. Application paths use `/tmp/` prefix (world-writable on any Linux system). Host directories must be pre-created with `mkdir -p && chmod 777`.
+
+**Reasoning:** The hardened image's `USER 65532` can't write to Docker-created bind-mount directories (root-owned). Named volumes inherit image permissions but persist stale state across rebuilds. The `user:` override runs the container as the host user (uid 1000), allowing writes to the pre-`chmod 777`'d host directories. `/tmp/` path prefix ensures the application can always create subdirectories regardless of mount point state.
+
+**Files changed:** `docker-compose.yml`, `docker-compose.local.yml`, `Dockerfile`, `logback-spring.xml`, `application.yml`, `.env.example`, `ChangeRequestService.java`
+
+---
+
+## ADR-058: SFC Components with Complex Props Avoided in Nuxt 4 SPA
+
+**Date:** 2026-06-22
+**Status:** Accepted
+
+**Decision:** Do not use separate SFC components for form sections that receive complex typed props (nested objects) in Nuxt 4 SPA mode. Use raw inline elements with `v-model` bindings directly in the parent page instead.
+
+**Reasoning:** `SettingsSla.vue` with `<script setup lang="ts">` and typed `defineProps<{ modelValue: { lowHours: number, ... } }>()` silently produced blank inputs in production builds — same generic SFC failure pattern as `AppTable.vue` (ADR-035). The component rendered with zero content in the number inputs despite receiving correct data. Replacing with raw inline `<input v-model.number>` in the parent page immediately resolved the issue.
+
+**Files changed:** `pages/admin/settings/index.vue`; deleted `components/admin/SettingsSla.vue`
