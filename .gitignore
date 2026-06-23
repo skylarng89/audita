@@ -32,3 +32,5 @@ memory-bank/
 AGENTS.md
 .opencode/
 sonar-scan.sh
+.playwright-mcp
+.superpowers

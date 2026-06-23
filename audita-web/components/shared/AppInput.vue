@@ -47,10 +47,10 @@ defineEmits<{
           'block w-full rounded border bg-white px-3 py-2 text-sm text-gray-900 transition-colors',
           'placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary',
           'disabled:cursor-not-allowed disabled:opacity-50',
-          'dark:bg-slate-800 dark:text-gray-100 dark:placeholder:text-slate-500',
+          'dark:bg-[var(--c-surface)] dark:text-gray-100 dark:placeholder:text-slate-500',
           error
             ? 'border-danger focus:ring-danger focus:border-danger dark:border-danger'
-            : 'border-border dark:border-border-dark',
+            : 'border-border dark:border-[var(--c-border)]',
           $slots.prefix ? 'pl-9' : '',
           $slots.suffix ? 'pr-9' : '',
         ]"

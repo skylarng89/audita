@@ -122,17 +122,16 @@ onMounted(() => {
           <div
             v-if="open"
             ref="panelRef"
-            class="relative z-10 w-full bg-white rounded-2xl shadow-[0_20px_40px_rgba(0,35,111,0.12)] dark:bg-slate-800 flex flex-col max-h-[90vh]"
+            class="relative z-10 w-full mx-4 sm:mx-auto sm:max-w-md bg-white rounded-2xl shadow-[0_20px_40px_rgba(0,35,111,0.12)] dark:bg-[var(--c-surface)] flex flex-col max-h-[90vh]"
             :class="{
               'max-w-sm': size === 'sm',
-              'max-w-lg': !size || size === 'md',
-              'max-w-2xl': size === 'lg',
+              'sm:max-w-lg md:max-w-xl': size === 'lg',
               'max-w-4xl': size === 'xl',
             }"
           >
             <!-- Header -->
             <div
-              class="flex items-center justify-between px-6 py-4 border-b border-outline-variant/50 dark:border-border-dark shrink-0"
+              class="flex items-center justify-between px-6 py-4 border-b border-outline-variant/50 dark:border-[var(--c-border)] shrink-0"
             >
               <h2
                 :id="titleId"
@@ -142,7 +141,7 @@ onMounted(() => {
               </h2>
               <button
                 type="button"
-                class="rounded-lg p-1 text-muted hover:text-on-surface hover:bg-surface-container dark:hover:text-gray-200 dark:hover:bg-slate-700 transition-colors"
+                class="sticky top-0 z-10 rounded-lg p-1 text-muted hover:text-on-surface hover:bg-surface-container dark:hover:text-gray-200 dark:hover:bg-[var(--c-input)] transition-colors"
                 aria-label="Close"
                 @click="emit('close')"
               >
@@ -164,14 +163,14 @@ onMounted(() => {
             </div>
 
             <!-- Body -->
-            <div class="px-6 py-5 overflow-y-auto flex-1">
+            <div class="px-6 py-5 overflow-y-auto max-h-[80vh] flex-1">
               <slot />
             </div>
 
             <!-- Footer -->
             <div
               v-if="$slots.footer"
-              class="flex items-center justify-end gap-3 px-6 py-4 border-t border-outline-variant/50 dark:border-border-dark shrink-0 bg-surface-container-low dark:bg-slate-800/50 rounded-b-2xl"
+              class="flex items-center justify-end gap-3 px-6 py-4 border-t border-outline-variant/50 dark:border-[var(--c-border)] shrink-0 bg-surface-container-low dark:bg-[var(--c-surface)]/50 rounded-b-2xl"
             >
               <slot name="footer" />
             </div>

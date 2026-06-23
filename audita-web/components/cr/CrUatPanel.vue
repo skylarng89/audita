@@ -110,12 +110,12 @@
             @input="onApproverSearch"
           />
           <div
-            class="max-h-48 overflow-auto rounded-lg border border-border dark:border-border-dark divide-y divide-border/60 dark:divide-border-dark/60"
+            class="max-h-48 overflow-auto rounded-lg border border-border dark:border-[var(--c-border)] divide-y divide-border/60 dark:divide-[var(--c-border)]/60"
           >
             <label
               v-for="candidate in filteredApproverCandidates"
               :key="candidate.id"
-              class="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface-container-low dark:hover:bg-slate-800 cursor-pointer"
+              class="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface-container-low dark:hover:bg-[var(--c-surface)] cursor-pointer"
             >
               <input
                 type="checkbox"
@@ -148,7 +148,7 @@
           <div
             v-for="approver in uat.approvers"
             :key="approver.id"
-            class="flex items-center justify-between rounded-lg border border-border dark:border-border-dark p-3"
+            class="flex items-center justify-between rounded-lg border border-border dark:border-[var(--c-border)] p-3"
           >
             <div>
               <p class="text-sm font-semibold">{{ approver.userFullName }}</p>
@@ -198,12 +198,12 @@
             placeholder="Search users by name or email…"
           />
           <div
-            class="max-h-48 overflow-auto rounded-lg border border-border dark:border-border-dark divide-y divide-border/60 dark:divide-border-dark/60"
+            class="max-h-48 overflow-auto rounded-lg border border-border dark:border-[var(--c-border)] divide-y divide-border/60 dark:divide-[var(--c-border)]/60"
           >
             <label
               v-for="candidate in filteredWatcherCandidates"
               :key="candidate.id"
-              class="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface-container-low dark:hover:bg-slate-800 cursor-pointer"
+              class="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface-container-low dark:hover:bg-[var(--c-surface)] cursor-pointer"
             >
               <input
                 type="checkbox"
@@ -236,7 +236,7 @@
           <div
             v-for="w in watchers"
             :key="w.id"
-            class="flex items-center justify-between rounded-lg border border-border dark:border-border-dark p-3"
+            class="flex items-center justify-between rounded-lg border border-border dark:border-[var(--c-border)] p-3"
           >
             <div>
               <p class="text-sm font-semibold">{{ w.userFullName }}</p>
@@ -267,7 +267,7 @@
         </button>
       </div>
 
-      <div v-if="currentApprover" class="border-t border-border dark:border-border-dark pt-4 mt-4">
+      <div v-if="currentApprover" class="border-t border-border dark:border-[var(--c-border)] pt-4 mt-4">
         <p class="text-sm font-medium mb-2">Your Sign-Off</p>
         <div class="flex flex-wrap gap-2">
           <button
@@ -301,7 +301,7 @@
         </div>
       </div>
 
-      <div v-if="canRequesterSignOff" class="border-t border-border dark:border-border-dark pt-4 mt-4">
+      <div v-if="canRequesterSignOff" class="border-t border-border dark:border-[var(--c-border)] pt-4 mt-4">
         <p class="text-sm font-medium mb-2">Requester Sign-Off</p>
         <p class="text-xs text-muted mb-2">
           Sign-off to acknowledge your satisfaction with the UAT results.
@@ -315,7 +315,7 @@
         </button>
       </div>
 
-      <div v-if="uat?.requesterSignedOff" class="border-t border-border dark:border-border-dark pt-4 mt-4">
+      <div v-if="uat?.requesterSignedOff" class="border-t border-border dark:border-[var(--c-border)] pt-4 mt-4">
         <div class="flex items-center gap-2">
           <span class="text-xs px-2 py-1 rounded-md bg-success/15 text-success font-medium">Signed Off ✓</span>
           <span class="text-xs text-muted">Requester has acknowledged the UAT results.</span>
@@ -328,7 +328,7 @@
           <div
             v-for="comment in uatComments"
             :key="comment.id"
-            class="border border-border dark:border-border-dark rounded-lg p-3"
+            class="border border-border dark:border-[var(--c-border)] rounded-lg p-3"
           >
             <p class="text-xs text-muted">
               {{ comment.author?.fullName ?? "Unknown" }} •
@@ -345,7 +345,7 @@
         </div>
 
         <div class="space-y-2">
-          <div class="border border-border dark:border-border-dark rounded-lg overflow-hidden">
+          <div class="border border-border dark:border-[var(--c-border)] rounded-lg overflow-hidden">
             <SharedRichTextToolbar :editor="commentEditor" />
             <EditorContent
               :editor="commentEditor"

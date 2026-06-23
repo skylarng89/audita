@@ -12,12 +12,12 @@
           :key="toast.id"
           class="relative flex items-start gap-3 rounded-xl shadow-card-md px-4 py-3.5 text-sm font-medium border overflow-hidden"
           :class="{
-            'bg-white text-on-surface border-outline-variant/50':
+            'bg-white text-on-surface border-outline-variant/50 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800':
               toast.type === 'info',
-            'bg-white text-on-surface border-success/30':
+            'bg-white text-on-surface border-success/30 dark:bg-green-950 dark:text-green-300 dark:border-green-800':
               toast.type === 'success',
-            'bg-white text-on-surface border-danger/30': toast.type === 'error',
-            'bg-white text-on-surface border-warning/30':
+            'bg-white text-on-surface border-danger/30 dark:bg-red-950 dark:text-red-300 dark:border-red-800': toast.type === 'error',
+            'bg-white text-on-surface border-warning/30 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800':
               toast.type === 'warning',
           }"
           :role="toast.type === 'error' ? 'alert' : undefined"

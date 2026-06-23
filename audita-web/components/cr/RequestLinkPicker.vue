@@ -32,7 +32,7 @@
 
     <ul
       v-if="dropdownOpen && searchResults.length"
-      class="absolute z-50 mt-1 w-full bg-surface border border-border dark:border-border-dark rounded-lg shadow-lg max-h-52 overflow-y-auto"
+      class="absolute z-50 mt-1 w-full bg-surface border border-border dark:border-[var(--c-border)] rounded-lg shadow-lg max-h-52 overflow-y-auto"
     >
       <li
         v-for="result in searchResults"
@@ -50,7 +50,7 @@
 
     <p
       v-if="dropdownOpen && !searchResults.length && searchQuery.trim() && !isSearching"
-      class="absolute z-50 mt-1 w-full bg-surface border border-border dark:border-border-dark rounded-lg shadow-lg px-3 py-2 text-sm text-muted"
+      class="absolute z-50 mt-1 w-full bg-surface border border-border dark:border-[var(--c-border)] rounded-lg shadow-lg px-3 py-2 text-sm text-muted"
     >
       No matching requests found.
     </p>

@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <div class="flex items-start justify-between">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p
           class="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70 mb-1"
@@ -15,7 +15,7 @@
       </div>
       <button
         type="button"
-        class="btn-primary btn-sm"
+        class="btn-primary btn-sm shrink-0 whitespace-nowrap"
         :disabled="!isDirty || savingSettings"
         @click="saveSettings"
       >
@@ -96,7 +96,7 @@
 
         <div class="space-y-3 text-sm text-muted">
           <div
-            class="flex items-center justify-between rounded-md border border-border p-3 dark:border-border-dark"
+            class="flex items-center justify-between rounded-md border border-border p-3 dark:border-[var(--c-border)]"
           >
             <span>Policy breach digests</span>
             <AppBadge
@@ -114,7 +114,7 @@
             </AppBadge>
           </div>
           <div
-            class="flex items-center justify-between rounded-md border border-border p-3 dark:border-border-dark"
+            class="flex items-center justify-between rounded-md border border-border p-3 dark:border-[var(--c-border)]"
           >
             <span>Automated reminders</span>
             <AppBadge
@@ -130,7 +130,7 @@
             </AppBadge>
           </div>
           <div
-            class="flex items-center justify-between rounded-md border border-border p-3 dark:border-border-dark"
+            class="flex items-center justify-between rounded-md border border-border p-3 dark:border-[var(--c-border)]"
           >
             <span>Conditional escalation</span>
             <AppBadge
@@ -159,7 +159,7 @@
       <h2 class="text-lg font-semibold">Security Defaults</h2>
       <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
         <div
-          class="rounded-md border border-border p-4 dark:border-border-dark"
+          class="rounded-md border border-border p-4 dark:border-[var(--c-border)]"
         >
           <p class="text-xs uppercase tracking-wide text-muted">
             Session Timeout
@@ -169,7 +169,7 @@
           </p>
         </div>
         <div
-          class="rounded-md border border-border p-4 dark:border-border-dark"
+          class="rounded-md border border-border p-4 dark:border-[var(--c-border)]"
         >
           <p class="text-xs uppercase tracking-wide text-muted">MFA Policy</p>
           <p class="mt-1 text-sm font-semibold">
@@ -177,7 +177,7 @@
           </p>
         </div>
         <div
-          class="rounded-md border border-border p-4 dark:border-border-dark"
+          class="rounded-md border border-border p-4 dark:border-[var(--c-border)]"
         >
           <p class="text-xs uppercase tracking-wide text-muted">
             Password Policy
@@ -214,13 +214,13 @@
           />
           <div
             v-if="userSearchResults.length"
-            class="max-h-40 overflow-auto rounded-lg border border-border dark:border-border-dark"
+            class="max-h-40 overflow-auto rounded-lg border border-border dark:border-[var(--c-border)]"
           >
             <button
               v-for="candidate in userSearchResults"
               :key="candidate.id"
               type="button"
-              class="w-full px-3 py-2 text-left text-sm hover:bg-surface-container-low dark:hover:bg-slate-800 border-b border-border/60 last:border-b-0 dark:border-border-dark/60"
+              class="w-full px-3 py-2 text-left text-sm hover:bg-surface-container-low dark:hover:bg-[var(--c-surface)] border-b border-border/60 last:border-b-0 dark:border-[var(--c-border)]/60"
               @click="addAutoApproverUser(candidate)"
             >
               <p class="font-medium">{{ candidate.label }}</p>
@@ -254,13 +254,13 @@
           />
           <div
             v-if="groupSearchResults.length"
-            class="max-h-40 overflow-auto rounded-lg border border-border dark:border-border-dark"
+            class="max-h-40 overflow-auto rounded-lg border border-border dark:border-[var(--c-border)]"
           >
             <button
               v-for="candidate in groupSearchResults"
               :key="candidate.id"
               type="button"
-              class="w-full px-3 py-2 text-left text-sm hover:bg-surface-container-low dark:hover:bg-slate-800 border-b border-border/60 last:border-b-0 dark:border-border-dark/60"
+              class="w-full px-3 py-2 text-left text-sm hover:bg-surface-container-low dark:hover:bg-[var(--c-surface)] border-b border-border/60 last:border-b-0 dark:border-[var(--c-border)]/60"
               @click="addAutoApproverGroup(candidate)"
             >
               <p class="font-medium">{{ candidate.label }}</p>
@@ -367,7 +367,7 @@
         <table class="w-full text-sm" aria-label="Custom field definitions">
           <thead>
             <tr
-              class="border-b border-border dark:border-border-dark text-left text-xs uppercase tracking-wide text-muted"
+              class="border-b border-border dark:border-[var(--c-border)] text-left text-xs uppercase tracking-wide text-muted"
             >
               <th class="py-2 pr-4">Label</th>
               <th class="py-2 pr-4">Type</th>
@@ -380,7 +380,7 @@
             <tr
               v-for="field in customFields"
               :key="field.id"
-              class="border-b border-border/50 dark:border-border-dark/50 hover:bg-surface-hover dark:hover:bg-surface-dark-hover"
+              class="border-b border-border/50 dark:border-[var(--c-border)]/50 hover:bg-surface-hover dark:hover:bg-surface-dark-hover"
             >
               <td class="py-2 pr-4 font-medium">{{ field.label }}</td>
               <td class="py-2 pr-4">
@@ -456,7 +456,7 @@
         </div>
         <div v-else class="space-y-3">
           <div
-            class="rounded-md border border-border p-3 dark:border-border-dark"
+            class="rounded-md border border-border p-3 dark:border-[var(--c-border)]"
           >
             <span class="text-sm text-muted">
               Import pre-configured demo data including 8 users, 4 groups, 15

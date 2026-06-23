@@ -22,7 +22,7 @@ defineProps<{
           variant === 'danger',
         'bg-info-light text-blue-800 dark:bg-blue-900/30 dark:text-blue-400':
           variant === 'info',
-        'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-gray-300':
+        'bg-gray-100 text-gray-700 dark:bg-[var(--c-input)] dark:text-gray-300':
           variant === 'neutral' || !variant,
         'bg-primary/10 text-primary dark:bg-primary/20 dark:text-blue-300':
           variant === 'primary',

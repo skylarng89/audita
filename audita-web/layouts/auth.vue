@@ -1,6 +1,6 @@
 <template>
   <div
-    class="min-h-screen flex items-center justify-center bg-[#f7f9fb] dark:bg-slate-950 p-4 relative overflow-hidden"
+    class="min-h-screen flex items-center justify-center bg-[var(--c-base)] p-4 relative overflow-hidden"
   >
     <!-- Decorative blurs matching designs -->
     <div
@@ -12,7 +12,7 @@
 
     <!-- Split-panel card matching the sign-in design -->
     <div
-      class="w-full max-w-[900px] flex rounded-2xl shadow-[0px_24px_48px_rgba(0,35,111,0.10)] overflow-hidden bg-white dark:bg-slate-800 relative z-10"
+      class="w-full max-w-[900px] flex rounded-2xl shadow-[0px_24px_48px_rgba(0,35,111,0.10)] overflow-hidden bg-white dark:bg-[var(--c-surface)] relative z-10"
     >
       <!-- Left: Navy hero panel -->
       <div
@@ -61,7 +61,7 @@
 
       <!-- Right: Form panel -->
       <div
-        class="flex-1 flex flex-col justify-center px-10 py-12 md:px-14 bg-white dark:bg-slate-800"
+        class="flex-1 flex flex-col justify-center px-10 py-12 md:px-14 bg-white dark:bg-[var(--c-surface)]"
       >
         <slot />
       </div>
@@ -69,10 +69,16 @@
 
     <!-- Help button -->
     <button
-      class="fixed bottom-6 right-6 w-9 h-9 rounded-full bg-white dark:bg-slate-800 shadow-card-md border border-outline-variant text-muted text-sm font-semibold hover:bg-surface-container-low transition-colors"
+      class="fixed bottom-6 right-6 w-9 h-9 rounded-full bg-white dark:bg-[var(--c-surface)] shadow-card-md border border-outline-variant text-muted text-sm font-semibold hover:bg-surface-container-low transition-colors"
       aria-label="Need assistance?"
     >
       ?
     </button>
   </div>
 </template>
+
+<script setup lang="ts">
+onMounted(() => {
+  useTheme().initTheme();
+});
+</script>

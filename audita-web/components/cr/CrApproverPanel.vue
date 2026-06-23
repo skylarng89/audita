@@ -22,7 +22,7 @@
       <div
         v-for="a in sortedApprovers"
         :key="a.id"
-        class="border border-border dark:border-border-dark rounded-lg p-3 flex items-center justify-between gap-3 transition-all duration-300 ease-out"
+        class="border border-border dark:border-[var(--c-border)] rounded-lg p-3 flex items-center justify-between gap-3 transition-all duration-300 ease-out"
         :class="draggingId === a.id ? 'opacity-60 scale-[0.98]' : ''"
         :draggable="canManageApprovers"
         @dragstart="$emit('dragStart', a.id)"

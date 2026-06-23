@@ -52,7 +52,7 @@
 
     <div class="card shadow-card-hover">
       <div
-        class="flex items-center justify-between px-5 py-4 border-b border-border dark:border-border-dark"
+        class="flex items-center justify-between px-5 py-4 border-b border-border dark:border-[var(--c-border)]"
       >
         <h2 class="font-semibold">Recent Organisations</h2>
         <NuxtLink

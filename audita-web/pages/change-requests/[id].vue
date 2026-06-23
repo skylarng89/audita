@@ -54,7 +54,7 @@
       <div
         role="tablist"
         aria-label="Change request sections"
-        class="flex items-center gap-1 p-1 bg-surface-container-low dark:bg-slate-800 rounded-xl"
+        class="flex items-center gap-1 p-1 bg-surface-container-low dark:bg-[var(--c-surface)] rounded-xl"
       >
         <button
           v-for="crTab in crTabs"
@@ -68,8 +68,8 @@
           class="relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
           :class="
             tab === crTab.key
-              ? 'bg-white dark:bg-slate-700 text-on-surface dark:text-gray-100 shadow-sm'
-              : 'text-muted hover:text-on-surface hover:bg-white/50 dark:hover:text-gray-300 dark:hover:bg-slate-700/50'
+              ? 'bg-white dark:bg-[var(--c-input)] text-on-surface dark:text-gray-100 shadow-sm'
+              : 'text-muted hover:text-on-surface hover:bg-white/50 dark:hover:text-gray-300 dark:hover:bg-[var(--c-input)]/50'
           "
           :title="
             crTab.key === 'approvers' && needsApproverAttention
@@ -305,7 +305,7 @@
 
           <!-- Custom fields in edit mode -->
           <template v-if="fieldDefinitions.length">
-            <hr class="border-outline-variant/40 dark:border-border-dark" />
+            <hr class="border-outline-variant/40 dark:border-[var(--c-border)]" />
             <h4 class="font-medium text-sm">Custom Fields</h4>
             <div class="space-y-3">
               <div
@@ -448,7 +448,7 @@
         <h3 class="font-semibold mb-3">Attachments</h3>
         <template v-if="changeRequest.status === 'DRAFT' && isEditing">
           <div
-            class="border-2 border-dashed border-border dark:border-border-dark rounded-lg p-6 text-center"
+            class="border-2 border-dashed border-border dark:border-[var(--c-border)] rounded-lg p-6 text-center"
             @dragover.prevent
             @drop.prevent="onDropUpload"
           >
@@ -480,7 +480,7 @@
           <div
             v-for="file in attachments"
             :key="file.id"
-            class="border border-border dark:border-border-dark rounded-lg p-3 flex items-center justify-between"
+            class="border border-border dark:border-[var(--c-border)] rounded-lg p-3 flex items-center justify-between"
           >
             <div>
               <p class="text-sm font-semibold">{{ file.fileName }}</p>
@@ -512,7 +512,7 @@
           <div
             v-for="approver in recordedVotes"
             :key="approver.id"
-            class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-outline-variant/50 bg-surface-container-low px-3 py-2 dark:border-slate-600 dark:bg-slate-800/70"
+            class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-outline-variant/50 bg-surface-container-low px-3 py-2 dark:border-slate-600 dark:bg-[var(--c-surface)]/70"
           >
             <div>
               <p class="font-medium text-on-surface dark:text-gray-100">
@@ -558,12 +558,12 @@
         </div>
 
         <div
-          class="max-h-52 overflow-auto rounded-lg border border-border dark:border-border-dark divide-y divide-border/60 dark:divide-border-dark/60"
+          class="max-h-52 overflow-auto rounded-lg border border-border dark:border-[var(--c-border)] divide-y divide-border/60 dark:divide-[var(--c-border)]/60"
         >
           <label
             v-for="candidate in filteredCandidates"
             :key="`${candidate.kind}-${candidate.id}`"
-            class="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface-container-low dark:hover:bg-slate-800 cursor-pointer"
+            class="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface-container-low dark:hover:bg-[var(--c-surface)] cursor-pointer"
           >
             <input
               type="checkbox"
@@ -597,7 +597,7 @@
             <span
               v-for="cid in selectedCandidateIds"
               :key="cid"
-              class="inline-flex items-center gap-1.5 rounded-md bg-white dark:bg-slate-800 border border-primary/20 text-xs px-2 py-1 shadow-sm"
+              class="inline-flex items-center gap-1.5 rounded-md bg-white dark:bg-[var(--c-surface)] border border-primary/20 text-xs px-2 py-1 shadow-sm"
             >
               <span class="font-medium">{{ pendingSelection[cid]?.label }}</span>
               <span
@@ -642,7 +642,7 @@
         <div
           v-for="a in sortedApprovers"
           :key="a.id"
-          class="border border-border dark:border-border-dark rounded-lg p-3 flex items-center justify-between gap-3 transition-all duration-300 ease-out"
+          class="border border-border dark:border-[var(--c-border)] rounded-lg p-3 flex items-center justify-between gap-3 transition-all duration-300 ease-out"
           :class="draggingApproverId === a.id ? 'opacity-60 scale-[0.98]' : ''"
           :draggable="canManageApprovers"
           @dragstart="onApproverDragStart(a.id)"
@@ -725,7 +725,7 @@
         </div>
       </Transition>
 
-      <div class="border-t border-border dark:border-border-dark pt-4 mt-4 space-y-3">
+      <div class="border-t border-border dark:border-[var(--c-border)] pt-4 mt-4 space-y-3">
         <div class="flex items-center justify-between">
           <h3 class="font-semibold">Watchers</h3>
           <button
@@ -745,12 +745,12 @@
             placeholder="Search users by name or email…"
           />
           <div
-            class="max-h-48 overflow-auto rounded-lg border border-border dark:border-border-dark divide-y divide-border/60 dark:divide-border-dark/60"
+            class="max-h-48 overflow-auto rounded-lg border border-border dark:border-[var(--c-border)] divide-y divide-border/60 dark:divide-[var(--c-border)]/60"
           >
             <label
               v-for="candidate in filteredWatcherCandidates"
               :key="candidate.id"
-              class="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface-container-low dark:hover:bg-slate-800 cursor-pointer"
+              class="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface-container-low dark:hover:bg-[var(--c-surface)] cursor-pointer"
             >
               <input
                 type="checkbox"
@@ -783,7 +783,7 @@
           <div
             v-for="w in watchers"
             :key="w.id"
-            class="flex items-center justify-between rounded-lg border border-border dark:border-border-dark p-3"
+            class="flex items-center justify-between rounded-lg border border-border dark:border-[var(--c-border)] p-3"
           >
             <div>
               <p class="text-sm font-semibold">{{ w.userFullName }}</p>
@@ -814,7 +814,7 @@
         <div
           v-for="event in activity"
           :key="event.id"
-          class="border border-border dark:border-border-dark rounded-xl p-4 bg-surface-container-low/50 dark:bg-slate-800/70"
+          class="border border-border dark:border-[var(--c-border)] rounded-xl p-4 bg-surface-container-low/50 dark:bg-[var(--c-surface)]/70"
         >
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -840,7 +840,7 @@
           </p>
           <dl
             v-if="activityFields(event).length"
-            class="mt-3 grid gap-2 rounded-lg bg-white/80 p-3 text-xs dark:bg-slate-900/50 sm:grid-cols-2"
+            class="mt-3 grid gap-2 rounded-lg bg-white/80 p-3 text-xs dark:bg-[var(--c-surface)]/50 sm:grid-cols-2"
           >
             <div v-for="field in activityFields(event)" :key="field.label">
               <dt class="font-semibold uppercase tracking-[0.08em] text-muted">
@@ -875,7 +875,7 @@
           v-for="comment in comments"
           :key="comment.id"
           :id="`comment-${comment.id}`"
-          class="border border-border dark:border-border-dark rounded-lg p-3"
+          class="border border-border dark:border-[var(--c-border)] rounded-lg p-3"
           :class="{ 'ring-2 ring-primary/50 bg-primary/5': highlightedCommentId === comment.id }"
         >
           <p class="text-xs text-muted">
@@ -893,7 +893,7 @@
       </div>
 
       <div class="space-y-2">
-        <div class="border border-border dark:border-border-dark rounded-lg overflow-hidden">
+        <div class="border border-border dark:border-[var(--c-border)] rounded-lg overflow-hidden">
           <SharedRichTextToolbar :editor="commentEditor" />
           <EditorContent
             :editor="commentEditor"
@@ -953,7 +953,7 @@
     >
       <div
         v-if="isEditing"
-        class="fixed bottom-0 left-0 md:left-56 right-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-outline-variant/50 dark:border-border-dark px-6 py-3 flex items-center justify-between gap-3 shadow-[0_-2px_8px_rgba(0,35,111,0.06)]"
+        class="fixed bottom-0 left-0 md:left-56 right-0 z-20 bg-white/95 dark:bg-[var(--c-chrome)]/95 backdrop-blur-sm border-t border-outline-variant/50 dark:border-[var(--c-border)] px-6 py-3 flex items-center justify-between gap-3 shadow-[0_-2px_8px_rgba(0,35,111,0.06)]"
       >
         <p class="text-sm text-muted hidden sm:block">
           You have unsaved changes

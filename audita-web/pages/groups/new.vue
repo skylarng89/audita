@@ -31,7 +31,7 @@
     </div>
 
     <div class="card shadow-card-hover overflow-hidden">
-      <div class="px-6 py-4 border-b border-border dark:border-border-dark">
+      <div class="px-6 py-4 border-b border-border dark:border-[var(--c-border)]">
         <div class="flex items-center gap-3">
           <div
             v-for="(step, i) in steps"
@@ -45,7 +45,7 @@
                   ? 'bg-primary text-white'
                   : currentStep === i
                     ? 'bg-primary/20 text-primary ring-2 ring-primary'
-                    : 'bg-gray-100 dark:bg-slate-700 text-muted'
+                    : 'bg-gray-100 dark:bg-[var(--c-input)] text-muted'
               "
             >
               <template v-if="currentStep > i">
@@ -79,7 +79,7 @@
               v-if="i < steps.length - 1"
               class="w-12 h-0.5 rounded"
               :class="
-                currentStep > i ? 'bg-primary' : 'bg-border dark:bg-border-dark'
+                currentStep > i ? 'bg-primary' : 'bg-border dark:bg-[var(--c-surface-raised)]'
               "
             />
           </div>
@@ -173,7 +173,7 @@
 
               <div
                 v-if="memberSearchDropdownOpen && memberSearchResults.length"
-                class="absolute z-30 mt-1 w-full bg-white dark:bg-slate-800 border border-border dark:border-border-dark rounded-lg shadow-lg max-h-64 overflow-y-auto"
+                class="absolute z-30 mt-1 w-full bg-white dark:bg-[var(--c-surface)] border border-border dark:border-[var(--c-border)] rounded-lg shadow-lg max-h-64 overflow-y-auto"
               >
                 <div
                   v-for="result in memberSearchResults"
@@ -204,7 +204,7 @@
 
         <div v-if="currentStep === 2">
           <div
-            class="card border border-border dark:border-border-dark p-5 space-y-4"
+            class="card border border-border dark:border-[var(--c-border)] p-5 space-y-4"
           >
             <h3
               class="text-sm font-semibold uppercase tracking-wide text-muted"
@@ -251,7 +251,7 @@
     </div>
 
     <div
-      class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-950 border-t border-border dark:border-border-dark z-30 md:left-14"
+      class="fixed bottom-0 left-0 right-0 bg-white dark:bg-[var(--c-chrome)] border-t border-border dark:border-[var(--c-border)] z-30 md:left-14"
     >
       <div
         class="max-w-4xl mx-auto flex items-center justify-between px-6 py-4"

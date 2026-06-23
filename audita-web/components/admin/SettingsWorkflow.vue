@@ -16,7 +16,7 @@
           <option value="NON_LINEAR">Non-linear</option>
         </select>
       </div>
-      <div class="rounded-lg border border-border/70 bg-surface-container-low p-3 text-sm text-muted dark:border-border-dark dark:bg-slate-900/50">
+      <div class="rounded-lg border border-border/70 bg-surface-container-low p-3 text-sm text-muted dark:border-[var(--c-border)] dark:bg-[var(--c-surface)]/50">
         Configured default approver users and groups are always auto-added to
         new change requests.
       </div>

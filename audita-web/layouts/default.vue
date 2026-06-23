@@ -1,11 +1,11 @@
 <template>
-  <div class="min-h-screen flex flex-col bg-[#f7f9fb] dark:bg-slate-950">
+  <div class="min-h-screen flex flex-col bg-[var(--c-base)]">
     <!-- Skip to main content — WCAG 2.4.1 -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <!-- ── Top Header ─────────────────────────────────────────────────────── -->
     <header
-      class="fixed top-0 left-0 right-0 z-30 h-14 border-b border-outline-variant/50 bg-white/95 backdrop-blur-sm dark:bg-slate-900/90 dark:border-border-dark flex items-center px-4 gap-3 shadow-[0_1px_3px_rgba(0,35,111,0.05)]"
+      class="fixed top-0 left-0 right-0 z-30 h-14 border-b border-outline-variant/50 bg-white/95 backdrop-blur-sm dark:bg-[var(--c-chrome)]/95 dark:border-[var(--c-border)] flex items-center px-4 gap-3 shadow-[0_1px_3px_rgba(0,35,111,0.05)]"
     >
       <!-- Mobile: hamburger + logo -->
       <div class="flex items-center gap-2 md:hidden">
@@ -153,12 +153,12 @@
 
         <!-- Drawer panel -->
         <nav
-          class="absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-slate-950 border-r border-outline-variant/50 dark:border-border-dark flex flex-col overflow-y-auto translate-x-0"
+          class="absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-[var(--c-chrome)] border-r border-outline-variant/50 dark:border-[var(--c-border)] flex flex-col overflow-y-auto translate-x-0"
           aria-label="Main navigation"
         >
           <!-- Drawer header -->
           <div
-            class="flex items-center justify-between px-4 py-3 border-b border-outline-variant/50 dark:border-border-dark shrink-0"
+            class="flex items-center justify-between px-4 py-3 border-b border-outline-variant/50 dark:border-[var(--c-border)] shrink-0"
           >
             <div class="flex items-center gap-2">
               <img
@@ -374,7 +374,7 @@
 
           <!-- Create button -->
           <div
-            class="p-3 border-t border-outline-variant/50 dark:border-border-dark shrink-0"
+            class="p-3 border-t border-outline-variant/50 dark:border-[var(--c-border)] shrink-0"
           >
             <NuxtLink
               v-if="auth.hasPermission('cr.create')"

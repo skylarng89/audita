@@ -63,6 +63,16 @@ export default {
         },
         outline: "#757682",
         "outline-variant": "#c5c5d3",
+        dm: {
+          base: "var(--c-base)",
+          chrome: "var(--c-chrome)",
+          surface: "var(--c-surface)",
+          "surface-raised": "var(--c-surface-raised)",
+          "surface-highest": "var(--c-surface-highest)",
+          input: "var(--c-input)",
+          border: "var(--c-border)",
+          "border-subtle": "var(--c-border-subtle)",
+        },
       },
       backgroundImage: {
         "hero-gradient": "linear-gradient(150deg, #00236f 0%, #1e3a8a 100%)",

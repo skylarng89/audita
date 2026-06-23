@@ -6,7 +6,7 @@
         v-for="comment in comments"
         :key="comment.id"
         :id="`comment-${comment.id}`"
-        class="border border-border dark:border-border-dark rounded-lg p-3"
+        class="border border-border dark:border-[var(--c-border)] rounded-lg p-3"
         :class="{ 'ring-2 ring-primary/50 bg-primary/5': highlightedId === comment.id }"
       >
         <p class="text-xs text-muted">
@@ -24,7 +24,7 @@
     </div>
 
     <div class="space-y-2">
-      <div class="border border-border dark:border-border-dark rounded-lg overflow-hidden">
+      <div class="border border-border dark:border-[var(--c-border)] rounded-lg overflow-hidden">
         <SharedRichTextToolbar :editor="editor" />
         <EditorContent
           :editor="editor"

@@ -192,7 +192,7 @@
           <!-- Dropdown -->
           <ul
             v-if="categoryOpen && filteredCategories.length"
-            class="absolute z-50 mt-1 w-full bg-surface border border-border dark:border-border-dark rounded-lg shadow-lg max-h-52 overflow-y-auto"
+            class="absolute z-50 mt-1 w-full bg-surface border border-border dark:border-[var(--c-border)] rounded-lg shadow-lg max-h-52 overflow-y-auto"
           >
             <li
               v-for="cat in filteredCategories"
@@ -309,7 +309,7 @@
         <div class="md:col-span-2">
           <p class="field-label">Attachments</p>
           <div
-            class="rounded-lg border border-dashed border-outline-variant/70 bg-surface-container-low p-5 dark:border-slate-600 dark:bg-slate-800/70"
+            class="rounded-lg border border-dashed border-outline-variant/70 bg-surface-container-low p-5 dark:border-slate-600 dark:bg-[var(--c-surface)]/70"
           >
             <div
               class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
@@ -347,7 +347,7 @@
               <div
                 v-for="file in pendingAttachments"
                 :key="`${file.name}-${file.size}-${file.lastModified}`"
-                class="flex items-center justify-between rounded-lg border border-outline-variant/50 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900/50"
+                class="flex items-center justify-between rounded-lg border border-outline-variant/50 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-[var(--c-surface)]/50"
               >
                 <div>
                   <p class="font-medium text-on-surface dark:text-gray-100">

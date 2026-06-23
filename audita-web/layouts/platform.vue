@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen flex flex-col bg-[#f7f9fb] dark:bg-slate-950">
+  <div class="min-h-screen flex flex-col bg-[#f7f9fb] dark:bg-[var(--c-chrome)]">
     <!-- Header -->
     <header
-      class="fixed top-0 left-0 right-0 z-30 h-14 border-b border-outline-variant/50 bg-white/95 backdrop-blur-sm dark:bg-slate-900/90 dark:border-border-dark flex items-center px-6 gap-4 shadow-[0_1px_3px_rgba(0,35,111,0.05)]"
+      class="fixed top-0 left-0 right-0 z-30 h-14 border-b border-outline-variant/50 bg-white/95 backdrop-blur-sm dark:bg-[var(--c-chrome)]/95 dark:border-[var(--c-border)] flex items-center px-6 gap-4 shadow-[0_1px_3px_rgba(0,35,111,0.05)]"
     >
       <span class="font-bold text-primary text-sm tracking-tight"
         >Audita ITSM</span
@@ -90,7 +90,7 @@
 
     <div class="flex pt-14 min-h-screen">
       <nav
-        class="fixed left-0 top-14 bottom-0 w-56 bg-white dark:bg-slate-950 border-r border-outline-variant/50 dark:border-border-dark flex flex-col p-4 gap-1 overflow-y-auto"
+        class="fixed left-0 top-14 bottom-0 w-56 bg-white dark:bg-[var(--c-chrome)] border-r border-outline-variant/50 dark:border-[var(--c-border)] flex flex-col p-4 gap-1 overflow-y-auto"
       >
         <div class="flex items-center gap-2 px-3 py-2 mb-4">
           <div
@@ -138,7 +138,7 @@
         >
 
         <div
-          class="mt-auto pt-4 border-t border-outline-variant/50 dark:border-border-dark space-y-1"
+          class="mt-auto pt-4 border-t border-outline-variant/50 dark:border-[var(--c-border)] space-y-1"
         >
           <NuxtLink
             to="/platform/tenants/new"

@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-4xl mx-auto space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p
           class="text-xs text-primary/70 uppercase tracking-[0.16em] font-semibold mb-1"
@@ -16,7 +16,7 @@
           Define the custom fields that appear on every change request.
         </p>
       </div>
-      <button class="btn-primary btn-md" @click="openCreateModal">
+      <button class="btn-primary btn-md shrink-0" @click="openCreateModal">
         <svg
           class="w-4 h-4"
           fill="none"
@@ -66,7 +66,7 @@
     <!-- Field list -->
     <div
       v-else
-      class="card divide-y divide-outline-variant/30 dark:divide-border-dark"
+      class="card divide-y divide-outline-variant/30 dark:divide-[var(--c-border)]"
     >
       <div
         v-for="field in fields"

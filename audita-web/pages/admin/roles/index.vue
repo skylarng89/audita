@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p
           class="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70 mb-1"
@@ -15,7 +15,7 @@
       <button
         v-if="auth.hasPermission('roles.manage')"
         type="button"
-        class="btn-primary btn-sm shadow-lg shadow-primary/20"
+        class="btn-primary btn-sm shadow-lg shadow-primary/20 shrink-0"
         @click="openCreate"
       >
         + Create Role
@@ -139,7 +139,7 @@
             <div
               v-for="group in permissionGroups"
               :key="group.label"
-              class="rounded-lg border border-outline-variant/50 dark:border-border-dark p-3"
+              class="rounded-lg border border-outline-variant/50 dark:border-[var(--c-border)] p-3"
             >
               <div class="flex items-center justify-between mb-2">
                 <p class="text-xs font-semibold uppercase tracking-wide text-muted">

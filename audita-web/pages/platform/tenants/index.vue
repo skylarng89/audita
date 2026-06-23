@@ -40,7 +40,7 @@
         </template>
       </AppTable>
 
-      <div class="px-5 py-4 border-t border-border dark:border-border-dark">
+      <div class="px-5 py-4 border-t border-border dark:border-[var(--c-border)]">
         <AppPagination
           :current-page="page"
           :total-pages="totalPages"

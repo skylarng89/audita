@@ -2,7 +2,7 @@
   <div class="relative" ref="menuRef">
     <button
       @click="open = !open"
-      class="flex items-center gap-2 rounded-lg hover:bg-surface-container dark:hover:bg-slate-800 px-2 py-1.5 transition-colors"
+      class="flex items-center gap-2 rounded-lg hover:bg-surface-container dark:hover:bg-[var(--c-surface)] px-2 py-1.5 transition-colors"
     >
       <div class="text-right hidden sm:block">
         <p
@@ -24,10 +24,10 @@
     <Transition name="fade">
       <div
         v-if="open"
-        class="absolute right-0 mt-2 w-52 bg-white dark:bg-slate-800 shadow-card-md rounded-xl overflow-hidden z-50 py-1 border border-outline-variant/50 dark:border-border-dark"
+        class="absolute right-0 mt-2 w-52 bg-white dark:bg-[var(--c-surface)] shadow-card-md rounded-xl overflow-hidden z-50 py-1 border border-outline-variant/50 dark:border-[var(--c-border)]"
       >
         <div
-          class="px-4 py-3 border-b border-outline-variant/40 dark:border-border-dark"
+          class="px-4 py-3 border-b border-outline-variant/40 dark:border-[var(--c-border)]"
         >
           <p class="text-sm font-semibold text-on-surface">
             {{ auth.fullName }}
@@ -37,7 +37,7 @@
 
         <button
           @click="toggleDarkAction"
-          class="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container-low dark:hover:bg-slate-700 flex items-center justify-between transition-colors"
+          class="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container-low dark:hover:bg-[var(--c-input)] flex items-center justify-between transition-colors"
         >
           {{ isDark ? "Light Mode" : "Dark Mode" }}
           <svg

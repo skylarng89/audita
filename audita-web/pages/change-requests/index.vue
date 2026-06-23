@@ -102,7 +102,7 @@
         <div
           v-if="filtersOpen"
           id="filter-panel"
-          class="absolute top-full left-0 mt-2 z-20 bg-white dark:bg-slate-800 rounded-xl border border-outline-variant/50 dark:border-border-dark shadow-card-hover p-4 flex flex-col sm:flex-row gap-4 min-w-max"
+          class="absolute top-full left-0 mt-2 z-20 bg-white dark:bg-[var(--c-surface)] rounded-xl border border-outline-variant/50 dark:border-[var(--c-border)] shadow-card-hover p-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap w-auto max-w-[calc(100vw-2rem)]"
         >
           <div class="flex items-center gap-2">
             <label
@@ -156,11 +156,11 @@
     <div class="card overflow-hidden shadow-card-hover">
       <div class="overflow-x-auto">
         <table
-          class="w-full min-w-[1240px] table-auto"
+          class="w-full table-auto"
           aria-label="Change requests"
         >
           <thead>
-            <tr class="border-b border-border dark:border-border-dark">
+            <tr class="border-b border-border dark:border-[var(--c-border)]">
               <th
                 class="table-header px-6 py-4 text-left whitespace-nowrap w-48"
                 scope="col"
@@ -180,13 +180,13 @@
                 Approval Status
               </th>
               <th
-                class="table-header px-6 py-4 text-left whitespace-nowrap w-40"
+                class="table-header px-6 py-4 text-left whitespace-nowrap w-40 hidden sm:table-cell"
                 scope="col"
               >
                 Completion
               </th>
               <th
-                class="table-header px-6 py-4 text-left whitespace-nowrap w-36"
+                class="table-header px-6 py-4 text-left whitespace-nowrap w-36 hidden sm:table-cell"
                 scope="col"
               >
                 Priority
@@ -217,40 +217,40 @@
               <tr v-for="n in 5" :key="`sk-${n}`" class="animate-pulse">
                 <td class="px-6 py-4">
                   <div
-                    class="h-3.5 w-20 bg-border dark:bg-border-dark rounded"
+                    class="h-3.5 w-20 bg-border dark:bg-[var(--c-surface-raised)] rounded"
                   />
                 </td>
                 <td class="px-6 py-4">
                   <div
-                    class="h-3.5 w-48 bg-border dark:bg-border-dark rounded mb-1.5"
+                    class="h-3.5 w-48 bg-border dark:bg-[var(--c-surface-raised)] rounded mb-1.5"
                   />
                   <div
-                    class="h-2.5 w-24 bg-border dark:bg-border-dark rounded"
-                  />
-                </td>
-                <td class="px-6 py-4">
-                  <div
-                    class="h-5 w-24 bg-border dark:bg-border-dark rounded-full"
+                    class="h-2.5 w-24 bg-border dark:bg-[var(--c-surface-raised)] rounded"
                   />
                 </td>
                 <td class="px-6 py-4">
                   <div
-                    class="h-5 w-20 bg-border dark:bg-border-dark rounded-full"
+                    class="h-5 w-24 bg-border dark:bg-[var(--c-surface-raised)] rounded-full"
                   />
                 </td>
-                <td class="px-6 py-4">
+                <td class="px-6 py-4 hidden sm:table-cell">
                   <div
-                    class="h-5 w-16 bg-border dark:bg-border-dark rounded-full"
+                    class="h-5 w-20 bg-border dark:bg-[var(--c-surface-raised)] rounded-full"
+                  />
+                </td>
+                <td class="px-6 py-4 hidden sm:table-cell">
+                  <div
+                    class="h-5 w-16 bg-border dark:bg-[var(--c-surface-raised)] rounded-full"
                   />
                 </td>
                 <td class="px-6 py-4 hidden lg:table-cell">
-                  <div class="h-3 w-20 bg-border dark:bg-border-dark rounded" />
+                  <div class="h-3 w-20 bg-border dark:bg-[var(--c-surface-raised)] rounded" />
                 </td>
                 <td class="px-6 py-4 hidden xl:table-cell">
-                  <div class="h-3 w-20 bg-border dark:bg-border-dark rounded" />
+                  <div class="h-3 w-20 bg-border dark:bg-[var(--c-surface-raised)] rounded" />
                 </td>
                 <td class="px-6 py-4 hidden lg:table-cell">
-                  <div class="h-3 w-28 bg-border dark:bg-border-dark rounded" />
+                  <div class="h-3 w-28 bg-border dark:bg-[var(--c-surface-raised)] rounded" />
                 </td>
               </tr>
             </template>
@@ -260,7 +260,7 @@
               <td colspan="8" class="px-4 py-16 text-center">
                 <div class="flex flex-col items-center gap-3">
                   <div
-                    class="w-14 h-14 rounded-2xl bg-surface-container-low dark:bg-slate-800 flex items-center justify-center"
+                    class="w-14 h-14 rounded-2xl bg-surface-container-low dark:bg-[var(--c-surface)] flex items-center justify-center"
                   >
                     <svg
                       class="w-7 h-7 text-muted"
@@ -330,10 +330,10 @@
               <td class="px-6 py-4 whitespace-nowrap">
                 <CrStatusBadge :status="(cr.approvalStatus as CRStatus) || cr.status" />
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td class="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
                 <CrCompletionStatusBadge :status="cr.completionStatus || 'IN_PROGRESS'" />
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td class="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
                 <CrPriorityBadge :priority="cr.priority" />
               </td>
               <td
@@ -377,7 +377,7 @@
       <!-- Pagination -->
       <div
         v-if="page && page.totalPages > 1"
-        class="px-4 py-3 border-t border-border dark:border-border-dark flex items-center justify-between gap-3"
+        class="px-4 py-3 border-t border-border dark:border-[var(--c-border)] flex items-center justify-between gap-3"
       >
         <p class="text-xs text-muted">
           Showing {{ page.number * page.size + 1 }}–{{

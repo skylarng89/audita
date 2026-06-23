@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p
           class="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70 mb-1"
@@ -14,7 +14,7 @@
       </div>
       <button
         v-if="auth.isAdmin"
-        class="btn-primary btn-sm shadow-lg shadow-primary/20"
+        class="btn-primary btn-sm shadow-lg shadow-primary/20 shrink-0"
         @click="navigateTo('/groups/new')"
       >
         + New Group
@@ -23,22 +23,22 @@
 
     <div class="card shadow-card-hover">
       <div class="w-full overflow-x-auto">
-        <table class="w-full min-w-[980px] table-auto divide-y divide-border dark:divide-border-dark">
+        <table class="w-full table-auto divide-y divide-border dark:divide-[var(--c-border)]">
           <thead>
             <tr>
               <th v-for="col in columns" :key="col.key" scope="col" class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-muted whitespace-nowrap">{{ col.label }}</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-border dark:divide-border-dark">
+          <tbody class="divide-y divide-border dark:divide-[var(--c-border)]">
             <template v-if="pending">
               <tr v-for="i in 5" :key="i" class="animate-pulse">
-                <td v-for="col in columns" :key="col.key" class="px-6 py-4"><div class="h-4 rounded bg-gray-200 dark:bg-slate-700" /></td>
+                <td v-for="col in columns" :key="col.key" class="px-6 py-4"><div class="h-4 rounded bg-gray-200 dark:bg-[var(--c-input)]" /></td>
               </tr>
             </template>
             <tr v-else-if="groups.length === 0">
               <td :colspan="columns.length" class="px-6 py-12 text-center text-sm text-muted">No groups yet.</td>
             </tr>
-            <tr v-for="row in groups" :key="row.id" class="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
+            <tr v-for="row in groups" :key="row.id" class="hover:bg-gray-50 dark:hover:bg-[var(--c-input)]/50 transition-colors">
               <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-middle">{{ row.name }}</td>
               <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-middle text-muted">{{ row.description || "—" }}</td>
               <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-middle">{{ row.memberCount ?? 0 }}</td>
@@ -56,7 +56,7 @@
 
       <div
         v-if="total > pageSize"
-        class="border-t border-border px-5 py-4 dark:border-border-dark"
+        class="border-t border-border px-5 py-4 dark:border-[var(--c-border)]"
       >
         <AppPagination
           :page="page"
@@ -71,7 +71,7 @@
       v-if="expandedGroup"
       class="card shadow-card-hover border-l-4 border-l-primary"
     >
-      <div class="flex items-center justify-between px-6 py-4 border-b border-border dark:border-border-dark">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-border dark:border-[var(--c-border)]">
         <h2 class="text-lg font-semibold">
           {{ expandedGroup.name }} — Members
         </h2>
@@ -96,7 +96,7 @@
             />
             <div
               v-if="memberSearchOpen && memberSearchResults.length"
-              class="absolute z-30 mt-1 w-full bg-white dark:bg-slate-800 border border-border dark:border-border-dark rounded-lg shadow-lg max-h-52 overflow-y-auto"
+              class="absolute z-30 mt-1 w-full bg-white dark:bg-[var(--c-surface)] border border-border dark:border-[var(--c-border)] rounded-lg shadow-lg max-h-52 overflow-y-auto"
             >
               <div
                 v-for="result in memberSearchResults"
@@ -144,7 +144,7 @@
           Loading members…
         </div>
 
-        <ul v-else-if="members.length" class="divide-y divide-border dark:divide-border-dark">
+        <ul v-else-if="members.length" class="divide-y divide-border dark:divide-[var(--c-border)]">
           <li
             v-for="m in members"
             :key="m.id"
