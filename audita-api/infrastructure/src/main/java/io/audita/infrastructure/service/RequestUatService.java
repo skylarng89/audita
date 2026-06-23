@@ -22,6 +22,7 @@ import io.audita.infrastructure.persistence.repository.RequestUatRepository;
 import io.audita.infrastructure.persistence.repository.RequestUatWatcherRepository;
 import io.audita.infrastructure.persistence.repository.UserRepository;
 import io.audita.infrastructure.tenant.RequestContext;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -555,7 +556,12 @@ public class RequestUatService {
                 .filter(id -> id != null)
                 .distinct()
                 .toList();
-        return userRepository.findAllById(authorIds).stream()
+        List<UserEntity> users = userRepository.findAllById(authorIds);
+        users.forEach(u -> {
+            Hibernate.initialize(u.getRole());
+            Hibernate.initialize(u.getRoles());
+        });
+        return users.stream()
                 .collect(Collectors.toMap(UserEntity::getId, u -> u));
     }
 
