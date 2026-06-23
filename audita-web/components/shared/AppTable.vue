@@ -4,6 +4,7 @@ interface TableColumn {
   label: string;
   class?: string;
   headerClass?: string;
+  hideBelow?: "sm" | "md" | "lg" | "xl";
   render?: (row: Record<string, unknown>) => string;
 }
 
@@ -20,12 +21,22 @@ defineEmits<{
 }>();
 
 const skeletonRows = Array.from({ length: 5 });
+
+function hideBelowClass(col: TableColumn): string {
+  const breakpoints: Record<string, string> = {
+    sm: "hidden sm:table-cell",
+    md: "hidden md:table-cell",
+    lg: "hidden lg:table-cell",
+    xl: "hidden xl:table-cell",
+  };
+  return col.hideBelow ? breakpoints[col.hideBelow] : "";
+}
 </script>
 
 <template>
   <div class="w-full overflow-x-auto">
     <table
-      class="w-full min-w-[980px] table-auto divide-y divide-border dark:divide-border-dark"
+      class="w-full table-auto divide-y divide-border dark:divide-[var(--c-border)]"
     >
       <thead>
         <tr>
@@ -36,6 +47,7 @@ const skeletonRows = Array.from({ length: 5 });
             :class="[
               'px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-muted whitespace-nowrap',
               col.headerClass,
+              hideBelowClass(col),
             ]"
           >
             {{ col.label }}
@@ -43,12 +55,12 @@ const skeletonRows = Array.from({ length: 5 });
         </tr>
       </thead>
 
-      <tbody class="divide-y divide-border dark:divide-border-dark">
+      <tbody class="divide-y divide-border dark:divide-[var(--c-border)]">
         <!-- Loading skeleton -->
         <template v-if="loading">
           <tr v-for="(_, i) in skeletonRows" :key="i" class="animate-pulse">
-            <td v-for="col in columns" :key="col.key" class="px-6 py-4">
-              <div class="h-4 rounded bg-gray-200 dark:bg-slate-700" />
+            <td v-for="col in columns" :key="col.key" :class="['px-6 py-4', hideBelowClass(col)]">
+              <div class="h-4 rounded bg-gray-200 dark:bg-[var(--c-input)]" />
             </td>
           </tr>
         </template>
@@ -68,7 +80,7 @@ const skeletonRows = Array.from({ length: 5 });
           <tr
             v-for="row in data"
             :key="rowKey ? String(row[rowKey]) : JSON.stringify(row)"
-            class="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-default"
+            class="hover:bg-gray-50 dark:hover:bg-[var(--c-input)]/50 transition-colors cursor-default"
             @click="$emit('rowClick', row)"
           >
             <td
@@ -77,6 +89,7 @@ const skeletonRows = Array.from({ length: 5 });
               :class="[
                 'px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-middle',
                 col.class,
+                hideBelowClass(col),
               ]"
             >
               <slot :name="`cell-${col.key}`" :row="row" :value="row[col.key]">

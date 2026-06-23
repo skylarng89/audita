@@ -8,7 +8,7 @@
       <div
         v-for="event in activity"
         :key="event.id"
-        class="border border-border dark:border-border-dark rounded-xl p-4 bg-surface-container-low/50 dark:bg-slate-800/70"
+        class="border border-border dark:border-[var(--c-border)] rounded-xl p-4 bg-surface-container-low/50 dark:bg-[var(--c-surface)]/70"
       >
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -32,7 +32,7 @@
         </p>
         <dl
           v-if="fields(event).length"
-          class="mt-3 grid gap-2 rounded-lg bg-white/80 p-3 text-xs dark:bg-slate-900/50 sm:grid-cols-2"
+          class="mt-3 grid gap-2 rounded-lg bg-white/80 p-3 text-xs dark:bg-[var(--c-surface)]/50 sm:grid-cols-2"
         >
           <div v-for="f in fields(event)" :key="f.label">
             <dt class="font-semibold uppercase tracking-[0.08em] text-muted">

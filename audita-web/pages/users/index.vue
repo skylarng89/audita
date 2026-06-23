@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p
           class="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70 mb-1"
@@ -15,7 +15,7 @@
       <button
         v-if="canManageUsers"
         @click="showInviteModal = true"
-        class="btn-primary btn-sm"
+        class="btn-primary btn-sm shrink-0"
       >
         + Invite User
       </button>
@@ -99,7 +99,7 @@
 
       <div
         v-if="total > pageSize"
-        class="border-t border-border px-5 py-4 dark:border-border-dark"
+        class="border-t border-border px-5 py-4 dark:border-[var(--c-border)]"
       >
         <SharedAppPagination
           :page="page"
@@ -208,7 +208,7 @@
           </div>
           <div
             v-if="groupDropdownOpen"
-            class="mt-1 border border-border dark:border-border-dark rounded-lg shadow-lg max-h-48 overflow-y-auto bg-white dark:bg-slate-800"
+            class="mt-1 border border-border dark:border-[var(--c-border)] rounded-lg shadow-lg max-h-48 overflow-y-auto bg-white dark:bg-[var(--c-surface)]"
           >
             <div
               v-for="group in availableGroups"
@@ -448,8 +448,8 @@ const columns = computed(() => {
   const base = [
     { key: "fullName", label: "Name" },
     { key: "email", label: "Email" },
-    { key: "roleName", label: "Role" },
-    { key: "status", label: "Status" },
+    { key: "roleName", label: "Role", hideBelow: "sm" },
+    { key: "status", label: "Status", hideBelow: "md" },
   ];
   if (canManageUsers.value) {
     base.push({ key: "actions", label: "" });

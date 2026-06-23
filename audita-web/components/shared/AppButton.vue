@@ -27,9 +27,9 @@ withDefaults(
         // Variants
         'bg-primary text-white hover:bg-primary-dark active:bg-primary-dark':
           variant === 'primary',
-        'bg-white border border-border text-gray-700 hover:bg-gray-50 dark:bg-surface-dark dark:border-border-dark dark:text-gray-200 dark:hover:bg-slate-700':
+        'bg-white border border-border text-gray-700 hover:bg-gray-50 dark:bg-surface-dark dark:border-[var(--c-border)] dark:text-gray-200 dark:hover:bg-[var(--c-input)]':
           variant === 'secondary',
-        'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-700':
+        'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-[var(--c-input)]':
           variant === 'ghost',
         'bg-danger text-white hover:bg-red-600 active:bg-red-700':
           variant === 'danger',

@@ -3,7 +3,7 @@
     :class="[
       heightClass,
       rounded ? 'rounded-lg' : 'rounded',
-      'animate-pulse bg-slate-200 dark:bg-slate-700',
+      'animate-pulse bg-slate-200 dark:bg-[var(--c-input)]',
     ]"
   />
 </template>

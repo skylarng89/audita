@@ -34,7 +34,7 @@ const label = computed(() => {
 })
 
 function barClass(bar: number) {
-  if (bar > score.value) return "bg-border dark:bg-border-dark"
+  if (bar > score.value) return "bg-border dark:bg-[var(--c-surface-raised)]"
   if (score.value <= 1) return "bg-danger"
   if (score.value === 2) return "bg-warning"
   if (score.value === 3) return "bg-info"

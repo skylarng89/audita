@@ -1,7 +1,7 @@
 <template>
   <nav
     :class="[
-      'fixed left-0 top-14 bottom-0 border-r border-outline-variant/50 bg-white dark:border-border-dark dark:bg-slate-950 flex flex-col z-20 hidden md:flex transition-[width] duration-200 overflow-hidden',
+      'fixed left-0 top-14 bottom-0 border-r border-outline-variant/50 bg-white dark:border-[var(--c-border)] dark:bg-[var(--c-chrome)] flex flex-col z-20 hidden md:flex transition-[width] duration-200 overflow-hidden',
       sidebarCollapsed ? 'w-14' : 'w-56',
     ]"
     aria-label="Main navigation"
@@ -195,7 +195,7 @@
     <!-- Footer: Create CTA + collapse toggle -->
     <div
       :class="[
-        'border-t border-outline-variant/50 dark:border-border-dark shrink-0',
+        'border-t border-outline-variant/50 dark:border-[var(--c-border)] shrink-0',
         sidebarCollapsed ? 'p-2' : 'p-3',
       ]"
     >
@@ -254,7 +254,7 @@
       </template>
 
       <button
-        class="mt-2 w-full flex items-center justify-center gap-2 rounded-lg px-2 py-1.5 text-xs text-muted hover:bg-surface-container hover:text-on-surface transition-colors dark:hover:bg-slate-800"
+        class="mt-2 w-full flex items-center justify-center gap-2 rounded-lg px-2 py-1.5 text-xs text-muted hover:bg-surface-container hover:text-on-surface transition-colors dark:hover:bg-[var(--c-surface)]"
         :aria-label="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
         @click="toggle"
       >

@@ -38,7 +38,7 @@
         <h3 class="font-medium text-sm">Deployer</h3>
         <div
           v-if="deployment.assignee"
-          class="flex items-center justify-between rounded-lg border border-border dark:border-border-dark p-3"
+          class="flex items-center justify-between rounded-lg border border-border dark:border-[var(--c-border)] p-3"
         >
           <div>
             <p class="text-sm font-semibold">{{ deployment.assignee.fullName }}</p>
@@ -68,12 +68,12 @@
             placeholder="Search users by name or email…"
           />
           <div
-            class="max-h-48 overflow-auto rounded-lg border border-border dark:border-border-dark divide-y divide-border/60 dark:divide-border-dark/60"
+            class="max-h-48 overflow-auto rounded-lg border border-border dark:border-[var(--c-border)] divide-y divide-border/60 dark:divide-[var(--c-border)]/60"
           >
             <label
               v-for="candidate in filteredAssigneeCandidates"
               :key="candidate.id"
-              class="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface-container-low dark:hover:bg-slate-800 cursor-pointer"
+              class="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface-container-low dark:hover:bg-[var(--c-surface)] cursor-pointer"
             >
               <input
                 type="radio"
@@ -129,13 +129,13 @@
         </button>
       </div>
 
-      <div class="space-y-4 pt-4 border-t border-border dark:border-border-dark">
+      <div class="space-y-4 pt-4 border-t border-border dark:border-[var(--c-border)]">
         <h3 class="font-semibold">Comments</h3>
         <div class="space-y-3">
           <div
             v-for="comment in deploymentComments"
             :key="comment.id"
-            class="border border-border dark:border-border-dark rounded-lg p-3"
+            class="border border-border dark:border-[var(--c-border)] rounded-lg p-3"
           >
             <p class="text-xs text-muted">
               {{ comment.author?.fullName ?? "Unknown" }} •
@@ -152,7 +152,7 @@
         </div>
 
         <div class="space-y-2">
-          <div class="border border-border dark:border-border-dark rounded-lg overflow-hidden">
+          <div class="border border-border dark:border-[var(--c-border)] rounded-lg overflow-hidden">
             <SharedRichTextToolbar :editor="deploymentCommentEditor" />
             <EditorContent
               :editor="deploymentCommentEditor"
@@ -178,6 +178,7 @@
 import type { Deployment, Comment, ApproverCandidate } from "~/types";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import { buildRichTextExtensions, normalizeRichTextHtml } from "~/composables/richText";
+import { buildMentionExtension } from "~/composables/useMentions";
 
 const props = defineProps<{
   requestId: string;
@@ -207,7 +208,7 @@ const assigneeCandidates = ref<ApproverCandidate[]>([]);
 const selectedAssigneeId = ref<string | null>(null);
 
 const deploymentCommentEditor = useEditor({
-  extensions: buildRichTextExtensions("Add a comment…"),
+  extensions: [...buildRichTextExtensions("Add a comment. Type @ to mention someone…"), buildMentionExtension()],
   editorProps: {
     attributes: {
       class: "prose dark:prose-invert max-w-none focus:outline-none min-h-[4rem]",

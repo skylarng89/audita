@@ -56,7 +56,7 @@ const rangeEnd = computed(() =>
       <button
         type="button"
         :disabled="page === 1"
-        class="flex h-8 w-8 items-center justify-center rounded-lg border border-outline-variant text-muted transition-colors hover:bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed dark:border-border-dark dark:hover:bg-slate-700"
+        class="flex h-8 w-8 items-center justify-center rounded-lg border border-outline-variant text-muted transition-colors hover:bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed dark:border-[var(--c-border)] dark:hover:bg-[var(--c-input)]"
         aria-label="Previous page"
         @click="emit('update:page', page - 1)"
       >
@@ -76,11 +76,13 @@ const rangeEnd = computed(() =>
         </svg>
       </button>
 
+      <span class="text-xs text-muted sm:hidden">Page {{ page }} of {{ totalPages }}</span>
+
       <!-- Page numbers -->
       <template v-for="(p, i) in pageNumbers" :key="i">
         <span
           v-if="p === '...'"
-          class="flex h-8 w-8 items-center justify-center text-sm text-muted"
+          class="hidden sm:flex h-8 w-8 items-center justify-center text-sm text-muted"
         >
           &hellip;
         </span>
@@ -89,10 +91,10 @@ const rangeEnd = computed(() =>
           type="button"
           :aria-current="p === page ? 'page' : undefined"
           :class="[
-            'flex h-8 w-8 items-center justify-center rounded text-sm font-medium transition-colors',
+            'hidden sm:inline-flex h-8 w-8 items-center justify-center rounded text-sm font-medium transition-colors',
             p === page
               ? 'bg-primary text-white shadow-sm'
-              : 'border border-outline-variant text-on-surface-variant hover:bg-surface-container dark:border-border-dark dark:text-gray-300 dark:hover:bg-slate-700',
+              : 'border border-outline-variant text-on-surface-variant hover:bg-surface-container dark:border-[var(--c-border)] dark:text-gray-300 dark:hover:bg-[var(--c-input)]',
           ]"
           @click="emit('update:page', p as number)"
         >
@@ -104,7 +106,7 @@ const rangeEnd = computed(() =>
       <button
         type="button"
         :disabled="page === totalPages"
-        class="flex h-8 w-8 items-center justify-center rounded-lg border border-outline-variant text-muted transition-colors hover:bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed dark:border-border-dark dark:hover:bg-slate-700"
+        class="flex h-8 w-8 items-center justify-center rounded-lg border border-outline-variant text-muted transition-colors hover:bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed dark:border-[var(--c-border)] dark:hover:bg-[var(--c-input)]"
         aria-label="Next page"
         @click="emit('update:page', page + 1)"
       >

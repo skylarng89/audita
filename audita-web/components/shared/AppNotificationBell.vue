@@ -29,10 +29,10 @@
     <Transition name="fade">
       <div
         v-if="open"
-        class="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 shadow-card-md rounded-xl overflow-hidden z-50 border border-outline-variant/50 dark:border-border-dark"
+        class="absolute right-0 mt-2 w-80 bg-white dark:bg-[var(--c-surface)] shadow-card-md rounded-xl overflow-hidden z-50 border border-outline-variant/50 dark:border-[var(--c-border)]"
       >
         <div
-          class="flex items-center justify-between px-4 py-3 border-b border-outline-variant/40 dark:border-border-dark"
+          class="flex items-center justify-between px-4 py-3 border-b border-outline-variant/40 dark:border-[var(--c-border)]"
         >
           <h3 class="font-semibold text-sm text-on-surface">Notifications</h3>
           <button
@@ -45,14 +45,14 @@
         </div>
 
         <div
-          class="max-h-80 overflow-y-auto divide-y divide-outline-variant/30 dark:divide-border-dark"
+          class="max-h-80 overflow-y-auto divide-y divide-outline-variant/30 dark:divide-[var(--c-border)]"
         >
           <div
             v-for="n in notifStore.items.slice(0, 10)"
             :key="n.id"
             @click="handleClick(n)"
-            class="flex gap-3 px-4 py-3 hover:bg-surface-container-low dark:hover:bg-slate-800 cursor-pointer transition-colors"
-            :class="{ 'bg-primary/5 dark:bg-slate-800/60': !n.isRead }"
+            class="flex gap-3 px-4 py-3 hover:bg-surface-container-low dark:hover:bg-[var(--c-surface)] cursor-pointer transition-colors"
+            :class="{ 'bg-primary/5 dark:bg-[var(--c-surface)]/60': !n.isRead }"
           >
             <div
               class="w-2 h-2 rounded-full mt-1.5 shrink-0"

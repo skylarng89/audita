@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <!-- Header -->
-    <div class="flex flex-wrap items-start justify-between gap-4">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p
           class="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70 mb-1"
@@ -16,7 +16,7 @@
       <button
         v-if="canExport"
         type="button"
-        class="btn-secondary btn-sm"
+        class="btn-secondary btn-sm shrink-0"
         :disabled="exporting"
         :aria-label="
           exporting ? 'Preparing export…' : 'Export audit log as CSV'
@@ -29,7 +29,7 @@
 
     <!-- Filters -->
     <section class="card p-5 shadow-card-hover">
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div>
           <label class="field-label" for="audit-range">Date Range</label>
           <select id="audit-range" v-model="filters.rangePreset" class="input">
@@ -218,8 +218,8 @@ const ACTION_TYPES = [
 const columns = [
   { key: "createdAt", label: "Timestamp" },
   { key: "actor", label: "Actor" },
-  { key: "actionType", label: "Action" },
-  { key: "entityType", label: "Entity Type" },
+  { key: "actionType", label: "Action", hideBelow: "sm" },
+  { key: "entityType", label: "Entity Type", hideBelow: "lg" },
   { key: "actions", label: "" },
 ];
 

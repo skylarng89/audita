@@ -27,7 +27,10 @@ audita-api/logs/*
 .mcp.json
 .sugar
 .sugar/
+memory-bank
 memory-bank/
 AGENTS.md
 .opencode/
 sonar-scan.sh
+.playwright-mcp
+.superpowers

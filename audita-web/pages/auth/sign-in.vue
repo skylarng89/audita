@@ -167,7 +167,7 @@
       </div>
       <div class="relative flex justify-center">
         <span
-          class="px-3 bg-white dark:bg-slate-800 text-[10px] text-muted uppercase tracking-[0.16em]"
+          class="px-3 bg-white dark:bg-[var(--c-surface)] text-[10px] text-muted uppercase tracking-[0.16em]"
         >
           Or Authorized SSO
         </span>
@@ -178,7 +178,7 @@
     <div class="grid grid-cols-2 gap-3">
       <a
         :href="`/api/v1/auth/oauth/google`"
-        class="flex items-center justify-center gap-2.5 rounded-xl border border-outline-variant bg-white hover:bg-surface-container-low px-4 py-2.5 text-sm font-medium text-on-surface shadow-sm transition-all hover:shadow hover:border-outline"
+        class="flex items-center justify-center gap-2.5 rounded-xl border border-outline-variant bg-white hover:bg-surface-container-low dark:bg-[var(--c-surface-raised)] dark:hover:bg-[var(--c-surface-highest)] dark:text-[var(--c-text-primary)] dark:border-[var(--c-border)] px-4 py-2.5 text-sm font-medium text-on-surface shadow-sm transition-all hover:shadow hover:border-outline"
         aria-label="Sign in with Google"
       >
         <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
@@ -203,7 +203,7 @@
       </a>
       <a
         :href="`/api/v1/auth/oauth/microsoft`"
-        class="flex items-center justify-center gap-2.5 rounded-xl border border-outline-variant bg-white hover:bg-surface-container-low px-4 py-2.5 text-sm font-medium text-on-surface shadow-sm transition-all hover:shadow hover:border-outline"
+        class="flex items-center justify-center gap-2.5 rounded-xl border border-outline-variant bg-white hover:bg-surface-container-low dark:bg-[var(--c-surface-raised)] dark:hover:bg-[var(--c-surface-highest)] dark:text-[var(--c-text-primary)] dark:border-[var(--c-border)] px-4 py-2.5 text-sm font-medium text-on-surface shadow-sm transition-all hover:shadow hover:border-outline"
         aria-label="Sign in with Microsoft"
       >
         <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none">

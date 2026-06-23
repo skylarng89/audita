@@ -162,7 +162,7 @@ const strengthLabel = computed(() => {
 });
 
 function strengthColor(bar: number) {
-  if (bar > strengthScore.value) return "bg-border dark:bg-border-dark";
+  if (bar > strengthScore.value) return "bg-border dark:bg-[var(--c-surface-raised)]";
   if (strengthScore.value <= 1) return "bg-danger";
   if (strengthScore.value === 2) return "bg-warning";
   if (strengthScore.value === 3) return "bg-info";

@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p
           class="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70 mb-1"
@@ -14,7 +14,7 @@
       </div>
       <button
         @click="showInviteModal = true"
-        class="btn-primary btn-sm shadow-lg shadow-primary/20"
+        class="btn-primary btn-sm shadow-lg shadow-primary/20 shrink-0"
       >
         + Invite User
       </button>
@@ -71,7 +71,7 @@
           </div>
         </template>
       </AppTable>
-      <div class="px-5 py-4 border-t border-border dark:border-border-dark">
+      <div class="px-5 py-4 border-t border-border dark:border-[var(--c-border)]">
         <AppPagination
           :current-page="page"
           :total-pages="totalPages"
@@ -310,8 +310,8 @@ async function cancelInvite(id: string) {
 const columns = [
   { key: "fullName", label: "Name" },
   { key: "email", label: "Email" },
-  { key: "roleName", label: "Role" },
-  { key: "status", label: "Status" },
+  { key: "roleName", label: "Role", hideBelow: "sm" },
+  { key: "status", label: "Status", hideBelow: "md" },
   { key: "actions", label: "" },
 ];
 </script>

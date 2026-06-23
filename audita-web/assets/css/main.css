@@ -10,6 +10,43 @@
     --sidebar-w: 3.5rem;
   }
 
+  /* ── Semantic colour tokens ────────────────────────────────────────────── */
+  :root {
+    --c-base:        #f7f9fb;
+    --c-chrome:      #00236f;
+    --c-surface:     #ffffff;
+    --c-surface-raised: #f7f9fb;
+    --c-surface-highest: #eceef0;
+    --c-input:       #ffffff;
+    --c-border:      #c5c5d3;
+    --c-border-subtle: #e0e3e5;
+    --c-text-primary:   #191c1e;
+    --c-text-secondary: #444651;
+    --c-text-muted:     #757682;
+    --c-accent:         #00236f;
+    --c-accent-hover:   #001a52;
+    --c-accent-text:    #00236f;
+    --c-accent-subtle:  rgba(0, 35, 111, 0.10);
+  }
+
+  html.dark {
+    --c-base:        #0f172a;
+    --c-chrome:      #0a1120;
+    --c-surface:     #1e293b;
+    --c-surface-raised: #253449;
+    --c-surface-highest: #2e3f57;
+    --c-input:       #334155;
+    --c-border:      #253449;
+    --c-border-subtle: #1e293b;
+    --c-text-primary:   #f1f5f9;
+    --c-text-secondary: #cbd5e1;
+    --c-text-muted:     #64748b;
+    --c-accent:         #60a5fa;
+    --c-accent-hover:   #93c5fd;
+    --c-accent-text:    #60a5fa;
+    --c-accent-subtle:  rgba(96, 165, 250, 0.12);
+  }
+
   html {
     @apply text-[#191c1e] bg-[#f7f9fb] antialiased;
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -21,7 +58,9 @@
   }
 
   html.dark {
-    @apply text-gray-100 bg-slate-950;
+    @apply antialiased;
+    color: var(--c-text-primary);
+    background-color: var(--c-base);
   }
 
   * {
@@ -97,13 +136,25 @@
   }
 
   .btn-primary {
-    @apply bg-primary text-white hover:bg-primary-dark shadow-sm hover:shadow-md
-           dark:bg-blue-700 dark:hover:bg-blue-600 dark:shadow-none;
+    @apply bg-primary text-white hover:bg-primary-dark shadow-sm hover:shadow-md;
+  }
+  html.dark .btn-primary {
+    background-color: var(--c-accent);
+  }
+  html.dark .btn-primary:hover {
+    background-color: var(--c-accent-hover);
   }
 
   .btn-secondary {
-    @apply border border-border text-[#444651] bg-white hover:bg-surface-container-low shadow-sm
-           dark:bg-transparent dark:text-gray-300 dark:border-border-dark dark:hover:bg-slate-800;
+    @apply border border-border text-[#444651] bg-white hover:bg-surface-container-low shadow-sm;
+  }
+  html.dark .btn-secondary {
+    @apply bg-transparent;
+    color: var(--c-text-secondary);
+    border-color: var(--c-border);
+  }
+  html.dark .btn-secondary:hover {
+    background-color: var(--c-surface);
   }
 
   .btn-danger {
@@ -111,14 +162,23 @@
   }
 
   .btn-ghost {
-    @apply text-muted hover:bg-surface-container hover:text-on-surface
-           dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100;
+    @apply text-muted hover:bg-surface-container hover:text-on-surface;
+  }
+  html.dark .btn-ghost {
+    color: var(--c-text-muted);
+  }
+  html.dark .btn-ghost:hover {
+    background-color: var(--c-surface);
+    color: var(--c-text-primary);
   }
 
   /* ── Card ───────────────────────────────────────────────────────────────── */
   .card {
-    @apply bg-white rounded-xl shadow-card border border-outline-variant/50
-           dark:bg-slate-800 dark:border-border-dark;
+    @apply bg-white rounded-xl shadow-card border border-outline-variant/50;
+  }
+  html.dark .card {
+    background-color: var(--c-surface);
+    border-color: var(--c-border);
   }
 
   /* ── Input ──────────────────────────────────────────────────────────────── */
@@ -129,9 +189,22 @@
            transition-all duration-150
            hover:border-outline hover:bg-white
            focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20
-           disabled:cursor-not-allowed disabled:bg-surface-container disabled:text-muted disabled:opacity-60
-           dark:bg-slate-700 dark:border-slate-600 dark:text-gray-100 dark:placeholder:text-slate-400
-           dark:hover:border-slate-500 dark:focus:border-primary-light dark:focus:ring-primary-light/20;
+           disabled:cursor-not-allowed disabled:bg-surface-container disabled:text-muted disabled:opacity-60;
+  }
+  html.dark .input {
+    background-color: var(--c-input);
+    border-color: var(--c-border);
+    color: var(--c-text-primary);
+  }
+  html.dark .input::placeholder {
+    color: var(--c-text-muted);
+  }
+  html.dark .input:hover {
+    border-color: var(--c-surface-raised);
+  }
+  html.dark .input:focus {
+    border-color: var(--c-accent);
+    background-color: var(--c-input);
   }
 
   textarea.input {
@@ -157,11 +230,17 @@
   }
 
   .field-label {
-    @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted dark:text-slate-400;
+    @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted;
+  }
+  html.dark .field-label {
+    color: var(--c-text-muted);
   }
 
   .field-hint {
-    @apply mt-1 text-xs text-muted dark:text-slate-400;
+    @apply mt-1 text-xs text-muted;
+  }
+  html.dark .field-hint {
+    color: var(--c-text-muted);
   }
 
   .field-error {
@@ -169,24 +248,39 @@
   }
 
   .rich-editor-shell {
-    @apply mt-1 overflow-hidden rounded-lg border border-outline-variant bg-surface-container-low
-           dark:border-slate-600 dark:bg-slate-700;
+    @apply mt-1 overflow-hidden rounded-lg border border-outline-variant bg-surface-container-low;
+  }
+  html.dark .rich-editor-shell {
+    border-color: var(--c-border);
+    background-color: var(--c-input);
   }
 
   .rich-editor-toolbar {
-    @apply flex flex-wrap items-center gap-2 border-b border-outline-variant/60 bg-white/70 px-3 py-2
-           dark:border-slate-600 dark:bg-slate-800/80;
+    @apply flex flex-wrap items-center gap-2 border-b border-outline-variant/60 bg-white/70 px-3 py-2;
+  }
+  html.dark .rich-editor-toolbar {
+    border-color: var(--c-border);
+    background-color: var(--c-surface);
   }
 
   .rich-editor-button {
     @apply inline-flex min-h-9 items-center justify-center rounded-md border border-outline-variant/80
            bg-white px-2.5 py-1.5 text-xs font-semibold text-on-surface transition-colors
-           hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50
-           dark:border-slate-500 dark:bg-slate-700 dark:text-slate-100;
+           hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  html.dark .rich-editor-button {
+    border-color: var(--c-border);
+    background-color: var(--c-input);
+    color: var(--c-text-primary);
   }
 
   .rich-editor-button-active {
-    @apply border-primary/40 bg-primary/10 text-primary dark:bg-primary/20;
+    @apply border-primary/40 bg-primary/10 text-primary;
+  }
+  html.dark .rich-editor-button-active {
+    background-color: var(--c-accent-subtle);
+    border-color: var(--c-accent);
+    color: var(--c-accent-text);
   }
 
   .rich-editor-button-clear {
@@ -197,10 +291,22 @@
     @apply bg-transparent;
   }
 
+  .mention {
+    background-color: var(--c-accent-subtle);
+    color: var(--c-accent-text);
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+    font-weight: 500;
+    cursor: default;
+  }
+
   .rich-content {
-    @apply text-sm text-on-surface dark:text-gray-100;
+    @apply text-sm text-on-surface;
     white-space: normal;
     word-break: break-word;
+  }
+  html.dark .rich-content {
+    color: var(--c-text-primary);
   }
 
   .rich-content p {
@@ -216,19 +322,34 @@
   }
 
   .rich-content blockquote {
-    @apply my-2 border-l-4 border-outline-variant pl-4 italic text-on-surface-variant dark:border-slate-600;
+    @apply my-2 border-l-4 border-outline-variant pl-4 italic text-on-surface-variant;
+  }
+  html.dark .rich-content blockquote {
+    border-color: var(--c-border);
   }
 
   .rich-content code {
-    @apply rounded bg-surface-container px-1 py-0.5 text-xs dark:bg-slate-700;
+    @apply rounded bg-surface-container px-1 py-0.5 text-xs;
+  }
+  html.dark .rich-content code {
+    background-color: var(--c-input);
   }
 
   .rich-content pre {
-    @apply my-2 overflow-x-auto rounded-lg bg-surface-container p-3 text-xs dark:bg-slate-800;
+    @apply my-2 overflow-x-auto rounded-lg bg-surface-container p-3 text-xs;
+  }
+  html.dark .rich-content pre {
+    background-color: var(--c-surface);
   }
 
   .rich-content a {
-    @apply text-primary underline underline-offset-2 hover:text-primary-dark dark:text-blue-300 dark:hover:text-blue-200;
+    @apply text-primary underline underline-offset-2 hover:text-primary-dark;
+  }
+  html.dark .rich-content a {
+    color: var(--c-accent);
+  }
+  html.dark .rich-content a:hover {
+    color: var(--c-accent-hover);
   }
 
   .rich-content table {
@@ -237,12 +358,19 @@
 
   .rich-content th,
   .rich-content td {
-    @apply border border-outline-variant/60 px-2 py-1 text-left dark:border-slate-600;
+    @apply border border-outline-variant/60 px-2 py-1 text-left;
+  }
+  html.dark .rich-content th,
+  html.dark .rich-content td {
+    border-color: var(--c-border);
   }
 
   .rich-editor-content .ProseMirror {
-    @apply min-h-44 px-4 py-3 text-sm text-on-surface focus:outline-none dark:text-gray-100;
+    @apply min-h-44 px-4 py-3 text-sm text-on-surface focus:outline-none;
     white-space: pre-wrap;
+  }
+  html.dark .rich-editor-content .ProseMirror {
+    color: var(--c-text-primary);
   }
 
   .rich-editor-content .ProseMirror p {
@@ -287,8 +415,12 @@
   }
 
   .badge-draft {
-    @apply bg-surface-container text-on-surface-variant border border-outline-variant
-           dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600;
+    @apply bg-surface-container text-on-surface-variant border border-outline-variant;
+  }
+  html.dark .badge-draft {
+    background-color: var(--c-input);
+    color: var(--c-text-secondary);
+    border-color: var(--c-border);
   }
   .badge-pending {
     @apply bg-amber-50 text-amber-700 border border-amber-200
@@ -303,13 +435,21 @@
            dark:bg-red-900/30 dark:text-red-400 dark:border-red-700/50;
   }
   .badge-cancelled {
-    @apply bg-surface-container text-muted border border-outline-variant
-           dark:bg-slate-700 dark:text-slate-400 dark:border-slate-600;
+    @apply bg-surface-container text-muted border border-outline-variant;
+  }
+  html.dark .badge-cancelled {
+    background-color: var(--c-input);
+    color: var(--c-text-muted);
+    border-color: var(--c-border);
   }
 
   .badge-low {
-    @apply bg-surface-container text-on-surface-variant border border-outline-variant
-           dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600;
+    @apply bg-surface-container text-on-surface-variant border border-outline-variant;
+  }
+  html.dark .badge-low {
+    background-color: var(--c-input);
+    color: var(--c-text-secondary);
+    border-color: var(--c-border);
   }
   .badge-medium {
     @apply bg-info-light text-blue-700 border border-blue-200
@@ -327,29 +467,55 @@
   /* ── Sidebar ────────────────────────────────────────────────────────────── */
   .sidebar-link {
     @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-on-surface-variant
-           hover:bg-surface-container hover:text-on-surface transition-colors
-           dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-gray-100;
+           hover:bg-surface-container hover:text-on-surface transition-colors;
+  }
+  html.dark .sidebar-link {
+    color: var(--c-text-muted);
+  }
+  html.dark .sidebar-link:hover {
+    background-color: var(--c-surface);
+    color: var(--c-text-primary);
   }
 
   .sidebar-link-active {
     @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-        hover:bg-surface-container hover:text-on-surface dark:hover:bg-slate-800 dark:hover:text-gray-100
-        bg-primary/10 text-primary border-l-[3px] border-primary pl-[9px]
-           dark:bg-primary/20 dark:text-primary-fixed;
+        hover:bg-surface-container hover:text-on-surface
+        bg-primary/10 text-primary border-l-[3px] border-primary pl-[9px];
+  }
+  html.dark .sidebar-link-active {
+    background-color: var(--c-accent-subtle);
+    color: var(--c-accent-text);
+  }
+  html.dark .sidebar-link-active:hover {
+    background-color: var(--c-surface);
+    color: var(--c-text-primary);
   }
 
   /* Collapsed icon-only rail variants */
   .sidebar-link-rail {
     @apply flex items-center justify-center rounded-lg w-10 h-10 mx-auto
            text-on-surface-variant hover:bg-surface-container hover:text-on-surface
-           transition-colors dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-gray-100;
+           transition-colors;
+  }
+  html.dark .sidebar-link-rail {
+    color: var(--c-text-muted);
+  }
+  html.dark .sidebar-link-rail:hover {
+    background-color: var(--c-surface);
+    color: var(--c-text-primary);
   }
 
   .sidebar-link-rail-active {
     @apply flex items-center justify-center rounded-lg w-10 h-10 mx-auto
            bg-primary/10 text-primary transition-colors
-           hover:bg-surface-container hover:text-on-surface
-           dark:bg-primary/20 dark:text-primary-fixed dark:hover:bg-slate-800;
+           hover:bg-surface-container hover:text-on-surface;
+  }
+  html.dark .sidebar-link-rail-active {
+    background-color: var(--c-accent-subtle);
+    color: var(--c-accent-text);
+  }
+  html.dark .sidebar-link-rail-active:hover {
+    background-color: var(--c-surface);
   }
 
   /* Sidebar-aware main content — margin follows --sidebar-w at md+ */
@@ -361,26 +527,44 @@
 
   /* ── Table ──────────────────────────────────────────────────────────────── */
   .table-header {
-    @apply text-[11px] font-semibold uppercase tracking-[0.1em] text-muted dark:text-slate-400;
+    @apply text-[11px] font-semibold uppercase tracking-[0.1em] text-muted;
+  }
+  html.dark .table-header {
+    color: var(--c-text-muted);
   }
 
   .table-row {
     @apply border-t border-outline-variant/40 hover:bg-surface-container-low
-           transition-colors cursor-pointer dark:border-border-dark dark:hover:bg-slate-800/50;
+           transition-colors cursor-pointer;
+  }
+  html.dark .table-row {
+    border-color: var(--c-border-subtle);
+  }
+  html.dark .table-row:hover {
+    background-color: var(--c-surface-raised);
   }
 
   /* ── Section label (eyebrow text) ───────────────────────────────────────── */
   .section-label {
-    @apply text-xs font-semibold uppercase tracking-[0.14em] text-primary/70 dark:text-blue-400/70;
+    @apply text-xs font-semibold uppercase tracking-[0.14em] text-primary/70;
+  }
+  html.dark .section-label {
+    color: var(--c-accent);
   }
 
   /* ── Page heading ───────────────────────────────────────────────────────── */
   .page-title {
-    @apply text-3xl font-bold tracking-tight text-on-surface dark:text-slate-100;
+    @apply text-3xl font-bold tracking-tight text-on-surface;
+  }
+  html.dark .page-title {
+    color: var(--c-text-primary);
   }
 
   .page-subtitle {
-    @apply text-sm text-muted mt-1 dark:text-slate-400;
+    @apply text-sm text-muted mt-1;
+  }
+  html.dark .page-subtitle {
+    color: var(--c-text-muted);
   }
 
   /* ── App shell sizing for fluid desktop/4K layouts ────────────────────── */
@@ -538,13 +722,16 @@
   }
 
   html.dark .flatpickr-calendar {
-    @apply bg-slate-800 border-border-dark text-gray-100;
+    background-color: var(--c-surface-highest);
+    border-color: var(--c-border);
+    color: var(--c-text-primary);
   }
 
   html.dark .flatpickr-months,
   html.dark .flatpickr-weekdays,
   html.dark .flatpickr-time {
-    @apply bg-slate-900 border-border-dark;
+    background-color: var(--c-surface);
+    border-color: var(--c-border);
   }
 
   html.dark .flatpickr-current-month,
@@ -554,7 +741,7 @@
   html.dark .flatpickr-time input,
   html.dark .flatpickr-time .flatpickr-am-pm,
   html.dark .flatpickr-day {
-    @apply text-gray-100;
+    color: var(--c-text-primary);
   }
 
   html.dark .flatpickr-day:hover,
@@ -565,20 +752,25 @@
   html.dark .flatpickr-time .flatpickr-am-pm:focus,
   html.dark .flatpickr-prev-month:hover,
   html.dark .flatpickr-next-month:hover {
-    @apply bg-slate-700 text-primary-fixed;
+    background-color: var(--c-input);
+    color: var(--c-accent-text);
   }
 
   html.dark .flatpickr-day.today {
-    @apply border-primary-fixed text-primary-fixed;
+    border-color: var(--c-accent-text);
+    color: var(--c-accent-text);
   }
 
   html.dark .flatpickr-day.today:hover,
   html.dark .flatpickr-day.today:focus {
-    @apply bg-primary/30 text-primary-fixed;
+    background-color: var(--c-accent-subtle);
+    color: var(--c-accent-text);
   }
 
   html.dark .flatpickr-day.inRange {
-    @apply bg-primary/25 border-primary/40 text-primary-fixed;
+    background-color: var(--c-accent-subtle);
+    border-color: var(--c-accent);
+    color: var(--c-accent-text);
   }
 
   html.dark .flatpickr-day.selected,
@@ -590,12 +782,14 @@
   html.dark .flatpickr-day.selected:focus,
   html.dark .flatpickr-day.startRange:focus,
   html.dark .flatpickr-day.endRange:focus {
-    @apply bg-primary/85 text-white border-primary/80;
+    background-color: var(--c-accent);
+    color: #fff;
+    border-color: var(--c-accent);
   }
 
   html.dark .flatpickr-day.flatpickr-disabled,
   html.dark .flatpickr-day.flatpickr-disabled:hover {
-    @apply text-slate-500;
+    color: var(--c-text-muted);
   }
 }
 
@@ -604,54 +798,54 @@
    CSS-variable overrides in html.dark don't cascade to utility classes.
    These unlayered rules (cascade layer = "none", highest implicit priority)
    fix inline usages of text-primary, bg-primary/*, etc. in page templates.
-────────────────────────────────────────────────────────────────────────────── */
+   ── Updated for token system: accent = #60a5fa, text colours from tokens ─ */
 .dark .text-primary {
-  color: #4f80ff;
+  color: #60a5fa;
 }
 .dark .text-primary\/60 {
-  color: rgb(79 128 255 / 0.6);
+  color: rgb(96 165 250 / 0.6);
 }
 .dark .text-primary\/70 {
-  color: rgb(79 128 255 / 0.7);
+  color: rgb(96 165 250 / 0.7);
 }
 .dark .text-primary\/80 {
-  color: rgb(79 128 255 / 0.8);
+  color: rgb(96 165 250 / 0.8);
 }
 
 /* bg-primary used directly in templates (logos, step indicators, etc.) */
 .dark .bg-primary {
-  background-color: #1d4ed8;
+  background-color: rgba(96, 165, 250, 0.12);
 }
 .dark .hover\:bg-primary-dark:hover {
-  background-color: #1e40af;
+  background-color: rgba(147, 197, 253, 0.2);
 }
 
 /* Translucent primary used for tag chips, active tabs, avatar rings */
 .dark .bg-primary\/10 {
-  background-color: rgb(79 128 255 / 0.12);
+  background-color: rgba(96, 165, 250, 0.1);
 }
 .dark .bg-primary\/15 {
-  background-color: rgb(79 128 255 / 0.15);
+  background-color: rgba(96, 165, 250, 0.15);
 }
 .dark .bg-primary\/20 {
-  background-color: rgb(79 128 255 / 0.2);
+  background-color: rgba(96, 165, 250, 0.2);
 }
 
 /* Semantic text tokens used inline (without a component class wrapper) */
 .dark .text-on-surface {
-  color: #e2e8f0;
+  color: #f1f5f9;
 }
 .dark .text-on-surface-variant {
-  color: #94a3b8;
+  color: #cbd5e1;
 }
 .dark .text-muted {
-  color: #94a3b8;
+  color: #64748b;
 }
 
 /* Border and outline tokens */
 .dark .border-primary {
-  border-color: #4f80ff;
+  border-color: #60a5fa;
 }
 .dark .outline-primary {
-  outline-color: #4f80ff;
+  outline-color: #60a5fa;
 }

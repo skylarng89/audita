@@ -54,7 +54,7 @@
       <div
         role="tablist"
         aria-label="Change request sections"
-        class="flex items-center gap-1 p-1 bg-surface-container-low dark:bg-slate-800 rounded-xl"
+        class="flex items-center gap-1 p-1 bg-surface-container-low dark:bg-[var(--c-surface)] rounded-xl"
       >
         <button
           v-for="crTab in crTabs"
@@ -68,8 +68,8 @@
           class="relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
           :class="
             tab === crTab.key
-              ? 'bg-white dark:bg-slate-700 text-on-surface dark:text-gray-100 shadow-sm'
-              : 'text-muted hover:text-on-surface hover:bg-white/50 dark:hover:text-gray-300 dark:hover:bg-slate-700/50'
+              ? 'bg-white dark:bg-[var(--c-input)] text-on-surface dark:text-gray-100 shadow-sm'
+              : 'text-muted hover:text-on-surface hover:bg-white/50 dark:hover:text-gray-300 dark:hover:bg-[var(--c-input)]/50'
           "
           :title="
             crTab.key === 'approvers' && needsApproverAttention
@@ -305,7 +305,7 @@
 
           <!-- Custom fields in edit mode -->
           <template v-if="fieldDefinitions.length">
-            <hr class="border-outline-variant/40 dark:border-border-dark" />
+            <hr class="border-outline-variant/40 dark:border-[var(--c-border)]" />
             <h4 class="font-medium text-sm">Custom Fields</h4>
             <div class="space-y-3">
               <div
@@ -448,7 +448,7 @@
         <h3 class="font-semibold mb-3">Attachments</h3>
         <template v-if="changeRequest.status === 'DRAFT' && isEditing">
           <div
-            class="border-2 border-dashed border-border dark:border-border-dark rounded-lg p-6 text-center"
+            class="border-2 border-dashed border-border dark:border-[var(--c-border)] rounded-lg p-6 text-center"
             @dragover.prevent
             @drop.prevent="onDropUpload"
           >
@@ -480,7 +480,7 @@
           <div
             v-for="file in attachments"
             :key="file.id"
-            class="border border-border dark:border-border-dark rounded-lg p-3 flex items-center justify-between"
+            class="border border-border dark:border-[var(--c-border)] rounded-lg p-3 flex items-center justify-between"
           >
             <div>
               <p class="text-sm font-semibold">{{ file.fileName }}</p>
@@ -512,7 +512,7 @@
           <div
             v-for="approver in recordedVotes"
             :key="approver.id"
-            class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-outline-variant/50 bg-surface-container-low px-3 py-2 dark:border-slate-600 dark:bg-slate-800/70"
+            class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-outline-variant/50 bg-surface-container-low px-3 py-2 dark:border-slate-600 dark:bg-[var(--c-surface)]/70"
           >
             <div>
               <p class="font-medium text-on-surface dark:text-gray-100">
@@ -558,12 +558,12 @@
         </div>
 
         <div
-          class="max-h-52 overflow-auto rounded-lg border border-border dark:border-border-dark divide-y divide-border/60 dark:divide-border-dark/60"
+          class="max-h-52 overflow-auto rounded-lg border border-border dark:border-[var(--c-border)] divide-y divide-border/60 dark:divide-[var(--c-border)]/60"
         >
           <label
             v-for="candidate in filteredCandidates"
             :key="`${candidate.kind}-${candidate.id}`"
-            class="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface-container-low dark:hover:bg-slate-800 cursor-pointer"
+            class="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface-container-low dark:hover:bg-[var(--c-surface)] cursor-pointer"
           >
             <input
               type="checkbox"
@@ -597,7 +597,7 @@
             <span
               v-for="cid in selectedCandidateIds"
               :key="cid"
-              class="inline-flex items-center gap-1.5 rounded-md bg-white dark:bg-slate-800 border border-primary/20 text-xs px-2 py-1 shadow-sm"
+              class="inline-flex items-center gap-1.5 rounded-md bg-white dark:bg-[var(--c-surface)] border border-primary/20 text-xs px-2 py-1 shadow-sm"
             >
               <span class="font-medium">{{ pendingSelection[cid]?.label }}</span>
               <span
@@ -642,7 +642,7 @@
         <div
           v-for="a in sortedApprovers"
           :key="a.id"
-          class="border border-border dark:border-border-dark rounded-lg p-3 flex items-center justify-between gap-3 transition-all duration-300 ease-out"
+          class="border border-border dark:border-[var(--c-border)] rounded-lg p-3 flex items-center justify-between gap-3 transition-all duration-300 ease-out"
           :class="draggingApproverId === a.id ? 'opacity-60 scale-[0.98]' : ''"
           :draggable="canManageApprovers"
           @dragstart="onApproverDragStart(a.id)"
@@ -725,7 +725,7 @@
         </div>
       </Transition>
 
-      <div class="border-t border-border dark:border-border-dark pt-4 mt-4 space-y-3">
+      <div class="border-t border-border dark:border-[var(--c-border)] pt-4 mt-4 space-y-3">
         <div class="flex items-center justify-between">
           <h3 class="font-semibold">Watchers</h3>
           <button
@@ -745,12 +745,12 @@
             placeholder="Search users by name or email…"
           />
           <div
-            class="max-h-48 overflow-auto rounded-lg border border-border dark:border-border-dark divide-y divide-border/60 dark:divide-border-dark/60"
+            class="max-h-48 overflow-auto rounded-lg border border-border dark:border-[var(--c-border)] divide-y divide-border/60 dark:divide-[var(--c-border)]/60"
           >
             <label
               v-for="candidate in filteredWatcherCandidates"
               :key="candidate.id"
-              class="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface-container-low dark:hover:bg-slate-800 cursor-pointer"
+              class="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-surface-container-low dark:hover:bg-[var(--c-surface)] cursor-pointer"
             >
               <input
                 type="checkbox"
@@ -783,7 +783,7 @@
           <div
             v-for="w in watchers"
             :key="w.id"
-            class="flex items-center justify-between rounded-lg border border-border dark:border-border-dark p-3"
+            class="flex items-center justify-between rounded-lg border border-border dark:border-[var(--c-border)] p-3"
           >
             <div>
               <p class="text-sm font-semibold">{{ w.userFullName }}</p>
@@ -814,7 +814,7 @@
         <div
           v-for="event in activity"
           :key="event.id"
-          class="border border-border dark:border-border-dark rounded-xl p-4 bg-surface-container-low/50 dark:bg-slate-800/70"
+          class="border border-border dark:border-[var(--c-border)] rounded-xl p-4 bg-surface-container-low/50 dark:bg-[var(--c-surface)]/70"
         >
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -840,7 +840,7 @@
           </p>
           <dl
             v-if="activityFields(event).length"
-            class="mt-3 grid gap-2 rounded-lg bg-white/80 p-3 text-xs dark:bg-slate-900/50 sm:grid-cols-2"
+            class="mt-3 grid gap-2 rounded-lg bg-white/80 p-3 text-xs dark:bg-[var(--c-surface)]/50 sm:grid-cols-2"
           >
             <div v-for="field in activityFields(event)" :key="field.label">
               <dt class="font-semibold uppercase tracking-[0.08em] text-muted">
@@ -875,7 +875,7 @@
           v-for="comment in comments"
           :key="comment.id"
           :id="`comment-${comment.id}`"
-          class="border border-border dark:border-border-dark rounded-lg p-3"
+          class="border border-border dark:border-[var(--c-border)] rounded-lg p-3"
           :class="{ 'ring-2 ring-primary/50 bg-primary/5': highlightedCommentId === comment.id }"
         >
           <p class="text-xs text-muted">
@@ -893,7 +893,7 @@
       </div>
 
       <div class="space-y-2">
-        <div class="border border-border dark:border-border-dark rounded-lg overflow-hidden">
+        <div class="border border-border dark:border-[var(--c-border)] rounded-lg overflow-hidden">
           <SharedRichTextToolbar :editor="commentEditor" />
           <EditorContent
             :editor="commentEditor"
@@ -953,7 +953,7 @@
     >
       <div
         v-if="isEditing"
-        class="fixed bottom-0 left-0 md:left-56 right-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-outline-variant/50 dark:border-border-dark px-6 py-3 flex items-center justify-between gap-3 shadow-[0_-2px_8px_rgba(0,35,111,0.06)]"
+        class="fixed bottom-0 left-0 md:left-56 right-0 z-20 bg-white/95 dark:bg-[var(--c-chrome)]/95 backdrop-blur-sm border-t border-outline-variant/50 dark:border-[var(--c-border)] px-6 py-3 flex items-center justify-between gap-3 shadow-[0_-2px_8px_rgba(0,35,111,0.06)]"
       >
         <p class="text-sm text-muted hidden sm:block">
           You have unsaved changes
@@ -998,8 +998,7 @@ import type {
   Group,
 } from "~/types";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
-import Mention from "@tiptap/extension-mention";
-import tippy from "tippy.js";
+import { buildMentionExtension } from "~/composables/useMentions";
 import FlatPickr from "vue-flatpickr-component";
 import {
   buildRichTextExtensions,
@@ -1071,62 +1070,11 @@ const highlightedCommentId = ref<string | null>(null);
 const editLinkedRequestIds = ref<string[]>([]);
 const linkedRequestIds = ref<string[]>([]);
 
-type MentionPopupController = {
-  update: (props: any) => void;
-  onKeyDown: (props: any) => boolean;
-  destroy: () => void;
-};
-
-async function searchMentionUsers(query: string) {
-  try {
-    const results = await api<Array<{ id: string; fullName: string; email: string }>>(
-      "/api/v1/users/mention-candidates",
-      { query: { query, limit: 10 } },
-    );
-    return results.map((u) => ({
-      id: u.id,
-      label: u.fullName,
-      email: u.email,
-    }));
-  } catch {
-    return [];
-  }
-}
 
 const commentEditor = useEditor({
   extensions: [
     ...buildRichTextExtensions("Add a comment. Type @ to mention someone…"),
-    Mention.configure({
-      HTMLAttributes: { class: "mention" },
-      suggestion: {
-        char: "@",
-        items: async ({ query }: { query: string }) => {
-          const users = await searchMentionUsers(query);
-          return users.map((u) => ({
-            id: u.id,
-            label: u.label,
-            email: u.email,
-          }));
-        },
-        render: () => {
-          let popup: MentionPopupController | null = null;
-          return {
-            onStart: (props: any) => {
-              popup = createMentionPopup(props);
-            },
-            onUpdate: (props: any) => {
-              popup?.update(props);
-            },
-            onKeyDown: (props: any) => {
-              return popup?.onKeyDown(props) ?? false;
-            },
-            onExit: () => {
-              popup?.destroy();
-            },
-          };
-        },
-      },
-    }),
+    buildMentionExtension(),
   ],
 });
 
@@ -2169,110 +2117,6 @@ async function postCommentAction() {
   }
 }
 
-function createMentionPopup(props: any) {
-  const container = document.createElement("div");
-  container.style.cssText =
-    "background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:4px;max-height:240px;overflow-y:auto;width:320px;";
-
-  let currentCommand = props.command;
-  let currentItems = props.items || [];
-  let selectedIndex = props.selectedIndex || 0;
-
-  function renderItems(items: any[], idx: number) {
-    currentItems = items;
-    selectedIndex = idx;
-    container.innerHTML = "";
-    if (!items.length) {
-      const empty = document.createElement("div");
-      empty.style.cssText = "padding:8px 12px;color:#6b7280;font-size:12px;";
-      empty.textContent = "Searching…";
-      container.appendChild(empty);
-      return;
-    }
-    items.forEach((item, i) => {
-      const row = document.createElement("div");
-      row.setAttribute("data-index", String(i));
-      row.style.cssText =
-        "display:flex;flex-direction:column;padding:6px 12px;border-radius:4px;cursor:pointer;" +
-        (i === idx
-          ? "background:#e8edf5;"
-          : "color:#111827;");
-      row.addEventListener("mouseenter", () => {
-        if (selectedIndex !== i) {
-          renderItems(currentItems, i);
-        }
-      });
-      const nameSpan = document.createElement("span");
-      nameSpan.style.cssText =
-        "font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" +
-        (i === idx ? "color:#1d3a8a;" : "color:#111827;");
-      nameSpan.textContent = item.label;
-      const emailSpan = document.createElement("span");
-      emailSpan.style.cssText =
-        "font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" +
-        (i === idx ? "color:#4a6fa5;" : "color:#6b7280;");
-      emailSpan.textContent = item.email;
-      row.appendChild(nameSpan);
-      row.appendChild(emailSpan);
-      row.addEventListener("mousedown", (e) => {
-        e.preventDefault();
-        currentCommand(item);
-      });
-      container.appendChild(row);
-    });
-  }
-
-  const tip = tippy("body", {
-    getReferenceClientRect: () =>
-      (props.clientRect?.() as DOMRect) || new DOMRect(0, 0, 0, 0),
-    appendTo: () => document.body,
-    content: container,
-    showOnCreate: true,
-    interactive: true,
-    trigger: "manual",
-    placement: "bottom-start",
-    maxWidth: "320px",
-  })[0];
-
-  renderItems(props.items || [], props.selectedIndex || 0);
-
-  return {
-    update: (updatedProps: any) => {
-      currentCommand = updatedProps.command;
-      tip.setProps({
-        getReferenceClientRect: () =>
-          (updatedProps.clientRect?.() as DOMRect) || new DOMRect(0, 0, 0, 0),
-      });
-      renderItems(updatedProps.items || [], updatedProps.selectedIndex || 0);
-    },
-    onKeyDown: (updatedProps: any) => {
-      const items = updatedProps.items || [];
-      if (!items.length) return false;
-      if (updatedProps.event.key === "ArrowUp") {
-        updatedProps.event.preventDefault();
-        const idx = (selectedIndex + items.length - 1) % items.length;
-        renderItems(items, idx);
-        return true;
-      }
-      if (updatedProps.event.key === "ArrowDown" || updatedProps.event.key === "Tab") {
-        updatedProps.event.preventDefault();
-        const idx = (selectedIndex + 1) % items.length;
-        renderItems(items, idx);
-        return true;
-      }
-      if (updatedProps.event.key === "Enter") {
-        updatedProps.event.preventDefault();
-        currentCommand(items[selectedIndex]);
-        return true;
-      }
-      return false;
-    },
-    destroy: () => {
-      tip.destroy();
-    },
-  };
-}
-
 onMounted(() => {
   loadAll();
 
@@ -2357,20 +2201,6 @@ async function onUatUpdated() {
 </script>
 
 <style scoped>
-:deep(.mention) {
-  background: rgba(29, 58, 138, 0.1);
-  color: #1d3a8a;
-  padding: 0.1em 0.3em;
-  border-radius: 3px;
-  font-weight: 500;
-  cursor: default;
-}
-
-.dark :deep(.mention) {
-  background: rgba(96, 165, 250, 0.15);
-  color: #60a5fa;
-}
-
 .approver-list-move {
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }

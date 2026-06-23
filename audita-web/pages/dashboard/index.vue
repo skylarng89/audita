@@ -5,7 +5,7 @@
       <SharedFieldSkeleton heightClass="h-8" class="w-36" />
       <SharedFieldSkeleton heightClass="h-4" class="w-72" />
     </div>
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <SharedFieldSkeleton v-for="n in 4" :key="n" heightClass="h-24" rounded />
     </div>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -28,9 +28,9 @@
       </p>
     </div>
 
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="card p-5 shadow-card-hover">
-        <div class="flex items-start justify-between">
+        <div class="flex flex-row items-center justify-between sm:flex-col sm:items-start">
           <p
             class="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted"
           >
@@ -60,7 +60,7 @@
         <p class="text-xs text-muted mt-1">Live pending approvals</p>
       </div>
       <div class="card p-5 shadow-card-hover">
-        <div class="flex items-start justify-between">
+        <div class="flex flex-row items-center justify-between sm:flex-col sm:items-start">
           <p
             class="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted"
           >
@@ -90,7 +90,7 @@
         <p class="text-xs text-muted mt-1">Currently in progress</p>
       </div>
       <div class="card p-5 border-danger/20 shadow-card-hover bg-danger/[0.02]">
-        <div class="flex items-start justify-between">
+        <div class="flex flex-row items-center justify-between sm:flex-col sm:items-start">
           <p
             class="text-[11px] font-semibold uppercase tracking-[0.12em] text-danger/80"
           >
@@ -120,7 +120,7 @@
       <div
         class="card p-5 bg-primary text-white border-0 shadow-[0_4px_12px_rgba(0,35,111,0.3)]"
       >
-        <div class="flex items-start justify-between">
+        <div class="flex flex-row items-center justify-between sm:flex-col sm:items-start">
           <p
             class="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/60"
           >
@@ -176,7 +176,7 @@
             :key="cr.id"
             class="flex items-center gap-4 px-4 py-4 cursor-pointer hover:bg-surface-container-low transition-colors"
             :class="
-              index > 0 ? 'border-t border-border dark:border-border-dark' : ''
+              index > 0 ? 'border-t border-border dark:border-[var(--c-border)]' : ''
             "
             :to="`/change-requests/${cr.id}`"
             :aria-label="`Open change request ${cr.title}`"
