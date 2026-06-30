@@ -14,7 +14,7 @@ dependencies {
 
     // Spring Data JPA + Hibernate (auto-configures Hibernate 7)
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    runtimeOnly("org.postgresql:postgresql:42.7.11")
+    runtimeOnly("org.postgresql:postgresql:42.7.12")
 
     // Flyway — Spring Boot 4 requires the starter (not bare flyway-core)
     implementation("org.springframework.boot:spring-boot-starter-flyway")
